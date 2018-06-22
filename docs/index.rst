@@ -1,12 +1,10 @@
-.. pycroscopy documentation master file, created by
-   sphinx-quickstart on Thu Aug  3 12:58:27 2017.
+.. pyUSID documentation master file, created by
+   sphinx-quickstart on Fri Jun 22 08:12:01 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-==========
-Pycroscopy
-==========
-
+Welcome to pyUSID's documentation!
+==================================
 **Framework for storing, visualizing, and processing Universal Spectroscopic and Imaging Data (USID)**
 
 Jump to our `GitHub project page <https://github.com/pycroscopy/pyUSID>`_
@@ -34,8 +32,9 @@ Documentation Index
     matlab_to_python
     api
 
+
 Indices and tables
-------------------
+==================
 
 * :ref:`genindex`
 * :ref:`modindex`
