@@ -20,7 +20,7 @@ deploy:
   - provider: pages
     skip_cleanup: true
     github_token:
-      secure: c0dc7aabde4342204db42f23bac052c7f9707f4a
+      secure: $GITHUBTOKEN
     local_dir: docs/_build/html
     on:
       branch: master
@@ -29,7 +29,7 @@ deploy:
   - provider: releases
     skip_cleanup: true
     api_key:
-      secure: c0dc7aabde4342204db42f23bac052c7f9707f4a
+      secure: $GITHUBTOKEN
     file_glob: true
     file: dist/*
     on:
