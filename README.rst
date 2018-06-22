@@ -16,6 +16,10 @@ pyUSID
 .. image:: https://img.shields.io/pypi/l/pyUSID.svg
     :target: https://pypi.org/project/pyUSID/
     :alt: License
+
+.. image:: https://zenodo.org/badge/138171750.svg
+   :target: https://zenodo.org/badge/latestdoi/138171750
+   :alt: DOI
     
 Framework for storing, visualizing, and processing Universal Spectroscopic and Imaging Data (USID)
 
