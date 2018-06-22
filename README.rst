@@ -1,10 +1,10 @@
 pyUSID
 ======
 
-.. image:: https://img.shields.io/travis/pycroscopy/pyUSID/master.svg
-    :target: https://travis-ci.org/pycroscopy/pyUSID
+.. image:: https://travis-ci.com/pycroscopy/pyUSID.svg?branch=master
+    :target: https://travis-ci.com/pycroscopy/pyUSID
     :alt: TravisCI
-    
+
 .. image:: https://img.shields.io/pypi/v/pyUSID.svg
     :target: https://pypi.org/project/pyUSID/
     :alt: PyPI
