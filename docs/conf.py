@@ -28,8 +28,8 @@ import pyUSID
 # -- Project information -----------------------------------------------------
 
 project = 'pyUSID'
-copyright = '2018, Suahs Somnath, Chris R. Smith, Stephen Jesse'
-author = 'Suahs Somnath, Chris R. Smith, Stephen Jesse'
+copyright = '2018, Suhas Somnath, Chris R. Smith, Stephen Jesse'
+author = 'Suhas Somnath, Chris R. Smith, Stephen Jesse'
 
 # The short X.Y version
 version = pyUSID.__version__
