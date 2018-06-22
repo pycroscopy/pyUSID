@@ -28,6 +28,8 @@ requirements = ['numpy>=1.13.0',
                 # 'pyqt;python_version<"3.5"',
                 'pyqt5;python_version>="3.5"',
                 'pyqtgraph>=0.10',
+
+                'scikit-image>=0.12.3',
                 ]
 
 setup(
