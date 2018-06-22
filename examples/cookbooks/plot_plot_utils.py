@@ -114,8 +114,24 @@ freqs = np.random.rand(num_spectra)*35 + 310
 q_facs = np.random.rand(num_spectra)*25 + 50
 phis = np.random.rand(num_spectra)*2*np.pi
 spectra = np.zeros((num_spectra, spectra_length), dtype=np.complex)
+
+
+def sho_resp(parms, w_vec):
+    """
+    Generates the SHO response over the given frequency band
+    Parameters
+    -----------
+    parms : list or tuple
+        SHO parae=(A,w0,Q,phi)
+    w_vec : 1D numpy array
+        Vector of frequency values
+    """
+    return parms[0] * np.exp(1j * parms[3]) * parms[1] ** 2 / \
+        (w_vec ** 2 - 1j * w_vec * parms[1] / parms[2] - parms[1] ** 2)
+
+
 for index, amp, freq, qfac, phase in zip(range(num_spectra), amps, freqs, q_facs, phis):
-    spectra[index] = px.analysis.utils.be_sho.SHOfunc((amp, freq, qfac, phase), w_vec)
+    spectra[index] = sho_resp((amp, freq, qfac, phase), w_vec)
 
 fig, axis = px.plot_utils.plot_complex_spectra(spectra, w_vec, title='Oscillator responses')
 
