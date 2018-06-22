@@ -9,7 +9,7 @@ Submodules
 
     hdf_utils
     image
-    ioutils
+    io_utils
     numpy_translator
     usi_data
     translator
