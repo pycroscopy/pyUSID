@@ -125,7 +125,7 @@ import h5py
 import matplotlib.pyplot as plt
 
 # the scientific function
-from examples.cookbooks.supporting_docs.peak_finding import find_all_peaks
+from .supporting_docs.peak_finding import find_all_peaks
 
 # Finally import pyUSID:
 try:

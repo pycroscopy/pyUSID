@@ -97,7 +97,7 @@ except ImportError:
     import pyUSID as px
 
 # import the scientific function:
-from examples.cookbooks.supporting_docs.peak_finding import find_all_peaks
+from .supporting_docs.peak_finding import find_all_peaks
 
 ########################################################################################################################
 # Load the dataset
