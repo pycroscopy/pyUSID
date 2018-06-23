@@ -3,20 +3,16 @@ Converting Unit Tests to Examples
 =============================================
 **Suhas Somnath**
 
+**This document is under construction!**
+
 .. contents::
 
 Introduction
 ------------
-* While we have some, we do not have enough ``cookbooks`` with examples on how to use functions that will help people become familiar / comfortable with pycroscopy. Here are cookbooks we already have:
-
-  * `plotting utilities <https://pycroscopy.github.io/pycroscopy/auto_examples/user_tutorials/plot_tutorial_01_interacting_w_h5_files.html#sphx-glr-auto-examples-user-tutorials-plot-tutorial-01-interacting-w-h5-files-py>`_
-  * `utilities for reading HDF files <https://pycroscopy.github.io/pycroscopy/auto_examples/user_tutorials/plot_tutorial_01_interacting_w_h5_files.html#sphx-glr-auto-examples-user-tutorials-plot-tutorial-01-interacting-w-h5-files-py>`_
-
-* It takes time to write examples and even more time to write ones that work
+* It takes time to write `examples <https://pycroscopy.github.io/pyUSID/auto_examples/index.html>`_ and even more time to write ones that work
 * ``Unit Tests`` show how a function should be used and how it behaves using examples. Does this sound familiar (above)? 
 * In a unit test, we assert that a function behaves in a certain way. In an example, we simply need to show how the function behaves either by printing the output or by plotting some curves, etc. Thus, it is indeed rather straightforward to convert a unit test to an example. 
-* Fortunately, we already have unit tests for the core functions of the "new" pycroscopy
-  
+
   * Typically, one may write several unit tests for a single function to cover as many use cases as possible. More coverage = more robust code.
   * We do not need to translate every single unit test to an example, just the ones that best illustrate a function.
 * This guide will show you how to convert existing unit tests to examples for cookbooks 
@@ -33,11 +29,11 @@ Notes
 Case 1 - Simple unit test
 -------------------------
 
-As a simple example, we will consider tests for ``recommend_cpu_cores()`` present in ``pycroscopy.core.io.io_utils.py``. As the name suggests, the function recommends the number of CPU cores to use for a specific parallel computation (for example fitting N spectra to a function). 
+As a simple example, we will consider tests for ``recommend_cpu_cores()`` present in ``pyUSID.io.io_utils.py``. As the name suggests, the function recommends the number of CPU cores to use for a specific parallel computation (for example fitting N spectra to a function).
 
 The unit test
 ~~~~~~~~~~~~~
-While it makes sense in theory to use all available CPU cores to solve an embarrassingly parallel problem quickly, there is a time overhead associated with starting up each CPU core and this time loss can outweigh the speedup that can be gained when using multiple cores. Below is an unit test for this very specific scenario. Essentially, we want the function to recommend using a single core when we tell the function that the operation needs to be performed only a few times. You can find this function in lines 30-36 of ``pycroscopy/tests/core/io/test_io_utils.py``
+While it makes sense in theory to use all available CPU cores to solve an embarrassingly parallel problem quickly, there is a time overhead associated with starting up each CPU core and this time loss can outweigh the speedup that can be gained when using multiple cores. Below is an unit test for this very specific scenario. Essentially, we want the function to recommend using a single core when we tell the function that the operation needs to be performed only a few times. You can find this function in lines 30-36 of ``pyUSID/tests/io/test_io_utils.py``
 
 .. code-block:: python
   
@@ -79,7 +75,7 @@ Since the two tests are actually very similar to each other, we clubbed both tes
 
 The example
 ~~~~~~~~~~~
-Recall that the translation of a unit test to an example only requires that the behavior of the function be shown via a print statement or a plot. When translating this specific unit test, all we need to do is print the returned value from the function instead of asserting that it would be equal to a certain value. In every other way, it is literally copy pasting code. This specific unit test has already been translated to an example `in this example python script <https://github.com/pycroscopy/pycroscopy/blob/unity_dev/examples/dev_tutorials/plot_io_utils.py>`_ but here the excerpt specific to this unit test:
+Recall that the translation of a unit test to an example only requires that the behavior of the function be shown via a print statement or a plot. When translating this specific unit test, all we need to do is print the returned value from the function instead of asserting that it would be equal to a certain value. In every other way, it is literally copy pasting code. This specific unit test has already been translated to an example `in this example python script <https://pycroscopy.github.io/pyUSID/auto_examples/cookbooks/plot_io_utils.html>`_ but here the excerpt specific to this unit test:
 
 .. code-block:: python
 
@@ -116,7 +112,7 @@ Most unit tests will not look as simple as that in Case 1. However, the unit tes
 * calling the function
 * asserting different things about the returned values / created file / plot etc.
 
-The following unit test tests the `pycroscopy.core.io.hdf_utils.link_as_main()` function which aims to link a dataset with four ancillary datasets to make it a `Main` dataset. You will see that the example is actually fairly similar to the unit test despite its complexity.
+The following unit test tests the `pyUSID.io.hdf_utils.link_as_main()` function which aims to link a dataset with four ancillary datasets to make it a `Main` dataset. You will see that the example is actually fairly similar to the unit test despite its complexity.
 
 .. code-block:: python
 
@@ -239,7 +235,7 @@ With the (Virtual) datasets prepared, we can write these to a real HDF5 file usi
   h5_spec_inds = writer._create_dataset(h5_f, dset_source_spec_inds)
   h5_spec_vals = writer._create_dataset(h5_f, dset_source_spec_vals)
 
-Finally, we arrive at the assertion portion of the unit test and this is the only section that will need to be changed. The following line proves that the dataset `h5_main` cannot pass the test of being a pycroscopy `Main` dataset since it has not yet been linked to the ancillary datasets
+Finally, we arrive at the assertion portion of the unit test and this is the only section that will need to be changed. The following line proves that the dataset `h5_main` cannot pass the test of being a USID `Main` dataset since it has not yet been linked to the ancillary datasets
 
 .. code-block:: python
 
@@ -271,11 +267,11 @@ Again, this assertion statement can easily be turned into a print statement:
 
   print('After linking to ancillary datasets, h5_main is a main dataset? : {}'.format(hdf_utils.check_if_main(h5_main))
 
-In addition, one could also show that if a dataset is a ``Main`` dataset, we can use it as a ``Pycrodataset``. The below print statement should print the complete details regarding h5_main:
+In addition, one could also show that if a dataset is a ``Main`` dataset, we can use it as a ``USIDataset``. The below print statement should print the complete details regarding h5_main:
 
 .. code-block:: python
 
-  print(px.Pycrodataset(h5_main))
+  print(px.USIDataset(h5_main))
 
 Formatting the example
 ----------------------
@@ -338,16 +334,3 @@ Emphasis
 .. code-block:: python
 
   # **some text in bold**
-
-Getting started
------------------
-* Read the instructions on `Pycharm + git <https://github.com/pycroscopy/pycroscopy/blob/unity_dev/docs/Using%20PyCharm%20to%20manage%20repository.pdf>`_ to get your hands on the code
-* Pick the ``module`` in ``pycroscopy/core/io/`` (for example - ``io_utils.py`` or ``dtype_utils.py``) you want to work on.
-  
-  * Please let others know which module you are working on in order to avoid duplication of efforts
-* You are recommended to keep three files open when writing examples:
-
-  1. The ``source code`` for the function located in ``pycroscopy/core/io/`` - the basic documentation for the function will give you an idea about the function, inputs, outputs, etc. Select the module you intend to work on in `this directory <https://github.com/pycroscopy/pycroscopy/tree/unity_dev/pycroscopy/core/io>`_
-  2. The ``unit tests`` that will be translated to examples located in ``test/core/io``. You should find a test module corresponding to each module in the source code `here <https://github.com/pycroscopy/pycroscopy/tree/unity_dev/tests/core/io>`_. All the files will have a "test_" prefix
-  3. The ``examples script`` where you will be writing the new examples located in ``examples/user_tutorial``. You will find a few existing examples already in `this directory <https://github.com/pycroscopy/pycroscopy/tree/unity_dev/examples/user_tutorials>`_. Most of them are incomplete. You can make a new file if one does not exist. Note that the names of all example scripts must start with "plot_".  
-* Contact Chris / Suhas if you have any questions.
