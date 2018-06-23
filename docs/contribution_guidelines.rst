@@ -10,8 +10,8 @@ We would like to thank you and several others who have offered their code. We ar
 * Ensure that your code (functions) is well documented (`numpy format <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_) - expected inputs and outputs, purpose of functions
 * Please avoid naming variables with single alphabets like ``i`` or ``k``. This makes it challenging to find and fix bugs.
 * Ensure that your code works in python 2.7 and python 3.5 (ideally using packages that are easy to install on Windows, Mac, and Linux). It is quite likely that packages included within Anaconda (upon which pyUSID is based and has a comprehensive list packages for science and data analysis + visualization) can handle most needs. If this is not possible, try to use packages that are easy to to install (pip install). If even this is not possible, try to use packages that at least have conda installers.
-* Please ensure that your code files fit into our `package structure <./package_structure.html>`_ (``io``, ``analysis``, ``processing``, ``simulation``, ``viz``) + external folder for jupyter notebook.
-* There is a good chance that pyUSID may already have some plotting or data analysis function that you need / already have. Please check against our `tutorials and examples <https://pycroscopy.github.io/pyUSID/auto_examples/index.html>`_. In such cases, consider either improving the function already in pyUSID or reusing code already within pyUSID.
+* Please ensure that your code files fit into our `package structure <./package_structure.html>`_ (``io``, ``processing``, ``viz``)
+* There is a good chance that pyUSID may already have some plotting or data analysis function that you need / already have. Please check against our `tutorials and examples <./auto_examples/index.html>`_. In such cases, consider either improving the function already in pyUSID or reusing code already within pyUSID.
 * Provide a few examples on how one might use your code - preferably via a jupyter notebook.
 * Follow best practices for `PEP8 compatibility <https://www.datacamp.com/community/tutorials/pep8-tutorial-python-code>`_. The easiest way to ensure compatibility is to set it up in your development environment. `PyCharm <https://blog.jetbrains.com/pycharm/2013/02/long-awaited-pep-8-checks-on-the-fly-improved-doctest-support-and-more-in-pycharm-2-7/>`_ does this by default. So, as long as PyCharm does not raise many warning, your code is beautiful!
 
@@ -28,3 +28,9 @@ We recommend that you follow the steps below. Again, if you are ever need help, 
 5. ``Commit`` your changes (equivalent to saving locally on your laptop). Do this regularly.
 6. Repeat steps 4-5. After you reach a certain milestone, ``push`` your commits to your ``remote branch``. To avoid losing work due to problems with your computer, consider ``pushing commits`` once at least every day / every few days.
 7. Repeat steps 4-6 till you are ready to have your code added to the parent pyUSID repository. At this point, `create a pull request <https://help.github.com/articles/creating-a-pull-request-from-a-fork/>`_. Someone on the development team will review your ``pull request`` and then ``merge`` these changes to ``master``.
+
+Writing tests
+-------------
+Unit tests are a good start for ensuring that you spend more time using code than fixing it. New functions / classes must be accompanied with unit tests.
+Additionally, examples on how to use the new code must also be added so others are aware about how to use the code.
+Fortunately, it is rather straightforward to `turn unit tests into examples <./unit_tests_to_examples.html>`_.
