@@ -6,6 +6,7 @@ Getting Started
 * Details regarding the definition, implementation, and guidelines for Universal Spectroscopy and Imaging Data (USID) and its implementation in HDF5 (h5USID) are available in `this document <./data_format.html>`_.
 * Please see our document on the `organization of pyUSID <./package_organization.html>`_ to find out more on what is where and why.
 * If you are interested in contributing your code to pyUSID, please look at our `guidelines <./contribution_guidelines.html>`_
+* We also have a handy document for converting your `matlab code to python <./matlab_to_python.html>`_.
 * If you need detailed documentation on all our classes, functions, etc., please visit our `API <./api.html>`_
 * Have questions? See our `FAQ <./faq.html>`_ to see if we have already answered them.
 * Need help or need to get in touch with us? See our `contact <./contact.html>`_ information.
