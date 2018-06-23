@@ -6,12 +6,8 @@ Frequently asked questions
 pyUSID philosophy
 ---------------------
 
-What is pyUSID and how is it different from python?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`Python <https://www.python.org>`_ is an (interpreted) programming langauge similar to R, Java, C, C++, Fortran etc. `pyUSID <https://pycroscopy.github.io/pyUSID/about.html>`_ is an addon module to python that provides a framework for processing, storing, and visualizing scientific spectroscopy or imaging data. As an (oversimplified) analogy, think of python as Windows or Mac OS and pyUSID as Firefox or Chrome or Safari.
-
 Is pyUSID specific to any communities?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Not at all**. We have ensured that the basic data model, file formatting, and processing paradigm are general enough that they can be extended to any other scientific domain so long as each experiment involves ``N`` identical observations of ``S`` values.
 
 Also, please see our answer to 'Who uses pyUSID' below:
@@ -47,7 +43,7 @@ Pycroscopy is written in python, so it is going to be slow since it cannot use a
 Actually, all data processing / analysis algorithms we have written in pyUSID can use every single core on your CPU. Given N CPU cores, you should notice a nearly N-fold speed up in your computation. By default, we set aside 2 cores for the operating system and other user applications such as an internet browser, Microsoft Word, etc.
 
 Using pyUSID
-----------------
+-------------
 I don't know programming. Does this preclude me from using pyUSID?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Not at all. One of the tenets of pyUSID is lowering the barrier for scientists and researchers. To this end, we have put together a list of `useful tutorials <./external_guides.html>`_ and examples and `examples / tutorials <./auto_examples/index.html>`_ to guide you. You should have no trouble getting started even if you do not know programming. That being said, you would be able to make the fullest use of pyUSID if you knew basic programming in python.
@@ -97,12 +93,6 @@ Unlike Nexus, NetCDF, Matlab's .mat files, the Universal Spectroscopy and Imagin
 Instead, implementing the USID model only increases the functionality of the very same datasets in pyUSID and other packages.
 
 We are currently exploring collaboration / translators to and from `DREAM.3D's HDF5 data model <http://dream3d.bluequartz.net/binaries/Help/DREAM3D/nativedream3d.html>`_
-
-Can Pycroscopy read data files from instrument X?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Pycroscopy has numerous translators that extract the data and metadata (e.g. - instrument / imaging parameters) from some
-popular file formats and store the information in HDF5 files.
-You can find a list of available `translators here <./translators.html>`_.
 
 Becoming a part of the effort
 -----------------------------
