@@ -16,10 +16,11 @@ What?
   #. **io**: Primarily, it enables the storage and access of USID in **hierarchical data format** `(HDF5) <http://extremecomputingtraining.anl.gov/files/2015/03/HDF5-Intro-aug7-130.pdf>`_ files (referred to as h5USID files) using python
   #. **viz**: It has handy tools for visualizing USID and general scientific data
   #. **processing**: It provides a framework for formulating scientific problems into computational problems.
-     See `pycroscopy <https://pycroscopy.github.io/pycroscopy/about.html>`_ - a sister project that uses pyUSID for analysis of microscopy data.
+     See `pycroscopy <./pycroscopy/about.html>`_ - a sister project that uses pyUSID for analysis of microscopy data.
 
 * pyUSID uses a data-centric approach wherein the raw data collected from the instrument, results from analysis
-  and processing routines are all written to the smae h5USID file for traceability, reproducibility, and provenance.
+  and processing routines are all written to the same h5USID file for traceability, reproducibility, and provenance.
+* Just as scipy uses numpy underneath, scientific packages like **pycroscopy** use **pyUSID** for all file-handling, general plotting utilities and a data processing framework
 * pyUSID uses popular packages such as numpy, h5py, joblib, matplotlib, etc. for most of the storage, computation, and visualization.
 * See a high-level overview of pyUSID in this `presentation <https://github.com/pycroscopy/pycroscopy/blob/master/docs/pycroscopy_presentation.pdf>`_
 * Jump to our `GitHub project <https://github.com/pycroscopy/pyUSID>`_
