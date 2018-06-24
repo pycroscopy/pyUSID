@@ -13,6 +13,10 @@ pyUSID
     :target: https://github.com/conda-forge/pyUSID-feedstock
     :alt: conda-forge
 
+.. image:: https://coveralls.io/repos/github/pycroscopy/pyUSID/badge.svg?branch=master
+    :target: https://coveralls.io/github/pycroscopy/pyUSID?branch=master
+    :alt: coverage
+    
 .. image:: https://img.shields.io/pypi/l/pyUSID.svg
     :target: https://pypi.org/project/pyUSID/
     :alt: License
