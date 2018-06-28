@@ -125,7 +125,9 @@ import h5py
 import matplotlib.pyplot as plt
 
 # the scientific function
-from .supporting_docs.peak_finding import find_all_peaks
+import sys
+sys.path.append('./supporting_docs/')
+from peak_finding import find_all_peaks
 
 # Finally import pyUSID:
 try:
