@@ -97,7 +97,9 @@ except ImportError:
     import pyUSID as px
 
 # import the scientific function:
-from .supporting_docs.peak_finding import find_all_peaks
+import sys
+sys.path.append('./supporting_docs/')
+from peak_finding import find_all_peaks
 
 ########################################################################################################################
 # Load the dataset
