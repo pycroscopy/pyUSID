@@ -26,7 +26,7 @@ __all__ = ['get_attr', 'get_h5_obj_refs', 'get_indices_for_region_ref', 'get_dim
            'copy_region_refs', 'get_all_main', 'get_unit_values', 'check_for_matching_attrs', 'create_region_reference',
            'copy_attributes', 'reshape_to_n_dims', 'link_h5_objects_as_attrs',
            'link_h5_obj_as_alias',
-           'find_results_groups', 'get_formatted_labels', 'reshape_from_n_dims', 'find_dataset', 'print_tree',
+           'find_results_groups', 'reshape_from_n_dims', 'find_dataset', 'print_tree',
            'copy_main_attributes', 'create_empty_dataset', 'check_for_old', 'get_source_dataset',
            'link_as_main', 'copy_reg_ref_reduced_dim', 'simple_region_ref_copy', 'write_book_keeping_attrs',
            'is_editable_h5', 'write_ind_val_dsets', 'write_reduced_spec_dsets',
@@ -627,44 +627,6 @@ def create_region_reference(h5_main, ref_inds):
     new_ref = h5py.h5r.create(h5_main.id, b'.', h5py.h5r.DATASET_REGION, space=h5_space)
 
     return new_ref
-
-
-def get_formatted_labels(h5_dset):
-    """
-    Takes any dataset which has the labels and units attributes and returns a list of strings
-    formatted as 'label k (unit k)'
-
-    Parameters
-    ----------
-    h5_dset : h5py.Dataset object
-        dataset which has labels and units attributes
-
-    Returns
-    -------
-    labels : list
-        list of strings formatted as 'label k (unit k)'
-    """
-    if not isinstance(h5_dset, h5py.Dataset):
-        raise TypeError('h5_dset should be a h5py.Dataset object')
-
-    try:
-        labs = get_attr(h5_dset, 'labels')
-        try:
-            units = get_attr(h5_dset, 'units')
-        except KeyError:
-            warn('units attribute was missing')
-            units = ['' for _ in labs]
-
-        if len(labs) != len(units):
-            raise ValueError('Labels and units have different sizes!\n\tLabels:{}, units:{}'.format(labs, units))
-
-        labels = []
-        for lab, unit in zip(labs, units):
-            labels.append('{} ({})'.format(lab, unit))
-        return labels
-
-    except KeyError:
-        raise KeyError('labels attribute was missing')
 
 
 def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verbose=False, sort_dims=False):

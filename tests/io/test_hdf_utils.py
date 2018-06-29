@@ -322,23 +322,6 @@ class TestHDFUtils(unittest.TestCase):
             for h5_dset, s_oder, exp_shape in zip(h5_dsets, sort_orders, expected_shapes):
                 self.assertTrue(np.all(exp_shape == hdf_utils.get_dimensionality(h5_dset, index_sort=s_oder)))
 
-    def test_get_formatted_labels_legal(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_dsets = [h5_f['/Raw_Measurement/Spectroscopic_Indices'],
-                        h5_f['/Raw_Measurement/source_main-Fitter_000/Spectroscopic_Indices'],
-                        h5_f['/Raw_Measurement/Position_Indices']]
-            expected_labels = [['Bias (V)', 'Cycle ()'], ['Bias (V)'], ['X (nm)', 'Y (um)']]
-            for h5_dset, exp_labs in zip(h5_dsets, expected_labels):
-                self.assertTrue(np.all(exp_labs == hdf_utils.get_formatted_labels(h5_dset)))
-
-    def test_get_formatted_labels_illegal(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_dsets = [h5_f['/Raw_Measurement/Ancillary'],
-                        h5_f['/Raw_Measurement/source_main']]  # This will have labels and units but of different sizes
-            for h5_dset, err_type in zip(h5_dsets, [KeyError, ValueError]):
-                with self.assertRaises(err_type):
-                    _ = hdf_utils.get_formatted_labels(h5_dset)
-
     def test_get_h5_obj_refs_legal_01(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             h5_obj_refs = [h5_f,

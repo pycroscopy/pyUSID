@@ -401,20 +401,6 @@ dset_list = px.hdf_utils.get_auxiliary_datasets(h5_raw, ['Position_Indices', 'Po
 h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals = dset_list
 
 ########################################################################################################################
-# get_formatted_labels()
-# ----------------------
-# ``get_formatted_labels()`` provides a string representation of the dimensions represented by an ancillary dataset. Lets
-# try it out on the ``Position Indices`` and ``Spectroscopic Indices`` datasets:
-
-pos_dim_names = px.hdf_utils.get_formatted_labels(h5_pos_inds)
-spec_dim_names = px.hdf_utils.get_formatted_labels(h5_spec_inds)
-
-print('Position dimensions are:')
-print(pos_dim_names)
-print('\nSpectroscopic dimensions are:')
-print(spec_dim_names)
-
-########################################################################################################################
 # As mentioned above, this is indeed a six dimensional dataset with two position dimensions and four spectroscopic
 # dimensions. The ``Field`` and ``Cycle`` dimensions do not have any units since they are dimensionless unlike the other
 # dimensions.
@@ -426,6 +412,8 @@ print(spec_dim_names)
 
 pos_dim_sizes = px.hdf_utils.get_dimensionality(h5_pos_inds)
 spec_dim_sizes = px.hdf_utils.get_dimensionality(h5_spec_inds)
+pos_dim_names = px.hdf_utils.get_attr(h5_pos_inds, 'labels')
+spec_dim_names = px.hdf_utils.get_attr(h5_spec_inds, 'labels')
 
 print('Size of each Position dimension:')
 for name, length in zip(pos_dim_names, pos_dim_sizes):
@@ -449,9 +437,8 @@ for name, length in zip(spec_dim_names, spec_dim_sizes):
 spec_sort_order = px.hdf_utils.get_sort_order(h5_spec_inds)
 print('Rate of change of spectroscopic dimensions: {}'.format(spec_sort_order))
 print('\nSpectroscopic dimensions arranged as is:')
-unsorted_spec_labels = px.hdf_utils.get_formatted_labels(h5_spec_inds)
-print(unsorted_spec_labels)
-sorted_spec_labels = np.array(unsorted_spec_labels)[np.array(spec_sort_order)]
+print(spec_dim_names)
+sorted_spec_labels = np.array(spec_dim_names)[np.array(spec_sort_order)]
 print('\nSpectroscopic dimensions arranged from fastest to slowest')
 print(sorted_spec_labels)
 

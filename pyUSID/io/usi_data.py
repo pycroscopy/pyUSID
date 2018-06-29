@@ -11,7 +11,7 @@ import os
 import sys
 import h5py
 import numpy as np
-from .hdf_utils import check_if_main, get_attr, get_data_descriptor, get_formatted_labels, \
+from .hdf_utils import check_if_main, get_attr, \
     get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims
 from .dtype_utils import flatten_to_real, contains_integers
 from .write_utils import Dimension
@@ -91,8 +91,8 @@ class USIDataset(h5py.Dataset):
 
         # Data descriptors
         self.data_descriptor = '{} ({})'.format(get_attr(self, 'quantity'), get_attr(self, 'units'))
-        self.pos_dim_descriptors = get_formatted_labels(self.h5_pos_inds)
-        self.spec_dim_descriptors = get_formatted_labels(self.h5_spec_inds)
+        self.pos_dim_descriptors = self.__get_anc_labels(self.h5_pos_inds)
+        self.spec_dim_descriptors = self.__get_anc_labels(self.h5_spec_inds)
 
         # The size of each dimension
         self.__pos_dim_sizes = np.array(get_dimensionality(np.transpose(self.h5_pos_inds)))
@@ -173,6 +173,27 @@ class USIDataset(h5py.Dataset):
             self.spec_dim_sizes = self.__spec_dim_sizes.tolist()
             self.n_dim_labels = self.__n_dim_labs.tolist()
             self.n_dim_sizes = self.__n_dim_sizes.tolist()
+
+    @staticmethod
+    def __get_anc_labels(h5_dset):
+        """
+        Takes any dataset which has the labels and units attributes and returns a list of strings
+        formatted as 'label k (unit k)'
+
+        Parameters
+        ----------
+        h5_dset : h5py.Dataset object
+            dataset which has labels and units attributes
+
+        Returns
+        -------
+        labels : list
+            list of strings formatted as 'label k (unit k)'
+        """
+        labels = []
+        for lab, unit in zip(get_attr(h5_dset, 'labels'), get_attr(h5_dset, 'units')):
+            labels.append('{} ({})'.format(lab, unit))
+        return labels
 
     def get_pos_values(self, dim_name):
         """
