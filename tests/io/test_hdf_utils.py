@@ -297,16 +297,6 @@ class TestHDFUtils(unittest.TestCase):
             with self.assertRaises(KeyError):
                 _ = hdf_utils.get_auxiliary_datasets(h5_main, aux_dset_name='Does_Not_Exist')
 
-    def test_get_data_descriptor_main(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            self.assertEqual(hdf_utils.get_data_descriptor(h5_main), 'Current (A)')
-
-    def test_get_data_descriptor_main(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_pos = h5_f['/Raw_Measurement/Ancillary']
-            self.assertEqual(hdf_utils.get_data_descriptor(h5_pos), 'unknown quantity (unknown units)')
-
     def test_get_dimensionality_legal_no_sort(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             h5_dsets = [h5_f['/Raw_Measurement/Spectroscopic_Indices'],
@@ -348,35 +338,6 @@ class TestHDFUtils(unittest.TestCase):
             for h5_dset, err_type in zip(h5_dsets, [KeyError, ValueError]):
                 with self.assertRaises(err_type):
                     _ = hdf_utils.get_formatted_labels(h5_dset)
-
-    def test_get_group_refs_legal(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_refs = [h5_f['/Raw_Measurement/Ancillary'],
-                       h5_f['/Raw_Measurement/source_main-Fitter_000'],
-                       h5_f['/Raw_Measurement/source_main-Fitter_001'],
-                       h5_f['/Raw_Measurement/source_main-Fitter_000/results_main']]
-            group_prefix = 'source_main-Fitter'
-            expected_objs = set([h5_f['/Raw_Measurement/source_main-Fitter_000'],
-                                 h5_f['/Raw_Measurement/source_main-Fitter_001']])
-            if sys.version_info.major == 3:
-                with self.assertWarns(UserWarning):
-                    ret_vals = set(hdf_utils.get_group_refs(group_prefix, h5_refs))
-            else:
-                ret_vals = set(hdf_utils.get_group_refs(group_prefix, h5_refs))
-            self.assertTrue(ret_vals == expected_objs)
-
-    def test_get_group_refs_failure(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_refs = [h5_f['/Raw_Measurement/Ancillary'],
-                       h5_f,
-                       np.arange(15),
-                       h5_f['/Raw_Measurement/source_main-Fitter_000/results_main']]
-            group_prefix = 'source_main_Blah'
-            if sys.version_info.major == 3:
-                with self.assertWarns(UserWarning):
-                    self.assertTrue(hdf_utils.get_group_refs(group_prefix, h5_refs) == [])
-            else:
-                self.assertTrue(hdf_utils.get_group_refs(group_prefix, h5_refs) == [])
 
     def test_get_h5_obj_refs_legal_01(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:

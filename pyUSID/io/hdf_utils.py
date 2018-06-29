@@ -22,9 +22,8 @@ from .dtype_utils import contains_integers, validate_dtype
 from ..__version__ import version as py_usid_version
 
 __all__ = ['get_attr', 'get_h5_obj_refs', 'get_indices_for_region_ref', 'get_dimensionality', 'get_sort_order',
-           'get_auxiliary_datasets', 'get_attributes', 'get_group_refs', 'check_if_main', 'check_and_link_ancillary',
-           'copy_region_refs', 'get_all_main', 'get_unit_values', 'get_data_descriptor', 'check_for_matching_attrs'
-                                                                                         'create_region_reference',
+           'get_auxiliary_datasets', 'get_attributes', 'check_if_main', 'check_and_link_ancillary',
+           'copy_region_refs', 'get_all_main', 'get_unit_values', 'check_for_matching_attrs', 'create_region_reference',
            'copy_attributes', 'reshape_to_n_dims', 'link_h5_objects_as_attrs',
            'link_h5_obj_as_alias',
            'find_results_groups', 'get_formatted_labels', 'reshape_from_n_dims', 'find_dataset', 'print_tree',
@@ -318,44 +317,6 @@ def get_h5_obj_refs(obj_names, h5_refs):
                     found_objects.append(h5_object)
 
     return found_objects
-
-
-def get_group_refs(group_name, h5_refs):
-    """
-    Given a list of H5 references and a group name,
-    this method returns H5 Datagroup object corresponding to the names.
-    This function is especially useful when the suffix of the written group
-    is unknown (due to the autoindexing in HDFwriter)
-
-    Parameters
-    ----------
-    group_name : unicode / string
-        Name of the datagroup. If the index suffix is left out, all groups matching the basename will be returned
-        Example - provide 'SourceDataset_ProcessName'
-        if a specific group is required, provide - 'SourceDataset_ProcessName_017'
-    h5_refs : list
-        List of h5 object references
-
-
-    Returns
-    -------
-    group_list : list
-        A list of h5py.Group objects whose name matched with the provided group_name
-    """
-
-    if not isinstance(group_name, (str, unicode)):
-        raise TypeError('group_name must be a string')
-    if not isinstance(h5_refs, (list, tuple)):
-        raise TypeError('h5_refs should be a list or tuple')
-
-    group_list = list()
-    for h5_object in h5_refs:
-        if not isinstance(h5_object, h5py.Group):
-            warn('Ignoring object of type: {}. Expected h5py.Group object'.format(type(h5_object)))
-            continue
-        if h5_object.name.split('/')[-1].startswith(group_name):
-            group_list.append(h5_object)
-    return group_list
 
 
 def find_dataset(h5_group, dset_name):
@@ -666,34 +627,6 @@ def create_region_reference(h5_main, ref_inds):
     new_ref = h5py.h5r.create(h5_main.id, b'.', h5py.h5r.DATASET_REGION, space=h5_space)
 
     return new_ref
-
-
-def get_data_descriptor(h5_dset):
-    """
-    Returns a string of the form 'quantity (unit)'
-
-    Parameters
-    ----------
-    h5_dset : h5py.Dataset object
-        A USID 'main' dataset
-
-    Returns
-    -------
-    descriptor : String
-        string of the form 'quantity (unit)'
-    """
-    if not isinstance(h5_dset, h5py.Dataset):
-        raise TypeError('h5_dset should be a h5py.Dataset object')
-
-    try:
-        quant = get_attr(h5_dset, 'quantity')
-    except KeyError:
-        quant = 'unknown quantity'
-    try:
-        unit = get_attr(h5_dset, 'units')
-    except KeyError:
-        unit = 'unknown units'
-    return '{} ({})'.format(quant, unit)
 
 
 def get_formatted_labels(h5_dset):

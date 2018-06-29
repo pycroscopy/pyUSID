@@ -90,7 +90,7 @@ class USIDataset(h5py.Dataset):
         self.__spec_dim_labels = get_attr(self.h5_spec_inds, 'labels')
 
         # Data descriptors
-        self.data_descriptor = get_data_descriptor(self)
+        self.data_descriptor = '{} ({})'.format(get_attr(self, 'quantity'), get_attr(self, 'units'))
         self.pos_dim_descriptors = get_formatted_labels(self.h5_pos_inds)
         self.spec_dim_descriptors = get_formatted_labels(self.h5_spec_inds)
 
