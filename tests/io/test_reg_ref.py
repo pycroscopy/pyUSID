@@ -11,8 +11,6 @@ import sys
 import h5py
 import numpy as np
 
-import pyUSID.io.reg_ref
-
 sys.path.append("../../pyUSID/")
 from pyUSID.io import hdf_utils, reg_ref
 
