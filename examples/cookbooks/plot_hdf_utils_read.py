@@ -466,7 +466,6 @@ spec_unit_values = px.hdf_utils.get_unit_values(h5_spec_inds, h5_spec_vals)
 fig, axes = plt.subplots(ncols=2, nrows=2, figsize=(6.5, 6))
 for axis, name in zip(axes.flat, spec_dim_names):
     axis.set_title(name)
-    name, units = name.split()
     axis.plot(spec_unit_values[name], 'o-')
 
 fig.suptitle('Spectroscopic Dimensions', fontsize=16, y=1.05)
