@@ -20,12 +20,12 @@ def install(package):
     subprocess.call([sys.executable, "-m", "pip", "install", package])
 # Package for downloading online files:
 try:
-    import pyUSID as px
+    import pyUSID as usid
 except ImportError:
     print('pyUSID not found.  Will install with pip.')
     import pip
     install('pyUSID')
-    import pyUSID as px
+    import pyUSID as usid
 
 ########################################################################################################################
 # Computation related utilities
@@ -48,7 +48,7 @@ print('This CPU has {} cores available'.format(cpu_count()))
 # **Case 1**: several independent computations or jobs, each taking far less than 1 second. The number of desired cores
 # is not specified. The function will return 2 lesser than the total number of cores on the CPU
 num_jobs = 14035
-recommeded_cores = px.io_utils.recommend_cpu_cores(num_jobs, lengthy_computation=False)
+recommeded_cores = usid.io_utils.recommend_cpu_cores(num_jobs, lengthy_computation=False)
 print('Recommended number of CPU cores for {} independent, FAST, and parallel '
       'computations is {}\n'.format(num_jobs, recommeded_cores))
 
@@ -56,7 +56,7 @@ print('Recommended number of CPU cores for {} independent, FAST, and parallel '
 # **Case 2**: Several independent and fast computations, and the function is asked if 3 cores is OK. In this case, the
 # function will allow the usage of the 3 cores so long as the CPU actually has 3 or more cores
 requested_cores = 3
-recommeded_cores = px.io_utils.recommend_cpu_cores(num_jobs, requested_cores=requested_cores, lengthy_computation=False)
+recommeded_cores = usid.io_utils.recommend_cpu_cores(num_jobs, requested_cores=requested_cores, lengthy_computation=False)
 print('Recommended number of CPU cores for {} independent, FAST, and parallel '
       'computations using the requested {} CPU cores is {}\n'.format(num_jobs, requested_cores, recommeded_cores))
 
@@ -65,7 +65,7 @@ print('Recommended number of CPU cores for {} independent, FAST, and parallel '
 # configuring multiple cores for parallel computations will probably be slower than serial computation with a single
 # core. Hence, the function will recommend the use of only one core in this case.
 num_jobs = 13
-recommeded_cores = px.io_utils.recommend_cpu_cores(num_jobs, requested_cores=requested_cores, lengthy_computation=False)
+recommeded_cores = usid.io_utils.recommend_cpu_cores(num_jobs, requested_cores=requested_cores, lengthy_computation=False)
 print('Recommended number of CPU cores for {} independent, FAST, and parallel '
       'computations using the requested {} CPU cores is {}\n'.format(num_jobs, requested_cores, recommeded_cores))
 
@@ -74,7 +74,7 @@ print('Recommended number of CPU cores for {} independent, FAST, and parallel '
 # lengthy. In this case, the overhead of configuring the CPU core for parallel computing is worth the benefit of
 # parallel computation. Hence, the function will allow the use of the 3 cores even though the number of computations is
 # small.
-recommeded_cores = px.io_utils.recommend_cpu_cores(num_jobs, requested_cores=requested_cores, lengthy_computation=True)
+recommeded_cores = usid.io_utils.recommend_cpu_cores(num_jobs, requested_cores=requested_cores, lengthy_computation=True)
 print('Recommended number of CPU cores for {} independent, SLOW, and parallel '
       'computations using the requested {} CPU cores is {}'.format(num_jobs, requested_cores, recommeded_cores))
 
@@ -84,7 +84,7 @@ print('Recommended number of CPU cores for {} independent, SLOW, and parallel '
 # Among the many best-practices we follow when developing a new data analysis or processing class is memory-safe
 # computation. This handy function helps us quickly get the available memory. Note that this function returns the
 # available memory in bytes. So, we have converted it to gigabytes here:
-print('Available memory in this machine: {} GB'.format(px.io_utils.get_available_memory()/1024**3))
+print('Available memory in this machine: {} GB'.format(usid.io_utils.get_available_memory()/1024**3))
 
 ########################################################################################################################
 # String formatting utilities
@@ -97,14 +97,14 @@ print('Available memory in this machine: {} GB'.format(px.io_utils.get_available
 # --------------
 # One function that uses this functionality to print the size of files etc. is format_size(). While one can manually
 # print the available memory in gibibytes (see above), ``format_size()`` simplifies this substantially:
-print('Available memory in this machine: {}'.format(px.io_utils.format_size(px.io_utils.get_available_memory())))
+print('Available memory in this machine: {}'.format(usid.io_utils.format_size(usid.io_utils.get_available_memory())))
 
 ########################################################################################################################
 # format_time()
 # -------------
 # On the same lines, ``format_time()`` is another handy function that is great at formatting time and is often used in
 # Process and Fitter to print the remaining time
-print('{} seconds = {}'.format(14497.34, px.io_utils.format_time(14497.34)))
+print('{} seconds = {}'.format(14497.34, usid.io_utils.format_time(14497.34)))
 
 ########################################################################################################################
 # format_quantity()
@@ -114,7 +114,7 @@ print('{} seconds = {}'.format(14497.34, px.io_utils.format_time(14497.34)))
 units = ['msec', 'sec', 'mins', 'hours']
 factors = [0.001, 1, 60, 3600]
 time_value = 14497.34
-print('{} seconds = {}'.format(14497.34, px.io_utils.format_quantity(time_value, units, factors)))
+print('{} seconds = {}'.format(14497.34, usid.io_utils.format_quantity(time_value, units, factors)))
 
 ########################################################################################################################
 # formatted_str_to_number()
@@ -123,7 +123,7 @@ print('{} seconds = {}'.format(14497.34, px.io_utils.format_quantity(time_value,
 unit_names = ["MHz", "kHz"]
 unit_magnitudes = [1E+6, 1E+3]
 str_value = "4.32 MHz"
-num_value = px.io_utils.formatted_str_to_number(str_value, unit_names, unit_magnitudes, separator=' ')
+num_value = usid.io_utils.formatted_str_to_number(str_value, unit_names, unit_magnitudes, separator=' ')
 print('formatted_str_to_number says: {} = {}'.format(str_value, num_value))
 
 ########################################################################################################################
@@ -131,7 +131,7 @@ print('formatted_str_to_number says: {} = {}'.format(str_value, num_value))
 # ----------------
 # We try to use a standardized format for storing time stamps in HDF5 files. The function below generates the time
 # as a string that can be easily parsed if need be
-print('Current time is: {}'.format(px.io_utils.get_time_stamp()))
+print('Current time is: {}'.format(usid.io_utils.get_time_stamp()))
 
 ########################################################################################################################
 # Communication utilities
@@ -146,4 +146,4 @@ print('Current time is: {}'.format(px.io_utils.get_time_stamp()))
 # When developing workflows that need to work on remote or virtual machines in addition to one's own personal computer
 # such as a laptop, this function is handy at letting the developer know where the code is being executed
 
-print('Running on remote machine: {}'.format(px.io_utils.check_ssh()))
+print('Running on remote machine: {}'.format(usid.io_utils.check_ssh()))

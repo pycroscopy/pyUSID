@@ -95,12 +95,12 @@ import matplotlib.pyplot as plt
 
 # Finally import pyUSID:
 try:
-    import pyUSID as px
+    import pyUSID as usid
 except ImportError:
     warn('pyUSID not found.  Will install with pip.')
     import pip
     install('pyUSID')
-    import pyUSID as px
+    import pyUSID as usid
 
 ####################################################################################
 # Step 0. Procure the Raw Data file
@@ -235,9 +235,9 @@ units = 'nA'
 # Position and spectroscopic dimensions need to defined using ``Dimension`` objects. Remember that the position and
 # spectroscopic dimensions need to be specified in the correct order.
 
-pos_dims = [px.write_utils.Dimension('X', 'a. u.', parm_dict['x-pixels']),
-            px.write_utils.Dimension('Y', 'a. u.', parm_dict['y-pixels'])]
-spec_dims = px.write_utils.Dimension('Bias', 'V', volt_vec)
+pos_dims = [usid.write_utils.Dimension('X', 'a. u.', parm_dict['x-pixels']),
+            usid.write_utils.Dimension('Y', 'a. u.', parm_dict['y-pixels'])]
+spec_dims = usid.write_utils.Dimension('Bias', 'V', volt_vec)
 
 ####################################################################################
 # Step 4.c. Calling the NumpyTranslator to create the h5USID file
@@ -247,7 +247,7 @@ spec_dims = px.write_utils.Dimension('Bias', 'V', volt_vec)
 # ancillary datasets to the main dataset etc. With a single call to the NumpyTranslator, we complete the translation
 # process.
 
-tran = px.NumpyTranslator()
+tran = usid.NumpyTranslator()
 h5_path = tran.translate(h5_path, sci_data_type, raw_data_2d,  quantity, units,
                          pos_dims, spec_dims, translator_name='Omicron_ASC_Translator', parm_dict=parm_dict)
 
@@ -283,13 +283,13 @@ h5_path = tran.translate(h5_path, sci_data_type, raw_data_2d,  quantity, units,
 
 with h5py.File(h5_path, mode='r') as h5_file:
     # See if a tree has been created within the hdf5 file:
-    px.hdf_utils.print_tree(h5_file)
+    usid.hdf_utils.print_tree(h5_file)
 
     h5_main = h5_file['Measurement_000/Channel_000/Raw_Data']
-    px.plot_utils.use_nice_plot_params()
+    usid.plot_utils.use_nice_plot_params()
     fig, axes = plt.subplots(ncols=2, figsize=(11, 5))
     spat_map = np.reshape(h5_main[:, 100], (100, 100))
-    px.plot_utils.plot_map(axes[0], spat_map, origin='lower')
+    usid.plot_utils.plot_map(axes[0], spat_map, origin='lower')
     axes[0].set_title('Spatial map')
     axes[0].set_xlabel('X')
     axes[0].set_ylabel('Y')

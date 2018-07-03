@@ -131,12 +131,12 @@ from peak_finding import find_all_peaks
 
 # Finally import pyUSID:
 try:
-    import pyUSID as px
+    import pyUSID as usid
 except ImportError:
     warn('pyUSID not found.  Will install with pip.')
     import pip
     install('pyUSID')
-    import pyUSID as px
+    import pyUSID as usid
 
 ########################################################################################################################
 # The goal is to **find the amplitude at the peak in each spectra**. Clearly, the operation of finding the peak in one
@@ -205,7 +205,7 @@ except ImportError:
 # * update the ``start_pos`` internal variable to guide compute() to process the next batch of positions / pixels
 
 
-class PeakFinder(px.Process):
+class PeakFinder(usid.Process):
 
     def test(self, pixel_ind):
         """
@@ -234,10 +234,10 @@ class PeakFinder(px.Process):
         self.process_name = 'Peak_Finding'
 
         # 1. create a HDF5 group to hold the results
-        self.h5_results_grp = px.hdf_utils.create_results_group(self.h5_main, self.process_name)
+        self.h5_results_grp = usid.hdf_utils.create_results_group(self.h5_main, self.process_name)
 
         # 2. Write relevant metadata to the group
-        px.hdf_utils.write_simple_attrs(self.h5_results_grp,
+        usid.hdf_utils.write_simple_attrs(self.h5_results_grp,
                                         {'last_pixel': 0, 'algorithm': 'find_all_peaks'})
 
         # Explicitly stating all the inputs to write_main_dataset
@@ -248,10 +248,10 @@ class PeakFinder(px.Process):
         results_quantity = 'Amplitude'
         results_units = 'V'
         pos_dims = None # Reusing those linked to self.h5_main
-        spec_dims = px.write_utils.Dimension('Empty', 'a. u.', 1)
+        spec_dims = usid.write_utils.Dimension('Empty', 'a. u.', 1)
 
         # 3. Create an empty results dataset that will hold all the results
-        self.h5_results = px.hdf_utils.write_main_dataset(self.h5_results_grp, results_shape, results_dset_name,
+        self.h5_results = usid.hdf_utils.write_main_dataset(self.h5_results_grp, results_shape, results_dset_name,
                                                           results_quantity, results_units, pos_dims, spec_dims,
                                                           dtype=np.float32,
                                                           h5_pos_inds=self.h5_main.h5_pos_inds,
@@ -354,7 +354,7 @@ _ = wget.download(url, h5_path, bar=None)
 
 h5_file = h5py.File(h5_path, mode='r+')
 print('File contents:\n')
-px.hdf_utils.print_tree(h5_file)
+usid.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # The focus of this example is not on the data storage or formatting but rather on demonstrating our new Process class
@@ -363,7 +363,7 @@ px.hdf_utils.print_tree(h5_file)
 h5_chan_grp = h5_file['Measurement_000/Channel_000']
 
 # Accessing the dataset of interest:
-h5_main = px.USIDataset(h5_chan_grp['Raw_Data'])
+h5_main = usid.USIDataset(h5_chan_grp['Raw_Data'])
 print('\nThe main dataset:\n------------------------------------')
 print(h5_main)
 
@@ -423,12 +423,12 @@ print(h5_results_grp)
 # three datasets within the group. Among the datasets is ``Peak_Response`` that contains the peak amplitudes we are
 # interested in.
 
-px.hdf_utils.print_tree(h5_file)
+usid.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # Lets look at this ``Peak_Response`` dataset:
 
-h5_peak_amps = px.USIDataset(h5_results_grp['Peak_Response'])
+h5_peak_amps = usid.USIDataset(h5_results_grp['Peak_Response'])
 print(h5_peak_amps)
 
 ########################################################################################################################

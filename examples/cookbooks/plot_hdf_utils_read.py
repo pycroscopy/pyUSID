@@ -16,7 +16,7 @@ and metadata in Universal Spectroscopy and Imaging Data (USID) HDF5 files (h5USI
 # The USID model uses a data-centric approach to data analysis and processing meaning that results from all data analysis
 # and processing are written to the same h5 file that contains the recorded measurements. The Hierarchical Data Format
 # (HDF5) allows data, whether it is raw measured data or results of analysis, to be stored in multiple datasets within
-# the same file in a tree-like manner. Certain rules and considerations have been made in pycroscopy to ensure
+# the same file in a tree-like manner. Certain rules and considerations have been made in pyUSID to ensure
 # consistent and easy access to any data.
 #
 # The h5py python package provides great functions to create, read, and manage data in HDF5 files. In
@@ -69,12 +69,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 # Finally import pyUSID.
 try:
-    import pyUSID as px
+    import pyUSID as usid
 except ImportError:
     warn('pyUSID not found.  Will install with pip.')
     import pip
     install('pyUSID')
-    import pyUSID as px
+    import pyUSID as usid
 
 ########################################################################################################################
 # In order to demonstrate the many functions in hdf_utils, we will be using a h5USID file containing real
@@ -133,7 +133,7 @@ h5_f = h5py.File(h5_path, mode='r')
 # ``print_tree()`` to quickly visualize all the datasets and groups within the file within python.
 
 print('Contents of the H5 file:')
-px.hdf_utils.print_tree(h5_f)
+usid.hdf_utils.print_tree(h5_f)
 
 ########################################################################################################################
 # By default, ``print_tree()`` presents a clean tree view of the contents of the group. In this mode, only the group names
@@ -142,13 +142,13 @@ px.hdf_utils.print_tree(h5_f)
 # file as we have done above. Lets configure it to print the relative paths of all objects within the ``Channel_000``
 # group:
 
-px.hdf_utils.print_tree(h5_f['/Measurement_000/Channel_000/'], rel_paths=True)
+usid.hdf_utils.print_tree(h5_f['/Measurement_000/Channel_000/'], rel_paths=True)
 
 ########################################################################################################################
 # Finally, ``print_tree()`` can also be configured to only print USID Main datasets besides Group objects using the
 # ``main_dsets_only`` option
 
-px.hdf_utils.print_tree(h5_f, main_dsets_only=True)
+usid.hdf_utils.print_tree(h5_f, main_dsets_only=True)
 
 ########################################################################################################################
 # Accessing Attributes
@@ -170,14 +170,14 @@ px.hdf_utils.print_tree(h5_f, main_dsets_only=True)
 # ``get_attributes()`` is a very handy function that returns all or a specified set of attributes in an HDF5 object. If no
 # attributes are explicitly requested, all attributes in the object are returned:
 
-for key, val in px.hdf_utils.get_attributes(h5_f).items():
+for key, val in usid.hdf_utils.get_attributes(h5_f).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
 # ``get_attributes()`` is also great for only getting selected attributes. For example, if we only cared about the user
 # and project related attributes, we could manually request for any that we wanted:
 
-proj_attrs = px.hdf_utils.get_attributes(h5_f, ['project_name', 'project_id', 'user_name'])
+proj_attrs = usid.hdf_utils.get_attributes(h5_f, ['project_name', 'project_id', 'user_name'])
 for key, val in proj_attrs.items():
     print('{} : {}'.format(key, val))
 
@@ -188,7 +188,7 @@ for key, val in proj_attrs.items():
 # If were sure that we only wanted a specific attribute, we could instead use ``get_attr()`` as:
 
 
-print(px.hdf_utils.get_attr(h5_f, 'user_name'))
+print(usid.hdf_utils.get_attr(h5_f, 'user_name'))
 
 ########################################################################################################################
 # check_for_matching_attrs()
@@ -199,7 +199,7 @@ print(px.hdf_utils.get_attr(h5_f, 'user_name'))
 #
 # For example, let us check if this file was authored by 'John Doe':
 
-print(px.hdf_utils.check_for_matching_attrs(h5_f, new_parms={'user_name': 'John Doe'}))
+print(usid.hdf_utils.check_for_matching_attrs(h5_f, new_parms={'user_name': 'John Doe'}))
 
 ########################################################################################################################
 # Finding datasets and groups
@@ -216,7 +216,7 @@ print(px.hdf_utils.check_for_matching_attrs(h5_f, new_parms={'user_name': 'John 
 # are looking for any datasets containing the string ``UDVS`` in their names. If you look above, there are two datasets
 # (UDVS and UDVS_Indices) that match this condition:
 
-udvs_dsets_2 = px.hdf_utils.find_dataset(h5_f, 'UDVS')
+udvs_dsets_2 = usid.hdf_utils.find_dataset(h5_f, 'UDVS')
 for item in udvs_dsets_2:
     print(item)
 
@@ -242,7 +242,7 @@ h5_chan_group = h5_f['Measurement_000/Channel_000']
 non_main_objs = []
 main_objs = []
 for key, val in h5_chan_group.items():
-    if px.hdf_utils.check_if_main(val):
+    if usid.hdf_utils.check_if_main(val):
         main_objs.append(key)
     else:
         non_main_objs.append(key)
@@ -267,7 +267,7 @@ for item in non_main_objs:
 # What if we want to quickly find all ``Main`` datasets even within the sub-Groups of ``Channel_000``? To do this, we have a
 # very handy function called - ``get_all_main()``:
 
-main_dsets = px.hdf_utils.get_all_main(h5_chan_group)
+main_dsets = usid.hdf_utils.get_all_main(h5_chan_group)
 for dset in main_dsets:
     print(dset)
     print('--------------------------------------------------------------------')
@@ -299,7 +299,7 @@ h5_raw = h5_chan_group['Raw_Data']
 
 operation = 'SHO_Fit'
 print('Instances of operation "{}" applied to dataset named "{}":'.format(operation, h5_raw.name))
-h5_sho_group_list = px.hdf_utils.find_results_groups(h5_raw, operation)
+h5_sho_group_list = usid.hdf_utils.find_results_groups(h5_raw, operation)
 print(h5_sho_group_list)
 
 ########################################################################################################################
@@ -316,7 +316,7 @@ print(h5_sho_group_list)
 # take a look at the attributes stored in the existing results groups:
 
 print('Parameters already used for computing SHO_Fit on Raw_Data in the file:')
-for key, val in px.hdf_utils.get_attributes(h5_chan_group['Raw_Data-SHO_Fit_000']).items():
+for key, val in usid.hdf_utils.get_attributes(h5_chan_group['Raw_Data-SHO_Fit_000']).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
@@ -324,10 +324,10 @@ for key, val in px.hdf_utils.get_attributes(h5_chan_group['Raw_Data-SHO_Fit_000'
 
 print('Checking to see if SHO Fits have been computed on the raw dataset:')
 print('\nUsing "pycroscopy BESHO":')
-print(px.hdf_utils.check_for_old(h5_raw, 'SHO_Fit',
+print(usid.hdf_utils.check_for_old(h5_raw, 'SHO_Fit',
                                  new_parms={'SHO_fit_method': 'pycroscopy BESHO'}))
 print('\nUsing "alternate technique"')
-print(px.hdf_utils.check_for_old(h5_raw, 'SHO_Fit',
+print(usid.hdf_utils.check_for_old(h5_raw, 'SHO_Fit',
                                  new_parms={'SHO_fit_method': 'alternate technique'}))
 
 ########################################################################################################################
@@ -348,7 +348,7 @@ h5_sho_group = h5_sho_group_list[0]
 print('Datagroup containing the SHO fits:')
 print(h5_sho_group)
 print('\nDataset on which the SHO Fit was computed:')
-h5_source_dset = px.hdf_utils.get_source_dataset(h5_sho_group)
+h5_source_dset = usid.hdf_utils.get_source_dataset(h5_sho_group)
 print(h5_source_dset)
 
 ########################################################################################################################
@@ -363,14 +363,14 @@ print(h5_source_dset)
 # The association of datasets and groups with one another provides a powerful mechanism for conveying (richer)
 # information. One way to associate objects with each other is to store the reference of an object as an attribute of
 # another. This is precisely the capability that is leveraged to turn Central datasets into USID Main Datasets or
-# ``PycroDatasets``. PycroDatasets need to have four attributes that are references to the ``Position`` and ``Spectroscopic``
+# ``USIDatasets``. USIDatasets need to have four attributes that are references to the ``Position`` and ``Spectroscopic``
 # ``ancillary`` datasets. Note, that USID does not restrict or preclude the storage of other relevant datasets as
 # attributes of another dataset.
 #
 # For example, the ``Raw_Data`` dataset appears to contain several attributes whose keys / names match the names of
 # datasets we see above and values all appear to be HDF5 object references:
 
-for key, val in px.hdf_utils.get_attributes(h5_raw).items():
+for key, val in usid.hdf_utils.get_attributes(h5_raw).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
@@ -381,7 +381,7 @@ for key, val in px.hdf_utils.get_attributes(h5_raw).items():
 # ``get_auxiliary_datasets()`` simplifies this process by directly retrieving the actual Dataset / Group associated with
 # the attribute. Thus, we would be able to get a reference to the ``Bin_Frequencies`` Dataset via:
 
-h5_obj = px.hdf_utils.get_auxiliary_datasets(h5_raw, 'Bin_Frequencies')[0]
+h5_obj = usid.hdf_utils.get_auxiliary_datasets(h5_raw, 'Bin_Frequencies')[0]
 print(h5_obj)
 # Lets prove that this object is the same as the 'Bin_Frequencies' object that can be directly addressed:
 print(h5_obj == h5_f['/Measurement_000/Channel_000/Bin_Frequencies'])
@@ -396,7 +396,7 @@ print(h5_obj == h5_f['/Measurement_000/Channel_000/Bin_Frequencies'])
 # Before we demonstrate the several useful functions in hdf_utils, lets access the position and spectroscopic ancillary
 # datasets using the ``get_auxiliary_datasets()`` function we used above:
 
-dset_list = px.hdf_utils.get_auxiliary_datasets(h5_raw, ['Position_Indices', 'Position_Values',
+dset_list = usid.hdf_utils.get_auxiliary_datasets(h5_raw, ['Position_Indices', 'Position_Values',
                                                          'Spectroscopic_Indices', 'Spectroscopic_Values'])
 h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals = dset_list
 
@@ -410,10 +410,10 @@ h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals = dset_list
 # Now lets find out the number of steps in each of those dimensions using another handy function called
 # ``get_dimensionality()``:
 
-pos_dim_sizes = px.hdf_utils.get_dimensionality(h5_pos_inds)
-spec_dim_sizes = px.hdf_utils.get_dimensionality(h5_spec_inds)
-pos_dim_names = px.hdf_utils.get_attr(h5_pos_inds, 'labels')
-spec_dim_names = px.hdf_utils.get_attr(h5_spec_inds, 'labels')
+pos_dim_sizes = usid.hdf_utils.get_dimensionality(h5_pos_inds)
+spec_dim_sizes = usid.hdf_utils.get_dimensionality(h5_spec_inds)
+pos_dim_names = usid.hdf_utils.get_attr(h5_pos_inds, 'labels')
+spec_dim_names = usid.hdf_utils.get_attr(h5_spec_inds, 'labels')
 
 print('Size of each Position dimension:')
 for name, length in zip(pos_dim_names, pos_dim_sizes):
@@ -434,7 +434,7 @@ for name, length in zip(spec_dim_names, spec_dim_sizes):
 # Below we illustrate an example of sorting the names of the spectroscopic dimensions from fastest to slowest in
 # the BEPS data file:
 
-spec_sort_order = px.hdf_utils.get_sort_order(h5_spec_inds)
+spec_sort_order = usid.hdf_utils.get_sort_order(h5_spec_inds)
 print('Rate of change of spectroscopic dimensions: {}'.format(spec_sort_order))
 print('\nSpectroscopic dimensions arranged as is:')
 print(spec_dim_names)
@@ -454,11 +454,11 @@ print(sorted_spec_labels)
 # datasets is not trivial. This problem is especially challenging for multidimensional datasets such as the one under
 # consideration. Fortunately, ``hdf_utils`` has a very handy function for this as well:
 
-pos_unit_values = px.hdf_utils.get_unit_values(h5_pos_inds, h5_pos_vals)
+pos_unit_values = usid.hdf_utils.get_unit_values(h5_pos_inds, h5_pos_vals)
 print('Position unit values:')
 for key, val in pos_unit_values.items():
     print('{} : {}'.format(key, val))
-spec_unit_values = px.hdf_utils.get_unit_values(h5_spec_inds, h5_spec_vals)
+spec_unit_values = usid.hdf_utils.get_unit_values(h5_spec_inds, h5_spec_vals)
 
 ########################################################################################################################
 # Since the spectroscopic dimensions are quite complicated, lets visualize the results from ``get_unit_values()``:
@@ -484,7 +484,7 @@ fig.tight_layout()
 # in the spectral and position ancillary datasets. ``reshape_to_n_dims()`` is a very useful function that can help
 # retrieve the N-dimensional form of the data using a simple function call:
 
-ndim_form, success, labels = px.hdf_utils.reshape_to_n_dims(h5_raw, get_labels=True)
+ndim_form, success, labels = usid.hdf_utils.reshape_to_n_dims(h5_raw, get_labels=True)
 if success:
     print('Succeeded in reshaping flattened 2D dataset to N dimensions')
     print('Shape of the data in its original 2D form')
@@ -503,7 +503,7 @@ else:
 # multivariate analysis or storing into h5USID files) is also easily solved using another handy
 # function - ``reshape_from_n_dims()``:
 
-two_dim_form, success = px.hdf_utils.reshape_from_n_dims(ndim_form, h5_pos=h5_pos_inds, h5_spec=h5_spec_inds)
+two_dim_form, success = usid.hdf_utils.reshape_from_n_dims(ndim_form, h5_pos=h5_pos_inds, h5_spec=h5_spec_inds)
 if success:
     print('Shape of flattened two dimensional form')
     print(two_dim_form.shape)

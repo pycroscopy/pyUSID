@@ -30,12 +30,12 @@ def install(package):
     subprocess.call([sys.executable, "-m", "pip", "install", package])
 # Package for downloading online files:
 try:
-    import pyUSID as px
+    import pyUSID as usid
 except ImportError:
     warn('pyUSID not found.  Will install with pip.')
     import pip
     install('pyUSID')
-    import pyUSID as px
+    import pyUSID as usid
 
 
 ################################################################################################
@@ -54,7 +54,7 @@ freqs = np.linspace(0.5, 5, 9)
 # Generating the signals at the different "positions"
 y_mat = np.array([np.sin(freq * x_vec) for freq in freqs])
 
-px.plot_utils.plot_curves(x_vec, y_mat)
+usid.plot_utils.plot_curves(x_vec, y_mat)
 
 
 ################################################################################################
@@ -67,7 +67,7 @@ freqs = np.linspace(0.5, 5, 9)
 y_mat_1 = np.array([np.sin(freq * x_vec_1) for freq in freqs])
 y_mat_2 = np.array([np.cos(freq * x_vec_2) for freq in freqs])
 
-px.plot_utils.plot_curves([x_vec_1, x_vec_2], [y_mat_1, y_mat_2],
+usid.plot_utils.plot_curves([x_vec_1, x_vec_2], [y_mat_1, y_mat_2],
                           title='Sine and Cosine of different resolutions')
 
 ################################################################################################
@@ -84,18 +84,18 @@ y_mat = np.array([np.sin(freq * x_vec) for freq in freqs])
 freq_strs = [str(_) for _ in freqs]
 
 fig, axes = plt.subplots(ncols=3, figsize=(12, 4))
-px.plot_utils.plot_line_family(axes[0], x_vec, y_mat)
+usid.plot_utils.plot_line_family(axes[0], x_vec, y_mat)
 axes[0].set_title('Basic line family')
 
 # Option suitable for visualiing spectra with y offsets:
-px.plot_utils.plot_line_family(axes[1], x_vec, y_mat, 
+usid.plot_utils.plot_line_family(axes[1], x_vec, y_mat, 
                                line_names=freq_strs, label_prefix='Freq = ', label_suffix='Hz',
                                  y_offset=2.5)
 axes[1].legend()
 axes[1].set_title('Line family with legend')
 
 # Option highly suited for visualizing the centroids from a clustering algorithm:
-px.plot_utils.plot_line_family(axes[2], x_vec, y_mat, 
+usid.plot_utils.plot_line_family(axes[2], x_vec, y_mat, 
                                line_names=freq_strs, label_prefix='Freq = ', label_suffix='Hz',
                                  y_offset=2.5, show_cbar=True)
 axes[2].set_title('Line family with colorbar')
@@ -133,7 +133,7 @@ def sho_resp(parms, w_vec):
 for index, amp, freq, qfac, phase in zip(range(num_spectra), amps, freqs, q_facs, phis):
     spectra[index] = sho_resp((amp, freq, qfac, phase), w_vec)
 
-fig, axis = px.plot_utils.plot_complex_spectra(spectra, w_vec, title='Oscillator responses')
+fig, axis = usid.plot_utils.plot_complex_spectra(spectra, w_vec, title='Oscillator responses')
 
 ################################################################################################
 # rainbow_plot()
@@ -145,7 +145,7 @@ num_pts = 1024
 t_vec = np.linspace(0, 10*np.pi, num_pts)
 
 fig, axis = plt.subplots(figsize=(4, 4))
-px.plot_utils.rainbow_plot(axis, np.cos(t_vec)*np.linspace(0, 1, num_pts),
+usid.plot_utils.rainbow_plot(axis, np.cos(t_vec)*np.linspace(0, 1, num_pts),
                            np.sin(t_vec)*np.linspace(0, 1, num_pts),
                            num_steps=32)
 
@@ -160,11 +160,11 @@ num_pts = 1024
 t_vec = np.linspace(0, 10*np.pi, num_pts)
 
 fig, axis = plt.subplots(figsize=(4.5, 4))
-px.plot_utils.rainbow_plot(axis, np.cos(t_vec)*np.linspace(0, 1, num_pts),
+usid.plot_utils.rainbow_plot(axis, np.cos(t_vec)*np.linspace(0, 1, num_pts),
                            np.sin(t_vec)*np.linspace(0, 1, num_pts),
                            num_steps=32)
 
-cbar = px.plot_utils.cbar_for_line_plot(axis, 10)
+cbar = usid.plot_utils.cbar_for_line_plot(axis, 10)
 cbar.set_label('Time (sec)')
 
 ################################################################################################
@@ -175,7 +175,7 @@ cbar.set_label('Time (sec)')
 # exclusively to visualize this kind of data
 
 scree = np.exp(-1 * np.arange(100))
-px.plot_utils.plot_scree(scree, color='r')
+usid.plot_utils.plot_scree(scree, color='r')
 
 ################################################################################################
 # Colormaps
@@ -210,9 +210,9 @@ for axis, title, cmap in zip(axes.flat,
                               'Jet desaturated',
                               'Jet discretized'], 
                              [plt.cm.jet, 
-                              px.plot_utils.cmap_jet_white_center(),
-                              px.plot_utils.cmap_hot_desaturated(), 
-                              px.plot_utils.discrete_cmap(8, cmap='jet')]):
+                              usid.plot_utils.cmap_jet_white_center(),
+                              usid.plot_utils.cmap_hot_desaturated(), 
+                              usid.plot_utils.discrete_cmap(8, cmap='jet')]):
     im_handle = axis.imshow(test, cmap=cmap)
     cbar = plt.colorbar(im_handle, ax=axis, orientation='vertical',
                         fraction=0.046, pad=0.04, use_gridspec=True)
@@ -246,7 +246,7 @@ atom_intensities = y_vec * np.atleast_2d(y_vec).T
 
 # prepare the transparent-to-solid colormap
 solid_color = plt.cm.jet(0.8)
-translucent_colormap = px.plot_utils.make_linear_alpha_cmap('my_map', solid_color, 
+translucent_colormap = usid.plot_utils.make_linear_alpha_cmap('my_map', solid_color, 
                                                             1, min_alpha=0, max_alpha=1)
 
 # plot the atom intensities using the custom colormap
@@ -262,7 +262,7 @@ cbar = plt.colorbar(im_handle, ax=axis, orientation='vertical',
 # string name of the colormap (both of which are accepted by most matplotlib functions).
 # Here we simply compare the returned values when passing both the colormap object and the string name of the colormap
 
-px.plot_utils.get_cmap_object('jet') == px.plot_utils.get_cmap_object(plt.cm.jet)
+usid.plot_utils.get_cmap_object('jet') == usid.plot_utils.get_cmap_object(plt.cm.jet)
 
 ################################################################################################
 # 2D plot utilities
@@ -285,7 +285,7 @@ fig, axes = plt.subplots(ncols=2, figsize=(10, 5))
 axes[0].imshow(atom_intensities, origin='lower')
 axes[0].set_title('Standard imshow')
 # Now plot_map with some options enabled:
-px.plot_utils.plot_map(axes[1], atom_intensities, stdevs=1.5, num_ticks=4,
+usid.plot_utils.plot_map(axes[1], atom_intensities, stdevs=1.5, num_ticks=4,
                        x_vec=np.linspace(-1, 1, atom_intensities.shape[0]),
                        y_vec=np.linspace(0, 500, atom_intensities.shape[1]),
                        cbar_label='intensity (a. u.)', tick_font_size=16)
@@ -310,7 +310,7 @@ frequencies = [0.25, 0.5, 1, 2, 4 ,8, 16, 32, 64]
 image_stack = [get_sine_2d_image(freq) for freq in frequencies]
 image_stack = np.array(image_stack)
 
-fig, axes = px.plot_utils.plot_map_stack(image_stack, reverse_dims=False, title_yoffset=0.95)
+fig, axes = usid.plot_utils.plot_map_stack(image_stack, reverse_dims=False, title_yoffset=0.95)
 
 ################################################################################################
 # plot_complex_spectra()
@@ -331,7 +331,7 @@ def get_complex_2d_image(freq):
 frequencies = 2 ** np.arange(4)
 image_stack = [get_complex_2d_image(freq) for freq in frequencies]
 
-fig, axes = px.plot_utils.plot_complex_spectra(np.array(image_stack), figsize=(3.5, 3))
+fig, axes = usid.plot_utils.plot_complex_spectra(np.array(image_stack), figsize=(3.5, 3))
 
 ################################################################################################
 # General Utilities
@@ -348,7 +348,7 @@ for axis, title in zip(axes, ['Default', 'Custom']):
     axis.imshow(test)
     axis.set_title(title + ' tick size')
 # only changing the tick font size on the second plot:
-px.plot_utils.set_tick_font_size(axes[1], 24)
+usid.plot_utils.set_tick_font_size(axes[1], 24)
 fig.tight_layout()
 
 ################################################################################################
@@ -358,8 +358,8 @@ fig.tight_layout()
 print('Subfigures\tFewer Rows\tFewer Columns')
 for num_plots in range(1, 17):
     print('{}\t\t{}\t\t{}'.format(num_plots,
-                              px.plot_utils.get_plot_grid_size(num_plots, fewer_rows=True),
-                              px.plot_utils.get_plot_grid_size(num_plots, fewer_rows=False)))
+                              usid.plot_utils.get_plot_grid_size(num_plots, fewer_rows=True),
+                              usid.plot_utils.get_plot_grid_size(num_plots, fewer_rows=False)))
 
 ################################################################################################
 # make_scalar_mappable()
@@ -373,11 +373,11 @@ freqs = range(1, 5)
 y_mat = np.array([np.sin(freq * x_vec) for freq in freqs])
 
 fig, axis = plt.subplots(figsize=(4, 4.75))
-px.plot_utils.plot_line_family(axis, x_vec, y_mat)
+usid.plot_utils.plot_line_family(axis, x_vec, y_mat)
 
 num_steps = len(freqs)
 
-sm = px.plot_utils.make_scalar_mappable(1, num_steps+1)
+sm = usid.plot_utils.make_scalar_mappable(1, num_steps+1)
 
 cbar = plt.colorbar(sm, ax=axis, orientation='horizontal',
                     pad=0.04, use_gridspec=True)
@@ -397,7 +397,7 @@ hot_desaturated = [(255.0, (255, 76, 76, 255)),
                    (36.5, (0, 0, 91, 255)),
                    (0, (71, 71, 219, 255))]
 
-new_cmap = px.plot_utils.cmap_from_rgba('hot_desaturated', hot_desaturated, 255)
+new_cmap = usid.plot_utils.cmap_from_rgba('hot_desaturated', hot_desaturated, 255)
 
 x_vec = np.linspace(0, 2*np.pi, 256)
 y_vec = np.sin(x_vec)
@@ -431,11 +431,11 @@ y_mat = np.array([np.sin(freq * x_vec) for freq in freqs])
 
 for nice in [False, True, False]:
     if nice:
-        px.plot_utils.use_nice_plot_params()
+        usid.plot_utils.use_nice_plot_params()
     else:
-        px.plot_utils.reset_plot_params()
+        usid.plot_utils.reset_plot_params()
     fig, axis = plt.subplots(figsize=(4, 4))
-    px.plot_utils.plot_line_family(axis, x_vec, y_mat)
+    usid.plot_utils.plot_line_family(axis, x_vec, y_mat)
     axis.set_xlabel('Time (sec)')
     axis.set_ylabel('Amplitude (a. u.)')
     if nice:

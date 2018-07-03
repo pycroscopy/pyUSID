@@ -89,12 +89,12 @@ from functools import partial
 
 # Finally import pyUSID:
 try:
-    import pyUSID as px
+    import pyUSID as usid
 except ImportError:
     warn('pyUSID not found.  Will install with pip.')
     import pip
     install('pyUSID')
-    import pyUSID as px
+    import pyUSID as usid
 
 # import the scientific function:
 import sys
@@ -123,7 +123,7 @@ h5_file = h5py.File(h5_path, mode='r')
 h5_meas_grp = h5_file['Measurement_000']
 
 # Accessing the dataset of interest:
-h5_main = px.USIDataset(h5_meas_grp['Channel_000/Raw_Data'])
+h5_main = usid.USIDataset(h5_meas_grp['Channel_000/Raw_Data'])
 print('\nThe main dataset:\n------------------------------------')
 print(h5_main)
 
@@ -240,7 +240,7 @@ kwargs = {'num_steps': 30}
 t_0 = time.time()
 
 # Execute the parallel computation
-parallel_results = px.parallel_compute(raw_data, find_all_peaks, cores=cpu_cores, func_args=args, func_kwargs=kwargs)
+parallel_results = usid.parallel_compute(raw_data, find_all_peaks, cores=cpu_cores, func_args=args, func_kwargs=kwargs)
 
 cores_vec.append(cpu_cores)
 times_vec.append(time.time()-t_0)
@@ -290,7 +290,7 @@ cpu_cores = 3
 t_0 = time.time()
 
 # Execute the parallel computation
-parallel_results = px.parallel_compute(raw_data, find_peaks, cores=cpu_cores)
+parallel_results = usid.parallel_compute(raw_data, find_peaks, cores=cpu_cores)
 
 cores_vec.append(cpu_cores)
 times_vec.append(time.time()-t_0)

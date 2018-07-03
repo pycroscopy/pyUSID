@@ -56,12 +56,12 @@ import matplotlib.pyplot as plt
 
 # Finally import pyUSID.
 try:
-    import pyUSID as px
+    import pyUSID as usid
 except ImportError:
     warn('pyUSID not found.  Will install with pip.')
     import pip
     install('pyUSID')
-    import pyUSID as px
+    import pyUSID as usid
 
 ########################################################################################################################
 # Create a HDF5 file
@@ -101,7 +101,7 @@ print(h5_some_dataset)
 # create a group with an index as a suffix and write certain book-keeping attributes to the group. We will see how this
 # and similar functions handle situations when similarly named groups already exist.
 
-h5_meas_group = px.hdf_utils.create_indexed_group(h5_file, 'Measurement')
+h5_meas_group = usid.hdf_utils.create_indexed_group(h5_file, 'Measurement')
 print(h5_meas_group)
 
 ########################################################################################################################
@@ -116,13 +116,13 @@ print(h5_meas_group)
 # see below. Note that ``assign_group_index()`` does not create the group; it only assigns a non-conflicting string name
 # for the group.
 
-print(px.hdf_utils.assign_group_index(h5_file, 'Measurement'))
+print(usid.hdf_utils.assign_group_index(h5_file, 'Measurement'))
 
 ########################################################################################################################
 # Now lets look at datasets and groups in the created file:
 
 print('Contents within the file so far:')
-px.hdf_utils.print_tree(h5_file)
+usid.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # Clearly, we have the ``Measurement_000`` Group at the same level as a group named ``Some_Group``. The group ``Some_Group``
@@ -145,10 +145,10 @@ px.hdf_utils.print_tree(h5_file)
 # consistently** for any kind of attribute for any version of python:
 #
 # Here's a look at the (self-explanatory), default attributes that will be written to the indexed group for traceability
-# and posterity. Note that we are using pycrocsopy's ``get_attributes()`` function instead of the base h5py capability
+# and posterity. Note that we are using pyUSID's ``get_attributes()`` function instead of the base h5py capability
 
 print('Attributes contained within {}'.format(h5_meas_group))
-for key, val in px.hdf_utils.get_attributes(h5_meas_group).items():
+for key, val in usid.hdf_utils.get_attributes(h5_meas_group).items():
     print('\t%s : %s' % (key, val))
 
 ########################################################################################################################
@@ -156,7 +156,7 @@ for key, val in px.hdf_utils.get_attributes(h5_meas_group).items():
 # ``create_group()`` function to create a regular group.
 
 print('Attributes contained in the basic group created using h5py: {}'.format(h5_some_group))
-print(px.hdf_utils.get_attributes(h5_some_group))
+print(usid.hdf_utils.get_attributes(h5_some_group))
 
 ########################################################################################################################
 # write_book_keeping_attrs()
@@ -165,9 +165,9 @@ print(px.hdf_utils.get_attributes(h5_some_group))
 # ``write_book_keeping_attrs()``. Note that we can add these basic attributes to Datasets as well as Groups using this
 # function.
 
-px.hdf_utils.write_book_keeping_attrs(h5_some_group)
+usid.hdf_utils.write_book_keeping_attrs(h5_some_group)
 print('Attributes contained in the basic group after calling write_book_keeping_attrs():')
-for key, val in px.hdf_utils.get_attributes(h5_some_group).items():
+for key, val in usid.hdf_utils.get_attributes(h5_some_group).items():
     print('\t%s : %s' % (key, val))
 
 ########################################################################################################################
@@ -176,7 +176,7 @@ for key, val in px.hdf_utils.get_attributes(h5_some_group).items():
 # Due to the problems in h5py, we use the ``write_simple_attrs()`` function to add / modify additional attributes to the
 # group:
 
-px.hdf_utils.write_simple_attrs(h5_meas_group, {'Instrument': 'Atomic Force Microscope',
+usid.hdf_utils.write_simple_attrs(h5_meas_group, {'Instrument': 'Atomic Force Microscope',
                                                 'User': 'Joe Smith',
                                                 'Room Temperature [C]': 23})
 
@@ -188,12 +188,12 @@ px.hdf_utils.write_simple_attrs(h5_meas_group, {'Instrument': 'Atomic Force Micr
 # ``h5_meas_group`` to ``h5_some_dataset``:
 
 print('Attributes in {} before copying attributes:'.format(h5_some_dataset))
-for key, val in px.hdf_utils.get_attributes(h5_some_dataset).items():
+for key, val in usid.hdf_utils.get_attributes(h5_some_dataset).items():
     print('\t%s : %s' % (key, val))
 print('\n------------- COPYING ATTRIBUTES ----------------------------\n')
-px.hdf_utils.copy_attributes(h5_meas_group, h5_some_dataset)
+usid.hdf_utils.copy_attributes(h5_meas_group, h5_some_dataset)
 print('Attributes in {}:'.format(h5_some_dataset))
-for key, val in px.hdf_utils.get_attributes(h5_some_dataset).items():
+for key, val in usid.hdf_utils.get_attributes(h5_some_dataset).items():
     print('\t%s : %s' % (key, val))
 
 ########################################################################################################################
@@ -254,10 +254,10 @@ fig.tight_layout()
 # the columns change faster than the rows. Therefore, the  ``Cols`` must come before the ``Rows`` and ``Bias`` must precede
 # the ``Cycle`` dimension:
 
-pos_dims = [px.write_utils.Dimension('Cols', 'nm', cols_vals),
-            px.write_utils.Dimension('Rows', 'um', rows_vals)]
-spec_dims = [px.write_utils.Dimension('Bias', 'V', bias_vals),
-             px.write_utils.Dimension('Cycle', '', num_cycles)]
+pos_dims = [usid.write_utils.Dimension('Cols', 'nm', cols_vals),
+            usid.write_utils.Dimension('Rows', 'um', rows_vals)]
+spec_dims = [usid.write_utils.Dimension('Bias', 'V', bias_vals),
+             usid.write_utils.Dimension('Cycle', '', num_cycles)]
 
 ########################################################################################################################
 # write_main_dataset()
@@ -281,7 +281,7 @@ spec_dims = [px.write_utils.Dimension('Bias', 'V', bias_vals),
 # We could use the ``write_simple_attrs()`` function to write attributes to ``Raw_Data`` at a later stage but we can always
 # pass these attributes to be written at the time of dataset creation if they are already known
 
-h5_raw = px.hdf_utils.write_main_dataset(h5_meas_group,  # parent HDF5 group
+h5_raw = usid.hdf_utils.write_main_dataset(h5_meas_group,  # parent HDF5 group
                                          (num_rows * num_cols, bias_pts * num_cycles),  # shape of Main dataset
                                          'Raw_Data',  # Name of main dataset
                                          'Current',  # Physical quantity contained in Main dataset
@@ -302,7 +302,7 @@ print(h5_raw)
 #
 # The underline below ``Measurement_000`` indicates that this is a HDF5 Group
 
-px.hdf_utils.print_tree(h5_file)
+usid.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # As mentioned in our `document about the USID
@@ -314,7 +314,7 @@ px.hdf_utils.print_tree(h5_file)
 # verify whether a dataset is a Main dataset or not using the ``check_if_main()`` function:
 
 for dset in [h5_raw, h5_raw.h5_spec_inds, h5_raw.h5_pos_vals]:
-    print('Is {} is a Main dataset?: {}'.format(dset.name, px.hdf_utils.check_if_main(dset)))
+    print('Is {} is a Main dataset?: {}'.format(dset.name, usid.hdf_utils.check_if_main(dset)))
 
 ########################################################################################################################
 # Populating the Dataset:
@@ -354,27 +354,27 @@ print(h5_raw[5])
 #
 # Again, we can use the ``get_attributes()`` function to see if and how these attributes are stored:
 
-for key, val in px.hdf_utils.get_attributes(h5_raw).items():
+for key, val in usid.hdf_utils.get_attributes(h5_raw).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
 # While it is straightforward to read simple attributes like ``quantity`` or ``units``, the values for ``Position_Values`` or
 # ``Spectroscopic_Indices`` attributes seem cryptic. These are just references or links to other datasets.
 
-print(px.hdf_utils.get_attr(h5_raw, 'Position_Indices'))
+print(usid.hdf_utils.get_attr(h5_raw, 'Position_Indices'))
 
 ########################################################################################################################
 # Object references as attributes
 # ================================
 # We can get access to linked datasets using ``get_auxiliary_datasets()``:
 
-print(px.hdf_utils.get_auxiliary_datasets(h5_raw, 'Position_Indices'))
+print(usid.hdf_utils.get_auxiliary_datasets(h5_raw, 'Position_Indices'))
 
 ########################################################################################################################
 # Given that ``h5_raw`` is a ``Main`` dataset, and`` Position_Indices`` is one of the four essential components of a ``Main``
-# dataset, the ``Pycrodataset`` object makes it far easier to access the ``ancillary datasets`` without needing to call a
+# dataset, the ``USIdataset`` object makes it far easier to access the ``ancillary datasets`` without needing to call a
 # function as above.
-# `The USIDataset class <./plot_pycro_dataset.html>`_
+# `The USIDataset class <./plot_usi_dataset.html>`_
 # has been discussed in greater detail in a separate document.
 #
 # What do we do if we need to store some other supporting information regarding some measurement? If such supporting
@@ -394,17 +394,17 @@ h5_other = h5_meas_group.create_dataset('Other', np.random.rand(5))
 # ``link_h5_objects_as_attrs()`` makes it easy to link a dataset or group to any other dataset or group. In this example
 # we will link the ``Other`` dataset to the ``Raw_Data`` dataset:
 
-px.hdf_utils.link_h5_objects_as_attrs(h5_raw, h5_other)
+usid.hdf_utils.link_h5_objects_as_attrs(h5_raw, h5_other)
 
-for key, val in px.hdf_utils.get_attributes(h5_raw).items():
+for key, val in usid.hdf_utils.get_attributes(h5_raw).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
 # In the same way, we can even link a group to the ``Other`` dataset:
 
-px.hdf_utils.link_h5_objects_as_attrs(h5_other, h5_some_group)
+usid.hdf_utils.link_h5_objects_as_attrs(h5_other, h5_some_group)
 
-for key, val in px.hdf_utils.get_attributes(h5_other).items():
+for key, val in usid.hdf_utils.get_attributes(h5_other).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
@@ -422,16 +422,16 @@ for key, val in px.hdf_utils.get_attributes(h5_other).items():
 # ``link_h5_obj_as_alias()`` is handy in this scenario since it allows a dataset or group to be linked with a name
 # different from its actual name. For example, we can link the ``Raw_Data`` dataset to the ``Other`` dataset with an alias:
 
-px.hdf_utils.link_h5_obj_as_alias(h5_other, h5_raw, 'Mysterious_Dataset')
+usid.hdf_utils.link_h5_obj_as_alias(h5_other, h5_raw, 'Mysterious_Dataset')
 
-for key, val in px.hdf_utils.get_attributes(h5_other).items():
+for key, val in usid.hdf_utils.get_attributes(h5_other).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
 # The dataset named ``Other`` has a new attribute named ``Mysterious_Dataset``. Let us show that this dataset is none other
 # than ``Raw_Data``:
 
-h5_myst_dset = px.hdf_utils.get_auxiliary_datasets(h5_other, 'Mysterious_Dataset')[0]
+h5_myst_dset = usid.hdf_utils.get_auxiliary_datasets(h5_other, 'Mysterious_Dataset')[0]
 print(h5_myst_dset == h5_raw)
 
 ########################################################################################################################
@@ -447,7 +447,7 @@ print(h5_myst_dset == h5_raw)
 # where the index of the group. The ``create_results_group()`` function makes it very easy to create a group with such
 # nomenclature and indexing:
 
-h5_results_group_1 = px.hdf_utils.create_results_group(h5_raw, 'Normalization')
+h5_results_group_1 = usid.hdf_utils.create_results_group(h5_raw, 'Normalization')
 print(h5_results_group_1)
 
 ########################################################################################################################
@@ -467,7 +467,7 @@ norm_data = np.random.rand(num_rows * num_cols, bias_pts * num_cycles)
 # creation of new ``Ancillary datasets``. In this case, we will show how we can ask ``write_main_dataset()`` to reuse
 # existing ancillary datasets:
 
-h5_norm = px.hdf_utils.write_main_dataset(h5_results_group_1,  # parent group
+h5_norm = usid.hdf_utils.write_main_dataset(h5_results_group_1,  # parent group
                                           norm_data,  # data to be written
                                           'Normalized_Data',  # Name of the main dataset
                                           'Current',  # quantity
@@ -485,7 +485,7 @@ print(h5_norm)
 # ``Raw_Data-Normalization_000`` only contains the ``Normalized_Data`` dataset and none of the supporting ancillary datasets
 # since it is sharing the same ones created for ``Raw_Data``
 
-px.hdf_utils.print_tree(h5_file)
+usid.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # Shared ancillary datasets
@@ -494,9 +494,9 @@ px.hdf_utils.print_tree(h5_file)
 
 for anc_name in ['Position_Indices', 'Position_Values', 'Spectroscopic_Indices', 'Spectroscopic_Values']:
     # get the handle to the ancillary dataset linked to 'Raw_Data'
-    raw_anc = px.hdf_utils.get_auxiliary_datasets(h5_raw, anc_name)[0]
+    raw_anc = usid.hdf_utils.get_auxiliary_datasets(h5_raw, anc_name)[0]
     # get the handle to the ancillary dataset linked to 'Normalized_Data'
-    norm_anc = px.hdf_utils.get_auxiliary_datasets(h5_norm, anc_name)[0]
+    norm_anc = usid.hdf_utils.get_auxiliary_datasets(h5_norm, anc_name)[0]
     # Show that these are indeed the same dataset
     print('Sharing {}: {}'.format(anc_name, raw_anc == norm_anc))
 
@@ -516,7 +516,7 @@ print(h5_norm[5])
 # ``Raw_Data`` or ``Normalized_Data``. There is another way to create an empty dataset identical to an existing dataset, and
 # then fill it in. This approach is an alternative to the approach used for ``Normalized_Data``:
 
-h5_offsets = px.hdf_utils.create_empty_dataset(h5_norm, np.float32, 'Offsets')
+h5_offsets = usid.hdf_utils.create_empty_dataset(h5_norm, np.float32, 'Offsets')
 print(h5_offsets)
 
 ########################################################################################################################
@@ -547,20 +547,20 @@ print(h5_offsets[6])
 #
 # First, we still need to create the results HDF5 group to hold the results:
 
-h5_analysis_group = px.hdf_utils.create_results_group(h5_norm, 'Fitting')
+h5_analysis_group = usid.hdf_utils.create_results_group(h5_norm, 'Fitting')
 
 ########################################################################################################################
 # Let us take a look at the contents of the HDF5 file again. Clearly, we do not have any new datasets underneath
 # ``Normalized_Data-Fitting_000``
 
-px.hdf_utils.print_tree(h5_file)
+usid.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # write_reduced_spec_dsets()
 # ---------------------------
 # Now we make the new spectroscopic indices and values datasets while removing the ``Bias`` dimension
 
-h5_spec_inds, h5_spec_vals = px.hdf_utils.write_reduced_spec_dsets(h5_analysis_group,
+h5_spec_inds, h5_spec_vals = usid.hdf_utils.write_reduced_spec_dsets(h5_analysis_group,
                                                                    h5_norm.h5_spec_inds,
                                                                    h5_norm.h5_spec_vals,
                                                                    'Bias')
@@ -570,7 +570,7 @@ print(h5_spec_inds)
 # Let us take a look at the contents only inside h5_analysis_group now. Clearly, we have created two new spectroscopic
 # ancillary datasets.
 
-px.hdf_utils.print_tree(h5_analysis_group)
+usid.hdf_utils.print_tree(h5_analysis_group)
 
 ########################################################################################################################
 # write_ind_val_dsets()
@@ -597,13 +597,13 @@ px.hdf_utils.print_tree(h5_analysis_group)
 # will demonstrate the usage of ``write_ind_val_dsets()`` to make ``position indices`` and ``values`` HDF5 datasets (that are
 # identical to the ones already linked to ``h5_norm``)
 
-h5_pos_inds, h5_pos_vals = px.hdf_utils.write_ind_val_dsets(h5_analysis_group, pos_dims, is_spectral=False)
+h5_pos_inds, h5_pos_vals = usid.hdf_utils.write_ind_val_dsets(h5_analysis_group, pos_dims, is_spectral=False)
 
 ########################################################################################################################
 # Looking at the contents of ``Normalized_Data-Fitting_000`` now reveals that we have added the ``Position`` datasets as
 # well. However, we still do not have the ``Main dataset``.
 
-px.hdf_utils.print_tree(h5_analysis_group)
+usid.hdf_utils.print_tree(h5_analysis_group)
 
 ########################################################################################################################
 # Finally, we can create and write a Main dataset with some results using the trusty write_main_dataset function. Since
@@ -611,7 +611,7 @@ px.hdf_utils.print_tree(h5_analysis_group)
 # + link them. This is why the ``pos_dims`` and ``spec_dims`` arguments are None (we don't want to create new datasets).
 
 reduced_main = np.random.rand(num_rows * num_cols, num_cycles)
-h5_cap_1 = px.hdf_utils.write_main_dataset(h5_analysis_group,  # parent HDF5 group
+h5_cap_1 = usid.hdf_utils.write_main_dataset(h5_analysis_group,  # parent HDF5 group
                                            reduced_main,  # data for Main dataset
                                            'Capacitance',  # Name of Main dataset
                                            'Capacitance',  # Quantity
@@ -639,13 +639,13 @@ print(h5_cap_1)
 # ``Spectroscopic`` (which is the default) via the ``aux_spec_prefix`` keyword argument (last line). This allows the
 # creation of the new Main Dataset without any name clashes with existing datasets:
 
-h5_cap_2 = px.hdf_utils.write_main_dataset(h5_analysis_group,  # Parent HDF5 group
+h5_cap_2 = usid.hdf_utils.write_main_dataset(h5_analysis_group,  # Parent HDF5 group
                                            np.random.rand(num_rows * num_cols, 1),  # Main Data
                                            'Mean_Capacitance',  # Name of Main Dataset
                                            'Capacitance',  # Physical quantity
                                            'pF',  # Units
                                            None,  # Position dimensions
-                                           px.write_utils.Dimension('Capacitance', 'pF', 1),  # Spectroscopic dimensions
+                                           usid.write_utils.Dimension('Capacitance', 'pF', 1),  # Spectroscopic dimensions
                                            h5_pos_inds=h5_pos_inds,
                                            h5_pos_vals=h5_pos_vals,
                                            aux_spec_prefix='Empty_Spec')
@@ -657,7 +657,7 @@ print(h5_cap_2)
 #
 # Now, let us look at the contents of the group: ``Normalized_Data-Fitting_000`` to verify this:
 
-px.hdf_utils.print_tree(h5_analysis_group)
+usid.hdf_utils.print_tree(h5_analysis_group)
 
 ########################################################################################################################
 # File status
@@ -668,19 +668,19 @@ px.hdf_utils.print_tree(h5_analysis_group)
 # make sure that it is indeed possible to write the new data to the file. ``is_editable_h5()`` is a handy function for
 # this very purpose:
 
-print('Is the file editable?: {}'.format(px.hdf_utils.is_editable_h5(h5_file)))
+print('Is the file editable?: {}'.format(usid.hdf_utils.is_editable_h5(h5_file)))
 
 ########################################################################################################################
 # If we close the file and try again we should expect runtime and Value errors. You can try this by yourself if you like
 
 h5_file.close()
-# print('Is the file editable?: {}'.format(px.hdf_utils.is_editable_h5(h5_file)))
+# print('Is the file editable?: {}'.format(usid.hdf_utils.is_editable_h5(h5_file)))
 
 ########################################################################################################################
 # Let us try again by opening this file in read-only mode. We should see that the file will not be editable:
 
 h5_file = h5py.File('test.h5', mode='r')
-print('Is the file editable?: {}'.format(px.hdf_utils.is_editable_h5(h5_file)))
+print('Is the file editable?: {}'.format(usid.hdf_utils.is_editable_h5(h5_file)))
 
 
 ########################################################################################################################

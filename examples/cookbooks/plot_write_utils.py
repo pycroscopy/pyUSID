@@ -53,12 +53,12 @@ def install(package):
 # Package for downloading online files:
 # Finally import pyUSID.
 try:
-    import pyUSID as px
+    import pyUSID as usid
 except ImportError:
     warn('pyUSID not found.  Will install with pip.')
     import pip
     install('pyUSID')
-    import pyUSID as px
+    import pyUSID as usid
 
 ########################################################################################################################
 # Building Ancillary datasets
@@ -99,7 +99,7 @@ fig.tight_layout()
 # dimension. The result is a 2D matrix of shape: (3 dimensions, points in ``Bias``[``16``] * points in ``Field``[``2``] * points
 # in ``Cycle``[``3``]) = ``(3, 96)``.
 
-inds = px.write_utils.make_indices_matrix([len(bi_triang), len(fields), len(cycles)], is_position=False)
+inds = usid.write_utils.make_indices_matrix([len(bi_triang), len(fields), len(cycles)], is_position=False)
 print('Generated indices of shape: {}'.format(inds.shape))
 
 # The plots below show a visual representation of the indices for each dimension:
@@ -129,7 +129,7 @@ fig.tight_layout()
 # repeats in the same manner.  The repeated + tiled indices and values vectors for ``Cycle`` and ``Field`` look the same /
 # very similar since they were simple linearly increasing values to start with.
 
-inds, vals = px.write_utils.build_ind_val_matrices([bi_triang, fields, cycles], is_spectral=True)
+inds, vals = usid.write_utils.build_ind_val_matrices([bi_triang, fields, cycles], is_spectral=True)
 print('Indices and values of shape: {}'.format(inds.shape))
 
 fig, axes = plt.subplots(ncols=3, figsize=(10, 3.5))
@@ -155,7 +155,7 @@ fig.tight_layout()
 # matrix that corresponds to a values matrix. For this example, lets assume that we only have the values matrix but need
 # to generate the indices matrix from this:
 
-inds = px.write_utils.create_spec_inds_from_vals(vals)
+inds = usid.write_utils.create_spec_inds_from_vals(vals)
 
 fig, axes = plt.subplots(ncols=3, figsize=(10, 3.5))
 for axis, name, vec in zip(axes.flat, dim_names, inds):
@@ -186,12 +186,12 @@ fig.tight_layout()
 # spectroscopic dimensions.
 
 print('Region references slicing instructions for Spectroscopic dimensions:')
-ret_val = px.write_utils.get_aux_dset_slicing(dim_names, is_spectroscopic=True)
+ret_val = usid.write_utils.get_aux_dset_slicing(dim_names, is_spectroscopic=True)
 for key, val in ret_val.items():
     print('{} : {}'.format(key, val))
 
 print('\nRegion references slicing instructions for Position dimensions:')
-ret_val = px.write_utils.get_aux_dset_slicing(['X', 'Y'], is_spectroscopic=False)
+ret_val = usid.write_utils.get_aux_dset_slicing(['X', 'Y'], is_spectroscopic=False)
 for key, val in ret_val.items():
     print('{} : {}'.format(key, val))
 
@@ -217,11 +217,11 @@ for key, val in ret_val.items():
 # assume that we were describing the spectroscopic dimensions for this example dataset to some other pyUSID function
 # , we would describe the spectroscopic dimensions as:
 
-spec_dims = [px.write_utils.Dimension('Bias', 'V', bi_triang),
-             px.write_utils.Dimension('Fields', '', fields),
+spec_dims = [usid.write_utils.Dimension('Bias', 'V', bi_triang),
+             usid.write_utils.Dimension('Fields', '', fields),
              # for the sake of example, since we know that cycles is linearly increasing from 0 with a step size of 1,
              # we can specify such a simply dimension via just the length of that dimension:
-             px.write_utils.Dimension('Cycle', '', len(cycles))]
+             usid.write_utils.Dimension('Cycle', '', len(cycles))]
 
 ########################################################################################################################
 # The application of the Dimension objects will be a lot more apparent in the document about the `writing functions in
@@ -241,14 +241,14 @@ spec_dims = [px.write_utils.Dimension('Bias', 'V', bi_triang),
 
 dimensions = (16384, 16384 * 4)
 dtype_bytesize = 4
-ret_val = px.write_utils.calc_chunks(dimensions, dtype_bytesize)
+ret_val = usid.write_utils.calc_chunks(dimensions, dtype_bytesize)
 print(ret_val)
 
 dimensions = (16384, 16384 * 4)
 dtype_bytesize = 4
 unit_chunks = (3, 7)
 max_mem = 50000
-ret_val = px.write_utils.calc_chunks(dimensions, dtype_bytesize, unit_chunks=unit_chunks, max_chunk_mem=max_mem)
+ret_val = usid.write_utils.calc_chunks(dimensions, dtype_bytesize, unit_chunks=unit_chunks, max_chunk_mem=max_mem)
 print(ret_val)
 
 ########################################################################################################################
@@ -261,9 +261,9 @@ print(ret_val)
 # attributes - single strings, numbers, lists of numbers are unmodified by this function.
 
 expected = ['a', 'bc', 'def']
-returned = px.write_utils.clean_string_att(expected)
+returned = usid.write_utils.clean_string_att(expected)
 print('List of strings value: {} encoded to: {}'.format(expected, returned))
 
 expected = [1, 2, 3.456]
-returned = px.write_utils.clean_string_att(expected)
+returned = usid.write_utils.clean_string_att(expected)
 print('List of numbers value: {} returned as is: {}'.format(expected, returned))

@@ -107,12 +107,12 @@ import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 try:
-    import pyUSID as px
+    import pyUSID as usid
 except ImportError:
     warn('pyUSID not found.  Will install with pip.')
     import pip
     install('pyUSID')
-    import pyUSID as px
+    import pyUSID as usid
 
 ########################################################################################################################
 # Load the dataset
@@ -138,7 +138,7 @@ h5_f = h5py.File(h5_path, mode='r')
 # Lets quickly look at the contents of this HDF5 file using a handy function in ``pyUSID.hdf_utils`` - ``print_tree()``
 
 print('Contents of the H5 file:')
-px.hdf_utils.print_tree(h5_f)
+usid.hdf_utils.print_tree(h5_f)
 
 ########################################################################################################################
 # For this example, we will only focus on the ``Raw_Data`` dataset which contains the 6D raw measurement data. First lets
@@ -146,7 +146,7 @@ px.hdf_utils.print_tree(h5_f)
 
 h5_raw = h5_f['/Measurement_000/Channel_000/Raw_Data']
 print(h5_raw)
-print('h5_raw is a main dataset? {}'.format(px.hdf_utils.check_if_main(h5_raw)))
+print('h5_raw is a main dataset? {}'.format(usid.hdf_utils.check_if_main(h5_raw)))
 
 ########################################################################################################################
 # It turns out that this is indeed a Main dataset. Therefore, we can turn this in to a USIDataset without any
@@ -156,7 +156,7 @@ print('h5_raw is a main dataset? {}'.format(px.hdf_utils.check_if_main(h5_raw)))
 # -----------------------
 # All one needs for creating a USIDataset object is a Main dataset. Here is how we can supercharge h5_raw:
 
-pd_raw = px.USIDataset(h5_raw)
+pd_raw = usid.USIDataset(h5_raw)
 print(pd_raw)
 
 ########################################################################################################################
@@ -182,7 +182,7 @@ print(pd_raw == h5_raw)
 # Let us compare accessing the Spectroscopic Indices via the USIDataset and hdf_utils functionality:
 
 h5_spec_inds_1 = pd_raw.h5_spec_inds
-h5_spec_inds_2 = px.hdf_utils.get_auxiliary_datasets(h5_raw, 'Spectroscopic_Indices')[0]
+h5_spec_inds_2 = usid.hdf_utils.get_auxiliary_datasets(h5_raw, 'Spectroscopic_Indices')[0]
 print(h5_spec_inds_1 == h5_spec_inds_2)
 
 ########################################################################################################################

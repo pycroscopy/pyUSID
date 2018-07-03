@@ -30,7 +30,7 @@
 # To avoid such problems, we need functions that transform the data to and from the necessary type (integer, real-value
 # etc.)
 #
-# The pycrocsopy.dtype_utils module facilitates comparisons, validations, and most importantly, transformations of one
+# The pyUSID.dtype_utils module facilitates comparisons, validations, and most importantly, transformations of one
 # data-type to another. We will be going over the many useful functions in this module and explaining how, when and why
 # one would use them.
 #
@@ -58,14 +58,14 @@ import h5py
 import numpy as np
 # Finally import pyUSID.
 try:
-    import pyUSID as px
+    import pyUSID as usid
 except ImportError:
     # Warning package in case something goes wrong
     from warnings import warn
     warn('pyUSID not found.  Will install with pip.')
     import pip
     install('pyUSID')
-    import pyUSID as px
+    import pyUSID as usid
 
 ################################################################################
 # Utilities for validating data types
@@ -80,14 +80,14 @@ except ImportError:
 # indices matrices based on the size of dimensions - specified as a list of integers for example.
 
 item = [1, 2, -3, 4]
-print('{} : contains integers? : {}'.format(item, px.dtype_utils.contains_integers(item)))
+print('{} : contains integers? : {}'.format(item, usid.dtype_utils.contains_integers(item)))
 item = [1, 4.5, 2.2, -1]
-print('{} : contains integers? : {}'.format(item, px.dtype_utils.contains_integers(item)))
+print('{} : contains integers? : {}'.format(item, usid.dtype_utils.contains_integers(item)))
 
 item = [1, 5, 8, 3]
 min_val = 2
 print('{} : contains integers >= {} ? : {}'.format(item, min_val,
-                                                px.dtype_utils.contains_integers(item, min_val=min_val)))
+                                                usid.dtype_utils.contains_integers(item, min_val=min_val)))
 
 ################################################################################
 # validate_dtype()
@@ -97,14 +97,14 @@ print('{} : contains integers >= {} ? : {}'.format(item, min_val,
 # writing data to the file. This comes in very handy when we want to follow the 'measure twice, cut once' ethos.
 
 for item in [np.float16, np.complex64, np.uint8, np.int16]:
-    print('Is {} a valid dtype? : {}'.format(item, px.dtype_utils.validate_dtype(item)))
+    print('Is {} a valid dtype? : {}'.format(item, usid.dtype_utils.validate_dtype(item)))
 
 
 # This function is especially useful on compound or structured data types:
 
 struct_dtype = np.dtype({'names': ['r', 'g', 'b'],
                         'formats': [np.float32, np.uint16, np.float64]})
-print('Is {} a valid dtype? : {}'.format(struct_dtype, px.dtype_utils.validate_dtype(struct_dtype)))
+print('Is {} a valid dtype? : {}'.format(struct_dtype, usid.dtype_utils.validate_dtype(struct_dtype)))
 
 ################################################################################
 # get_compound_sub_dtypes()
@@ -113,7 +113,7 @@ print('Is {} a valid dtype? : {}'.format(struct_dtype, px.dtype_utils.validate_d
 # quickly get the individual datatypes of each field in such a data type. The ``get_compound_sub_dtypes()`` makes this a
 # lot easier:
 
-sub_dtypes = px.dtype_utils.get_compound_sub_dtypes(struct_dtype)
+sub_dtypes = usid.dtype_utils.get_compound_sub_dtypes(struct_dtype)
 for key, val in sub_dtypes.items():
     print('{} : {}'.format(key, val))
 
@@ -125,10 +125,10 @@ for key, val in sub_dtypes.items():
 # complex data type:
 
 for dtype in [np.float32, np.float16, np.uint8, np.int16, struct_dtype, bool]:
-    print('Is {} a complex dtype?: {}'.format(dtype, (px.dtype_utils.is_complex_dtype(dtype))))
+    print('Is {} a complex dtype?: {}'.format(dtype, (usid.dtype_utils.is_complex_dtype(dtype))))
 
 for dtype in [np.complex, np.complex64, np.complex128, np.complex256]:
-    print('Is {} a complex dtype?: {}'.format(dtype, (px.dtype_utils.is_complex_dtype(dtype))))
+    print('Is {} a complex dtype?: {}'.format(dtype, (usid.dtype_utils.is_complex_dtype(dtype))))
 
 ################################################################################
 # Data transformation
@@ -148,7 +148,7 @@ for dtype in [np.complex, np.complex64, np.complex128, np.complex256]:
 
 length = 3
 complex_array = np.random.randint(-5, high=5, size=length) + 1j * np.random.randint(-5, high=5, size=length)
-stacked_real_array = px.dtype_utils.flatten_complex_to_real(complex_array)
+stacked_real_array = usid.dtype_utils.flatten_complex_to_real(complex_array)
 print('Complex value: {} has shape: {}'.format(complex_array, complex_array.shape))
 print('Stacked real value: {} has shape: '
       '{}'.format(stacked_real_array, stacked_real_array.shape))
@@ -165,7 +165,7 @@ structured_array = np.zeros(shape=num_elems, dtype=struct_dtype)
 structured_array['r'] = np.random.random(size=num_elems) * 1024
 structured_array['g'] = np.random.randint(0, high=1024, size=num_elems)
 structured_array['b'] = np.random.random(size=num_elems) * 1024
-real_array = px.dtype_utils.flatten_compound_to_real(structured_array)
+real_array = usid.dtype_utils.flatten_compound_to_real(structured_array)
 
 print('Structured array is of shape {} and have values:'.format(structured_array.shape))
 print(structured_array)
@@ -180,7 +180,7 @@ print(real_array)
 # the need to explicitly call the aforementioned functions (that still do the work). Here is an example of the function
 # being applied to the compound valued numpy array again:
 
-real_array = px.dtype_utils.flatten_to_real(structured_array)
+real_array = usid.dtype_utils.flatten_to_real(structured_array)
 print('Structured array is of shape {} and have values:'.format(structured_array.shape))
 print(structured_array)
 print('\nThis array converted to regular scalar matrix has shape: {} and values:'.format(real_array.shape))
@@ -203,7 +203,7 @@ real_val = np.hstack([5 * np.random.rand(6),
 print('Real valued dataset of shape {}:'.format(real_val.shape))
 print(real_val)
 
-comp_val = px.dtype_utils.stack_real_to_complex(real_val)
+comp_val = usid.dtype_utils.stack_real_to_complex(real_val)
 
 print('\nComplex-valued array of shape: {}'.format(comp_val.shape))
 print(comp_val)
@@ -221,7 +221,7 @@ real_val = np.concatenate((np.random.random(size=num_elems) * 1024,
 print('Real valued dataset of shape {}:'.format(real_val.shape))
 print(real_val)
 
-comp_val = px.dtype_utils.stack_real_to_compound(real_val, struct_dtype)
+comp_val = usid.dtype_utils.stack_real_to_compound(real_val, struct_dtype)
 
 print('\nStructured array of shape: {}'.format(comp_val.shape))
 print(comp_val)
@@ -236,7 +236,7 @@ print(comp_val)
 print('Real valued dataset of shape {}:'.format(real_val.shape))
 print(real_val)
 
-comp_val = px.dtype_utils.stack_real_to_target_dtype(real_val, struct_dtype)
+comp_val = usid.dtype_utils.stack_real_to_target_dtype(real_val, struct_dtype)
 
 print('\nStructured array of shape: {}'.format(comp_val.shape))
 print(comp_val)
@@ -269,7 +269,7 @@ with h5py.File(file_path) as h5_f:
 
 def check_dataset(h5_dset):
     print('\tDataset being tested: {}'.format(h5_dset))
-    func, is_complex, is_compound, n_features, type_mult = px.dtype_utils.check_dtype(h5_dset)
+    func, is_complex, is_compound, n_features, type_mult = usid.dtype_utils.check_dtype(h5_dset)
     print('\tFunction to transform to real: %s' % func)
     print('\tis_complex? %s' % is_complex)
     print('\tis_compound? %s' % is_compound)
