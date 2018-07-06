@@ -278,18 +278,23 @@ spec_dims = [usid.write_utils.Dimension('Bias', 'V', bias_vals),
 # * linking the ancillary datasets such that the central dataset becomes a ``Main`` dataset
 # * writing attributes
 #
+# By default h5py does not appear to compress datasets and datasets (especially ``Main`` datasets) can balloon in size
+# if they are not compressed. Therefore, it is recommended that the compression keyword argument is passed as well.
+# ``gzip`` is the compression algorithm that is always available with h5py and it does a great job, so we will use this.
+#
 # We could use the ``write_simple_attrs()`` function to write attributes to ``Raw_Data`` at a later stage but we can always
 # pass these attributes to be written at the time of dataset creation if they are already known
 
 h5_raw = usid.hdf_utils.write_main_dataset(h5_meas_group,  # parent HDF5 group
-                                         (num_rows * num_cols, bias_pts * num_cycles),  # shape of Main dataset
-                                         'Raw_Data',  # Name of main dataset
-                                         'Current',  # Physical quantity contained in Main dataset
-                                         'nA',  # Units for the physical quantity
-                                         pos_dims,  # Position dimensions
-                                         spec_dims,  # Spectroscopic dimensions
-                                         dtype=np.float32,  # data type / precision
-                                         main_dset_attrs={'IO_rate': 4E+6, 'Amplifier_Gain': 9})
+                                           (num_rows * num_cols, bias_pts * num_cycles),  # shape of Main dataset
+                                           'Raw_Data',  # Name of main dataset
+                                           'Current',  # Physical quantity contained in Main dataset
+                                           'nA',  # Units for the physical quantity
+                                           pos_dims,  # Position dimensions
+                                           spec_dims,  # Spectroscopic dimensions
+                                           dtype=np.float32,  # data type / precision
+                                           compression='gzip',
+                                           main_dset_attrs={'IO_rate': 4E+6, 'Amplifier_Gain': 9})
 print(h5_raw)
 
 ########################################################################################################################
@@ -468,16 +473,17 @@ norm_data = np.random.rand(num_rows * num_cols, bias_pts * num_cycles)
 # existing ancillary datasets:
 
 h5_norm = usid.hdf_utils.write_main_dataset(h5_results_group_1,  # parent group
-                                          norm_data,  # data to be written
-                                          'Normalized_Data',  # Name of the main dataset
-                                          'Current',  # quantity
-                                          'nA',  # units
-                                          None,  # position dimensions
-                                          None,  # spectroscopic dimensions
-                                          h5_pos_inds=h5_raw.h5_pos_inds,
-                                          h5_pos_vals=h5_raw.h5_pos_vals,
-                                          h5_spec_inds=h5_raw.h5_spec_inds,
-                                          h5_spec_vals=h5_raw.h5_spec_vals)
+                                            norm_data,  # data to be written
+                                            'Normalized_Data',  # Name of the main dataset
+                                            'Current',  # quantity
+                                            'nA',  # units
+                                            None,  # position dimensions
+                                            None,  # spectroscopic dimensions
+                                            h5_pos_inds=h5_raw.h5_pos_inds,
+                                            h5_pos_vals=h5_raw.h5_pos_vals,
+                                            h5_spec_inds=h5_raw.h5_spec_inds,
+                                            h5_spec_vals=h5_raw.h5_spec_vals,
+                                            compression='gzip')
 print(h5_norm)
 
 ########################################################################################################################
@@ -513,8 +519,8 @@ print(h5_norm[5])
 # create_empty_dataset()
 # -----------------------
 # Let us say that we are interested in writing out another dataset that is again of the same shape and dimensionality as
-# ``Raw_Data`` or ``Normalized_Data``. There is another way to create an empty dataset identical to an existing dataset, and
-# then fill it in. This approach is an alternative to the approach used for ``Normalized_Data``:
+# ``Raw_Data`` or ``Normalized_Data``. There is another way to create an empty dataset identical to an existing dataset,
+# and then fill it in. This approach is an alternative to the approach used for ``Normalized_Data``:
 
 h5_offsets = usid.hdf_utils.create_empty_dataset(h5_norm, np.float32, 'Offsets')
 print(h5_offsets)
@@ -621,7 +627,8 @@ h5_cap_1 = usid.hdf_utils.write_main_dataset(h5_analysis_group,  # parent HDF5 g
                                            h5_spec_inds=h5_spec_inds,
                                            h5_spec_vals=h5_spec_vals,
                                            h5_pos_inds=h5_pos_inds,
-                                           h5_pos_vals=h5_pos_vals)
+                                           h5_pos_vals=h5_pos_vals,
+                                             compression='gzip')
 print(h5_cap_1)
 
 ########################################################################################################################
@@ -652,8 +659,9 @@ h5_cap_2 = usid.hdf_utils.write_main_dataset(h5_analysis_group,  # Parent HDF5 g
 print(h5_cap_2)
 
 ########################################################################################################################
-# Clearly, ``Mean_Capacitance`` and ``Capacitance`` are two ``Main datasets`` that coexist in the same HDF5 group along with
-# their necessary ancillary datasets.
+# The ``compression`` argument need not be specified for small datasets such as ``Mean Capacitance``.
+# Clearly, ``Mean_Capacitance`` and ``Capacitance`` are two ``Main datasets`` that coexist in the same HDF5 group along
+# with their necessary ancillary datasets.
 #
 # Now, let us look at the contents of the group: ``Normalized_Data-Fitting_000`` to verify this:
 
