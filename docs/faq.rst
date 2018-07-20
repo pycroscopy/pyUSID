@@ -14,7 +14,7 @@ Also, please see our answer to 'Who uses pyUSID' below:
 
 Who uses pyUSID?
 ~~~~~~~~~~~~~~~~~~~~
-* `The Institute for Functional Imaging of Materials (IFIM) <http://ifim.ornl.gov>`_ at `Oak Ridge National Laboratory <www.ornl.gov>`_ uses pycroscopy (build on pyUSID) exclusively for in-house research as well as supporting the numerous users who visit IFIM to use their state-of-art scanning probe microscopy techniques.
+* `The Institute for Functional Imaging of Materials (IFIM) <http://ifim.ornl.gov>`_ at `Oak Ridge National Laboratory <www.ornl.gov>`_ uses `pycroscopy <../pycroscopy/about.html>`_ (built on pyUSID) exclusively for in-house research as well as supporting the numerous users who visit IFIM to use their state-of-art scanning probe microscopy techniques.
 * Synchrotron Radiation Research at Lund University
 * Nuclear Engineering and Health Physics, Idaho State University
 * Prof. David Ginger's group at Department of Chemistry, University of Washington
@@ -38,19 +38,21 @@ Here are some of the main reasons pyUSID is written in python:
 
 We welcome you to develop application programming interfaces (APIs) for languages besides python.
 
-Pycroscopy is written in python, so it is going to be slow since it cannot use all the cores on my CPU, right?
+pyUSID is written in python, so it is going to be slow since it cannot use all the cores on my CPU, right?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Actually, all data processing / analysis algorithms we have written in pyUSID can use every single core on your CPU. Given N CPU cores, you should notice a nearly N-fold speed up in your computation. By default, we set aside 2 cores for the operating system and other user applications such as an internet browser, Microsoft Word, etc.
+Actually, all data processing / analysis algorithms we have written using ``pyUSID.Process`` so far can use every single core on your CPU. Given N CPU cores, you should notice a nearly N-fold speed up in your computation.
+Note that the goal of pyUSID was never to maximize performance but rather to simplify and lower the barrier for the average scientist who may not be an expert programmer.
+By default, we set aside 1-2 cores for the operating system and other user applications such as an internet browser, Microsoft Word, etc.
 
 Using pyUSID
 -------------
 I don't know programming. Does this preclude me from using pyUSID?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Not at all. One of the tenets of pyUSID is lowering the barrier for scientists and researchers. To this end, we have put together a list of `useful tutorials <./external_guides.html>`_ and examples and `examples / tutorials <./auto_examples/index.html>`_ to guide you. You should have no trouble getting started even if you do not know programming. That being said, you would be able to make the fullest use of pyUSID if you knew basic programming in python.
+Not at all. One of the tenets of pyUSID is lowering the barrier for scientists and researchers. To this end, we have put together a list of `useful tutorials <./external_guides.html>`_ and examples and `examples <./auto_examples/index.html>`_ to guide you. You should have no trouble getting started even if you do not know programming. That being said, you would be able to make the fullest use of pyUSID if you knew basic programming in python.
 
 What sort of computer do I need to run pyUSID?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-You can use practically any laptop / desktop / virtual machine running Windows / Mac OS / Linux. Pycroscopy is not tested on 32 bit operating systems (very rare).
+You can use practically any laptop / desktop / virtual machine running Windows / Mac OS / Linux. pyUSID is not tested on 32 bit operating systems (very rare).
 
 I am not able to find an example on topic X / I find tutorial Y confusing / I need help!
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
