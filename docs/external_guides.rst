@@ -35,6 +35,7 @@ Installing software
 -------------------
 python
 ~~~~~~~
+`Anaconda <https://www.anaconda.com/download/>`_ is a popular source for python which also comes with a large number of popular scientific python packages that are all correctly compiled and installed in one go.
 Tutorial for `installing Anaconda <https://www.youtube.com/watch?v=YJC6ldI3hWk>`_ (Python + all necessary packages)
 
 python packages
@@ -48,6 +49,27 @@ Two popular methods for installing packages in python are:
     * included with Anaconda installation
     * Ideally suited for installing packages that have complex dependencies
 * Here's a nice tutorial on `installing packages using both pip and conda <https://www.youtube.com/watch?v=Z_Kxg-EYvxM>`_
+
+Updating packages
+~~~~~~~~~~~~~~~~~
+Following `these instructions <https://stackoverflow.com/questions/45197777/how-do-i-update-anaconda>`_, open a terminal or the command prompt (Windows) and type:
+
+.. code:: bash
+
+    conda update conda
+    conda update anaconda
+
+Note that you could use the following line instead of or in addition to ``conda update anaconda`` but it can lead to incompatible package versions
+
+.. code:: bash
+
+    conda update --all
+
+Note that this does **not** update python itself.
+
+Upgrading python
+~~~~~~~~~~~~~~~~
+Follow these instructions to `upgrade python using conda <https://conda.io/docs/user-guide/tasks/manage-python.html#updating-or-upgrading-python>`_ to the latest or specific version
 
 Writing code
 ------------
