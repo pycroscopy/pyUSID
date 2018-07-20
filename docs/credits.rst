@@ -5,7 +5,7 @@ The core pyUSID team consists of:
 * `@ssomnath <https://github.com/ssomnath>`_ (Suhas Somnath)
 * `@CompPhysChris <https://github.com/CompPhysChris>`_ (Chris R. Smith)
 
-Data format conceived by `@stephenjesse <https://github.com/stephenjesse>`_ (Stephen Jesse)
+USID was conceived by `@stephenjesse <https://github.com/stephenjesse>`_ (Stephen Jesse)
 
 Substantial contributions from many developers including:
 
@@ -14,12 +14,7 @@ Substantial contributions from many developers including:
 * and many more
 
 Acknowledgements
-----------------
-* Funding agencies:
-  
-  * Oak Ridge National Laboratory - Laboratory Director's Research and Development fund
-  * U.S. Department of Energy, Office of Science
-
+~~~~~~~~~~~~~~~~
 * People who have advised us:
 
   * `Stefan Van Der Walt <https://bids.berkeley.edu/people/stéfan-van-der-walt>`_ (`@stefanv <https://github.com/stefanv>`_)
@@ -34,3 +29,12 @@ Acknowledgements
   * `Anaconda <https://www.continuum.io/anaconda-overview>`_
   * `PyCharm <https://www.jetbrains.com/pycharm/>`_
   * `GitKraken <https://www.gitkraken.com/>`_
+
+Funding
+~~~~~~~
+* pyUSID and pycroscopy were initially developed through grants from:
+
+  * Oak Ridge National Laboratory - Laboratory Director's Research and Development fund
+  * U.S. Department of Energy, Office of Science
+
+* pyUSID is currently not officially or directly funded by any program and is developed by the contributors to the project
