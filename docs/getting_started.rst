@@ -30,7 +30,7 @@ For the python novices by a python novice - **Nick Mostovych, Brown University**
 
 * Documentation and examples on this website are for the latest version of pyUSID. If something does not work as shown on this website,
   chances are that you may be using an older version of pyUSID. Follow the instructions to `update pyUSID to the latest version <./install.html#updating-pyUSID>`_
-* Pycroscopy has excellent documentation (+ examples too) for all functions. If you are ever confused with the usage of a
+* pyUSID has excellent documentation (+ examples too) for all functions. If you are ever confused with the usage of a
   function or class and you can get help in numerous ways:
 
   * If you are using jupyter notebooks, just hit the ``Shift+Tab`` keys after typing the name of your function.
