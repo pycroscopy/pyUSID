@@ -8,10 +8,6 @@ pyUSID
 .. image:: https://img.shields.io/pypi/v/pyUSID.svg
     :target: https://pypi.org/project/pyUSID/
     :alt: PyPI
-    
-.. image:: https://img.shields.io/conda/vn/conda-forge/pyUSID.svg
-    :target: https://github.com/conda-forge/pyUSID-feedstock
-    :alt: conda-forge
 
 .. image:: https://coveralls.io/repos/github/pycroscopy/pyUSID/badge.svg?branch=master
     :target: https://coveralls.io/github/pycroscopy/pyUSID?branch=master
@@ -27,4 +23,4 @@ pyUSID
     
 Framework for storing, visualizing, and processing Universal Spectroscopic and Imaging Data (USID)
 
-**Package under construction**
+Please see our `website <https://pycroscopy.github.io/pyUSID/about.html>`_ for more information.
