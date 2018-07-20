@@ -20,8 +20,7 @@ The package structure is simple, with 3 main modules:
   dataset's N-dimensional form and simplified access to supporting information about the dataset.
 * ``Translator`` - An abstract class that provides the blueprint for other Translator classes to extract data and
   meta-data from other raw-data files and write them into h5USID files
-* ``ImageTranslator`` - Translates data in common image file formats such as .png and .tiff to a
-  Pycroscopy formatted HDF5 file
+* ``ImageTranslator`` - Translates data in common image file formats such as .png and .tiff to a h5USID file
 * ``NumpyTranslator`` - A generic translator that simplifies writing of a dataset in memory into a h5USID file
 
 ``processing``
