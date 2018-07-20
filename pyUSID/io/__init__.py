@@ -1,5 +1,5 @@
 """
-pyUSID's I/O module
+Tools to read, write data in h5USID files
 
 Submodules
 ----------
