@@ -51,7 +51,7 @@ Recommended pre-requisite reading
 
 Before proceeding with this example, we recommend reading the previous documents to learn more about:
 
-* `USID model </../../../data_format.html>`_
+* `USID model </../../data_format.html>`_
 
 Import all necessary packages
 -----------------------------

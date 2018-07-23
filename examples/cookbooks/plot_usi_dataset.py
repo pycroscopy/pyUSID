@@ -54,7 +54,7 @@ slicing, and visualizing N-dimensional Universal Spectroscopy and Imaging Data (
 #
 # Recommended pre-requisite reading
 # ---------------------------------
-# * `USID data model </../../../data_format.html>`_
+# * `USID data model </../../data_format.html>`_
 # * `Crash course on HDF5 and h5py <./plot_h5py.html>`_
 # * Utilities for `reading <./plot_hdf_utils_read.html>`_ and `writing <./plot_hdf_utils_write.html>`_
 #   h5USID files using pyUSID

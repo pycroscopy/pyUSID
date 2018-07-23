@@ -25,7 +25,7 @@ Data (USID) HDF5 files or h5USID files**
 #
 # Recommended pre-requisite reading
 # ----------------------------------
-# * `USID model <https://pycroscopy.github.io/pyUSID/data_format.html>`_
+# * `USID model </../../data_format.html>`_
 #
 # What to read after this
 # -------------------------

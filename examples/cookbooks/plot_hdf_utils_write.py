@@ -29,7 +29,7 @@ and information into Universal Spectroscopy and Imaging Data (USID) HDF5 files (
 #
 # Recommended pre-requisite reading
 # ----------------------------------
-# * `USID data model </../../../data_format.html>`_
+# * `USID data model </../../data_format.html>`_
 # * `Crash course on HDF5 and h5py <./plot_h5py.html>`_
 # * Utilities for `reading <./plot_hdf_utils_read.html>`_ h5USID files using pyUSID
 #
@@ -37,6 +37,7 @@ and information into Universal Spectroscopy and Imaging Data (USID) HDF5 files (
 # ------------------------------
 # Before we begin demonstrating the numerous functions in pyUSID.hdf_utils, we need to import the necessary
 # packages. Here are a list of packages besides pyUSID that will be used in this example:
+#
 # * ``h5py`` - to open and close the file
 # * ``numpy`` - for numerical operations on arrays in memory
 # * ``matplotlib`` - basic visualization of data
