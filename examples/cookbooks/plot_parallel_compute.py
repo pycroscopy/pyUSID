@@ -202,7 +202,7 @@ raw_data = h5_main[()]
 # Serial computing
 # ----------------
 # A single call to the function does not take substantial time. However, performing the same operation on each of the
-# 16,384 pixels sequentially can take substantial time. The simplest way to find all peak positions is to simply loop
+# ``16,384`` pixels sequentially can take substantial time. The simplest way to find all peak positions is to simply loop
 # over each position in the dataset:
 
 serial_results = list()

@@ -7,9 +7,9 @@
 
 8/8/2017
 
-**This document illustrates an example of extracting data out of proprietary raw data files and writing the information
+This document illustrates an example of extracting data out of proprietary raw data files and writing the information
 into a **Universal Spectroscopy and Imaging Data (USID)** HDF5 file (referred to as a **h5USID** file) using the
-pyUSID.NumpyTranslator**
+``pyUSID.NumpyTranslator``
 
 Introduction
 ------------
@@ -27,7 +27,7 @@ The process of copying data from the original format to **h5USID** files is call
 operation are called **Translators**
 
 Simply put, so long as one has the metadata and the actual data extracted from the raw data file,
-the **pyUSID.NumpyTranslator** will correctly write the contents to a h5UID / HDF5 file.
+the ``pyUSID.NumpyTranslator`` will correctly write the contents to a h5UID / HDF5 file.
 Note that the complexity or size of the raw data may necessitate a custom Translator class. However, the rough process
 of translation is the same regardless of the origin, complexity, or size of the raw data:
 
@@ -40,7 +40,7 @@ The goal of this document is to demonstrate how one would extract data and param
 Spectroscopy (STS) raw data file obtained from an Omicron Scanning Tunneling Microscope (STM) into a h5USID file.
 
 While there is an `AscTranslator <https://github.com/pycroscopy/pycroscopy/blob/master/pycroscopy/io/translators/omicron_asc.py>`_
-available in our sister-package - pycroscopy that can translate these files in just a **single** line,
+available in our sister-package - ``pycroscopy`` that can translate these files in just a **single** line,
 we will intentionally assume that no such translator is available. Using a handful of useful functions in pyUSID,
 we will translate the files from the source **.asc** format to h5USID files in just a few lines.
 
@@ -259,8 +259,9 @@ h5_path = tran.translate(h5_path, sci_data_type, raw_data_2d,  quantity, units,
 # * A modular / formal version of this translator has been implemented as a class in pycroscopy as the
 #   `AscTranslator <https://github.com/pycroscopy/pycroscopy/blob/master/pycroscopy/io/translators/omicron_asc.py>`_.
 #   This custom translator packages the same code used above into functions that focus on the individual tasks such
-#   as extracting parameters, reading data, and writing to h5. The NumpyTranslator uses
-#   ``pyUSID.hdf_utils.write_main_dataset()`` function underneath to write its data.
+#   as extracting parameters, reading data, and writing to h5USID. The ``NumpyTranslator`` uses the
+#   ``pyUSID.hdf_utils.write_main_dataset()`` function underneath to write its data. You can learn more about lower-
+#   level file-writing functions in another tutorial on `writing <./plot_hdf_utils_write.html>`_ h5USID files.
 # * There are many benefits to writing such a formal Translator class instead of standalone scripts like this including:
 #
 #   * Unlike such a stand-alone script, a Translator class in the package can be used by everyone repeatedly
@@ -270,15 +271,15 @@ h5_path = tran.translate(h5_path, sci_data_type, raw_data_2d,  quantity, units,
 #     as an example.
 #
 # * While this approach is feasible and encouraged for simple and small data, it may be necessary to use lower level
-#   calls to write efficient translators. As an example, please see the BEPSndfTranslator at:
-#   https://github.com/pycroscopy/pycroscopy/blob/master/pycroscopy/io/translators/beps_ndf.py
+#   calls to write efficient translators. As an example, please see the `BEPSndfTranslator
+#   <https://github.com/pycroscopy/pycroscopy/blob/master/pycroscopy/io/translators/beps_ndf.py>`_
 # * We have found python packages online to open a few proprietary file formats and have written translators using these
 #   packages. If you are having trouble reading the data in your files and cannot find any packages online, consider 
 #   contacting the manufacturer of the instrument which generated the data in the proprietary format for help.
 #
 # Verifying the newly written H5 file:
 # ====================================
-# * We will only perform some simple and quick verification to show that the data has indeed been translated corectly.
+# * We will only perform some simple and quick verification to show that the data has indeed been translated correctly.
 # * Please see the next notebook in the example series to learn more about reading and accessing data.
 
 with h5py.File(h5_path, mode='r') as h5_file:

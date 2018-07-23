@@ -14,10 +14,10 @@
 # any kind of measurement data.
 # This includes:
 #
-#  #. Conventional data represented using floating point numbers such as 1.2345
-#  #. Integer data (with or without sign) such as 1, 2, 3, 4
-#  #. Complex-valued data such as 1.23 + 4.5i
-#  #. Multi-valued or compound valued data cells such as ('Frequency': 301.2, 'Amplitude':1.553E-3, 'Phase': 2.14)
+#  #. Conventional data represented using floating point numbers such as ``1.2345``
+#  #. Integer data (with or without sign) such as ``137``
+#  #. Complex-valued data such as ``1.23 + 4.5i``
+#  #. Multi-valued or compound valued data cells such as (``'Frequency'``: ``301.2``, ``'Amplitude'``: ``1.553E-3``, ``'Phase'``: ``2.14``)
 #     where a single value or measurement is represented by multiple elements, each with their own names, and data types
 #
 # While HDF5 datasets are capable of storing all of these kinds of data, many conventional data analysis techniques
@@ -30,7 +30,7 @@
 # To avoid such problems, we need functions that transform the data to and from the necessary type (integer, real-value
 # etc.)
 #
-# The pyUSID.dtype_utils module facilitates comparisons, validations, and most importantly, transformations of one
+# The ``pyUSID.dtype_utils`` module facilitates comparisons, validations, and most importantly, transformations of one
 # data-type to another. We will be going over the many useful functions in this module and explaining how, when and why
 # one would use them.
 #
@@ -137,6 +137,7 @@ for dtype in [np.complex, np.complex64, np.complex128, np.complex256]:
 # datasets and vice versa. As mentioned in the introduction, this is particularly important when attempting to use
 # machine learning algorithms on complex or compound-valued datasets. In order to enable such pipelines, we need
 # functions to transform:
+#
 # * complex / compound valued datasets to real-valued datasets
 # * real-valued datasets back to complex / compound valued datasets
 #

@@ -14,13 +14,13 @@ and metadata in Universal Spectroscopy and Imaging Data (USID) HDF5 files (h5USI
 # Introduction
 # -------------
 # The USID model uses a data-centric approach to data analysis and processing meaning that results from all data analysis
-# and processing are written to the same h5 file that contains the recorded measurements. The Hierarchical Data Format
-# (HDF5) allows data, whether it is raw measured data or results of analysis, to be stored in multiple datasets within
+# and processing are written to the same h5 file that contains the recorded measurements. **Hierarchical Data Format
+# (HDF5)** files allow data, whether it is raw measured data or results of analysis, to be stored in multiple datasets within
 # the same file in a tree-like manner. Certain rules and considerations have been made in pyUSID to ensure
 # consistent and easy access to any data.
 #
 # The h5py python package provides great functions to create, read, and manage data in HDF5 files. In
-# pyUSID.hdf_utils, we have added functions that facilitate scientifically relevant, or USID specific
+# ``pyUSID.hdf_utils``, we have added functions that facilitate scientifically relevant, or USID specific
 # functionality such as checking if a dataset is a Main dataset, reshaping to / from the original N dimensional form of
 # the data, etc. Due to the wide breadth of the functions in ``hdf_utils``, the guide for hdf_utils will be split in two
 # parts - one that focuses on functions that facilitate reading and one that facilitate writing of data. The following
@@ -84,11 +84,11 @@ except ImportError:
 # -----------------------
 #
 # For this example, we will be working with a **Band Excitation Polarization Switching (BEPS)** dataset acquired from
-# advanced atomic force microscopes. In the much simpler **Band Excitation (BE)** imaging datasets, a single spectra is
+# advanced atomic force microscopes. In the much simpler **Band Excitation (BE)** imaging datasets, a single spectrum is
 # acquired at each location in a two dimensional grid of spatial locations. Thus, BE imaging datasets have two
-# position dimensions (``X``, ``Y``) and one spectroscopic dimension (``Frequency`` - against which the spectra is recorded).
-# The BEPS dataset used in this example has a spectra for each combination of three other parameters (``DC offset``,
-# ``Field``, and ``Cycle``). Thus, this dataset has three new spectral dimensions in addition to the spectra itself. Hence,
+# position dimensions (``X``, ``Y``) and one spectroscopic dimension (``Frequency`` - against which the spectrum is recorded).
+# The BEPS dataset used in this example has a spectrum for **each combination of** three other parameters (``DC offset``,
+# ``Field``, and ``Cycle``). Thus, this dataset has three new spectral dimensions in addition to ``Frequency``. Hence,
 # this dataset becomes a 2+4 = **6 dimensional dataset**
 #
 # Load the dataset
@@ -110,7 +110,7 @@ h5_path = 'temp.h5'
 h5_f = h5py.File(h5_path, mode='r')
 
 ########################################################################################################################
-# Here, h5_f is an active handle to the open file
+# Here, ``h5_f`` is an active handle to the open file
 #
 # Inspect HDF5 contents
 # ======================
@@ -155,13 +155,13 @@ usid.hdf_utils.print_tree(h5_f, main_dsets_only=True)
 # Accessing Attributes
 # ==================================
 #
-# HDF5 datasets and datagroups can also store metadata such as experimental parameters. These metadata can be text,
+# HDF5 datasets and groups can also store metadata such as experimental parameters. These metadata can be text,
 # numbers, small lists of numbers or text etc. These metadata can be very important for understanding the datasets
 # and guide the analysis routines.
 #
-# While one could use the basic h5py functionality to access attributes, one would encounter a lot of problems when
-# attempting to decode attributes whose values were strings or lists of strings due to some issues in h5py. This problem
-# has been demonstrated in our primer to HDF5. Instead of using the basic functionality of h5py, we recommend always
+# While one could use the basic ``h5py`` functionality to access attributes, one would encounter a lot of problems when
+# attempting to decode attributes whose values were strings or lists of strings due to some issues in ``h5py``. This problem
+# has been demonstrated in our `primer to HDF5 and h5py <./plot_h5py.html>`_. Instead of using the basic functionality of ``h5py``, we recommend always
 # using the functions in pyUSID that reliably and consistently work for any kind of attribute for any version of
 # python:
 #
@@ -186,7 +186,7 @@ for key, val in proj_attrs.items():
 # get_attr()
 # ----------
 #
-# If were sure that we only wanted a specific attribute, we could instead use ``get_attr()`` as:
+# If we are sure that we only wanted a specific attribute, we could instead use ``get_attr()`` as:
 
 
 print(usid.hdf_utils.get_attr(h5_f, 'user_name'))
@@ -198,7 +198,7 @@ print(usid.hdf_utils.get_attr(h5_f, 'user_name'))
 # see if they have the certain metadata / attributes. ``check_for_matching_attrs()`` is one very handy function that
 # simplifies the comparision operation.
 #
-# For example, let us check if this file was authored by 'John Doe':
+# For example, let us check if this file was authored by ``John Doe``:
 
 print(usid.hdf_utils.check_for_matching_attrs(h5_f, new_parms={'user_name': 'John Doe'}))
 
@@ -234,11 +234,11 @@ for item in udvs_dsets_2:
 # ---------------
 # ``check_if_main()`` is a very handy function that helps distinguish between ``Main`` datasets and other objects
 # (``Ancillary`` datasets, other datasets, Groups etc.). Lets apply this function to see which of the objects within the
-# ``Channel_000`` Group are Main datasets:
+# ``Channel_000`` Group are ``Main`` datasets:
 
 h5_chan_group = h5_f['Measurement_000/Channel_000']
 
-# We will prepare two lists - one of objects that are main and one of objects that are not
+# We will prepare two lists - one of objects that are ``main`` and one of objects that are not
 
 non_main_objs = []
 main_objs = []

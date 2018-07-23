@@ -278,7 +278,7 @@ print('2D slicing == ND slicing: {}'.format(np.allclose(spat_map_1, spat_map_2))
 # `Download as Jupyter Notebook <https://pycroscopy.github.io/pyUSID/_downloads/plot_usi_dataset.ipynb>`_ button
 # below to try it out yourself.
 
-pd_raw.visualize(slice_dict={'Field': 0, 'Cycle': 1})
+pd_raw.visualize(slice_dict={'Field': 0, 'Cycle': 1});
 
 ########################################################################################################################
 # Close and delete the h5_file
