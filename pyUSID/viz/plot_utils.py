@@ -687,6 +687,7 @@ def plot_curves(excit_wfms, datasets, line_colors=[], dataset_names=[], evenly_s
     Returns
     ---------
     fig, axes
+
     """
     for var, var_name in zip([use_rainbow_plots, evenly_spaced], ['use_rainbow_plots', 'evenly_spaced']):
         if not isinstance(var, bool):

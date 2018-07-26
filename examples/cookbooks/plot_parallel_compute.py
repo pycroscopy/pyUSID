@@ -314,6 +314,7 @@ fig.tight_layout()
 ########################################################################################################################
 # Best practices for parallel computing
 # --------------------------------------
+#
 # While it may seem tempting to do everything in parallel, it is important to be aware of some of the trade-offs and
 # best-practices for parallel computing (multiple CPU cores) when compared to traditional serial computing (single
 # CPU core):
@@ -327,9 +328,11 @@ fig.tight_layout()
 #   after all the computation is complete. In fact, this is what we automatically do in the ``Fitter`` and
 #   ``Process`` classes in pycroscopy
 #
+
 ########################################################################################################################
 # Formalizing data processing and pyUSID.Process
-# --------------------------------------------------
+# ----------------------------------------------
+#
 # Data processing / analysis typically involves a few basic operations:
 #
 # 1. Reading data from file

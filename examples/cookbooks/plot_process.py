@@ -174,6 +174,7 @@ except ImportError:
 #
 # * read the spectra corresponding to that index from the HDF5 dataset
 # * apply the ``map_function()`` to this spectra and return the result.
+#
 # The goal here is to load the smallest necessary portion of data from the HDF5 dataset to memory and test it against
 # the ``map_function()``
 #
@@ -470,6 +471,7 @@ os.remove(h5_path)
 #   * Check if the provided ``h5_main`` is indeed a ``Main`` dataset
 #   * call ``set_memory_and_cores()`` to figure out how many pixels can be read into memory at any given time
 #   * Initialize some basic variables
+#
 # 2. Next, the subclass continues any further validation / checks / initialization - this was not implemented for
 #    ``PeakFinder`` but here are some things that can be done:
 #

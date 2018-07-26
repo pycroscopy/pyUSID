@@ -2333,12 +2333,13 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
     verbose : bool, Optional, default=False
         If set to true - prints debugging logs
     kwargs will be passed onto the creation of the dataset. Please pass chunking, compression, dtype, and other
-    arguments this way
+        arguments this way
 
     Returns
     -------
     h5_main : USIDataset
         Reference to the main dataset
+
     """
 
     def __validate_anc_h5_dsets(inds, vals, main_shape, is_spectroscopic=True):

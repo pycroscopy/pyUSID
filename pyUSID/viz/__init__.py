@@ -7,6 +7,9 @@ Submodules
 .. autosummary::
     :toctree: _autosummary
 
+    plot_utils
+    jupyter_utils
+
 """
 
 from . import plot_utils

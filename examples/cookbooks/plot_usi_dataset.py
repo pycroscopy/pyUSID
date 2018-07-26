@@ -33,7 +33,7 @@ slicing, and visualizing N-dimensional Universal Spectroscopy and Imaging Data (
 # * dimensionality of the data in its original N dimensional form etc.
 #
 # USIDatasets = USID Main Datasets
-# ------------------------------
+# --------------------------------
 # Regardless, ``Main datasets`` are just concepts or blueprints and not concrete digital objects in a programming language
 # or a file. ``USIDatasets`` are **tangible representations of Main datasets**. From an implementation perspective, the
 # USIDataset class extends the ``h5py.Dataset object``. In other words, USIDatasets have all the capabilities of
