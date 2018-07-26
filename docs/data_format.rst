@@ -158,7 +158,7 @@ the positions and ``j`` for spectroscopic:
 
 A notion of chronology is attached to both the position and spectroscopic axes.
 In other words, the data for the second location (second row in the above table)
-was acquired before the first location (first row). The same applies to the spectroscopic axis as well.
+was acquired after the first location (first row). The same applies to the spectroscopic axis as well.
 This is an important point to remember especially when information is recorded
 from multiple sources or channels (e.g. - data from different sensors) or if two or more numbers are **necessary** to
 give a particular observation / data point its correct meaning (e.g. - color images).
@@ -331,7 +331,7 @@ and utility of compound datasets are best described with examples:
   fit should actually be a ``N x 1`` dataset where each element is a compound
   value made up of the ``S`` coefficients. Note that while some form of sequence
   can be forced onto the coefficients if the spectra were fit to polynomial
-  functions, the drawbacks outweigh the benefits:
+  functions, the benefits outweigh the drawbacks:
 
   * **Slicing**: Storing data in compound datasets circumvents problems associated
     with getting a specific / the ``kth`` coefficient if the data were stored in a
@@ -401,12 +401,12 @@ each containing ``P`` spectral values (shape = (``N x P``)), and having
 
 * The ``Position Indices`` and ``Position Values`` datasets would both of the
   same size of ``N x U``, where ``U`` is the number of ``position
-  dimensions``. The **columns would be arranged in ascending order of rate of
+  dimensions``. The **columns would be arranged in descending order of rate of
   change**. In other words, the first column would be the fastest changing
   position dimension and the last column would be the slowest. **Each position dimension gets it's own column**.
 
 * The ``Spectroscopic Values`` and ``Spectroscopic Indices`` dataset would
-  both be ``V x S`` in shape, where ``V`` is the number of ``spectroscopic
+  both be ``V x P`` in shape, where ``V`` is the number of ``spectroscopic
   dimensions``. Similarly to the ``position dimensions``, the first row would be
   the fastest changing ``spectroscopic dimension`` while the last row would be
   the slowest varying dimension. **Each spectroscopic dimension gets it's own row**.
@@ -416,7 +416,7 @@ be continuing with the same examples used when illustrating the ``main`` dataset
 
 Spectrum
 ^^^^^^^^^
-Let's assume that data points were collected as a function of 8 values of the (sole) variable / ``spectroscopic dimension`` -
+Let's assume that data points were collected as a function of 5 values of the (sole) variable / ``spectroscopic dimension`` -
 *Frequency*.  In that case, the ``Spectroscopic Values`` dataset would be of size ``1 x 5`` (one row for the single
 ``spectroscopic dimension`` and eight columns for each of the reference *Frequency* steps.
 Let's assume that the data was collected as a function of *Frequency* over a band ranging from ``300`` to ``320`` kHz.
@@ -596,7 +596,7 @@ Continuing with the expansion of the **spectral maps** example - if the data was
 ``spectroscopic dimensions`` - *Frequency*, and *Temperature*. Thus, the ``ancillary spectroscopic`` datasets would
 now have a shape of ``2 x 5*3`` instead of the simpler ``1 x 5``. The value ``2`` on the first index corresponds to
 the two ``spectroscopic dimensions`` and the longer (``15`` instead of ``5``) second axis corresponds to the fact
-that the spectra is now recorded thrice at each position (once for each *Frequency*). Assuming that the *Frequency*
+that the spectra is now recorded thrice at each *Temperature* (once for each *Frequency*). Assuming that the *Frequency*
 varies faster than the *Temperature* dimension (i.e.- the *Frequency* is varied from ``300`` to ``320`` for a
 *Temperature* of ``30 C``, **then** the *Frequency* is varied from ``300`` to ``320`` for a *Temperature* of ``40 C``
 and so on), the ``Spectroscopic Indices`` would be as follows:
