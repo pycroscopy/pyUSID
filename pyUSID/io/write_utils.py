@@ -22,18 +22,24 @@ VALUES_DTYPE = np.float32
 
 
 class Dimension(object):
+    """
+    ..autoclass::Dimension
+    """
+
     def __init__(self, name, units, values):
         """
         Simple object that describes a dimension in a dataset by its name, units, and values
+
         Parameters
         ----------
-        name : str / unicode
+        name : str or unicode
             Name of the dimension. For example 'Bias'
-        units : str / unicode
+        units : str or unicode
             Units for this dimension. For example: 'V'
-        values : array-like, or int
+        values : array-like or int
             Values over which this dimension was varied. A linearly increasing set of values will be generated if an
             integer is provided instead of an array.
+
         """
         if not isinstance(name, (str, unicode)):
             raise TypeError('name should be a string')
@@ -54,6 +60,16 @@ class Dimension(object):
 
     def __repr__(self):
         return '{} ({}) : {}'.format(self.name, self.units, self.values)
+
+    def __eq__(self, other):
+        if isinstance(other, Dimension):
+            same_name = self.name == other.name
+            same_unit = self.units == other.units
+            same_values = self.values == other.values
+
+            return all([same_name, same_unit, same_values])
+
+        return False
 
 
 def get_aux_dset_slicing(dim_names, last_ind=None, is_spectroscopic=False):
