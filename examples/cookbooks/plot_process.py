@@ -90,6 +90,9 @@
 #
 # This example is a simplification of the pycroscopy.analysis.BESHOFitter class in our sister project - Pycroscopy.
 #
+# .. tip::
+#     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
+#
 # Import necessary packages
 # -------------------------
 

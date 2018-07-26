@@ -32,6 +32,9 @@ Data (USID) HDF5 files or h5USID files**
 # * `Crash course on HDF5 and h5py <./plot_h5py.html>`_
 # * Utilities for `reading <./plot_hdf_utils_read.html>`_ and `writing <./plot_hdf_utils_write.html>`_ h5USID files
 #
+# .. tip::
+#     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
+#
 # Import necessary packages
 # --------------------------
 # We only need a handful of packages besides pyUSID to illustrate the functions in ``pyUSID.write_utils``:

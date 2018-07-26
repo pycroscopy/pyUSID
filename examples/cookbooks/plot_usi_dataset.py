@@ -71,6 +71,9 @@ slicing, and visualizing N-dimensional Universal Spectroscopy and Imaging Data (
 # Cycle). Thus, this dataset has three new spectral dimensions in addition to the spectra itself. Hence, this dataset
 # becomes a 2+4 = 6 dimensional dataset
 #
+# .. tip::
+#     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
+#
 # Load all necessary packages
 # ---------------------------
 #

@@ -53,6 +53,9 @@ Before proceeding with this example, we recommend reading the previous documents
 
 * `USID model </../../data_format.html>`_
 
+.. tip::
+    You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
+
 Import all necessary packages
 -----------------------------
 There are a few setup procedures that need to be followed before any code is written. In this step, we simply load a

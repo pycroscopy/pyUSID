@@ -33,6 +33,9 @@ and metadata in Universal Spectroscopy and Imaging Data (USID) HDF5 files (h5USI
 # * `Crash course on HDF5 and h5py <./plot_h5py.html>`_
 # * Utilities for `writing <./plot_hdf_utils_write.html>`_ h5USID files using pyUSID
 #
+# .. tip::
+#     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
+#
 # Import all necessary packages
 # -------------------------------
 #

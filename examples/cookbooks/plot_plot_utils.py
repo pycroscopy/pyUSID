@@ -15,6 +15,9 @@ Some of the functions in ``pyUSID.plot_utils`` fill gaps in the default matplotl
 developed for scientific applications, and others were developed specifically
 for handling **Universal Spectroscopy and Imaging Data (USID)** ``main`` datasets. These functions have been developed
 to substantially simplify the generation of high quality figures for journal publications.
+
+.. tip::
+    You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
 """
 
 # Ensure python 3 compatibility:

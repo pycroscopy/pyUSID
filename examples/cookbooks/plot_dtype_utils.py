@@ -39,6 +39,9 @@
 # * `USID data model </../../data_format.html>`_
 # * `Crash course on HDF5 and h5py <./plot_h5py.html>`_
 #
+# .. tip::
+#     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
+#
 # Import all necessary packages
 # -------------------------------
 # Before we begin demonstrating the numerous functions in ``pyUSID.dtype_utils``, we need to import the necessary

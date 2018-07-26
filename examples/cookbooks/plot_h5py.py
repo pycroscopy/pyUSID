@@ -34,6 +34,9 @@
 # elsewhere to explain h5py in great detail. This document serves as a quick primer to the basics of interacting with
 # HDF5 files via h5py.
 #
+# .. tip::
+#     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
+#
 # Import all necessary packages
 # -------------------------------
 # For this primer, we only need some very basic packages, all of which come with the standard Anaconda distribution:

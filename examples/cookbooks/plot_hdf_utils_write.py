@@ -33,6 +33,9 @@ and information into Universal Spectroscopy and Imaging Data (USID) HDF5 files (
 # * `Crash course on HDF5 and h5py <./plot_h5py.html>`_
 # * Utilities for `reading <./plot_hdf_utils_read.html>`_ h5USID files using pyUSID
 #
+# .. tip::
+#     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
+#
 # Import all necessary packages
 # ------------------------------
 # Before we begin demonstrating the numerous functions in pyUSID.hdf_utils, we need to import the necessary

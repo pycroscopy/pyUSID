@@ -9,6 +9,9 @@
 
 **This is a short walk-through of useful utilities in pyUSID.io_utils that simplify common i/o and computational
 tasks.**
+
+.. tip::
+    You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
 """
 
 from __future__ import print_function, division, unicode_literals

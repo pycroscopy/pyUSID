@@ -39,7 +39,10 @@ using all available CPU cores in a computer**
 #
 # ``Here, we will learn how to fit the thousands of spectra using all available cores on a computer.``
 # Note, that this is applicable only for a single CPU. Please refer to another advanced example for multi-CPU computing.
-
+#
+# .. tip::
+#     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
+#
 # Ensure python 3 compatibility:
 from __future__ import division, print_function, absolute_import, unicode_literals
 
