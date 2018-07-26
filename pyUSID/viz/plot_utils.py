@@ -462,6 +462,7 @@ def plot_line_family(axis, x_vec, line_family, line_names=None, label_prefix='',
         quantity by which the lines are offset from each other vertically (useful for spectra)
     show_cbar : (optional) bool
         Whether or not to show a colorbar (instead of a legend)
+
     """
     if not isinstance(axis, mpl.axes.Axes):
         raise TypeError('axis must be a matplotlib.axes.Axes object')
@@ -514,6 +515,7 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
     """
     Plots an image within the given axis with a color bar + label and appropriate X, Y tick labels.
     This is particularly useful to get readily interpretable plots for papers
+
     Parameters
     ----------
     axis : matplotlib.axes.Axes object
@@ -525,7 +527,7 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
     show_cbar : bool, optional, default = True
         Whether or not to show the colorbar
     x_vec : 1-D array-like or Number, optional
-        if an array-like is provided - these will be used for the tick values on the X axis
+        if an array-like is provided, these will be used for the tick values on the X axis
         if a Number is provided, this will serve as an extent for tick values in the X axis.
         For example x_vec=1.5 would cause the x tick labels to range from 0 to 1.5
     y_vec : 1-D array-like or Number, optional
@@ -553,6 +555,7 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
     Note
     ----
     The origin of the image will be set to the lower left corner. Use the kwarg 'origin' to change this
+
     """
     if not isinstance(axis, mpl.axes.Axes):
         raise TypeError('axis must be a matplotlib.axes.Axes object')
