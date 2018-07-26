@@ -143,6 +143,7 @@ def get_auxiliary_datasets(h5_object, aux_dset_name=None):
     Returns
     -------
     list of h5py.Reference of auxiliary dataset objects.
+
     """
     if not isinstance(h5_object, (h5py.Dataset, h5py.Group, h5py.File)):
         raise TypeError('h5_object should be a h5py.Dataset, h5py.Group or h5py.File object')
@@ -187,6 +188,7 @@ def get_attr(h5_object, attr_name):
     -------
     att_val : object
         value of attribute, in certain cases (byte strings or list of byte strings) reformatted to readily usable forms
+
     """
     if not isinstance(h5_object, (h5py.Dataset, h5py.Group, h5py.File)):
         raise TypeError('h5_object should be a h5py.Dataset, h5py.Group or h5py.File object')
@@ -223,8 +225,8 @@ def get_attributes(h5_object, attr_names=None):
     Returns
     -------
     Dictionary containing (name,value) pairs of attributes
-    """
 
+    """
     if not isinstance(h5_object, (h5py.Dataset, h5py.Group, h5py.File)):
         raise TypeError('h5_object should be a h5py.Dataset, h5py.Group or h5py.File object')
 
@@ -265,6 +267,7 @@ def get_h5_obj_refs(obj_names, h5_refs):
     -------
     found_objects : List of HDF5 dataset references
         Corresponding references
+
     """
     from .usi_data import USIDataset
 
@@ -349,6 +352,7 @@ def find_results_groups(h5_main, tool_name):
     -------
     groups : list of references to h5 group objects
         groups whose name contains the tool name and the dataset name
+
     """
     if not isinstance(h5_main, h5py.Dataset):
         raise TypeError('h5_main should be a h5py.Dataset object')
@@ -415,6 +419,7 @@ def get_indices_for_region_ref(h5_main, ref, return_method='slices'):
             -------
             inds : Tuple of arrays
                 the list of points in each dimension
+
             """
             ranges = []
             for i in range(len(start)):
@@ -451,6 +456,7 @@ def get_indices_for_region_ref(h5_main, ref, return_method='slices'):
             -------
             slices : list
                 pair of slices representing the region
+
             """
             slices = []
             for idim in range(len(start)):
@@ -515,6 +521,7 @@ def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
     -----
     Either `h5_main` or `anc_refs` MUST be provided and `anc_refs` has the
     higher priority if both are present.
+
     """
     if not isinstance(h5_dset, h5py.Dataset):
         raise TypeError('h5_dset should be a h5py.Dataset object')
@@ -583,6 +590,7 @@ def create_region_reference(h5_main, ref_inds):
     -------
     new_ref : HDF5 Region reference
         reference in `h5_main` for the blocks of points defined by `ref_inds`
+
     """
     if not isinstance(h5_main, h5py.Dataset):
         raise TypeError('h5_main should be a h5py.Dataset object')
@@ -703,8 +711,6 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         pos_labs = np.array(['Position Dimension {}'.format(ipos) for ipos in range(ds_pos.shape[1])])
     else:
         raise TypeError('Position Indices must be either h5py.Dataset or None')
-
-    ##################################################
 
     if h5_spec is None:
         """
@@ -904,8 +910,6 @@ def reshape_from_n_dims(data_n_dim, h5_pos=None, h5_spec=None, verbose=False):
     else:
         raise TypeError('Position Indices must be either h5py.Dataset or None')
 
-    ##################################################
-
     if h5_spec is None:
         pass
     elif isinstance(h5_spec, h5py.Dataset):
@@ -1007,6 +1011,7 @@ def get_dimensionality(ds_index, index_sort=None):
     -------
     sorted_dims : list of unsigned integers
         Dimensionality of each row in ds_index.  If index_sort is supplied, it will be in the sorted order
+
     """
     if not isinstance(ds_index, (np.ndarray, h5py.Dataset)):
         raise TypeError('ds_index should either be a numpy array or h5py.Dataset')
@@ -1042,6 +1047,7 @@ def get_sort_order(ds_spec):
     -------
     change_sort : List of unsigned integers
         Order of rows sorted from fastest changing to slowest
+
     """
     if not isinstance(ds_spec, (np.ndarray, h5py.Dataset)):
         raise TypeError('ds_spec should either be a numpy array or h5py.Dataset')
@@ -1080,6 +1086,7 @@ def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs
     -------
     h5_new_dset : h5py.Dataset object
         Newly created dataset
+
     """
     if not isinstance(source_dset, h5py.Dataset):
         raise TypeError('source_deset should be a h5py.Dataset object')
@@ -1155,6 +1162,7 @@ def copy_attributes(source, dest, skip_refs=True):
         Object to which the attributes need to be copied to
     skip_refs : bool, optional. default = True
         Whether or not the references (dataset and region) should be skipped
+
     """
     if not isinstance(source, (h5py.Dataset, h5py.Group, h5py.File)):
         raise TypeError('source should be a h5py.Dataset, h5py.Group,or h5py.File object')
@@ -1233,6 +1241,7 @@ def check_if_main(h5_main, verbose=False):
     -------
     success : Boolean
         True if all tests pass
+
     """
     # Check that h5_main is a dataset
     success = isinstance(h5_main, h5py.Dataset)
@@ -1312,6 +1321,7 @@ def link_h5_objects_as_attrs(src, h5_objects):
     Returns
     --------
     None
+
     """
     if not isinstance(src, (h5py.Dataset, h5py.File, h5py.Group)):
         raise TypeError('src should either be a h5py Dataset, File, or Group')
@@ -1338,6 +1348,7 @@ def link_h5_obj_as_alias(h5_main, h5_ancillary, alias_name):
         object whose reference that can be accessed from src.attrs
     alias_name : String
         Alias / alternate name for trg
+
     """
     if not isinstance(h5_main, (h5py.Dataset, h5py.File, h5py.Group)):
         raise TypeError('h5_main should either be a h5py Dataset, File, or Group')
@@ -1546,6 +1557,7 @@ def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals, 
         Dataset that will be linked with the name 'Spectroscopic_Values'
     anc_dsets : (Optional) list of h5py.Dataset objects
         Datasets that will be linked with their own names
+
     """
     # TODO: Make sure that the dimensions of spec and pos match with the data!
     for param, param_name in zip([h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals],
@@ -1585,6 +1597,7 @@ def copy_main_attributes(h5_main, h5_new):
         Dataset containing the target attributes
     h5_new : h5py.Dataset
         Dataset to which the target attributes are to be copied
+
     """
     for param, param_name in zip([h5_main, h5_new], ['h5_main', 'h5_new']):
         if not isinstance(param, h5py.Dataset):
@@ -1620,6 +1633,7 @@ def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=
     -------
     group : list
            List of all groups with parameters matching those in `new_parms`
+
     """
     if not isinstance(h5_base, h5py.Dataset):
         raise TypeError('h5_base should be a h5py.Dataset object')
@@ -1676,6 +1690,7 @@ def check_for_matching_attrs(h5_obj, new_parms=None, verbose=False):
     -------
     tests: bool
         Whether or not all paramters in new_parms matched with those in h5_obj's attributes
+
     """
     if not isinstance(h5_obj, (h5py.Dataset, h5py.Group, h5py.File)):
         raise TypeError('h5_obj should be a h5py.Dataset, h5py.Group, or h5py.File object')
@@ -1880,6 +1895,7 @@ def get_source_dataset(h5_group):
     -------
     h5_source : Pycrodataset object
         Main dataset from which this group was generated
+
     """
     if not isinstance(h5_group, h5py.Group):
         raise TypeError('h5_group should be a h5py.Group object')
@@ -1914,6 +1930,7 @@ def is_editable_h5(h5_obj):
     -------
     mode : bool
         True if the file containing the provided h5 object is in w or r+ modes
+
     """
     if not isinstance(h5_obj, (h5py.File, h5py.Group, h5py.Dataset)):
         raise TypeError('h5_obj should be a h5py File, Group or Dataset object but is instead of type '
@@ -1951,8 +1968,8 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
         Spectroscopic (True) or Position (False)
     verbose : Boolean, optional
         Whether or not to print statements for debugging purposes
-    base_name : str / unicode, optional
-        Prefix for the datasets. Default: 'Position_' when is_spectral is False, 'Spectroscopic_' otherwise
+    base_name : str or unicode, optional
+        Prefix for the datasets. Default: 'Position' when is_spectral is False, 'Spectroscopic' otherwise
 
     Returns
     -------
@@ -1967,6 +1984,7 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
     `dimensions` when they are specified.
 
     Dimensions should be in the order from fastest varying to slowest.
+
     """
     if isinstance(dimensions, Dimension):
         dimensions = [dimensions]
@@ -2033,9 +2051,9 @@ def write_reduced_spec_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_na
             Spectroscopic indices dataset
     h5_spec_vals : HDF5 Dataset
             Spectroscopic values dataset
-    dim_name : str / unicode
+    dim_name : str or unicode
             Name of the dimension to remove
-    basename : str / unicode, Optional
+    basename : str or unicode, Optional
             String to which '_Indices' and '_Values' will be appended to get the names
             of the new datasets
 
@@ -2045,6 +2063,7 @@ def write_reduced_spec_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_na
             Reduced Spectroscopic indices dataset
     h5_vals : h5py.Dataset
             Reduces Spectroscopic values dataset
+
     """
     if not isinstance(h5_parent_group, (h5py.Group, h5py.File)):
         raise TypeError('h5_parent_group should either be a h5py. Group or File object')
@@ -2117,15 +2136,16 @@ def assign_group_index(h5_parent_group, base_name, verbose=False):
     ----------
     h5_parent_group : h5py.Group object
         Parent group under which the new group object will be created
-    base_name : str / unicode
+    base_name : str or unicode
         Base name of the new group without index
     verbose : bool, optional. Default=False
         Whether or not to print debugging statements
 
     Returns
     -------
-    base_name : str / unicode
+    base_name : str or unicode
         Base name of the new group with the next available index as a suffix
+
     """
     if not isinstance(h5_parent_group, h5py.Group):
         raise TypeError('h5_parent_group should be a h5py.Group object')
@@ -2165,7 +2185,7 @@ def create_indexed_group(h5_parent_group, base_name):
     ----------
     h5_parent_group : h5py.Group or h5py.File object
         File or group within which the new group will be created
-    base_name : str / unicode
+    base_name : str or unicode
         Prefix for the group name. This need not end with a '_'. It will be added automatically
 
     Returns
@@ -2194,6 +2214,7 @@ def write_book_keeping_attrs(h5_obj):
     ----------
     h5_obj : h5py.Object
         Object to which basic book-keeping attributes need to be written
+
     """
     if not isinstance(h5_obj, (h5py.Group, h5py.File, h5py.Dataset)):
         raise TypeError('h5_obj should be a h5py.Group, h5py.File, or h5py.Dataset object')
@@ -2219,6 +2240,7 @@ def create_results_group(h5_main, tool_name):
     -------
     h5_group : h5py.Group object
         Results group which can now house the results datasets
+
     """
     if not isinstance(h5_main, h5py.Dataset):
         raise TypeError('h5_main should be a h5py.Dataset or Pycrodataset object')
@@ -2260,10 +2282,11 @@ def write_simple_attrs(h5_obj, attrs, obj_type='', verbose=False):
         h5py object to which the attributes will be written to
     attrs : dict
         Dictionary containing the attributes as key-value pairs
-    obj_type : str / unicode, optional. Default = ''
+    obj_type : str or unicode, optional. Default = ''
         type of h5py.obj. Examples include 'group', 'file', 'dataset
     verbose : bool, optional. Default=False
         Whether or not to print debugging statements
+
     """
     if not isinstance(attrs, dict):
         raise TypeError('attrs should be a dictionary but is instead of type '
@@ -2319,17 +2342,17 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
     main_dset_attrs : dictionary, Optional
         Dictionary of parameters that will be written to the main dataset. Do NOT include region references here.
     h5_pos_inds : h5py.Dataset, Optional
-        Dataset that will be linked with the name 'Position_Indices'
+        Dataset that will be linked with the name "Position_Indices"
     h5_pos_vals : h5py.Dataset, Optional
-        Dataset that will be linked with the name 'Position_Values'
+        Dataset that will be linked with the name "Position_Values"
     h5_spec_inds : h5py.Dataset, Optional
-        Dataset that will be linked with the name 'Spectroscopic_Indices'
+        Dataset that will be linked with the name "Spectroscopic_Indices"
     h5_spec_vals : h5py.Dataset, Optional
-        Dataset that will be linked with the name 'Spectroscopic_Values'
-    aux_spec_prefix : str / unicode, Optional
-        Default prefix for Spectroscopic datasets. Default = 'Spectroscopic_'
-    aux_pos_prefix : str / unicode, Optional
-        Default prefix for Position datasets. Default = 'Position_'
+        Dataset that will be linked with the name "Spectroscopic_Values"
+    aux_spec_prefix : str or unicode, Optional
+        Default prefix for Spectroscopic datasets. Default = "Spectroscopic"
+    aux_pos_prefix : str or unicode, Optional
+        Default prefix for Position datasets. Default = "Position"
     verbose : bool, Optional, default=False
         If set to true - prints debugging logs
     kwargs will be passed onto the creation of the dataset. Please pass chunking, compression, dtype, and other
@@ -2339,7 +2362,7 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
     -------
     h5_main : USIDataset
         Reference to the main dataset
-
+        
     """
 
     def __validate_anc_h5_dsets(inds, vals, main_shape, is_spectroscopic=True):
