@@ -1,8 +1,8 @@
 Guides to pyUSID
 --------------------
 * The documents below should be sufficient for you to learn how to use and even write code for pyUSID.
-* If you haven't already, please go through the external tutorials on python, scientific data analysis in python, etc.
-* All the documents listed below will assume that you understand the **Universal Spectroscopy and Imaging Data (USID)** model. Please read `that document <../data_format.html>`_ **before** beginning
+* If you haven't already, please go through the `tutorials on the basics <../external_guides>`_ of python, numerical analysis, tools like jupyter notebooks, etc.
+* All the documents listed below will assume familiarity with the **Universal Spectroscopy and Imaging Data (USID)** model. Please read `that document <../data_format.html>`_ **before** beginning
 
 To learn **how to use pyUSID**, go through the following documents in the recommended order:
 
