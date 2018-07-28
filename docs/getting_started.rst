@@ -42,7 +42,7 @@ For the python novices by a python novice - **Nick Mostovych, Brown University**
     class / function to learn how to supply inputs / extract outputs
   * Use the search function and reference the source code in the `API section <./api.html>`_ for detailed comments.
     Most detailed questions are answered there.
-* Use the `USIDataset <./auto_examples/cookbooks/plot_usi_dataset.html>`_ everywhere possible to simplify your tasks.
+* Use the `USIDataset <./auto_examples/beginner/plot_usi_dataset.html>`_ everywhere possible to simplify your tasks.
 * Many functions in pyUSID have a ``verbose`` keyword argument that can be set to ``True`` to get detailed print logs of intermediate steps in the function.
   This is **very** handy for debugging code
 
