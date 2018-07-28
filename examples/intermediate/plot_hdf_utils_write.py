@@ -30,8 +30,8 @@ and information into Universal Spectroscopy and Imaging Data (USID) HDF5 files (
 # Recommended pre-requisite reading
 # ----------------------------------
 # * `USID data model </../../data_format.html>`_
-# * `Crash course on HDF5 and h5py <./plot_h5py.html>`_
-# * Utilities for `reading <./plot_hdf_utils_read.html>`_ h5USID files using pyUSID
+# * `Crash course on HDF5 and h5py <../beginner/plot_h5py.html>`_
+# * Utilities for `reading <../beginner/plot_hdf_utils_read.html>`_ h5USID files using pyUSID
 #
 # .. tip::
 #     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
@@ -144,7 +144,7 @@ usid.hdf_utils.print_tree(h5_file)
 # While one could use the basic h5py functionality to write and access attributes, one would encounter a lot of problems
 # when attempting to encode or decode attributes whose values were strings or lists of strings due to some issues in
 # h5py. This problem has been demonstrated in our
-# `primer to HDF5 <./plot_h5py.html>`. Instead of using
+# `primer to HDF5 <../beginner/plot_h5py.html>`. Instead of using
 # the basic functionality of ``h5py``, we recommend always using the functions in pyUSID that **work reliably and
 # consistently** for any kind of attribute for any version of python:
 #

@@ -29,8 +29,8 @@ Data (USID) HDF5 files or h5USID files**
 #
 # What to read after this
 # -------------------------
-# * `Crash course on HDF5 and h5py <./plot_h5py.html>`_
-# * Utilities for `reading <./plot_hdf_utils_read.html>`_ and `writing <./plot_hdf_utils_write.html>`_ h5USID files
+# * `Crash course on HDF5 and h5py <../beginner/plot_h5py.html>`_
+# * Utilities for `reading <../beginner/plot_hdf_utils_read.html>`_ and `writing <./plot_hdf_utils_write.html>`_ h5USID files
 #
 # .. tip::
 #     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
@@ -228,7 +228,7 @@ spec_dims = [usid.write_utils.Dimension('Bias', 'V', bi_triang),
 
 ########################################################################################################################
 # The application of the Dimension objects will be a lot more apparent in the document about the `writing functions in
-# pyUSID.hdf_utils <https://pycroscopy.github.io/pyUSID/auto_examples/cookbooks/plot_hdf_utils_write.html>`_.
+# pyUSID.hdf_utils <./plot_hdf_utils_write.html>`_.
 #
 # Misc writing utilities
 # ========================
@@ -257,7 +257,7 @@ print(ret_val)
 ########################################################################################################################
 # clean_string_att()
 # -------------------
-# As mentioned in our `HDF5 primer <https://pycroscopy.github.io/pyUSID/auto_examples/cookbooks/plot_h5py.html>`_,
+# As mentioned in our `HDF5 and h5py primer <../beginner/plot_h5py.html>`_,
 # the ``h5py`` package used for reading and manipulating HDF5 files has issues which necessitate the encoding of
 # attributes whose values are lists of strings. The ``clean_string_att()`` encodes lists of
 # strings correctly so that they can directly be written to HDF5 without causing any errors. All other kinds of simple

@@ -37,7 +37,7 @@
 # Recommended pre-requisite reading
 # -----------------------------------
 # * `USID data model </../../data_format.html>`_
-# * `Crash course on HDF5 and h5py <./plot_h5py.html>`_
+# * `Crash course on HDF5 and h5py <../beginner/plot_h5py.html>`_
 #
 # .. tip::
 #     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
