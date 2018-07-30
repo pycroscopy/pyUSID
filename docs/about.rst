@@ -4,6 +4,11 @@ pyUSID
 
 **Python framework for storing, visualizing, and processing Universal Spectroscopy and Imaging Data (USID)**
 
+.. note::
+   We are conducting a workshop on pyUSID
+   on `Aug 13 <https://cnmsusermeeting.ornl.gov/files/2018/03/Pycroscopy_WT_081318.pdf>`_.
+   Please see `this page <https://github.com/pycroscopy/pyUSID_Tutorial/blob/master/CNMS_UM_Workshop_schedule.md>`_ for more information on joining remotely
+
 What?
 ------
 * The `USID model <./data_format.html>`_:
