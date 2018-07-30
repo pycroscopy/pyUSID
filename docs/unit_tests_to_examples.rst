@@ -75,7 +75,7 @@ Since the two tests are actually very similar to each other, we clubbed both tes
 
 The example
 ~~~~~~~~~~~
-Recall that the translation of a unit test to an example only requires that the behavior of the function be shown via a print statement or a plot. When translating this specific unit test, all we need to do is print the returned value from the function instead of asserting that it would be equal to a certain value. In every other way, it is literally copy pasting code. This specific unit test has already been translated to an example `in this example python script <https://pycroscopy.github.io/pyUSID/auto_examples/cookbooks/plot_io_utils.html>`_ but here the excerpt specific to this unit test:
+Recall that the translation of a unit test to an example only requires that the behavior of the function be shown via a print statement or a plot. When translating this specific unit test, all we need to do is print the returned value from the function instead of asserting that it would be equal to a certain value. In every other way, it is literally copy pasting code. This specific unit test has already been translated to an example `in this example python script <./auto_examples/intermediate/plot_io_utils.html>`_ but here the excerpt specific to this unit test:
 
 .. code-block:: python
 
