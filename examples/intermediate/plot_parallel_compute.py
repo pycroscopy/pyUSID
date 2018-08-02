@@ -40,8 +40,17 @@ using all available CPU cores in a computer**
 # ``Here, we will learn how to fit the thousands of spectra using all available cores on a computer.``
 # Note, that this is applicable only for a single CPU. Please refer to another advanced example for multi-CPU computing.
 #
-# .. tip::
-#     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
+# .. note::
+#     In order to run this document on your own computer, you will need to:
+#
+#     1. Download the document as a Jupyter notebook using the link at the bottom of this page.
+#     2. Get the ``find_all_peaks()`` function via either of the approaches:
+#
+#        a. Save the contents of `this python file <./supporting_docs/peak_finding.py>`_ as ``peak_finding.py`` in the
+#           same folder as the notebook from step 1.
+#        b. Copy the contents of `this python file <./supporting_docs/peak_finding.py>`_ into the jupyter notebook
+#           downloaded in step 1. The contents of the file need to replace the last three lines in the cell below:
+#           ``import sys`` to ``from peak_finding import find_all_peaks``
 #
 # Ensure python 3 compatibility:
 from __future__ import division, print_function, absolute_import, unicode_literals
