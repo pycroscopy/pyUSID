@@ -27,7 +27,7 @@ What?
   and processing routines are all written to the same h5USID file for traceability, reproducibility, and provenance.
 * Just as scipy uses numpy underneath, scientific packages like **pycroscopy** use **pyUSID** for all file-handling, general plotting utilities and a data processing framework
 * pyUSID uses popular packages such as numpy, h5py, joblib, matplotlib, etc. for most of the storage, computation, and visualization.
-* See a high-level overview of pyUSID in this `presentation <https://github.com/pycroscopy/pycroscopy/blob/master/docs/USID_pyUSID_pycroscopy.pdf>`_
+* See a high-level overview of pyUSID in this `presentation <https://github.com/pycroscopy/pyUSID/blob/master/docs/USID_pyUSID_pycroscopy.pdf>`_
 * Jump to our `GitHub project <https://github.com/pycroscopy/pyUSID>`_
 
 Why?
