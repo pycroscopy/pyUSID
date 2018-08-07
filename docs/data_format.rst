@@ -197,7 +197,7 @@ this paradigm:
 
 Spectrum
 ^^^^^^^^
-.. image:: ./assets_USID/1D_spectra.pdf
+.. image:: ./assets_USID/1D_spectra.svg
 
 This case encompasses examples such as a **single** Raman spectrum, force-distance curve in
 atomic force microscopy, current-voltage spectroscopy, etc. In this case, the measurement is recorded
@@ -209,7 +209,7 @@ data would be a ``1 x S`` matrix. The ``quantity`` represented in this data woul
 
 Gray-scale images
 ^^^^^^^^^^^^^^^^^
-.. image:: ./assets_USID/2D_images.pdf
+.. image:: ./assets_USID/2D_images.svg
 
 In such data, a single value (``quantity`` is *intensity*) in is recorded
 at each location in a two dimensional grid. Thus, there are are two
@@ -230,7 +230,7 @@ measurement.
 
 Spectral maps
 ^^^^^^^^^^^^^
-.. image:: ./assets_USID/3D_map_of_spectra.pdf
+.. image:: ./assets_USID/3D_map_of_spectra.svg
 
 If a spectrum of length ``S`` were acquired at each location in a two dimensional grid of positions
 with ``P`` rows and ``Q`` columns, it would result in a three dimensional dataset.
@@ -684,7 +684,7 @@ Candidates
 * The `DREAM.3D <http://dream3d.bluequartz.net/binaries/Help/DREAM3D/nativedream3d.html>`_ is yet another group that uses HDF5
   as the base container to store their data. We are currently evaluating compatibility with and feasibility of their data model.
 
-We found that `HDF5 <http://extremecomputingtraining.anl.gov/files/2015/03/HDF5-Intro-aug7-130.pdf>`_, works best for us compared to the alternatives.
+We found that `HDF5 <http://extremecomputingtraining.anl.gov/files/2015/03/HDF5-Intro-aug7-130.svg>`_, works best for us compared to the alternatives.
 Hence, we have implemented the **USID** model into the HDF5 file format and such file will be referred to as **h5USID** files.
 
 We acknowledge that it is nearly impossible to find the perfect file format and HDF5 too has its fair share of drawbacks.
