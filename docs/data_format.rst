@@ -197,7 +197,7 @@ this paradigm:
 
 Spectrum
 ^^^^^^^^
-.. image:: ./assets_USID/1D_spectra.svg
+.. image:: ./assets_USID/1D_spectra.pdf
 
 This case encompasses examples such as a **single** Raman spectrum, force-distance curve in
 atomic force microscopy, current-voltage spectroscopy, etc. In this case, the measurement is recorded
@@ -209,7 +209,7 @@ data would be a ``1 x S`` matrix. The ``quantity`` represented in this data woul
 
 Gray-scale images
 ^^^^^^^^^^^^^^^^^
-.. image:: ./assets_USID/2D_images.svg
+.. image:: ./assets_USID/2D_images.pdf
 
 In such data, a single value (``quantity`` is *intensity*) in is recorded
 at each location in a two dimensional grid. Thus, there are are two
@@ -230,7 +230,7 @@ measurement.
 
 Spectral maps
 ^^^^^^^^^^^^^
-.. image:: ./assets_USID/3D_map_of_spectra.svg
+.. image:: ./assets_USID/3D_map_of_spectra.pdf
 
 If a spectrum of length ``S`` were acquired at each location in a two dimensional grid of positions
 with ``P`` rows and ``Q`` columns, it would result in a three dimensional dataset.
