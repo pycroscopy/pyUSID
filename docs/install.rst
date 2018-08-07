@@ -3,12 +3,19 @@ Installation
 
 Preparing for pyUSID
 --------------------
-`PyUSID <https://github.com/pycroscopy/pyUSID>`_ requires many commonly used scientific and numeric python packages such as numpy, h5py etc. To simplify the installation process, we recommend the installation of Anaconda which contains most of the prerequisite packages, `conda <https://conda.io/docs/>`_ - a package / environment manager, as well as an `interactive development environment <https://en.wikipedia.org/wiki/Integrated_development_environment>`_ - `Spyder <https://www.coursera.org/learn/python-programming-introduction/lecture/ywcuv/introduction-to-the-spyder-ide>`_.
+`PyUSID <https://github.com/pycroscopy/pyUSID>`_ requires many commonly used scientific and numeric python packages such as numpy, h5py etc.
+To simplify the installation process, we recommend the installation of Anaconda which contains most of the prerequisite packages,
+`conda <https://conda.io/docs/>`_ - a package / environment manager,
+as well as an `interactive development environment <https://en.wikipedia.org/wiki/Integrated_development_environment>`_ - `Spyder <https://www.coursera.org/learn/python-programming-introduction/lecture/ywcuv/introduction-to-the-spyder-ide>`_.
 
-   1. Recommended - uninstall existing Python distribution(s) if installed.  Restart computer afterwards.
+Do you already have Anaconda installed?
 
-   2. Install Anaconda 4.2 (Python 3.5) 64-bit -  `Mac <https://repo.continuum.io/archive/Anaconda3-4.2.0-MacOSX-x86_64.pkg>`_ / `Windows <https://repo.continuum.io/archive/Anaconda3-4.2.0-Windows-x86_64.exe>`_ / `Linux <https://repo.continuum.io/archive/Anaconda3-4.2.0-Linux-x86_64.sh>`_
-   
+- No? `Download and install Anaconda <https://www.anaconda.com/download/>`_ for Python 3.6
+
+- Yes? pyUSID will work with any Anaconda based on python 2.7 or 3.4+.
+  If your version of Anaconda is based on any other python version, we recommend that you uninstall existing Python distribution(s) if installed.
+  Restart computer afterwards.
+
 Compatibility
 ~~~~~~~~~~~~~
 * Development on pyUSID is on python 3.5+. Nonetheless, we will do our best to ensure continued compatibility with python 2. Please raise an issue if you find a bug.
