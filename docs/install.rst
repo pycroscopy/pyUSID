@@ -12,9 +12,10 @@ Do you already have Anaconda installed?
 
 - No? `Download and install Anaconda <https://www.anaconda.com/download/>`_ for Python 3.6
 
-- Yes? pyUSID will work with any Anaconda based on python 2.7 or 3.4+.
-  If your version of Anaconda is based on any other python version, we recommend that you uninstall existing Python distribution(s) if installed.
-  Restart computer afterwards.
+- Yes? Is your Anaconda based on python 2.7, 3.4+?
+
+  - No? Uninstall existing Python / Anaconda distribution(s). Restart computer afterwards.
+  - Yes? Proceed to install pyUSID
 
 Compatibility
 ~~~~~~~~~~~~~
