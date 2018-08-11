@@ -511,7 +511,7 @@ def plot_line_family(axis, x_vec, line_family, line_names=None, label_prefix='',
 
 
 def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=None,
-             num_ticks=4, stdevs=None, cbar_label=None, tick_font_size=14, **kwargs):
+             num_ticks=4, stdevs=None, cbar_label=None, tick_font_size=None, **kwargs):
     """
     Plots an image within the given axis with a color bar + label and appropriate X, Y tick labels.
     This is particularly useful to get readily interpretable plots for papers
@@ -540,7 +540,7 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
         Number of standard deviations to consider for plotting.  If None, full range is plotted.
     cbar_label : str, optional, default = None
         Labels for the colorbar. Use this for something like quantity (units)
-    tick_font_size : unsigned int, optional, default = 14
+    tick_font_size : unsigned int, optional, default = None
         Font size to apply to x, y, colorbar ticks and colorbar label
     kwargs : dictionary
         Anything else that will be passed on to imshow
@@ -611,7 +611,8 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
         axis.set_xticks(x_ticks)
         axis.set_xticklabels(x_tick_labs)
 
-        set_tick_font_size(axis, tick_font_size)
+        if tick_font_size is not None:
+            set_tick_font_size(axis, tick_font_size)
     else:
         axis.set_xticks([])
 
@@ -633,7 +634,8 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
         axis.set_yticks(y_ticks)
         axis.set_yticklabels(y_tick_labs)
 
-        set_tick_font_size(axis, tick_font_size)
+        if tick_font_size is not None:
+            set_tick_font_size(axis, tick_font_size)
     else:
         axis.set_yticks([])
 
@@ -649,8 +651,14 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
         if cbar_label is not None:
             if not isinstance(cbar_label, (str, unicode)):
                 raise TypeError('cbar_label should be a string')
-            cbar.set_label(cbar_label, fontsize=tick_font_size)
-        cbar.ax.tick_params(labelsize=tick_font_size)
+
+            if tick_font_size is not None:
+                cbar.set_label(cbar_label)
+            else:
+                cbar.set_label(cbar_label, fontsize=tick_font_size)
+
+        if tick_font_size is not None:
+            cbar.ax.tick_params(labelsize=tick_font_size)
     return im_handle, cbar
 
 
