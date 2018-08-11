@@ -40,6 +40,9 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
     verbose : bool, optional
         Whether or not to print log statements
     """
+    label_fontsize = 12
+    subtitle_fontsize = 13
+
     pos_dim_names = [item.name for item in pos_dims]
     spec_dim_names = [item.name for item in spec_dims]
 
@@ -96,8 +99,8 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
         return spgram_slicing
 
     def plot_1d(axis, image_mat, dim_name, dim_dict, component_title):
-        axis.set_xlabel(dim_name + ' (' + dim_dict[dim_name].units + ')', fontsize=16)
-        axis.set_ylabel(component_title, fontsize=16)
+        axis.set_xlabel(dim_name + ' (' + dim_dict[dim_name].units + ')', fontsize=label_fontsize)
+        axis.set_ylabel(component_title, fontsize=label_fontsize)
         if image_mat.shape[0] != dim_dict[dim_name].values.size:
             image_mat = image_mat.T
         img_handle = axis.plot(dim_dict[dim_name].values, image_mat)
@@ -105,8 +108,8 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
             other_dims = list(dim_dict.keys()).copy()
             other_dims.remove(dim_name)
             other_dims = other_dims[0]
-            axis.legend(dim_dict[other_dims].values, fontsize=14)
-        set_tick_font_size(axis, 14)
+            axis.legend(dim_dict[other_dims].values)#, fontsize=14)
+        #set_tick_font_size(axis, 14)
         return img_handle
 
     def plot_2d(axis, image_mat, clims, dim_list):
@@ -115,8 +118,8 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
                                                                  dim_list[0].values.shape))
         img, cbar = plot_map(axis, image_mat, aspect='auto', clim=clims,
                              x_vec=dim_list[1].values, y_vec=dim_list[0].values)
-        axis.set_xlabel(dim_list[1].name + ' (' + dim_list[1].units + ')', fontsize=16)
-        axis.set_ylabel(dim_list[0].name + ' (' + dim_list[0].units + ')', fontsize=16)
+        axis.set_xlabel(dim_list[1].name + ' (' + dim_list[1].units + ')', fontsize=label_fontsize)
+        axis.set_ylabel(dim_list[0].name + ' (' + dim_list[0].units + ')', fontsize=label_fontsize)
         return img, cbar
 
     def update_image(axis, img_handle, data_mat, slice_dict, twoD=True):
@@ -241,10 +244,10 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
         print('Spatial map data shape: {}, Spectrogram data shape: {}'.format(current_spatmap.shape,
                                                                               current_spgram.shape))
 
-    fig, axes = plt.subplots(ncols=2, figsize=(15.5, 7))
+    fig, axes = plt.subplots(ncols=2, figsize=(8, 3.5))
     # axes[0].hold(True)
     spec_titles = get_slice_string(spatmap_slicing, spec_dims)
-    axes[0].set_title('Spatial Map for\n' + component_title + '\n' + spec_titles, fontsize=18)
+    axes[0].set_title('Spatial Map for\n' + component_title + '\n' + spec_titles, fontsize=subtitle_fontsize)
     if pos_plot_2d:
         img_spat, cbar_spat = plot_2d(axes[0], current_spatmap, clims, pos_dims)
         main_vert_line = axes[0].axvline(x=spgram_slicing[pos_dims[1].name], color='k')
@@ -253,7 +256,7 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
         img_spat = plot_1d(axes[0], current_spatmap, pos_xdim, pos_dims_dict, component_title)
 
     pos_titles = get_slice_string(spgram_slicing, pos_dims)
-    axes[1].set_title('Spectrogram for\n' + component_title + '\n' + pos_titles, fontsize=18)
+    axes[1].set_title('Spectrogram for\n' + component_title + '\n' + pos_titles, fontsize=subtitle_fontsize)
     if spec_plot_2d:
         img_spec, cbar_spec = plot_2d(axes[1], current_spgram, clims, spec_dims)
     else:
@@ -291,12 +294,12 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
                 if pos_plot_2d:
                     img_spat.set_clim(clims)
                 else:
-                    axes[0].set_ylabel(component_title, fontsize=16)
+                    axes[0].set_ylabel(component_title, fontsize=label_fontsize)
                 update_image(axes[1], img_spec, sub_data, spgram_slicing, twoD=spec_plot_2d)
                 if spec_plot_2d:
                     img_spec.set_clim(clims)
                 else:
-                    axes[1].set_ylabel(component_title, fontsize=16)
+                    axes[1].set_ylabel(component_title, fontsize=label_fontsize)
 
                 spec_titles = get_slice_string(spatmap_slicing, spec_dims)
                 axes[0].set_title('Spatial Map for\n' + component_title + '\n' + spec_titles)
@@ -315,7 +318,8 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
             spgram_slicing.update(get_spgram_slice_dict(slice_dict=kwargs))
             update_image(axes[1], img_spec, global_vars['sub_data'], spgram_slicing, twoD=spec_plot_2d)
             pos_titles = get_slice_string(spgram_slicing, pos_dims)
-            axes[1].set_title('Spectrogram for\n' + global_vars['component_title'] + '\n' + pos_titles, fontsize=18)
+            axes[1].set_title('Spectrogram for\n' + global_vars['component_title'] + '\n' + pos_titles,
+                              fontsize=subtitle_fontsize)
             if pos_plot_2d:
                 main_vert_line.set_xdata(spgram_slicing[pos_dims[1].name])
                 main_hor_line.set_ydata(spgram_slicing[pos_dims[0].name])
@@ -330,7 +334,8 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
             spatmap_slicing.update(get_spatmap_slice_dict(slice_dict=kwargs))
             update_image(axes[0], img_spat, global_vars['sub_data'], spatmap_slicing, twoD=pos_plot_2d)
             spec_titles = get_slice_string(spatmap_slicing, spec_dims)
-            axes[0].set_title('Spatial Map for\n' + global_vars['component_title'] + '\n' + spec_titles, fontsize=18)
+            axes[0].set_title('Spatial Map for\n' + global_vars['component_title'] + '\n' + spec_titles,
+                              fontsize=subtitle_fontsize)
 
         slice_dict.update(kwargs)
 
