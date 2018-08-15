@@ -16,6 +16,10 @@ pyUSID
 .. image:: https://img.shields.io/pypi/l/pyUSID.svg
     :target: https://pypi.org/project/pyUSID/
     :alt: License
+    
+.. image:: http://pepy.tech/badge/pyUSID
+    :target: http://pepy.tech/project/pyUSID
+    :alt: Downloads
 
 .. image:: https://zenodo.org/badge/138171750.svg
    :target: https://zenodo.org/badge/latestdoi/138171750
