@@ -1,5 +1,5 @@
-Data Model and File Format
-==========================
+Data Schema and File Format
+===========================
 
 **Suhas Somnath**
 
@@ -11,7 +11,8 @@ spectroscopy and imaging data.
 
 Pycroscopy uses the **USID** model and **h5USID** files.
 
-**Dr. Stephen Jesse** conceived the **USID** while **Dr. Suhas Somnath** and **Chris R. Smith** implemented **USID**
+`Alex Belianinonv <https://www.ornl.gov/staff-profile/alex-belianinov>`_ and `Stephen Jesse <https://scholar.google.com/citations?user=uiTAx2cAAAAJ&hl=en>`_,
+conceived the first version of **USID** while Suhas Somnath and Chris R. Smith developed subsequent versions of USID and implemented **USID**
 into hierarchical data format (**HDF5**) files using python in **pyUSID**
 
 .. contents::
@@ -20,9 +21,9 @@ Nomenclature
 --------------
 Before we start off, lets clarify some nomenclature to avoid confusion.
 
-Data model
+Data schema
 ~~~~~~~~~~~
-Data model refers to the way the data is arranged. This does **not** depend on the implementation in a particular file format
+Data schema or model refers to the way the data is arranged. This does **not** depend on the implementation in a particular file format
 
 File format
 ~~~~~~~~~~~~
@@ -31,7 +32,7 @@ This corresponds to the kind of file, such as a spreadsheet (.CSV), an image (.P
 Data format
 ~~~~~~~~~~~~
 `data format <https://en.wikipedia.org/wiki/Data_format>`_ is actually a rather broad term. However, we have observed that
-people often refer to the combination of a data model implemented within a file format as a ``data format``.
+people often refer to the combination of a data schema implemented within a file format as a ``data format``.
 
 Measurements
 ~~~~~~~~~~~~
@@ -66,7 +67,7 @@ Proprietary file formats
 
 Typically, each commercial instruments generates data files formatted in
 proprietary file formats by the instrument manufacturer. The proprietary
-nature of these file formats and the obfuscated data model within the files impede scientific progress in the
+nature of these file formats and the obfuscated data schema within the files impede scientific progress in the
 following ways:
 
 #. By making it challenging for researchers to extract data from these files
@@ -81,7 +82,9 @@ Future concerns
 
 #. Several fields are moving towards the open science paradigm which will require journals and researchers to support
    journal papers with data and analysis software
-#. US Federal agencies that support scientific research require curation of datasets in a clear and organized manner
+#. US Federal agencies that support scientific research mandate that the data be stored in a manner that is open, standardized
+   and curation-ready in order to meet both the guidelines for data sharing and satisfy the implementation of digital
+   data management as outlined by the United States Department of Energy.
 
 Other problems
 ~~~~~~~~~~~~~~~
@@ -98,11 +101,11 @@ Other problems
    advanced algorithms to reconstruct the missing data. We have not come across any robust solutions for storing such
    **Compressed sensing / sparse sampling** data. More in the **Advanced Topics** section.
 
-Universal Spectroscopy and Imaging Data (USID) Model
+Universal Spectroscopy and Imaging Data (USID) schema
 ------------------------------------------------------
 
 To solve the above and many more problems, we have developed an
-**instrument agnostic data model** that can be used to represent data
+**instrument agnostic data schema** that can be used to represent data
 from any instrument, size, dimensionality, or complexity.
 
 Information in **USID** are stored in three main kinds of datasets:
@@ -114,11 +117,11 @@ Information in **USID** are stored in three main kinds of datasets:
    ``main`` data
 #. ``Extra`` datasets store any other data that may be of value
 
-In addition to datasets, the data model is highly reliant on metadata that capture
+In addition to datasets, the data schema is highly reliant on metadata that capture
 smaller pieces but critical pieces of information such as the
 ``quantity`` and ``units`` that describe every data point in the ``main`` dataset.
 
-**We acknowledge that this data model is not trivial to understand at first glance but we are making every effort
+**We acknowledge that this data schema is not trivial to understand at first glance but we are making every effort
 to make is simple to understand. If you ever find anything complicated or unclear, please** `write to us <./contact.html>`_
 **and we will improve our documentation.**
 
@@ -130,7 +133,7 @@ thing in common:
 
 **The same measurement / operation is performed at each spatial position**
 
-The **USID** model is based on this one simple ground-truth.
+The **USID** schema is based on this one simple ground-truth.
 The data always has some ``spatial dimensions`` (X, Y, Z) and some
 ``spectroscopic dimensions`` (time, frequency, intensity, wavelength,
 temperature, cycle, voltage, etc.). **In USID, the spatial
@@ -216,7 +219,7 @@ at each location in a two dimensional grid. Thus, there are are two
 ``position dimensions`` - *X*, *Y*. The value at each pixel was not really acquired
 as a function of any variable so the data has one *arbitrary* ``spectroscopic dimension``.
 Thus, if the image had ``P`` rows and ``Q`` columns, it would have to be flattened and
-represented as a ``P*Q x 1`` array according to the **USID** model. The second
+represented as a ``P*Q x 1`` array according to the **USID** schema. The second
 axis has size of 1 since we only record one value (intensity) at each
 location. In theory, the flattened data could be arranged column-by-column (as in the figure above)
 and then row-by-row or vice-versa depending on how the data was (sequentially)
@@ -279,7 +282,7 @@ data that were not directly recorded from an instrument. Here are some examples:
 
 Complicated?
 ^^^^^^^^^^^^^
-This data model may seem unnecessarily complicated for very simple / rigid data such as 2D images or 1D spectra.
+This data schema may seem unnecessarily complicated for very simple / rigid data such as 2D images or 1D spectra.
 However, bear in mind that **this paradigm was designed to represent any information regardless of dimensionality, origin, complexity**, etc.
 Thus, encoding data in this manner will allow seamless sharing, exchange, and interpretation of data.
 
@@ -624,11 +627,11 @@ two ``spectroscopic dimensions`` (two rows in the ``Spectroscopic Indices`` data
 dataset)
 
 In the same manner, additional dimensions can be added to the ``main`` and appropriate ``ancillary`` datasets
-thus proving that this data model can indeed accommodate data of any size, complexity, or dimensionality.
+thus proving that this data schema can indeed accommodate data of any size, complexity, or dimensionality.
 
 Channels
 ~~~~~~~~~
-The **USID** model also allows the representation and capture of **information acquired
+The **USID** schema also allows the representation and capture of **information acquired
 simultaneously from multiple sources** through ``Channels``.
 Each ``Channel`` would contain a **separate** ``main`` dataset. ``Ancillary`` datasets
 can be shared across channels if the position or spectroscopic dimensions are identical.
@@ -682,10 +685,10 @@ Candidates
   In fact, Nexus, NetCDF, and even `Matlab's .mat <https://www.mathworks.com/help/matlab/import_export/mat-file-versions.html>`_
   files are actually (now) just custom flavors of HDF5 thereby validating the statement that HDF5 is the **unanimous the file format of choice**
 * The `DREAM.3D <http://dream3d.bluequartz.net/binaries/Help/DREAM3D/nativedream3d.html>`_ is yet another group that uses HDF5
-  as the base container to store their data. We are currently evaluating compatibility with and feasibility of their data model.
+  as the base container to store their data. We are currently evaluating compatibility with and feasibility of their data schema.
 
 We found that `HDF5 <http://extremecomputingtraining.anl.gov/files/2015/03/HDF5-Intro-aug7-130.svg>`_, works best for us compared to the alternatives.
-Hence, we have implemented the **USID** model into the HDF5 file format and such file will be referred to as **h5USID** files.
+Hence, we have implemented the **USID** schema into the HDF5 file format and such file will be referred to as **h5USID** files.
 
 We acknowledge that it is nearly impossible to find the perfect file format and HDF5 too has its fair share of drawbacks.
 One common observation among file formats is that a file format optimized for the cloud or cluster computing often does
@@ -701,7 +704,7 @@ of HDF5 and we plan to look into this once h5py or other python packages support
 h5USID - USID in HDF5
 -----------------------
 
-Here we discuss guidelines and specifications for implementing the **USID** model into HDF5 files.
+Here we discuss guidelines and specifications for implementing the **USID** schema into HDF5 files.
 While we could impose that the file extension be changed from **.hdf5** to **.h5USID**, we choose to retain
 the **.hdf5** extension so that other software are aware of the general file type and can recognize / read them easily.
 
