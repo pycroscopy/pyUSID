@@ -500,14 +500,14 @@ os.remove(h5_path)
 #   * ``use_partial_computation()`` - pick the first partially computed results group that was discovered by
 #     ``check_for_duplicates()``
 # * call ``create_results_datasets()`` to create the HDF5 datasets and group objects
-# * read the first chunk of data via ``read_data_chunk()`` into ``self._data``
-# * Until the source dataset is fully read (``self._data is not None``), do:
+# * read the first chunk of data via ``read_data_chunk()`` into ``self.data``
+# * Until the source dataset is fully read (``self.data is not None``), do:
 #
-#   * call ``unit_computation()`` on ``self._data``
+#   * call ``unit_computation()`` on ``self.data``
 #
-#     * By default ``unit_computation()`` just maps ``map_function()`` onto ``self._data``
+#     * By default ``unit_computation()`` just maps ``map_function()`` onto ``self.data``
 #   * call ``write_results_chunk()`` to write ``self._results`` into the HDF5 datasets
-#   * read the next chunk of data into ``self._data``
+#   * read the next chunk of data into ``self.data``
 #
 # use_partial_computation()
 # --------------------------
