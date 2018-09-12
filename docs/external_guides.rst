@@ -18,8 +18,10 @@ The following tutorials go over the basics of python programming:
 * `Official Python tutorial <https://docs.python.org/3/tutorial/>`_
 * The `Hitchhiker guide to Python <http://docs.python-guide.org/en/latest/>`_
 * Introduction to programming in `Python 3 <https://pythonprogramming.net/beginner-python-programming-tutorials/>`_
+* Tutorials on a broad spectrum of `real-world use topics <https://automatetheboringstuff.com>`_
 * `O'Riley <https://greenteapress.com/wp/think-python/>`_ has a nice book on Python too.
 * A nice guide on `intermediate Python <http://book.pythontips.com/en/latest/index.html>`_
+* Our own `crash course on the basics of python <https://github.com/pycroscopy/CNMS_UM_2018_SPIMA>`_
 
 HDF5 and h5py
 ~~~~~~~~~~~~~
