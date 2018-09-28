@@ -69,6 +69,7 @@ Long-term
 Back-burner
 ~~~~~~~~~~~~
 * Cloud deployment
+
   * Container installation
   * Check out HDF5Cloud
   * AWS cloud cluster
@@ -78,27 +79,19 @@ Back-burner
 
 Scaling to HPC
 --------------
-We have two kinds of large computational jobs and one kind of large I/O job:
+We have two kinds of large computational jobs:
 
-* I/O - reading and writing large amounts of data:
+#. Embarrassingly parallel analysis / processing. Can be scaled using:
 
-  * MPI clearly works with very high performance parallel read and write
-  * Dask would indeed work as well but may not be capable of parallel writes
-  * Spark / HDFS requires investigation - Try with new h5pyd
+    * MPI - upgraded Process class `already available <https://github.com/pycroscopy/distUSID/tree/pure_mpi>`_ and in the process of rolling changes into pyUSID
+    * Dask - An inplace replacement of multiprocessing will work on laptops and clusters. More elegant and easier to write and maintain compared to MPI at the cost of efficiency
 
-* Computation:
+      * `simple dask netcdf example <http://matthewrocklin.com/blog/work/2016/02/26/dask-distributed-part-3>`_
+    * pySpark?
 
-  1. Machine learning and Statistics
+#. Machine learning and Statistics
 
-    * Use custom algorithms developed for BEAM - NO one is willing to salvage code
-
-      * Advantage - Optimized (and tested) for various HPC environments
-      * Disadvantages:
-
-        * Need to integrate non-python code
-        * We only have a handful of these. NOT future compatible
-
-    * OR continue using a single FAT node for these jobs
+    * Continue using a single FAT node for these jobs
 
       * Advantages:
 
@@ -116,11 +109,4 @@ We have two kinds of large computational jobs and one kind of large I/O job:
 
         * Dependant on pbdR for implementing new algorithms
 
-  2. Embarrasingly parallel analysis / processing. Can be scaled using:
 
-    * Dask - An inplace replacement of multiprocessing will work on laptops and clusters. More elegant and easier to write and maintain compared to MPI at the cost of efficiency
-
-      * `simple dask netcdf example <http://matthewrocklin.com/blog/work/2016/02/26/dask-distributed-part-3>`_
-    * MPI - Need alternatives to Optimize / Process classes - Best efficiency but a pain to implement
-    * Spark?
-    * ipyParallel?
