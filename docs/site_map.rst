@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to pyUSID's documentation!
-==================================
+Site map
+========
 **Framework for storing, visualizing, and processing Universal Spectroscopic and Imaging Data (USID)**
 
 Jump to our `GitHub project page <https://github.com/pycroscopy/pyUSID>`_
