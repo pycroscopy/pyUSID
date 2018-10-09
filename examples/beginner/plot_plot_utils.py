@@ -233,9 +233,8 @@ fig.tight_layout()
 num_pts = 256
 
 fig, axis = plt.subplots()
-axis.hold(True)
 
-# Prepare some backround signal
+# Prepare some background signal
 x_mat, y_mat = np.meshgrid(np.linspace(-0.2*np.pi, 0.1*np.pi, num_pts), np.linspace(0, 0.25*np.pi, num_pts))
 background_distortion = 0.2 * (x_mat + y_mat + np.sin(0.25 * np.pi * x_mat))
 
@@ -250,12 +249,12 @@ atom_intensities = y_vec * np.atleast_2d(y_vec).T
 # prepare the transparent-to-solid colormap
 solid_color = plt.cm.jet(0.8)
 translucent_colormap = usid.plot_utils.make_linear_alpha_cmap('my_map', solid_color, 
-                                                            1, min_alpha=0, max_alpha=1)
+                                                              1, min_alpha=0, max_alpha=1)
 
 # plot the atom intensities using the custom colormap
 im_handle = axis.imshow(atom_intensities, cmap=translucent_colormap)
 cbar = plt.colorbar(im_handle, ax=axis, orientation='vertical',
-                        fraction=0.046, pad=0.04, use_gridspec=True)
+                    fraction=0.046, pad=0.04, use_gridspec=True)
 
 ################################################################################################
 # get_cmap_object()
