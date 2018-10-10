@@ -108,8 +108,8 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
             other_dims = list(dim_dict.keys()).copy()
             other_dims.remove(dim_name)
             other_dims = other_dims[0]
-            axis.legend(dim_dict[other_dims].values)#, fontsize=14)
-        #set_tick_font_size(axis, 14)
+            axis.legend(dim_dict[other_dims].values)  # , fontsize=14)
+        # set_tick_font_size(axis, 14)
         return img_handle
 
     def plot_2d(axis, image_mat, clims, dim_list):
@@ -145,6 +145,8 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
         if len(parm) > 2:
             raise NotImplementedError('Currently not able to handle more than 2 position or spectroscopic dimensions.'
                                       ' {} contains {} dimensions'.format(parm_name, len(parm)))
+        elif len(parm) < 1:
+            raise ValueError('{} contains too few ({}) dimensions'.format(parm_name, len(parm)))
 
     if len(pos_dims) + len(spec_dims) != data_mat.ndim:
         raise ValueError('Lengths of pos_dims and spec_dims not matching with that of the dimensions of data_mat')

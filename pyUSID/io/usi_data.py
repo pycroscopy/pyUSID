@@ -11,11 +11,13 @@ import os
 import sys
 import h5py
 import numpy as np
+import matplotlib.pyplot as plt
 from .hdf_utils import check_if_main, get_attr, \
     get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims
 from .dtype_utils import flatten_to_real, contains_integers
 from .write_utils import Dimension
 from ..viz.jupyter_utils import simple_ndim_visualizer
+from ..viz.plot_utils import plot_map
 
 if sys.version_info.major == 3:
     unicode = str
@@ -502,6 +504,13 @@ class USIDataset(h5py.Dataset):
             Slicing instructions
         verbose : bool, optional
             Whether or not to print debugging statements. Default = Off
+
+        Returns
+        -------
+        fig : matplotlib.figure handle
+            Handle for the figure object
+        axis : matplotlib.Axes.axis object
+            Axis within which the data was plotted. Note - the interactive visualizer does not return this object
         """
         pos_labels = self.pos_dim_labels
         pos_units = get_attr(self.h5_pos_inds, 'units')
@@ -579,15 +588,37 @@ class USIDataset(h5py.Dataset):
             spec_dims.append(Dimension(name, units, spec_unit_values[name]))
 
         if verbose:
-            print('Position VizDimensions:')
+            print('Position Dimensions:')
             for item in pos_dims:
                 print('{}\n{}'.format(len(item.values), item))
-            print('Spectroscopic VizDimensions:')
+            print('Spectroscopic Dimensions:')
             for item in spec_dims:
                 print('{}\n{}'.format(len(item.values), item))
             print('N dimensional data sent to visualizer of shape: {}'.format(data_slice.shape))
 
-        simple_ndim_visualizer(data_slice, pos_dims, spec_dims, verbose=verbose, **kwargs)
+        # Handle the simple cases first:
+        if len(spec_dims) == 1 and len(pos_dims) == 2:
+            if len(spec_dims[0].values) == 1:
+                # 2D Image
+                fig, axis = plt.subplots()
+                plot_map(axis, np.squeeze(data_slice), show_xy_ticks=True, show_cbar=True,
+                         cbar_label=self.data_descriptor, x_vec=pos_dims[0].values, y_vec=pos_dims[1].values, **kwargs)
+                axis.set_title(self.name, pad=15)
+                axis.set_xlabel(pos_dims[0].name + '(' + pos_dims[0].units + ')')
+                axis.set_ylabel(pos_dims[1].name + '(' + pos_dims[1].units + ')')
+                return fig, axis
+
+        elif len(spec_dims) == 1 and len(pos_dims) == 1:
+            if len(pos_dims[0].values) == 1 and len(spec_dims[0].values) > 1:
+                # 1D curve:
+                fig, axis = plt.subplots()
+                axis.plot(spec_dims[0].values, np.squeeze(data_slice), **kwargs)
+                axis.set_xlabel(spec_dims[0].name + '(' + spec_dims[0].units + ')')
+                axis.set_ylabel(self.data_descriptor)
+                axis.set_title(self.name)
+                return fig, axis
+
+        return simple_ndim_visualizer(data_slice, pos_dims, spec_dims, verbose=verbose, **kwargs)
 
     def to_csv(self, output_path=None, force=False):
         """
