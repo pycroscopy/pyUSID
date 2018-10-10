@@ -9,6 +9,7 @@ from __future__ import division, absolute_import, unicode_literals, print_functi
 import h5py
 import numpy as np
 from collections import Iterable
+from itertools import groupby
 
 __all__ = ['flatten_complex_to_real', 'get_compound_sub_dtypes', 'flatten_compound_to_real', 'check_dtype',
            'stack_real_to_complex', 'validate_dtype',
@@ -356,3 +357,48 @@ def is_complex_dtype(dtype):
     if dtype in [np.complex, np.complex64, np.complex128]:
         return True
     return False
+
+
+def integers_to_slices(int_array):
+    """
+    Converts a sequence of iterables to a list of slice objects denoting sequences of consecutive numbers
+
+    Parameters
+    ----------
+    int_array : collections.Iterable object
+        iterable object like a list or numpy array
+
+    Returns
+    -------
+    sequences : list of slice objects
+        slices denoting sequences of consecutive numbers
+    """
+    if not contains_integers(int_array):
+        raise ValueError('Expected a list, tuple, or numpy array of integers')
+
+    def integers_to_consecutive_sections(integer_array):
+        """
+        Converts a sequence of iterables to tuples with start and stop bounds
+
+        Parameters
+        ----------
+        integer_array : collections.Iterable object
+            iterable object like a list
+        Returns
+        -------
+        iterable : generator object
+            Cast to list or similar to use
+
+        Note
+        ----
+        From https://stackoverflow.com/questions/4628333/converting-a-list-of-integers-into-range-in-python
+        Credits: @juanchopanza and @luca
+        """
+        integer_array = sorted(set(integer_array))
+        for key, group in groupby(enumerate(integer_array),
+                                  lambda t: t[1] - t[0]):
+            group = list(group)
+            yield group[0][1], group[-1][1]
+
+    sequences = [slice(item[0], item[1] + 1) for item in integers_to_consecutive_sections(int_array)]
+    return sequences
