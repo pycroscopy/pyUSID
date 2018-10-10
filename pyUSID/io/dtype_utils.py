@@ -12,7 +12,7 @@ from collections import Iterable
 from itertools import groupby
 
 __all__ = ['flatten_complex_to_real', 'get_compound_sub_dtypes', 'flatten_compound_to_real', 'check_dtype',
-           'stack_real_to_complex', 'validate_dtype',
+           'stack_real_to_complex', 'validate_dtype', 'integers_to_slices',
            'stack_real_to_compound', 'stack_real_to_target_dtype', 'flatten_to_real', 'contains_integers']
 
 
