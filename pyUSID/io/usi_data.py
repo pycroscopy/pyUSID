@@ -604,8 +604,8 @@ class USIDataset(h5py.Dataset):
                 plot_map(axis, np.squeeze(data_slice), show_xy_ticks=True, show_cbar=True,
                          cbar_label=self.data_descriptor, x_vec=pos_dims[0].values, y_vec=pos_dims[1].values, **kwargs)
                 axis.set_title(self.name, pad=15)
-                axis.set_xlabel(pos_dims[0].name + '(' + pos_dims[0].units + ')')
-                axis.set_ylabel(pos_dims[1].name + '(' + pos_dims[1].units + ')')
+                axis.set_xlabel(pos_dims[1].name + '(' + pos_dims[1].units + ')')
+                axis.set_ylabel(pos_dims[0].name + '(' + pos_dims[0].units + ')')
                 return fig, axis
 
         elif len(spec_dims) == 1 and len(pos_dims) == 1:
