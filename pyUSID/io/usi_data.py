@@ -589,69 +589,93 @@ class USIDataset(h5py.Dataset):
 
         simple_ndim_visualizer(data_slice, pos_dims, spec_dims, verbose=verbose, **kwargs)
 
+    def to_csv(self, output_path=None, force=False):
+        """
+        Output this USIDataset and position + spectroscopic values to a csv file.
+        This should ideally be limited to small datasets only
 
-def write_dset_to_txt(self, output_file='output.csv'):
-    """
-    Output a USIDataset in csv format
+        Parameters
+        ----------
+        output_path : str, optional
+            path that the output file should be written to.
+            By default, the file will be written to the same directory as the HDF5 file
+        force : bool, optional
+            Whether or not to force large dataset to be written to CSV. Default = False
 
-    Parameters
-    ----------
-    self : USIDataset
-        the USIDataset that will be exported as a csv
-    output_file : str, optional
-        path that the output file should be written to
+        Returns
+        -------
+        output_file: str
 
-    Returns
-    -------
-    output_file: str
+        Author - Daniel Streater, Suhas Somnath
+        """
+        if not isinstance(force, bool):
+            raise TypeError('force should be a bool')
 
-    Author - Daniel Streater
-    """
-    if not isinstance(self, USIDataset):
-        raise TypeError('self should be a USIDataset')
+        if self.dtype.itemsize * self.size / (1024 ** 2) > 15:
+            if force:
+                print('Note - the CSV file will larger than 100 MB')
+            else:
+                print('CSV file will not be written since the CSV file could be several 100s of MB large.\n'
+                      'If you still want the file to be written, add the keyword argument "force=True"\n'
+                      'We recommend that you save the data as a .npy or .npz file using numpy.dump')
+                return
 
-    specVals = self.h5_spec_vals
-    posVals = self.h5_pos_vals
-    dimUnits = self.spec_dim_descriptors
-    pdPosDims = self.pos_dim_labels
-    pdSpecDims = self.spec_dim_labels
+        if output_path is not None:
+            if not isinstance(output_path, str):
+                raise TypeError('output_path should be a string with a valid path for the output file')
+        else:
+            parent_folder, file_name = os.path.split(self.file.filename)
+            csv_name = file_name[:file_name.rfind('.')] + self.name.replace('/', '-') + '.csv'
+            output_path = os.path.join(parent_folder, csv_name)
 
-    header = ''
-    for idx, spec in enumerate(specVals):
+        if os.path.exists(output_path):
+            if force:
+                os.remove(output_path)
+            else:
+                raise FileExistsError('A file of the following name already exists. Set "force=True" to overwrite.\n'
+                                      'File path: ' + output_path)
+
+        header = ''
+        for spec_vals_for_dim in self.h5_spec_vals:
+            # create one line of the header for each of the spectroscopic dimensions
+            header += ','.join(str(item) for item in spec_vals_for_dim) + '\n'
+        # Add a dashed-line separating the spec vals from the data
+        header += ','.join(
+            '--------------------------------------------------------------' for _ in self.h5_spec_vals[0])
+
+        # Write the contents to a temporary file
+        np.savetxt('temp.csv', self, delimiter=',', header=header, comments='')
 
         """
-        Obtain the units from the spectral dimension descriptors then
-        create each line of the header with a spacer between the dimensions and the data
+        Create the spectral and position labels for the dataset in string form then
+        create the position value array in string form, right-strip the last comma from the 
+        string to deliver the correct number of values, append all of the labels and values together,
+        save the data and header to a temporary csv output
         """
-        unitStart = dimUnits[idx].find('(') + 1
-        unitEnd = dimUnits[idx].find(')')
-        unit = dimUnits[idx][unitStart:unitEnd]
-        header = header + ','.join(str(freq) + ' ' + unit for freq in spec) + '\n'
-    header = header + ','.join('--------------------------------------------------------------' for idx in specVals[0])
+        # First few lines will have the spectroscopic dimension names + units
+        spec_dim_labels = ''
+        for dim_desc in self.spec_dim_descriptors:
+            spec_dim_labels += ','.join('' for _ in self.pos_dim_labels) + str(dim_desc) + ',\n'
 
-    """
-    Create the spectral and position labels for the dataset in string form then
-    create the position value array in string form, right-strip the last comma from the 
-    string to deliver the correct number of values, append all of the labels and values together,
-    save the data and header to a temporary csv output
-    """
-    specLabel = ''
-    for dim in pdSpecDims:
-        specLabel = specLabel + ','.join('' for idx in pdPosDims) + str(dim) + ',\n'
+        # Next line will have the position dimension names
+        pos_labels = ','.join(pos_dim for pos_dim in self.pos_dim_descriptors) + ',\n'
 
-    posLabel = ','.join(posL for posL in pdPosDims) + ',\n'
+        # Finally, the remaining rows will have the position values themselves
+        pos_values = ''
+        for pos_vals_in_row in self.h5_pos_vals:
+            pos_values += ','.join(str(item) for item in pos_vals_in_row) + ',\n'
+        pos_values = pos_values.rstrip('\n')
 
-    posValOut = ''
-    for val, posDim in enumerate(posVals):
-        posValOut = posValOut + ','.join(str(posVal) for posVal in posVals[val]) + ',\n'
-    posValOut = posValOut.rstrip('\n')
-    output = specLabel + posLabel + posValOut
-    np.savetxt('temp.csv', self, delimiter=',', header=header, comments='')
+        # Now put together all the rows for the first few columns:
+        output = spec_dim_labels + pos_labels + pos_values
 
-    left_dset = output.splitlines()
-    with open('temp.csv', 'r+') as f, open(output_file, 'w') as b:
-        for left_line, right_line in zip(left_dset, f):
-            right_line = left_line + right_line
-            b.write(right_line)
-    os.remove('temp.csv')
-    return output_file
+        left_dset = output.splitlines()
+
+        with open('temp.csv', 'r+') as in_file, open(output_path, 'w') as out_file:
+            for left_line, right_line in zip(left_dset, in_file):
+                out_file.write(left_line + right_line)
+
+        os.remove('temp.csv')
+        print('Successfully wrote this dataset to: ' + output_path)
+
+        return output_path
