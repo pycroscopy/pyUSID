@@ -11,6 +11,7 @@ import sys
 import h5py
 import numpy as np
 import shutil
+from collections import OrderedDict
 
 sys.path.append("../../pyUSID/")
 from pyUSID.io import hdf_utils, write_utils, io_utils, USIDataset
@@ -55,6 +56,28 @@ class TestHDFUtils(unittest.TestCase):
         for reg_ref_name, reg_ref_tuple in attrs.items():
             h5_dset.attrs[reg_ref_name] = h5_dset.regionref[reg_ref_tuple]
         TestHDFUtils.__write_string_list_as_attr(h5_dset, {'labels': list(attrs.keys())})
+
+    @staticmethod
+    def __make_simple_relaxation_spec_dsets():
+        unit_vals = OrderedDict()
+        unit_vals['Frequency'] =np.linspace(300, 350, 3)
+        unit_vals['Pulse_Repeat'] = np.arange(5)
+        unit_vals['DC_Offset'] = np.sin(2 * np.pi * np.linspace(0, 1, 7))
+        unit_vals['Field'] = np.array([1, 0])
+
+        relax_inds, relax_vals = write_utils.build_ind_val_matrices([unit_vals['Frequency'],
+                                                                     unit_vals['Pulse_Repeat'],
+                                                                     unit_vals['DC_Offset']])
+
+        # Now add a fourth dimension for the field that is closely tied with the DC offset:
+        # This time let the indices for Field start with 0
+        field_unit_inds = np.hstack(([0], np.ones(4, dtype=np.uint16)))
+        relax_inds = np.vstack((relax_inds,
+                                np.tile(np.repeat(field_unit_inds, 3), 7)))
+        field_unit_vals = np.hstack(([1], np.zeros(4, dtype=np.uint16)))
+        relax_vals = np.vstack((relax_vals,
+                                np.tile(np.repeat(field_unit_vals, 3), 7)))
+        return relax_inds, relax_vals, unit_vals
 
     def setUp(self):
         if os.path.exists(test_h5_file_path):
@@ -467,6 +490,20 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(len(expected), len(ret_val))
             for key, exp in expected.items():
                 self.assertTrue(np.allclose(exp, ret_val[key]))
+
+    def test_get_unit_values_names_not_provided(self):
+        relax_inds, relax_vals, exp_unit_vals = self.__make_simple_relaxation_spec_dsets()
+
+        with self.assertRaises(TypeError):
+            _ = hdf_utils.get_unit_values(relax_inds, relax_vals, dim_names=['Frequency', 'DC_Offset'])
+
+    def test_get_unit_values_no_n_dim_form(self):
+        relax_inds, relax_vals, exp_unit_vals = self.__make_simple_relaxation_spec_dsets()
+
+        ret_vals = hdf_utils.get_unit_values(relax_inds, relax_vals, all_dim_names=list(exp_unit_vals.keys()))
+
+        for key, expected in exp_unit_vals.items():
+            self.assertTrue(np.allclose(expected, ret_vals[key]))
 
     def test_find_dataset_legal(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
