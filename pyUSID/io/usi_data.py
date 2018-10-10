@@ -613,7 +613,7 @@ class USIDataset(h5py.Dataset):
 
         if self.dtype.itemsize * self.size / (1024 ** 2) > 15:
             if force:
-                print('Note - the CSV file will larger than 100 MB')
+                print('Note - the CSV file can be (much) larger than 100 MB')
             else:
                 print('CSV file will not be written since the CSV file could be several 100s of MB large.\n'
                       'If you still want the file to be written, add the keyword argument "force=True"\n'
