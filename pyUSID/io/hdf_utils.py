@@ -1828,15 +1828,6 @@ def get_unit_values(h5_inds, h5_vals, dim_names=None, all_dim_names=None, verbos
         raise ValueError('Length of dimension names list: {} not matching with shape of dataset: {}'
                          '.'.format(len(all_dim_names), inds_mat.shape[0]))
 
-    # For all dimensions, find where the index = 0
-    # basically, we are indexing all dimensions to 0
-    first_indices = []
-    for dim_ind, dim_name in enumerate(all_dim_names):
-        # check equality against the minimum value instead of 0 to account for cases when a dimension does not start
-        # from 0 (already been sliced) - think of multi-dimensional slicing!
-        first_indices.append(inds_mat[dim_ind] == np.min(inds_mat[dim_ind]))
-    first_indices = np.vstack(first_indices)
-
     if dim_names is None:
         dim_names = all_dim_names
         if verbose:
@@ -1865,19 +1856,46 @@ def get_unit_values(h5_inds, h5_vals, dim_names=None, all_dim_names=None, verbos
             print('Looking for dimension: {} in {}'.format(dim_name, dim_names))
         desired_row_ind = np.where(all_dim_names == dim_name)[0][0]
 
-        # Find indices of all other dimensions
-        remaining_dims = list(range(inds_mat.shape[0]))
-        remaining_dims.remove(desired_row_ind)
+        inds_for_dim = inds_mat[desired_row_ind]
+        # Wherever this dimension goes to 0 - start of a new tile
+        starts = np.where(inds_for_dim == np.min(inds_for_dim))[0]
+        # There may be repetitions in addition to tiling. Find how the the positions increase.
+        # 1 = repetition, > 1 = new tile
+        step_sizes = np.hstack(([1], np.diff(starts)))
+        # This array is of the same length as the full indices array
 
-        if verbose:
-            print('{} was found at position: {}. Indices of all other dimensions: {}'.format(dim_name, desired_row_ind,
-                                                                                             remaining_dims))
+        # We should expect only two values of step sizes for a regular dimension (tiles of the same size):
+        # 1 for same value repeating and a big jump in indices when the next tile starts
+        # If the repeats / tiles are of different lengths, then this is not a regular dimension.
+        # What does a Unit Values vector even mean in this case? Just raise an error for now
+        if np.where(np.unique(step_sizes) - 1)[0].size > 1:
+            raise ValueError('Non constant step sizes')
 
-        # The intersection of all these indices should give the desired index for the desired row
-        intersections = np.all(first_indices[remaining_dims, :], axis=0)
+        # Finding Start of a new tile
+        tile_starts = np.where(step_sizes > 1)[0]
 
-        # apply this slicing to the values dataset:
-        unit_values[dim_name] = vals_mat[desired_row_ind, intersections]
+        # converting these indices to correct indices that can be mapped straight to
+        if len(tile_starts) < 1:
+            # Dimension(s) with no tiling at all
+            # Make it look as though the next tile starts at the end of the whole indices vector
+            tile_starts = np.array([0, len(inds_for_dim)])
+        else:
+            # Dimension with some form of repetition
+            tile_starts = np.hstack(([0], starts[tile_starts]))
+
+            # Verify that each tile is identical here
+            # Last tile will not be checked unless we add the length of the indices vector as the start of next tile
+            tile_starts = np.hstack((tile_starts, [len(inds_for_dim)]))
+            subsections = [inds_for_dim[tile_starts[ind]: tile_starts[ind + 1]] for ind in range(len(tile_starts) - 1)]
+            if np.max(np.diff(subsections, axis=0)) != 0:
+                raise ValueError('Values in each tile of this dimension are different')
+
+        # Now looking within the first tile:
+        subsection = inds_for_dim[tile_starts[0]:tile_starts[1]]
+        # remove all repetitions. ie - take indices only where jump == 1
+        step_inds = np.hstack(([0], np.where(np.hstack(([0], np.diff(subsection))))[0]))
+        # Finally, use these indices to get the values
+        unit_values[dim_name] = vals_mat[desired_row_ind, step_inds]
 
     return unit_values
 
