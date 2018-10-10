@@ -37,7 +37,6 @@ __all__ = ['get_attr', 'get_h5_obj_refs', 'get_indices_for_region_ref', 'get_dim
 if sys.version_info.major == 3:
     unicode = str
 
-
 # TODO: Next version should account for two objects being in different files!
 
 
@@ -1113,6 +1112,14 @@ def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs
              '{}'.format(dset_name, dset_name.replace('-', '_')))
     dset_name = dset_name.replace('-', '_')
 
+    kwargs = {'shape': source_dset.shape, 'dtype': dtype, 'compression': source_dset.compression,
+              'chunks': source_dset.chunks}
+
+    if source_dset.file.driver == 'mpio':
+        if kwargs.pop('compression', None) is not None:
+            warn('This HDF5 file has been opened wth the "mpio" communicator. '
+                 'mpi4py does not allow creation of compressed datasets. Compression kwarg has been removed')
+
     if dset_name in h5_group.keys():
         if isinstance(h5_group[dset_name], h5py.Dataset):
             warn('A dataset named: {} already exists in group: {}'.format(dset_name, h5_group.name))
@@ -1125,15 +1132,13 @@ def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs
                                                                                                 h5_new_dset.dtype,
                                                                                                 dtype))
                 del h5_new_dset, h5_group[dset_name]
-                h5_new_dset = h5_group.create_dataset(dset_name, shape=source_dset.shape, dtype=dtype,
-                                                      compression=source_dset.compression, chunks=source_dset.chunks)
+                h5_new_dset = h5_group.create_dataset(dset_name, **kwargs)
         else:
             raise KeyError('{} is already a {} in group: {}'.format(dset_name, type(h5_group[dset_name]),
                                                                     h5_group.name))
 
     else:
-        h5_new_dset = h5_group.create_dataset(dset_name, shape=source_dset.shape, dtype=dtype,
-                                              compression=source_dset.compression, chunks=source_dset.chunks)
+        h5_new_dset = h5_group.create_dataset(dset_name, **kwargs)
 
     # This should link the ancillary datasets correctly
     h5_new_dset = copy_attributes(source_dset, h5_new_dset, skip_refs=skip_refs)
@@ -2498,6 +2503,11 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
                                                          base_name=aux_spec_prefix)
         if verbose:
             print('Created Spectroscopic datasets')
+
+    if h5_parent_group.file.driver == 'mpio':
+        if kwargs.pop('compression', None) is not None:
+            warn('This HDF5 file has been opened wth the "mpio" communicator. '
+                 'mpi4py does not allow creation of compressed datasets. Compression kwarg has been removed')
 
     if isinstance(main_data, np.ndarray):
         # Case 1 - simple small dataset
