@@ -19,6 +19,7 @@ struc_dtype = np.dtype({'names': ['r', 'g', 'b'],
 
 file_path = 'test_dtype_utils.h5'
 
+
 def compare_structured_arrays(arr_1, arr_2):
     """
     if not isinstance(arr_1, np.ndarray):
@@ -72,6 +73,26 @@ class TestDtypeUtils(unittest.TestCase):
             _ = dtype_utils.contains_integers(None)
         with self.assertRaises(TypeError):
             _ = dtype_utils.contains_integers(14)
+
+    def test_integers_to_slices_illegal(self):
+        with self.assertRaises(TypeError):
+            dtype_utils.integers_to_slices(slice(1, 15))
+        with self.assertRaises(ValueError):
+            dtype_utils.integers_to_slices([-1.43, 34.6565, 45.344, 5+6j])
+        with self.assertRaises(ValueError):
+            dtype_utils.integers_to_slices(['asdds', None, True, 45.344, 5 + 6j])
+
+    def test_integers_to_slices_positive(self):
+        expected = [slice(0, 3), slice(7, 8), slice(14, 18), slice(22, 23), slice(27, 28), slice(29, 30), slice(31, 32)]
+        inputs = np.hstack([range(item.start, item.stop) for item in expected])
+        ret_val = dtype_utils.integers_to_slices(inputs)
+        self.assertEqual(expected, ret_val)
+
+    def test_integers_to_slices_negative(self):
+        expected = [slice(-7, -4), slice(-2, 3), slice(14, 18), slice(22, 23), slice(27, 28), slice(29, 30)]
+        inputs = np.hstack([range(item.start, item.stop) for item in expected])
+        ret_val = dtype_utils.integers_to_slices(inputs)
+        self.assertEqual(expected, ret_val)
 
     def test_stack_real_to_complex_single(self):
         expected = 4.32 + 5.67j
