@@ -96,6 +96,12 @@ Instead, implementing the USID model only increases the functionality of the ver
 
 We are currently exploring collaboration / translators to and from `DREAM.3D's HDF5 data model <http://dream3d.bluequartz.net/binaries/Help/DREAM3D/nativedream3d.html>`_
 
+Do you have APIs for creating and reading USID HDF5 files in languages besides python?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+At the moment, pyUSID is the only available API for operating on USID HDF5 datasets.
+Given the open-source code of pyUSID and comprehensive documentation available, we believe that it should not be very challenging to work on USID HDF5 in other languages.
+If you are interested in making an API available for other languages, we would be happy to help in any way we can. Please get in touch with us.
+
 Becoming a part of the effort
 -----------------------------
 I don't know python / I don't think I write great python code. Does this preclude me from contributing to pyUSID?
