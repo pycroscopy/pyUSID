@@ -529,7 +529,7 @@ class USIDataset(h5py.Dataset):
         else:
             self.__validate_slice_dict(slice_dict)
 
-            # First work on slicing the ancillary matricies. Determine dimensionality before slicing n dims:
+            # First work on slicing the ancillary matrices. Determine dimensionality before slicing n dims:
             pos_slices, spec_slices = self._get_pos_spec_slices(slice_dict)
             # Things are too big to print here.
 
@@ -549,6 +549,7 @@ class USIDataset(h5py.Dataset):
 
             pos_unit_values = get_unit_values(pos_inds, pos_vals, all_dim_names=self.pos_dim_labels, verbose=False)
             spec_unit_values = get_unit_values(spec_inds, spec_vals, all_dim_names=self.spec_dim_labels, verbose=False)
+
             if verbose:
                 print('Position unit values:')
                 print(pos_unit_values)
