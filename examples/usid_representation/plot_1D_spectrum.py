@@ -127,6 +127,7 @@ for axis, data, title, y_lab in zip(axes.flat,
     axis.set_xlabel('Row in ' + title)
     axis.set_ylabel(y_lab)
 
+usid.plot_utils.use_scientific_ticks(axis, is_x=False)
 fig.suptitle('Ancillary Spectroscopic Datasets', y=1.05)
 fig.tight_layout()
 
