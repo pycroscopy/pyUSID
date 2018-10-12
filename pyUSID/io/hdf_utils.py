@@ -1764,7 +1764,7 @@ def check_for_matching_attrs(h5_obj, new_parms=None, verbose=False):
     return all(tests)
 
 
-def get_unit_values(h5_inds, h5_vals, dim_names=None, all_dim_names=None, verbose=False):
+def get_unit_values(h5_inds, h5_vals, dim_names=None, all_dim_names=None, is_spec=None, verbose=False):
     """
     Gets the unit arrays of values that describe the spectroscopic dimensions
 
@@ -1779,6 +1779,10 @@ def get_unit_values(h5_inds, h5_vals, dim_names=None, all_dim_names=None, verbos
     all_dim_names : list of str, Optional
         Names of all the dimensions in these datasets. Use this if supplying numpy arrays instead of h5py.Dataset
         objects for h5_inds, h5_vals since there is no other way of getting the dimension names.
+    is_spec : bool, optional
+        Whether or not the provided ancillary datasets are position or spectroscopic
+        The user is recommended to supply this parameter whenever it is known
+        By default, this function will attempt to recognize the answer based on the shape of the datasets.
     verbose : bool, optional
         Whether or not to print debugging statements. Default - off
 
@@ -1815,10 +1819,15 @@ def get_unit_values(h5_inds, h5_vals, dim_names=None, all_dim_names=None, verbos
     # First load to memory
     inds_mat = h5_inds[()]
     vals_mat = h5_vals[()]
-
-    is_spec = False
-    if inds_mat.shape[0] < inds_mat.shape[1]:
-        is_spec = True
+    
+    if is_spec is None:
+        # Attempt to recognize the type automatically
+        is_spec = False
+        if inds_mat.shape[0] < inds_mat.shape[1]:
+            is_spec = True
+    else:
+        if not isinstance(is_spec, bool):
+            raise TypeError('is_spec should be a boolean. Provided object is of type: {}'.format(type(is_spec)))
 
     if verbose:
         print(
