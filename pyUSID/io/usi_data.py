@@ -12,9 +12,10 @@ import sys
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
+
 from .hdf_utils import check_if_main, get_attr, \
     get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims
-from .dtype_utils import flatten_to_real, contains_integers
+from .dtype_utils import flatten_to_real, contains_integers, get_exponent
 from .write_utils import Dimension
 from ..viz.jupyter_utils import simple_ndim_visualizer
 from ..viz.plot_utils import plot_map
@@ -595,27 +596,6 @@ class USIDataset(h5py.Dataset):
             for item in spec_dims:
                 print('{}\n{}'.format(len(item.values), item))
             print('N dimensional data sent to visualizer of shape: {}'.format(data_slice.shape))
-
-        def get_exponent(vector):
-            """
-            Gets the scale / exponent for a sequence of numbers
-
-            Parameters
-            ----------
-            vector : array-like
-                Array of numbers
-
-            Returns
-            -------
-            exponent : int
-                Scale / exponent for the given vector
-            """
-            if np.max(np.abs(vector)) == np.max(vector):
-                exponent = np.log10(np.max(vector))
-            else:
-                # negative values
-                exponent = np.log10(np.max(np.abs(vector)))
-            return int(np.floor(exponent))
 
         # Handle the simple cases first:
         if len(spec_dims) == 1 and len(pos_dims) == 2:

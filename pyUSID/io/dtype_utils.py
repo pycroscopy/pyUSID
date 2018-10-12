@@ -12,7 +12,7 @@ from collections import Iterable
 from itertools import groupby
 
 __all__ = ['flatten_complex_to_real', 'get_compound_sub_dtypes', 'flatten_compound_to_real', 'check_dtype',
-           'stack_real_to_complex', 'validate_dtype', 'integers_to_slices',
+           'stack_real_to_complex', 'validate_dtype', 'integers_to_slices', 'get_exponent',
            'stack_real_to_compound', 'stack_real_to_target_dtype', 'flatten_to_real', 'contains_integers']
 
 
@@ -402,3 +402,26 @@ def integers_to_slices(int_array):
 
     sequences = [slice(item[0], item[1] + 1) for item in integers_to_consecutive_sections(int_array)]
     return sequences
+
+
+def get_exponent(vector):
+    """
+    Gets the scale / exponent for a sequence of numbers. This is particularly useful when wanting to scale a vector
+    for the purposes of plotting
+
+    Parameters
+    ----------
+    vector : array-like
+        Array of numbers
+
+    Returns
+    -------
+    exponent : int
+        Scale / exponent for the given vector
+    """
+    if np.max(np.abs(vector)) == np.max(vector):
+        exponent = np.log10(np.max(vector))
+    else:
+        # negative values
+        exponent = np.log10(np.max(np.abs(vector)))
+    return int(np.floor(exponent))
