@@ -44,6 +44,21 @@ except ImportError:
 ################################################################################################
 # 1D plot utilities
 # ===========================
+# use_scientific_ticks()
+# ----------------------
+# Often scientific plots look ugly because of the way tick marks are formatted for small or large values.
+# use_scientific_ticks() is a handy function that can convert tick marks on 1D plots to scientific form
+
+fig, axes = plt.subplots(ncols=2, figsize=(8, 4))
+x_vec = np.linspace(0, 2*np.pi, 128)
+for axis, title in zip(axes.flat, ['Default', 'Scientific']):
+    axis.plot(x_vec, np.sin(x_vec) * 1E-6)
+    axis.set_title(title)
+# Changing how the tick marks on the Y axis are formatted only on the second axis:
+usid.plot_utils.use_scientific_ticks(axes[1], is_x=False)
+fig.tight_layout()
+
+################################################################################################
 # plot_curves()
 # --------------
 # This function is particularly useful when we need to plot a 1D signal acquired at multiple locations.
