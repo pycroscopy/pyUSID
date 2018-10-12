@@ -12,10 +12,11 @@ import inspect
 import os
 import sys
 from numbers import Number
+import numpy as np
 import h5py
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import numpy as np
+import matplotlib.ticker as mtick
 from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.axes_grid1 import ImageGrid
 
@@ -126,6 +127,35 @@ def set_tick_font_size(axes, font_size):
     else:
         assert isinstance(axes, mpl.axes.Axes), mesg
         __set_axis_tick(axes)
+
+
+def use_scientific_ticks(axis, is_x=True, formatting='%.2e'):
+    """
+    Makes the desired axis use scientific notation for its tick labels. This is applicable only for 1D plots at the
+    moment.
+
+    Parameters
+    ----------
+    axis : matplotlib.pyplot.axis object
+        Axis handle
+    is_x : bool, optional. Default = True
+        If set to true, scientific notation will be applied only to the X axis.
+        If set to False, scientific notation will be applied only to the Y axis.
+    formatting : str / unicode, optional. Default = 2 digits of precision
+        Precision for the tick labels
+    """
+    if not isinstance(axis, mpl.axes.Axes):
+        raise TypeError('axis must be a matplotlib.axes.Axes object')
+    if not isinstance(is_x, bool):
+        raise TypeError('is_x should be a boolean to avoid confusion')
+    if not isinstance(formatting, (str, unicode)):
+        raise TypeError('formatting must be a string')
+
+    if is_x:
+        ax_hand = axis.xaxis
+    else:
+        ax_hand = axis.yaxis
+    ax_hand.set_major_formatter(mtick.FormatStrFormatter(formatting))
 
 
 def make_scalar_mappable(vmin, vmax, cmap=None):
