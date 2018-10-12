@@ -596,25 +596,68 @@ class USIDataset(h5py.Dataset):
                 print('{}\n{}'.format(len(item.values), item))
             print('N dimensional data sent to visualizer of shape: {}'.format(data_slice.shape))
 
+        def get_exponent(vector):
+            """
+            Gets the scale / exponent for a sequence of numbers
+
+            Parameters
+            ----------
+            vector : array-like
+                Array of numbers
+
+            Returns
+            -------
+            exponent : int
+                Scale / exponent for the given vector
+            """
+            if np.max(np.abs(vector)) == np.max(vector):
+                exponent = np.log10(np.max(vector))
+            else:
+                # negative values
+                exponent = np.log10(np.max(np.abs(vector)))
+            return int(np.floor(exponent))
+
         # Handle the simple cases first:
         if len(spec_dims) == 1 and len(pos_dims) == 2:
             if len(spec_dims[0].values) == 1:
                 # 2D Image
+
+                exponents = [get_exponent(item.values) for item in pos_dims]
+                suffix = []
+                for item, scale in zip(pos_dims, exponents):
+                    curr_suff = ''
+                    if scale < 2 or scale > 3:
+                        item.values /= 10**scale
+                        curr_suff = ' x $10^{' + str(scale) + '}$'
+                    suffix.append(curr_suff)
+
                 fig, axis = plt.subplots()
                 plot_map(axis, np.squeeze(data_slice), show_xy_ticks=True, show_cbar=True,
                          cbar_label=self.data_descriptor, x_vec=pos_dims[0].values, y_vec=pos_dims[1].values, **kwargs)
                 axis.set_title(self.name, pad=15)
-                axis.set_xlabel(pos_dims[1].name + '(' + pos_dims[1].units + ')')
-                axis.set_ylabel(pos_dims[0].name + '(' + pos_dims[0].units + ')')
+                axis.set_xlabel(pos_dims[1].name + '(' + pos_dims[1].units + ')' + suffix[1])
+                axis.set_ylabel(pos_dims[0].name + '(' + pos_dims[0].units + ')' + suffix[0])
                 return fig, axis
 
         elif len(spec_dims) == 1 and len(pos_dims) == 1:
             if len(pos_dims[0].values) == 1 and len(spec_dims[0].values) > 1:
                 # 1D curve:
+
+                y_exp = get_exponent(np.squeeze(data_slice))
+                y_suffix = ''
+                if y_exp < 2 or y_exp > 3:
+                    data_slice = np.squeeze(data_slice) / 10 ** y_exp
+                    y_suffix = ' x $10^{' + str(y_exp) + '}$'
+                x_suffix = ''
+                x_exp = get_exponent(spec_dims[0].values)
+                if y_exp < 2 or y_exp > 3:
+                    spec_dims[0].values /= 10 ** x_exp
+                    x_suffix = ' x $10^{' + str(x_exp) + '}$'
+
                 fig, axis = plt.subplots()
                 axis.plot(spec_dims[0].values, np.squeeze(data_slice), **kwargs)
-                axis.set_xlabel(spec_dims[0].name + '(' + spec_dims[0].units + ')')
-                axis.set_ylabel(self.data_descriptor)
+                axis.set_xlabel(spec_dims[0].name + '(' + spec_dims[0].units + ')' + x_suffix)
+                axis.set_ylabel(self.data_descriptor + y_suffix)
                 axis.set_title(self.name)
                 return fig, axis
 
