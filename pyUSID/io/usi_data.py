@@ -533,12 +533,22 @@ class USIDataset(h5py.Dataset):
             pos_slices, spec_slices = self._get_pos_spec_slices(slice_dict)
             # Things are too big to print here.
 
-            pos_unit_values = get_unit_values(self.h5_pos_inds[np.squeeze(pos_slices), :],
-                                              self.h5_pos_vals[np.squeeze(pos_slices), :],
-                                              all_dim_names=self.pos_dim_labels, verbose=False)
-            spec_unit_values = get_unit_values(self.h5_spec_inds[:, np.squeeze(spec_slices)],
-                                               self.h5_spec_vals[:, np.squeeze(spec_slices)],
-                                               all_dim_names=self.spec_dim_labels, verbose=False)
+            pos_inds = self.h5_pos_inds[np.squeeze(pos_slices), :]
+            if pos_inds.ndim == 1:
+                pos_inds = np.expand_dims(pos_inds, axis=1)
+            pos_vals = self.h5_pos_vals[np.squeeze(pos_slices), :]
+            if pos_vals.ndim == 1:
+                pos_vals = np.expand_dims(pos_vals, axis=1)
+
+            spec_inds = self.h5_spec_inds[:, np.squeeze(spec_slices)]
+            if spec_inds.ndim == 1:
+                spec_inds = np.expand_dims(spec_inds, axis=1)
+            spec_vals = self.h5_spec_vals[:, np.squeeze(spec_slices)]
+            if spec_vals.ndim == 1:
+                spec_vals = np.expand_dims(spec_vals, axis=1)
+
+            pos_unit_values = get_unit_values(pos_inds, pos_vals, all_dim_names=self.pos_dim_labels, verbose=False)
+            spec_unit_values = get_unit_values(spec_inds, spec_vals, all_dim_names=self.spec_dim_labels, verbose=False)
             if verbose:
                 print('Position unit values:')
                 print(pos_unit_values)
@@ -562,8 +572,21 @@ class USIDataset(h5py.Dataset):
             pos_labels, pos_units, pos_unit_values = assemble_dimensions(pos_labels, pos_units, pos_unit_values)
             spec_labels, spec_units, spec_unit_values = assemble_dimensions(spec_labels, spec_units, spec_unit_values)
 
+            # Ensuring that there are always at least 1 position and spectroscopic dimensions:
+            pos_squeezed = len(pos_labels) == 0
+            if pos_squeezed:
+                pos_labels = ['arb.']
+                pos_units = ['a. u.']
+                pos_unit_values = {pos_labels[-1]: np.array([1])}
+
+            spec_squeezed = len(spec_labels) == 0
+            if spec_squeezed:
+                spec_labels = ['arb.']
+                spec_units = ['a. u.']
+                spec_unit_values = {spec_labels[-1]: np.array([1])}
+
             if verbose:
-                print('After removing singular dimensions:')
+                print('\n\nAfter removing singular dimensions:')
                 print('Position: Labels: {}, Units: {}, Values:'.format(pos_labels, pos_units))
                 print(pos_unit_values)
                 print('Spectroscopic: Labels: {}, Units: {}, Values:'.format(spec_labels, spec_units))
@@ -580,6 +603,12 @@ class USIDataset(h5py.Dataset):
                 raise ValueError('Something went wrong when slicing the dataset. slice message: {}'.format(success))
             # don't forget to remove singular dimensions via a squeeze
             data_slice = np.squeeze(data_slice)
+            # There is a chance that the data dimensionality may have reduced to 1:
+            if data_slice.ndim == 1:
+                if pos_squeezed:
+                    data_slice = np.expand_dims(data_slice, axis=0)
+                else:
+                    data_slice = np.expand_dims(data_slice, axis=-1)
 
         pos_dims = []
         for name, units in zip(pos_labels, pos_units):
@@ -598,49 +627,63 @@ class USIDataset(h5py.Dataset):
             print('N dimensional data sent to visualizer of shape: {}'.format(data_slice.shape))
 
         # Handle the simple cases first:
-        if len(spec_dims) == 1 and len(pos_dims) == 2:
-            if len(spec_dims[0].values) == 1:
-                # 2D Image
 
-                exponents = [get_exponent(item.values) for item in pos_dims]
-                suffix = []
-                for item, scale in zip(pos_dims, exponents):
-                    curr_suff = ''
-                    if scale < 2 or scale > 3:
-                        item.values /= 10**scale
-                        curr_suff = ' x $10^{' + str(scale) + '}$'
-                    suffix.append(curr_suff)
+        def plot_curve(ref_dims, curve):
+            y_exp = get_exponent(np.squeeze(curve))
+            y_suffix = ''
+            if y_exp < 2 or y_exp > 3:
+                curve = np.squeeze(curve) / 10 ** y_exp
+                y_suffix = ' x $10^{' + str(y_exp) + '}$'
+            x_suffix = ''
+            x_exp = get_exponent(ref_dims[0].values)
+            if y_exp < 2 or y_exp > 3:
+                ref_dims[0].values /= 10 ** x_exp
+                x_suffix = ' x $10^{' + str(x_exp) + '}$'
 
-                fig, axis = plt.subplots()
-                plot_map(axis, np.squeeze(data_slice), show_xy_ticks=True, show_cbar=True,
-                         cbar_label=self.data_descriptor, x_vec=pos_dims[0].values, y_vec=pos_dims[1].values, **kwargs)
-                axis.set_title(self.name, pad=15)
-                axis.set_xlabel(pos_dims[1].name + '(' + pos_dims[1].units + ')' + suffix[1])
-                axis.set_ylabel(pos_dims[0].name + '(' + pos_dims[0].units + ')' + suffix[0])
-                return fig, axis
+            fig, axis = plt.subplots()
+            axis.plot(ref_dims[0].values, np.squeeze(curve), **kwargs)
+            axis.set_xlabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + x_suffix)
+            axis.set_ylabel(self.data_descriptor + y_suffix)
+            axis.set_title(self.name)
 
-        elif len(spec_dims) == 1 and len(pos_dims) == 1:
-            if len(pos_dims[0].values) == 1 and len(spec_dims[0].values) > 1:
-                # 1D curve:
+            return fig, axis
 
-                y_exp = get_exponent(np.squeeze(data_slice))
-                y_suffix = ''
-                if y_exp < 2 or y_exp > 3:
-                    data_slice = np.squeeze(data_slice) / 10 ** y_exp
-                    y_suffix = ' x $10^{' + str(y_exp) + '}$'
-                x_suffix = ''
-                x_exp = get_exponent(spec_dims[0].values)
-                if y_exp < 2 or y_exp > 3:
-                    spec_dims[0].values /= 10 ** x_exp
-                    x_suffix = ' x $10^{' + str(x_exp) + '}$'
+        def plot_image(ref_dims, img):
+            exponents = [get_exponent(item.values) for item in ref_dims]
+            suffix = []
+            for item, scale in zip(ref_dims, exponents):
+                curr_suff = ''
+                if scale < 2 or scale > 3:
+                    item.values /= 10 ** scale
+                    curr_suff = ' x $10^{' + str(scale) + '}$'
+                suffix.append(curr_suff)
 
-                fig, axis = plt.subplots()
-                axis.plot(spec_dims[0].values, np.squeeze(data_slice), **kwargs)
-                axis.set_xlabel(spec_dims[0].name + '(' + spec_dims[0].units + ')' + x_suffix)
-                axis.set_ylabel(self.data_descriptor + y_suffix)
-                axis.set_title(self.name)
-                return fig, axis
+            fig, axis = plt.subplots()
+            plot_map(axis, np.squeeze(img), show_xy_ticks=True, show_cbar=True,
+                     cbar_label=self.data_descriptor, x_vec=pos_dims[1].values, y_vec=pos_dims[0].values, **kwargs)
+            axis.set_title(self.name, pad=15)
+            axis.set_xlabel(ref_dims[1].name + ' (' + ref_dims[1].units + ')' + suffix[1])
+            axis.set_ylabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + suffix[0])
+            return fig, axis
 
+        if np.prod([len(item.values) for item in spec_dims]) == 1:
+            if len(pos_dims) == 2:
+                # 2D spatial map
+                return plot_image(pos_dims, data_slice)
+            elif np.prod([len(item.values) for item in pos_dims]) > 1:
+                # 1D position curve:
+                return plot_curve(pos_dims, data_slice)
+
+        elif np.prod([len(item.values) for item in pos_dims]) == 1:
+            if len(spec_dims) == 2:
+                # 2D spectrogram
+                return plot_image(spec_dims, data_slice)
+            elif np.prod([len(item.values) for item in pos_dims]) == 1 and \
+                    np.prod([len(item.values) for item in spec_dims]) > 1:
+                # 1D spectral curve:
+                return plot_curve(spec_dims, data_slice)
+
+        # If data has at least one dimension with 2 values in pos. AND spec., it can be visualized interactively:
         return simple_ndim_visualizer(data_slice, pos_dims, spec_dims, verbose=verbose, **kwargs)
 
     def to_csv(self, output_path=None, force=False):
