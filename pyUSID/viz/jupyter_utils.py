@@ -79,6 +79,13 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
                         '{} dimension {} of size {} in the dataset does not have values of the same length: {}'
                         '.'.format(dim_type, item.name, data_mat.shape[actual_ind], len(item.values)))
 
+    # Is there anything worth visualizing interactively at all in positions or spectroscopic?
+    pos_size = np.prod([len(item.values) for item in pos_dims])
+    spec_size = np.prod([len(item.values) for item in spec_dims])
+    if pos_size == 1 or spec_size == 1:
+        raise ValueError('Too few position: {} or spectroscopic: {} values to visualize interactively. '
+                         'Consider using alternate visualization approaches'.format(pos_size, spec_size))
+
     # create a dictionary that will allow lookup of values and units by name:
     pos_dims_dict = {}
     for dimension in pos_dims:
