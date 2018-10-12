@@ -1,6 +1,6 @@
 """
 ================================================================================
-02. 2D Image
+01. 1D Spectrum or Curve
 ================================================================================
 
 **Suhas Somnath**
@@ -48,7 +48,7 @@ except ImportError:
 # Download the dataset
 # ---------------------
 h5_path = 'temp.h5'
-url = 'https://raw.githubusercontent.com/pycroscopy/pyUSID/master/data/simulated_STEM_Image.h5'
+url = 'https://raw.githubusercontent.com/pycroscopy/pyUSID/master/data/AFM_Force_Curve.h5'
 if os.path.exists(h5_path):
     os.remove(h5_path)
 _ = wget.download(url, h5_path, bar=None)
@@ -61,16 +61,18 @@ h5_file = h5py.File(h5_path, mode='r')
 usid.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
-# Access the ``Main`` Dataset containing the image of interest
-# ------------------------------------------------------------
-h5_main = usid.hdf_utils.get_all_main(h5_file)[-1]
-print(h5_main)
+# Visualize the contents in each of these channels
+# ------------------------------------------------
+usid.plot_utils.use_nice_plot_params()
+for main_dset in usid.hdf_utils.get_all_main(h5_file):
+    main_dset.visualize()
 
 ########################################################################################################################
-# Visualize the image contained in the Main Dataset
-# --------------------------------------------------
-usid.plot_utils.use_nice_plot_params()
-h5_main.visualize()
+# Access the ``Main`` Dataset containing the spectrum of interest
+# ---------------------------------------------------------------
+# In this case, this is the second channel:
+h5_main = usid.hdf_utils.get_all_main(h5_file)[1]
+print(h5_main)
 
 ########################################################################################################################
 # Look at the Position Indices dataset linked to the Main dataset
@@ -88,36 +90,10 @@ print(h5_main.h5_pos_vals)
 for key, val in usid.hdf_utils.get_attributes(h5_main.h5_pos_inds).items():
     print('{} : {}'.format(key, val))
 
-
 ########################################################################################################################
-# Visualize the contents of the Position Indices Dataset
-# ------------------------------------------------------
-fig, axes = plt.subplots(ncols=2, figsize=(8, 4))
-axes[0].plot(h5_main.h5_pos_inds[()])
-axes[0].set_title('Full dataset')
-axes[1].set_title('First 1024 rows only')
-axes[1].plot(h5_main.h5_pos_inds[:1024])
-for axis in axes.flat:
-    axis.set_xlabel('Row in Position Indices')
-    axis.set_ylabel('Position Indices')
-    axis.legend(['X', 'Y'])
-fig.suptitle('Position Indices dataset')
-fig.tight_layout()
-
-########################################################################################################################
-# Visualize the contents of the Position Values Dataset
-# ------------------------------------------------------
-fig, axes = plt.subplots(ncols=2, figsize=(8, 4))
-axes[0].plot(h5_main.h5_pos_vals[()])
-axes[0].set_title('Full dataset')
-axes[1].set_title('First 1024 rows only')
-axes[1].plot(h5_main.h5_pos_vals[:1024])
-for axis in axes.flat:
-    axis.set_xlabel('Row in Position Values')
-    axis.set_ylabel('Position Values')
-    axis.legend(['X', 'Y'])
-fig.suptitle('Position Values dataset')
-fig.tight_layout()
+# See the contents within the Position Datasets
+# --------------------------------------------------
+print(h5_main.h5_pos_inds[()], h5_main.h5_pos_vals[()])
 
 ########################################################################################################################
 # Look at the Spectroscopic Indices dataset linked to the Main dataset
@@ -139,34 +115,20 @@ for key, val in usid.hdf_utils.get_attributes(h5_main.h5_spec_inds).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
-# See the contents within the Spectroscopic Datasets
-# --------------------------------------------------
-print(h5_main.h5_spec_inds[()], h5_main.h5_spec_vals[()])
+# Visualize the contents of the Position Indices Dataset
+# ------------------------------------------------------
+fig, axes = plt.subplots(ncols=2, figsize=(8, 4))
+for axis, data, title, y_lab in zip(axes.flat,
+                                    [h5_main.h5_spec_inds[()].T, h5_main.h5_spec_vals[()].T],
+                                    ['Spectroscopic Indices', 'Spectroscopic Values'],
+                                    ['Index', h5_main.spec_dim_descriptors[0]]):
+    axis.plot(data)
+    axis.set_title(title)
+    axis.set_xlabel('Row in ' + title)
+    axis.set_ylabel(y_lab)
 
-
-########################################################################################################################
-# Attempting to visualize the first few rows of the image manually
-# ----------------------------------------------------------------
-print(h5_main.pos_dim_labels)
-print(h5_main.pos_dim_sizes)
-
-
-########################################################################################################################
-rows_to_read = 50
-num_cols = h5_main.pos_dim_sizes[1]
-first_few_rows_1D = h5_main[: rows_to_read * num_cols, :]
-print(first_few_rows_1D.shape)
-
-
-########################################################################################################################
-first_few_rows_2D = np.reshape(first_few_rows_1D, (rows_to_read, num_cols))
-print(first_few_rows_2D.shape)
-
-
-########################################################################################################################
-fig, axis = plt.subplots()
-axis.imshow(first_few_rows_2D, origin='lower')
-
+fig.suptitle('Ancillary Spectroscopic Datasets', y=1.05)
+fig.tight_layout()
 
 ########################################################################################################################
 # Clean up
