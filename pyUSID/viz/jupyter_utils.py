@@ -43,8 +43,86 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
     label_fontsize = 12
     subtitle_fontsize = 13
 
+    # ############################# VALIDATING ALL INPUTS ##############################################################
+
+    for parm, parm_name in zip([pos_dims, spec_dims], ['pos_dims', 'spec_dims']):
+        if not isinstance(parm, (list, tuple)):
+            raise TypeError('Expected {} to be of type: Iterable - example list or tuple'.format(parm_name))
+        for item in parm:
+            if not isinstance(item, Dimension):
+                raise TypeError('Expected items in {} to be of type: Dimension'.format(parm_name))
+        if len(parm) > 2:
+            raise NotImplementedError('Currently not able to handle more than 2 position or spectroscopic dimensions.'
+                                      ' {} contains {} dimensions'.format(parm_name, len(parm)))
+        elif len(parm) < 1:
+            raise ValueError('{} contains too few ({}) dimensions'.format(parm_name, len(parm)))
+
+    if len(pos_dims) + len(spec_dims) != data_mat.ndim:
+        raise ValueError('Lengths of pos_dims: {} and spec_dims: {} not matching with that of the dimensions of '
+                         'data_mat: {}'.format(len(pos_dims), len(spec_dims), data_mat.ndim))
+
+    # now check if the dimension matches with that of the N dimensional dataset
+    for parm, dim_type in zip([pos_dims, spec_dims], ['Position', 'Spectroscopic']):
+        offset = 0
+        if dim_type == 'Spectroscopic':
+            offset += len(pos_dims)
+        for ind, item in enumerate(parm):
+            actual_ind = ind + offset
+            if item.values is None:
+                # Let's take this opportunity to fill in the values:
+                item.values = np.arange(data_mat.shape[actual_ind])
+                if verbose:
+                    print('automatically generated reference {} values for dimension: {}'.format(dim_type, item.name))
+            else:
+                if len(item.values) != data_mat.shape[actual_ind]:
+                    raise ValueError(
+                        '{} dimension {} of size {} in the dataset does not have values of the same length: {}'
+                        '.'.format(dim_type, item.name, data_mat.shape[actual_ind], len(item.values)))
+
+    # create a dictionary that will allow lookup of values and units by name:
+    pos_dims_dict = {}
+    for dimension in pos_dims:
+        pos_dims_dict[dimension.name] = dimension
+
+    spec_dims_dict = {}
+    for dimension in spec_dims:
+        spec_dims_dict[dimension.name] = dimension
+
+    if spec_xdim is not None:
+        if not isinstance(spec_xdim, (str, unicode)):
+            raise TypeError('spec_xdim should have been a string')
+        if spec_xdim not in spec_dims_dict.keys():
+            raise KeyError('{} not among the provided spectroscopic dimensions'.format(spec_xdim))
+
+    if pos_xdim is not None:
+        if not isinstance(pos_xdim, (str, unicode)):
+            raise TypeError('spec_xdim should have been a string')
+        if pos_xdim not in pos_dims_dict.keys():
+            raise KeyError('{} not among the provided position dimensions'.format(pos_xdim))
+
+    pos_plot_2d = len(pos_dims) > 1 and pos_xdim is None
+    spec_plot_2d = len(spec_dims) > 1 and spec_xdim is None
+    if verbose:
+        print('Plot 2D: Positions: {}, Spectroscopic: {}'.format(pos_plot_2d, spec_plot_2d))
+
+    if not spec_plot_2d and spec_xdim is None:
+        # Take the largest dimension you can find:
+        max_ind = np.argmax([len(item.values) for item in spec_dims])
+        spec_xdim = spec_dims[max_ind].name
+        if verbose:
+            print('automatically chose X axis for 1D Spectroscopic plot as {}'.format(spec_xdim))
+
+    if not pos_plot_2d and pos_xdim is None:
+        # Take the largest dimension you can find:
+        max_ind = np.argmax([len(item.values) for item in pos_dims])
+        pos_xdim = pos_dims[max_ind].name
+        if verbose:
+            print('automatically chose X axis for 1D Position plot as {}'.format(pos_xdim))
+
     pos_dim_names = [item.name for item in pos_dims]
     spec_dim_names = [item.name for item in spec_dims]
+
+    # ################################## HELPER FUNCTIONS ##############################################################
 
     def check_data_type(data_mat):
         if data_mat.dtype.names is not None:
@@ -134,80 +212,7 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
                 line_handle.set_ydata(y_vec)
             axis.set_ylim([np.min(y_mat), np.max(y_mat)])
 
-    # ###########################################################################
-
-    for parm, parm_name in zip([pos_dims, spec_dims], ['pos_dims', 'spec_dims']):
-        if not isinstance(parm, (list, tuple)):
-            raise TypeError('Expected {} to be of type: Iterable - example list or tuple'.format(parm_name))
-        for item in parm:
-            if not isinstance(item, Dimension):
-                raise TypeError('Expected items in {} to be of type: Dimension'.format(parm_name))
-        if len(parm) > 2:
-            raise NotImplementedError('Currently not able to handle more than 2 position or spectroscopic dimensions.'
-                                      ' {} contains {} dimensions'.format(parm_name, len(parm)))
-        elif len(parm) < 1:
-            raise ValueError('{} contains too few ({}) dimensions'.format(parm_name, len(parm)))
-
-    if len(pos_dims) + len(spec_dims) != data_mat.ndim:
-        raise ValueError('Lengths of pos_dims and spec_dims not matching with that of the dimensions of data_mat')
-
-    # now check if the dimension matches with that of the N dimensional dataset
-    for parm, dim_type in zip([pos_dims, spec_dims], ['Position', 'Spectroscopic']):
-        offset = 0
-        if dim_type == 'Spectroscopic':
-            offset += len(pos_dims)
-        for ind, item in enumerate(parm):
-            actual_ind = ind + offset
-            if item.values is None:
-                # Let's take this oppurtunity to fill in the values:
-                item.values = np.arange(data_mat.shape[actual_ind])
-                if verbose:
-                    print('automatically generated reference {} values for dimension: {}'.format(dim_type, item.name))
-            else:
-                if len(item.values) != data_mat.shape[actual_ind]:
-                    raise ValueError(
-                        '{} dimension {} of size {} in the dataset does not have values of the same length: {}'
-                        '.'.format(dim_type, item.name, data_mat.shape[actual_ind], len(item.values)))
-
-    # create a dictionary that will allow lookup of values and units by name:
-    pos_dims_dict = {}
-    for dimension in pos_dims:
-        pos_dims_dict[dimension.name] = dimension
-
-    spec_dims_dict = {}
-    for dimension in spec_dims:
-        spec_dims_dict[dimension.name] = dimension
-
-    if spec_xdim is not None:
-        if not isinstance(spec_xdim, (str, unicode)):
-            raise TypeError('spec_xdim should have been a string')
-        if spec_xdim not in spec_dims_dict.keys():
-            raise KeyError('{} not among the provided spectroscopic dimensions'.format(spec_xdim))
-
-    if pos_xdim is not None:
-        if not isinstance(pos_xdim, (str, unicode)):
-            raise TypeError('spec_xdim should have been a string')
-        if pos_xdim not in pos_dims_dict.keys():
-            raise KeyError('{} not among the provided position dimensions'.format(pos_xdim))
-
-    pos_plot_2d = len(pos_dims) > 1 and pos_xdim is None
-    spec_plot_2d = len(spec_dims) > 1 and spec_xdim is None
-    if verbose:
-        print('Plot 2D: Positions: {}, Spectroscopic: {}'.format(pos_plot_2d, spec_plot_2d))
-
-    if not spec_plot_2d and spec_xdim is None:
-        # Take the largest dimension you can find:
-        max_ind = np.argmax([len(item.values) for item in spec_dims])
-        spec_xdim = spec_dims[max_ind].name
-        if verbose:
-            print('automatically chose X axis for 1D Spectroscopic plot as {}'.format(spec_xdim))
-
-    if not pos_plot_2d and pos_xdim is None:
-        # Take the largest dimension you can find:
-        max_ind = np.argmax([len(item.values) for item in pos_dims])
-        pos_xdim = pos_dims[max_ind].name
-        if verbose:
-            print('automatically chose X axis for 1D Position plot as {}'.format(pos_xdim))
+        # ########################## VISUALIZATION BEGINS ##############################################################
 
     data_type, data_names, data_funcs = check_data_type(data_mat)
 
