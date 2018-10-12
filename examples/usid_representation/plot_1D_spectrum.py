@@ -61,6 +61,24 @@ h5_file = h5py.File(h5_path, mode='r')
 usid.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
+# Notice that this file has multiple Channels, each with a dataset named ``Raw_Data``. Are they all
+# ``Main`` datasets? There are multiple ways to find out this. One approach is simply to ask pyUSID to list out all
+# available ``Main`` datasets.
+
+for main_dset in usid.hdf_utils.get_all_main(h5_file):
+    print(main_dset)
+
+########################################################################################################################
+# Turns out that each of those datasets named ``Raw_Data`` were indeed ``Main`` datasets. But, how could they be if the
+# are not co-located with the four mandatory ancillary datasets within each channel?
+# Recall from the USID documentation that:
+#
+# 1. Multiple ``Main`` datasets can share the same ``Ancillary`` datasets
+# 2. The ``Main`` datasets only need to have ``attributes`` named ``Position_Indices`` with the value set to the
+#    reference of appropriate ``Ancillary`` datasets
+# We can investigate if this is indeed the case here.2
+
+########################################################################################################################
 # Visualize the contents in each of these channels
 # ------------------------------------------------
 usid.plot_utils.use_nice_plot_params()
