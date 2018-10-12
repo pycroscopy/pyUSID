@@ -583,59 +583,63 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
             raise TypeError('stdevs should be a Number')
         data_mean = np.mean(img)
         data_std = np.std(img)
-        kwargs.update({'clim': [data_mean - stdevs * data_std,
-                                data_mean + stdevs * data_std]})
+        kwargs.update({'clim': [data_mean - stdevs * data_std, data_mean + stdevs * data_std]})
 
     kwargs.update({'origin': kwargs.pop('origin', 'lower')})
 
     im_handle = axis.imshow(img, **kwargs)
     assert isinstance(show_xy_ticks, bool)
 
-    if show_xy_ticks is True or x_vec is not None:
+    ########################################################################################################
 
-        x_ticks = np.linspace(0, img.shape[1] - 1, num_ticks, dtype=int)
-        if x_vec is not None:
-            if isinstance(x_vec, (int, float)):
-                if x_vec > 0.01:
-                    x_tick_labs = [str(np.round(ind * x_vec / img.shape[1], 2)) for ind in x_ticks]
-                else:
-                    x_tick_labs = ['{0:.2e}'.format(ind * x_vec / img.shape[1]) for ind in x_ticks]
-            else:
-                if not isinstance(x_vec, (np.ndarray, list, tuple, range)) or len(x_vec) != img.shape[1]:
-                    raise ValueError(
-                        'x_vec should be array-like with shape equal to the second axis of img or img_size')
-                x_tick_labs = [str(np.round(x_vec[ind], 2)) for ind in x_ticks]
+    def set_ticks_for_axis(tick_vals, is_x):
+        if is_x:
+            tick_vals_var_name = 'x_vec'
+            tick_set_func = axis.set_xticks
+            tick_labs_set_func = axis.set_xticklabels
         else:
-            x_tick_labs = [str(ind) for ind in x_ticks]
+            tick_vals_var_name = 'y_vec'
+            tick_set_func = axis.set_yticks
+            tick_labs_set_func = axis.set_yticklabels
 
-        axis.set_xticks(x_ticks)
-        axis.set_xticklabels(x_tick_labs)
+        img_axis = int(is_x)
+        img_size = img.shape[img_axis]
+        chosen_ticks = np.linspace(0, img_size - 1, num_ticks, dtype=int)
+
+        if tick_vals is not None:
+            if isinstance(tick_vals, (int, float)):
+                if tick_vals > 0.01:
+                    tick_labs = [str(np.round(ind * tick_vals / img_size, 2)) for ind in chosen_ticks]
+                else:
+                    tick_labs = ['{0:.1E}'.format(ind * tick_vals / img_size) for ind in chosen_ticks]
+                    print(tick_labs)
+            else:
+                if not isinstance(tick_vals, (np.ndarray, list, tuple, range)) or len(tick_vals) != img_size:
+                    raise ValueError(
+                        '{} should be array-like with shape equal to axis {} of img'.format(tick_vals_var_name,
+                                                                                            img_axis))
+                if np.max(tick_vals) > 0.01:
+                    tick_labs = [str(np.round(tick_vals[ind], 2)) for ind in chosen_ticks]
+                else:
+                    tick_labs = ['{0:.1E}'.format(tick_vals[ind]) for ind in chosen_ticks]
+        else:
+            tick_labs = [str(ind) for ind in chosen_ticks]
+
+        tick_set_func(chosen_ticks)
+        tick_labs_set_func(tick_labs)
 
         if tick_font_size is not None:
             set_tick_font_size(axis, tick_font_size)
+
+    ########################################################################################################
+
+    if show_xy_ticks is True or x_vec is not None:
+        set_ticks_for_axis(x_vec, True)
     else:
         axis.set_xticks([])
 
     if show_xy_ticks is True or y_vec is not None:
-        y_ticks = np.linspace(0, img.shape[0] - 1, num_ticks, dtype=int)
-        if y_vec is not None:
-            if isinstance(y_vec, (int, float)):
-                if y_vec > 0.01:
-                    y_tick_labs = [str(np.round(ind * y_vec / img.shape[1], 2)) for ind in y_ticks]
-                else:
-                    y_tick_labs = ['{0:.2e}'.format(ind * y_vec / img.shape[1]) for ind in y_ticks]
-            else:
-                if not isinstance(y_vec, (np.ndarray, list, tuple, range)) or len(y_vec) != img.shape[0]:
-                    raise ValueError('y_vec should be array-like with shape equal to the first axis of img')
-                y_tick_labs = [str(np.round(y_vec[ind], 2)) for ind in y_ticks]
-        else:
-            y_tick_labs = [str(ind) for ind in y_ticks]
-
-        axis.set_yticks(y_ticks)
-        axis.set_yticklabels(y_tick_labs)
-
-        if tick_font_size is not None:
-            set_tick_font_size(axis, tick_font_size)
+        set_ticks_for_axis(y_vec, False)
     else:
         axis.set_yticks([])
 
