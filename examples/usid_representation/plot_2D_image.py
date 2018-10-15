@@ -85,7 +85,7 @@ _ = wget.download(url, image_path, bar=None)
 orig_image = imread(image_path)
 
 fig, axis = plt.subplots()
-usid.plot_utils.plot_map(axis, orig_image)
+usid.plot_utils.plot_map(axis, orig_image, num_ticks=5)
 axis.set_title('Image of shape: {}'.format(orig_image.shape))
 
 
@@ -147,7 +147,7 @@ print(h5_main)
 # a simple 2D image
 
 usid.plot_utils.use_nice_plot_params()
-h5_main.visualize()
+h5_main.visualize(num_ticks=5)
 
 ########################################################################################################################
 # Ancillary Datasets
