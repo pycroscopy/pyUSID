@@ -210,6 +210,10 @@ function of a single variable (``spectroscopic dimension``) such as *wavelength*
 Thus, if the spectrum contained ``S`` data points, the **USID** representation of this
 data would be a ``1 x S`` matrix. The ``quantity`` represented in this data would be **Amplitude**.
 
+.. note::
+    After going through the corresponding discussion about ``Ancillary`` datasets, the interested reader is recommended to
+    explore `this interactive example <./auto_examples/usid_representation/plot_1D_spectrum.html>`_ on actual data.
+
 Gray-scale images
 ^^^^^^^^^^^^^^^^^
 .. image:: ./assets_USID/2D_images.svg
@@ -225,8 +229,16 @@ location. In theory, the flattened data could be arranged column-by-column (as i
 and then row-by-row or vice-versa depending on how the data was (sequentially)
 captured. The sequence in this particular case is debatable in this particular example.
 
+.. note::
+    After going through the corresponding discussion about ``Ancillary`` datasets, the interested reader is recommended to
+    explore `this interactive example <./auto_examples/usid_representation/plot_2D_image.html>`_ on actual data.
+
 Popular examples of such data include imaging data from raster scans (e.g. - height channel in atomic force microscopy),
 black-and-white photographs, scanning electron microscopy (SEM) images. etc.
+
+.. note::
+    After going through the corresponding discussion about ``Ancillary`` datasets, the interested reader is recommended to
+    explore `this interactive example <./auto_examples/usid_representation/plot_2D_image_stack.html>`_ on actual data.
 
 Color images will be discussed separately below due to some very important subtleties about the
 measurement.
@@ -250,6 +262,10 @@ Assuming that the data was acquired column-by-column and then row-by-row, the ro
 
 Popular examples of such datasets include Scanning Tunnelling Spectroscopy (STS) and
 current-voltage spectroscopy
+
+.. note::
+    After going through the corresponding discussion about ``Ancillary`` datasets, the interested reader is recommended to
+    explore `this interactive example <./auto_examples/usid_representation/plot_3D_spectral_image.html>`_ on actual data.
 
 High dimensional data
 ^^^^^^^^^^^^^^^^^^^^^
@@ -461,6 +477,10 @@ value, the ``Position Indices`` and ``Position Values`` datasets would have a sh
 | 0.0      |
 +----------+
 
+.. note::
+    The interested reader is recommended to explore
+    `this interactive example <./auto_examples/usid_representation/plot_1D_spectrum.html>`_ on actual data.
+
 Gray-scale image
 ^^^^^^^^^^^^^^^^
 A simple gray-scale image with ``X`` pixels in the horizontal and ``Y`` pixels in the vertical
@@ -537,6 +557,10 @@ Similar to the ``position dimensions`` for a spectrum, gray-scale images only ha
 | **arb.**  | 0   |
 +-----------+-----+
 
+.. note::
+    The interested reader is recommended to
+    explore `this interactive example <./auto_examples/usid_representation/plot_2D_image.html>`_ on actual data.
+
 Spectral maps
 ^^^^^^^^^^^^^
 Let's continue the example on **spectral maps**, which has two ``position
@@ -591,6 +615,10 @@ If the dataset was varied over ``3`` values of *X*, ``2`` values of *Y* and ``5`
 +---------------+-----+-----+-----+-----+-----+
 | **Frequency** | 300 | 305 | 310 | 315 | 320 |
 +---------------+-----+-----+-----+-----+-----+
+
+.. note::
+    The interested reader is recommended to
+    explore `this interactive example <./auto_examples/usid_representation/plot_3D_spectral_image.html>`_ on actual data.
 
 High dimensional data
 ^^^^^^^^^^^^^^^^^^^^^
