@@ -16,7 +16,7 @@ Please consider downloading this document as a Jupyter notebook using the button
 
 Prerequisites:
 --------------
-We recommend that you read about the `USID data model </.../data_format.html>`_
+We recommend that you read about the `USID data model <../../data_format.html>`_
 
 We will be making use of the ``pyUSID`` package at multiple places to illustrate the central point. While it is
 recommended / a bonus, it is not absolutely necessary that the reader understands how the specific ``pyUSID`` functions
@@ -63,13 +63,14 @@ except ImportError:
 ########################################################################################################################
 # h5USID File
 # -----------
-# For this example, we will be working with a ``Band Excitation Piezoresponse Force Microscopy (BE-PFM)`` imaging dataset
+# For this example, we will be working with a `Band Excitation Piezoresponse Force Microscopy (BE-PFM)` imaging dataset
 # acquired from advanced atomic force microscopes. In this dataset, a spectra was collected for each position in a two
 # dimensional grid of spatial locations. Thus, this is a three dimensional dataset that has been flattened to a two
 # dimensional matrix in accordance with **Universal Spectroscopy and Imaging Data (USID)** model.
 #
 # As mentioned earlier, this dataset is available on the pyUSID repository and can be accessed directly as well.
 # Here, we will simply download the file using ``wget``:
+#
 # Download from GitHub
 # ~~~~~~~~~~~~~~~~~~~~~
 # Similarly the corresponding h5USID dataset is also available on the pyUSID repository.
@@ -275,6 +276,6 @@ h5_file.close()
 
 ########################################################################################################################
 # Here, we will even delete the HDF5 file. Please comment out the line  below if you want to look at the HDF5 file using
-#  software like HDFView.
+# software like HDFView.
 os.remove(h5_path)
 
