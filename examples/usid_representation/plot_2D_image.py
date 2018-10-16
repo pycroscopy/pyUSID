@@ -10,13 +10,13 @@
 **This example illustrates how a 2D grayscale image would be represented in the Universal Spectroscopy and
 Imaging Data (USID) schema and stored in a Hierarchical Data Format (HDF5) file, also referred to as the h5USID file.**
 
-This document is intended as a supplement to the explanation about the `USID data model </.../data_format.html>`_
+This document is intended as a supplement to the explanation about the `USID data model </../data_format.html>`_
 
 Please consider downloading this document as a Jupyter notebook using the button at the bottom of this document.
 
 Prerequisites:
 --------------
-We recommend that you read about the `USID data model </.../data_format.html>`_
+We recommend that you read about the `USID data model <../../data_format.html>`_
 
 We will be making use of the ``pyUSID`` package at multiple places to illustrate the central point. While it is
 recommended / a bonus, it is not absolutely necessary that the reader understands how the specific ``pyUSID`` functions
@@ -112,8 +112,8 @@ usid.hdf_utils.print_tree(h5_file)
 ########################################################################################################################
 # Access the ``Main`` Dataset containing the image of interest
 # ------------------------------------------------------------
-# Clearly, this file contains a single `Measurement` which has a single `Channel </.../data_format.html#channels>`_.
-# We can access the `Main Dataset </.../data_format.html#main-datasets>`_ where all the information is located in
+# Clearly, this file contains a single `Measurement` which has a single `Channel <../../data_format.html#channels>`_.
+# We can access the `Main Dataset <../../data_format.html#main-datasets>`_ where all the information is located in
 # multiple ways. Given that this file contains just a single ``Main Dataset`` we can conveniently use the
 # `pyUSID.hdf_utils.get_all_main() <../beginner/plot_hdf_utils_read.html#get-all-main>`_ function.
 h5_main = usid.hdf_utils.get_all_main(h5_file)[-1]
@@ -122,7 +122,7 @@ print(h5_main)
 ########################################################################################################################
 # Here, ``h5_main`` is a `USIDataset <../beginner/plot_usi_dataset.html>`_, which can be thought of as a supercharged
 # HDF5 Dataset that is not only aware of the contents of the plain ``Raw_Data`` dataset but also its links to the
-# `Ancillary Datasets </.../data_format.html#ancillary-datasets>`_ that make it a ``Main Dataset``.
+# `Ancillary Datasets <../../data_format.html#ancillary-datasets>`_ that make it a ``Main Dataset``.
 #
 # Understanding Dimensionality
 # ----------------------------

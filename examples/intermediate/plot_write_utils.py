@@ -25,7 +25,7 @@ Data (USID) HDF5 files or h5USID files**
 #
 # Recommended pre-requisite reading
 # ----------------------------------
-# * `USID model </../../data_format.html>`_
+# * `USID model <../../data_format.html>`_
 #
 # What to read after this
 # -------------------------
@@ -125,7 +125,7 @@ fig.tight_layout()
 # these dimensions are varied to ``build_ind_val_matrices()``. The results are two matrices - one for the indices and the
 # other for the values, of the same shape ``(3, 96)``.
 #
-# As mentioned in our document about the `data structuring <https://pycroscopy.github.io/pyUSID/data_format.html>`_,
+# As mentioned in our document about the `data structuring <../../data_format.html>`_,
 # the ``Bias`` would be in the first row, followed by ``Field``, finally followed by ``Cycle``. The plots below illustrate
 # what the indices and values look like for each dimension. For example, notice how the bipolar triangular bias vector
 # has been repeated 2 (``Field``) * 3 (``Cycle``) times. Also note how the indices vector is a saw-tooth waveform that also

@@ -13,13 +13,13 @@ This example is based on the popular Atomic Force Microscopy scan mode where mul
 a value at each position on a 2D grid, thereby resulting in a 2D image per sensor. Specifically, the goal of this
 example is to demonstrate the sharing of ``Ancillary`` datasets among multiple ``Main`` datasets.
 
-This document is intended as a supplement to the explanation about the `USID data model </.../data_format.html>`_
+This document is intended as a supplement to the explanation about the `USID data model <../../data_format.html>`_
 
 Please consider downloading this document as a Jupyter notebook using the button at the bottom of this document.
 
 Prerequisites:
 --------------
-We recommend that you read about the `USID data model </.../data_format.html>`_
+We recommend that you read about the `USID data model <../../data_format.html>`_
 
 We will be making use of the ``pyUSID`` package at multiple places to illustrate the central point. While it is
 recommended / a bonus, it is not absolutely necessary that the reader understands how the specific ``pyUSID`` functions

@@ -29,7 +29,7 @@ and information into Universal Spectroscopy and Imaging Data (USID) HDF5 files (
 #
 # Recommended pre-requisite reading
 # ----------------------------------
-# * `USID data model </../../data_format.html>`_
+# * `USID data model <../../data_format.html>`_
 # * `Crash course on HDF5 and h5py <../beginner/plot_h5py.html>`_
 # * Utilities for `reading <../beginner/plot_hdf_utils_read.html>`_ h5USID files using pyUSID
 #
@@ -315,7 +315,7 @@ usid.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # As mentioned in our `document about the USID
-# model </../../../data_format.html>`, the four supporting datasets (``Indices`` and
+# model <../../data_format.html>`, the four supporting datasets (``Indices`` and
 # ``Values`` datasets for ``Position`` and ``Spectroscopic``) help provide meaning to each element in ``Raw_Data`` such as
 # dimensionality, etc.
 #
