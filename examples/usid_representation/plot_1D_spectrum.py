@@ -16,7 +16,7 @@ Please consider downloading this document as a Jupyter notebook using the button
 
 Prerequisites:
 --------------
-We recommend that you read about the `USID data model </../data_format.html>`_
+We recommend that you read about the `USID data model </data_format.html>`_
 
 We will be making use of the ``pyUSID`` package at multiple places to illustrate the central point. While it is
 recommended / a bonus, it is not absolutely necessary that the reader understands how the specific ``pyUSID`` functions
