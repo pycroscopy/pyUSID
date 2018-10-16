@@ -7,8 +7,6 @@
 
 10/12/2018
 
-**This document is under construction.**
-
 **This example illustrates how a 2D grayscale image would be represented in the Universal Spectroscopy and
 Imaging Data (USID) schema and stored in a Hierarchical Data Format (HDF5) file, also referred to as the h5USID file.**
 
@@ -180,25 +178,22 @@ print(h5_main.h5_pos_vals)
 # appear solid simply because this dimension (``X`` or columns) varies much faster than the other dimension (``Y`` or
 # rows). The first few rows of the dataset are visualized on the right-hand column.
 fig, all_axes = plt.subplots(ncols=2, nrows=2, figsize=(8, 8))
-axes = all_axes[0]
-axes[0].plot(h5_main.h5_pos_inds[()])
-axes[0].set_title('Full dataset')
-axes[1].set_title('First 1024 rows only')
-axes[1].plot(h5_main.h5_pos_inds[:1024])
-for axis in axes.flat:
-    axis.set_xlabel('Row in Position Indices')
-    axis.set_ylabel('Position Indices')
-    axis.legend(['X', 'Y'])
 
-axes = all_axes[1]
-axes[0].plot(h5_main.h5_pos_vals[()])
-axes[0].set_title('Full dataset')
-axes[1].set_title('First 1024 rows only')
-axes[1].plot(h5_main.h5_pos_vals[:1024])
-for axis in axes.flat:
-    axis.set_xlabel('Row in Position Values')
-    axis.set_ylabel('Position Values')
-    axis.legend(['X', 'Y'])
+for axes, h5_pos_dset, dset_name in zip(all_axes,
+                                        [h5_main.h5_pos_inds, h5_main.h5_pos_vals],
+                                        ['Position Indices', 'Position Values']):
+    axes[0].plot(h5_pos_dset[()])
+    axes[0].set_title('Full dataset')
+    axes[1].set_title('First 1024 rows only')
+    axes[1].plot(h5_pos_dset[:1024])
+    for axis in axes.flat:
+        axis.set_xlabel('Row in ' + dset_name)
+        axis.set_ylabel(dset_name)
+        axis.legend(h5_main.pos_dim_labels)
+
+for axis in all_axes[1]:
+    axis.legend(h5_main.pos_dim_descriptors)
+
 fig.tight_layout()
 
 ########################################################################################################################
@@ -284,6 +279,6 @@ h5_file.close()
 # Here, we will even delete the HDF5 file in addition to the source 2D image. Please comment out the following lines if
 # you want to look at the HDF5 file using software like HDFView or work with the 2D image
 os.remove(h5_path)
-os.remove(orig_image)
+os.remove(image_path)
 
 
