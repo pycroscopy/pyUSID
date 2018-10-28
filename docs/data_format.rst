@@ -373,7 +373,7 @@ from the HDF Group.
 
 Videos
 ^^^^^^
-While USID provides an unambigious and single solution for representing data, videos come into a gray area with two
+While USID provides an unambiguous and single solution for representing data, videos come into a gray area with two
 plausible solutions rather than one. A video with ``S`` frames each containing an image of shape ``U x V`` can be
 represented in USID either as a ``S x UV`` dataset or a ``UV x S`` dataset.
 
