@@ -371,6 +371,33 @@ For more information on compound datasets see the
 `h5py Datasets documentation <http://docs.h5py.org/en/latest/high/dataset.html#reading-writing-data>`_
 from the HDF Group.
 
+Videos
+^^^^^^
+While USID provides an unambigious and single solution for representing data, videos come into a gray area with two
+plausible solutions rather than one. A video with ``S`` frames each containing an image of shape ``U x V`` can be
+represented in USID either as a ``S x UV`` dataset or a ``UV x S`` dataset.
+
+Those who strictly believe that the data for the ``N+1`` th observation (row in the USID ``Main`` dataset) is always
+acquired after all the data for the ``N`` th observation (row in the USID ``Main`` dataset) may prefer the ``S x UV``
+form. In other words, at time ``t = 0``, a 2D image of shape ``U x V`` is acquired. Subsequently, the next observation
+is at time ``t = 1`` when another 2D image is acquired. The chronology of the observations (frames in the movie) are
+indisputable. Thus, the data within each observation (``U x V`` image) would need to be flattened along the *horizontal*
+axis per the examples above. The observations (frames in the movie) themselves would be stacked along the *vertical*
+axis. This representation would confuse the reader since the ``Position`` and ``Spectroscopic`` dimensions are switched.
+Here, the *physical* position dimensions of the camera sensor (``U`` and ``V``) would actually be the spectroscopic
+dimensions in USID whereas time, which is typically a spectroscopic dimension in USID is treated as a Position dimension
+instead. We believe that this would be the correct representation of a movie in USID.
+We were very much aware of this potential problem and were originally planning on adopting the vocabulary used by the
+data science community of ``Instance`` or ``Example`` and ``Features``. However, we realize that users not familiar
+with this nomenclature may be confused.
+
+Those who prefer to think of movies as maps of spectra may prefer the ``UV x S`` representation. However, the chronology
+would be misrepresented or lost in such a USID representation. Nonetheless, such people may argue that this
+representation is more in line with convention although it is at odds with the rules laid by USID.
+
+The above philosophies would still hold true regardless of whether the data recorded at each time step were a 2D image,
+a 1D spectrum or a N-dimensional hypercube.
+
 ``Ancillary`` Datasets
 ~~~~~~~~~~~~~~~~~~~~~~
 
