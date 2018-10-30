@@ -68,40 +68,6 @@ For now, please use: *Somnath, Suhas, Chris R. Smith, and Stephen Jesse. pyUSID.
 
 We are writing a journal paper that you should be able to cite soon.
 
-Data
-----
-What do you mean by multidimensional data?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Please refer to the nomenclature section of our `data and file formatting document <https://pycroscopy.github.io/pyUSID/data_format.html#nomenclature>`_
-
-Why not use established file formats from other domains?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In our documentation about the data structure and `file format <https://pycroscopy.github.io/pyUSID/data_format.html#file-format>`_
-we discuss our requirements and our thoughts about the feasibility of established scientific formats including:
-
-* `Nexus data format <http://www.nexusformat.org>`_
-* `Nearly Raw Raster Data (NRRD) <http://teem.sourceforge.net/nrrd/format.html>`_
-* `XDMF <http://www.xdmf.org/index.php/Main_Page>`_,
-* `NetCDF <https://www.unidata.ucar.edu/software/netcdf/>`_
-* `Matlab's .mat <https://www.mathworks.com/help/matlab/import_export/mat-file-versions.html>`_
-* `Adios <https://www.olcf.ornl.gov/center-projects/adios/>`_
-
-We found that established community standards (like Nexus, XDMF, NetCDF, NRRD):
-
-* were designed for specific / narrow scientific domains only and we did not want to shoehorn our data structure into those formats.
-* it is not immediately straightforward to read those files on every computer using any programming language.
-
-Unlike Nexus, NetCDF, Matlab's .mat files, the Universal Spectroscopy and Imaging Data (USID) Model does not impose any strict restrictions or requirements on the HDF5 file structure.
-Instead, implementing the USID model only increases the functionality of the very same datasets in pyUSID and other packages.
-
-We are currently exploring collaboration / translators to and from `DREAM.3D's HDF5 data model <http://dream3d.bluequartz.net/binaries/Help/DREAM3D/nativedream3d.html>`_
-
-Do you have APIs for creating and reading USID HDF5 files in languages besides python?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-At the moment, pyUSID is the only available API for operating on USID HDF5 datasets.
-Given the open-source code of pyUSID and comprehensive documentation available, we believe that it should not be very challenging to work on USID HDF5 in other languages.
-If you are interested in making an API available for other languages, we would be happy to help in any way we can. Please get in touch with us.
-
 Becoming a part of the effort
 -----------------------------
 I don't know python / I don't think I write great python code. Does this preclude me from contributing to pyUSID?
