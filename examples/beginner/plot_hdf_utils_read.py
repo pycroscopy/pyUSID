@@ -28,8 +28,8 @@ and metadata in Universal Spectroscopy and Imaging Data (USID) HDF5 files (h5USI
 # scenarios.
 #
 # Recommended pre-requisite reading
-# -----------------------------------
-# * `USID data model <../../data_format.html>`_
+# ---------------------------------
+# * `USID data model </../../../USID/usid_model.html>`_
 # * `Crash course on HDF5 and h5py <./plot_h5py.html>`_
 #
 # .. tip::
