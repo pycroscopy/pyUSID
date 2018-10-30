@@ -25,7 +25,7 @@ Data (USID) HDF5 files or h5USID files**
 #
 # Recommended pre-requisite reading
 # ----------------------------------
-# * `USID model <../../data_format.html>`_
+# * `Universal Spectroscopic and Imaging Data (USID) model </../../../USID/usid_model.html>`_
 #
 # What to read after this
 # -------------------------

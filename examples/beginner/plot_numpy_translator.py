@@ -51,7 +51,7 @@ Recommended pre-requisite reading
 
 Before proceeding with this example, we recommend reading the previous documents to learn more about:
 
-* `USID model <../../data_format.html>`_
+* `Universal Spectroscopic and Imaging Data (USID) model </../../../USID/usid_model.html>`_
 
 .. tip::
     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
