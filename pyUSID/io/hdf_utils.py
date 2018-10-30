@@ -776,12 +776,12 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
     for both the position and spectroscopic dimensions
     """
     try:
-        ds_Nd = np.reshape(ds_main, pos_dims[::-1] + spec_dims[::-1])
+        ds_Nd = np.reshape(ds_main, pos_dims + spec_dims[::-1])
 
     except ValueError:
         warn('Could not reshape dataset to full N-dimensional form.  Attempting reshape based on position only.')
         try:
-            ds_Nd = np.reshape(ds_main, pos_dims[::-1] + [-1])
+            ds_Nd = np.reshape(ds_main, pos_dims + [-1])
 
         except ValueError:
             warn('Reshape by position only also failed.  Will keep dataset in 2d form.')
@@ -797,7 +797,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
             else:
                 return ds_Nd, 'Positions'
 
-    all_labels = np.hstack((pos_labs[pos_sort][::-1],
+    all_labels = np.hstack((pos_labs[pos_sort],
                             spec_labs[spec_sort][::-1]))
 
     if verbose:
