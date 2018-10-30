@@ -36,7 +36,7 @@
 #
 # Recommended pre-requisite reading
 # -----------------------------------
-# * `USID data model <../../data_format.html>`_
+# * `Universal Spectroscopic and Imaging Data (USID) model </../../../USID/usid_model.html>`_
 # * `Crash course on HDF5 and h5py <../beginner/plot_h5py.html>`_
 #
 # .. tip::

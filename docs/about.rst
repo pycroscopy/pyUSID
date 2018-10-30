@@ -6,7 +6,7 @@ pyUSID
 
 What?
 ------
-* The `USID model <./data_format.html>`_:
+* The `Universal Spectroscopic and Imaging Data (USID) model <../USID/index.html>`_:
 
   * facilitates the representation of any spectroscopic or imaging data regardless of its origin, modality, size, or dimensionality.
   * enables the development of instrument- and modality- agnostic data processing and analysis algorithms.
