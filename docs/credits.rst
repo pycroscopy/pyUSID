@@ -5,8 +5,6 @@ The core pyUSID team consists of:
 * `@ssomnath <https://github.com/ssomnath>`_ (Suhas Somnath)
 * `@CompPhysChris <https://github.com/CompPhysChris>`_ (Chris R. Smith)
 
-USID was conceived by `@stephenjesse <https://github.com/stephenjesse>`_ (Stephen Jesse)
-
 Substantial contributions from many developers including:
 
 * `@str-eat <https://github.com/str-eat>`_ (Daniel Streater)
@@ -32,7 +30,7 @@ Acknowledgements
 
 Funding
 ~~~~~~~
-* pyUSID and pycroscopy were initially developed through grants from:
+* USID, pyUSID and pycroscopy were initially developed through grants from:
 
   * Oak Ridge National Laboratory - Laboratory Director's Research and Development fund
   * U.S. Department of Energy, Office of Science
