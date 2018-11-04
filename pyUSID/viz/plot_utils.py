@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.axes_grid1 import ImageGrid
+from ..io.dtype_utils import get_exponent
 
 if sys.version_info.major == 3:
     unicode = str
@@ -617,6 +618,13 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
 
     kwargs.update({'origin': kwargs.pop('origin', 'lower')})
 
+    if show_cbar:
+        y_exp = get_exponent(np.squeeze(img))
+        z_suffix = ''
+        if y_exp < -2 or y_exp > 3:
+            img = np.squeeze(img) / 10 ** y_exp
+            z_suffix = ' x $10^{' + str(y_exp) + '}$'
+
     im_handle = axis.imshow(img, **kwargs)
     assert isinstance(show_xy_ticks, bool)
 
@@ -687,9 +695,12 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
                 raise TypeError('cbar_label should be a string')
 
             if tick_font_size is not None:
-                cbar.set_label(cbar_label)
+                cbar.set_label(cbar_label + z_suffix)
             else:
-                cbar.set_label(cbar_label, fontsize=tick_font_size)
+                cbar.set_label(cbar_label + z_suffix, fontsize=tick_font_size)
+        else:
+            if z_suffix is not '':
+                cbar.set_label(z_suffix)
 
         if tick_font_size is not None:
             cbar.ax.tick_params(labelsize=tick_font_size)
