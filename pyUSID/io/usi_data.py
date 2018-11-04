@@ -653,7 +653,7 @@ class USIDataset(h5py.Dataset):
         def plot_curve(ref_dims, curve):
             x_suffix = ''
             x_exp = get_exponent(ref_dims[0].values)
-            if x_exp < 2 or x_exp > 3:
+            if x_exp < -2 or x_exp > 3:
                 ref_dims[0].values /= 10 ** x_exp
                 x_suffix = ' x $10^{' + str(x_exp) + '}$'
 
@@ -686,7 +686,7 @@ class USIDataset(h5py.Dataset):
             else:
                 y_exp = get_exponent(np.squeeze(curve))
                 y_suffix = ''
-                if y_exp < 2 or y_exp > 3:
+                if y_exp < -2 or y_exp > 3:
                     curve = np.squeeze(curve) / 10 ** y_exp
                     y_suffix = ' x $10^{' + str(y_exp) + '}$'
 
@@ -703,7 +703,7 @@ class USIDataset(h5py.Dataset):
             suffix = []
             for item, scale in zip(ref_dims, exponents):
                 curr_suff = ''
-                if scale < -2 or scale > 3:
+                if scale < -1 or scale > 3:
                     item.values /= 10 ** scale
                     curr_suff = ' x $10^{' + str(scale) + '}$'
                 suffix.append(curr_suff)
