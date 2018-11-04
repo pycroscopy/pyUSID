@@ -254,7 +254,8 @@ class USIDataset(h5py.Dataset):
         """
         if self.__n_dim_data is not None:
             if self.__sort_dims:
-                nd_sort = self.__pos_sort_order[::-1] + self.__spec_sort_order[::-1]
+                nd_sort = np.append(self.__pos_sort_order[::-1],
+                                    self.__spec_sort_order[::-1] + len(self.pos_dim_sizes))
             else:
                 nd_sort = self.__n_dim_sort_order
 
