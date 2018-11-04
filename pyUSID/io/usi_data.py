@@ -735,6 +735,11 @@ class USIDataset(h5py.Dataset):
                     axis.set_title(comp_name, pad=15)
                     axis.set_xlabel(ref_dims[1].name + ' (' + ref_dims[1].units + ')' + suffix[1])
                     axis.set_ylabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + suffix[0])
+
+                # delete empty axes
+                for ax_ind in range(len(img.dtype), np.prod(plot_grid)):
+                    fig.delaxes(axes.flatten()[ax_ind])
+
                 # fig.suptitle(self.name)
                 fig.tight_layout()
                 return fig, axes
