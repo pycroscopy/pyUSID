@@ -15,10 +15,10 @@ import matplotlib.pyplot as plt
 
 from .hdf_utils import check_if_main, get_attr, \
     get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims
-from .dtype_utils import flatten_to_real, contains_integers, get_exponent
+from .dtype_utils import flatten_to_real, contains_integers, get_exponent, is_complex_dtype
 from .write_utils import Dimension
 from ..viz.jupyter_utils import simple_ndim_visualizer
-from ..viz.plot_utils import plot_map
+from ..viz.plot_utils import plot_map, get_plot_grid_size
 
 if sys.version_info.major == 3:
     unicode = str
@@ -534,21 +534,38 @@ class USIDataset(h5py.Dataset):
             # Things are too big to print here.
 
             pos_inds = self.h5_pos_inds[np.squeeze(pos_slices), :]
-            if pos_inds.ndim == 1:
-                pos_inds = np.expand_dims(pos_inds, axis=1)
             pos_vals = self.h5_pos_vals[np.squeeze(pos_slices), :]
+
+            if verbose:
+                print('Checking for and correcting the dimensionality of the indices and values datasets:')
+                print('Pos Inds: {}, Pos Vals: {}'.format(pos_inds.shape, pos_vals.shape))
+            if pos_inds.ndim == 1:
+                pos_inds = np.expand_dims(pos_inds, axis=0)
             if pos_vals.ndim == 1:
-                pos_vals = np.expand_dims(pos_vals, axis=1)
+                pos_vals = np.expand_dims(pos_vals, axis=0)
 
             spec_inds = self.h5_spec_inds[:, np.squeeze(spec_slices)]
-            if spec_inds.ndim == 1:
-                spec_inds = np.expand_dims(spec_inds, axis=1)
             spec_vals = self.h5_spec_vals[:, np.squeeze(spec_slices)]
-            if spec_vals.ndim == 1:
-                spec_vals = np.expand_dims(spec_vals, axis=1)
 
-            pos_unit_values = get_unit_values(pos_inds, pos_vals, all_dim_names=self.pos_dim_labels, verbose=False)
-            spec_unit_values = get_unit_values(spec_inds, spec_vals, all_dim_names=self.spec_dim_labels, verbose=False)
+            if verbose:
+                print('Checking for and correcting the dimensionality of the indices and values datasets:')
+                print('Spec Inds: {}, Spec Vals: {}'.format(spec_inds.shape, spec_vals.shape))
+
+            if spec_inds.ndim == 1:
+                spec_inds = np.expand_dims(spec_inds, axis=0)
+            if spec_vals.ndim == 1:
+                spec_vals = np.expand_dims(spec_vals, axis=0)
+
+            if verbose:
+                print('After correction of shape:')
+                print('Pos Inds: {}, Pos Vals: {}, Spec Inds: {}, Spec Vals: {}'.format(pos_inds.shape, pos_vals.shape,
+                                                                                        spec_inds.shape,
+                                                                                        spec_vals.shape))
+
+            pos_unit_values = get_unit_values(pos_inds, pos_vals, all_dim_names=self.pos_dim_labels, is_spec=False,
+                                              verbose=False)
+            spec_unit_values = get_unit_values(spec_inds, spec_vals, all_dim_names=self.spec_dim_labels, is_spec=True,
+                                               verbose=False)
 
             if verbose:
                 print('Position unit values:')
@@ -628,44 +645,109 @@ class USIDataset(h5py.Dataset):
             print('N dimensional data sent to visualizer of shape: {}'.format(data_slice.shape))
 
         # Handle the simple cases first:
+        fig_args = dict()
+        temp = kwargs.pop('figsize', None)
+        if temp is not None:
+            fig_args['figsize'] = temp
 
         def plot_curve(ref_dims, curve):
-            y_exp = get_exponent(np.squeeze(curve))
-            y_suffix = ''
-            if y_exp < 2 or y_exp > 3:
-                curve = np.squeeze(curve) / 10 ** y_exp
-                y_suffix = ' x $10^{' + str(y_exp) + '}$'
             x_suffix = ''
             x_exp = get_exponent(ref_dims[0].values)
-            if y_exp < 2 or y_exp > 3:
+            if x_exp < 2 or x_exp > 3:
                 ref_dims[0].values /= 10 ** x_exp
                 x_suffix = ' x $10^{' + str(x_exp) + '}$'
 
-            fig, axis = plt.subplots()
-            axis.plot(ref_dims[0].values, np.squeeze(curve), **kwargs)
-            axis.set_xlabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + x_suffix)
-            axis.set_ylabel(self.data_descriptor + y_suffix)
-            axis.set_title(self.name)
+            if is_complex_dtype(curve.dtype):
+                # Plot real and image
+                fig, axes = plt.subplots(nrows=2, **fig_args)
+                for axis, ufunc, comp_name in zip(axes.flat, [np.abs, np.angle], ['Magnitude', 'Phase']):
+                    axis.plot(ref_dims[0].values, ufunc(np.squeeze(curve)), **kwargs)
+                    if comp_name is 'Magnitude':
+                        axis.set_title(self.name + '\n(' + comp_name + ')', pad=15)
+                        axis.set_ylabel(self.data_descriptor)
+                    else:
+                        axis.set_title(comp_name, pad=15)
+                        axis.set_ylabel('Phase (rad)')
+                        axis.set_xlabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + x_suffix)
 
-            return fig, axis
+                fig.tight_layout()
+                return fig, axes
+            elif len(curve.dtype) > 0:
+                plot_grid = get_plot_grid_size(len(curve.dtype))
+                fig, axes = plt.subplots(nrows=plot_grid[0], ncols=plot_grid[1], **fig_args)
+                for axis, comp_name in zip(axes.flat, curve.dtype.fields):
+                    axis.plot(ref_dims[0].values, np.squeeze(curve[comp_name]), **kwargs)
+                    axis.set_title(comp_name, pad=15)
+                    axis.set_xlabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + x_suffix)
+                    axis.set_ylabel(comp_name)
+                # fig.suptitle(self.name)
+                fig.tight_layout()
+                return fig, axes
+            else:
+                y_exp = get_exponent(np.squeeze(curve))
+                y_suffix = ''
+                if y_exp < 2 or y_exp > 3:
+                    curve = np.squeeze(curve) / 10 ** y_exp
+                    y_suffix = ' x $10^{' + str(y_exp) + '}$'
+
+                fig, axis = plt.subplots(**fig_args)
+                axis.plot(ref_dims[0].values, np.squeeze(curve), **kwargs)
+                axis.set_xlabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + x_suffix)
+                axis.set_ylabel(self.data_descriptor + y_suffix)
+                axis.set_title(self.name)
+
+                return fig, axis
 
         def plot_image(ref_dims, img):
             exponents = [get_exponent(item.values) for item in ref_dims]
             suffix = []
             for item, scale in zip(ref_dims, exponents):
                 curr_suff = ''
-                if scale < 2 or scale > 3:
+                if scale < -2 or scale > 3:
                     item.values /= 10 ** scale
                     curr_suff = ' x $10^{' + str(scale) + '}$'
                 suffix.append(curr_suff)
 
-            fig, axis = plt.subplots()
-            plot_map(axis, np.squeeze(img), show_xy_ticks=True, show_cbar=True,
-                     cbar_label=self.data_descriptor, x_vec=pos_dims[1].values, y_vec=pos_dims[0].values, **kwargs)
-            axis.set_title(self.name, pad=15)
-            axis.set_xlabel(ref_dims[1].name + ' (' + ref_dims[1].units + ')' + suffix[1])
-            axis.set_ylabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + suffix[0])
-            return fig, axis
+            if is_complex_dtype(img.dtype):
+                # Plot real and image
+                fig, axes = plt.subplots(nrows=2, **fig_args)
+                for axis, ufunc, comp_name in zip(axes.flat, [np.abs, np.angle], ['Magnitude', 'Phase']):
+                    cbar_label = self.data_descriptor
+                    if comp_name is 'Phase':
+                        cbar_label = 'Phase (rad)'
+                    plot_map(axis, ufunc(np.squeeze(img)), show_xy_ticks=True, show_cbar=True,
+                             cbar_label=cbar_label, x_vec=ref_dims[1].values, y_vec=ref_dims[0].values,
+                             **kwargs)
+                    axis.set_title(self.name + '\n(' + comp_name + ')', pad=15)
+                    axis.set_xlabel(ref_dims[1].name + ' (' + ref_dims[1].units + ')' + suffix[1])
+                    axis.set_ylabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + suffix[0])
+                fig.tight_layout()
+                return fig, axes
+            elif len(img.dtype) > 0:
+                # Compound
+                # I would like to have used plot_map_stack by providing it the flattened (real) image cube
+                # However, the order of the components in the cube and that provided by img.dtype.fields is not matching
+                plot_grid = get_plot_grid_size(len(img.dtype))
+                fig, axes = plt.subplots(nrows=plot_grid[0], ncols=plot_grid[1], **fig_args)
+                for axis, comp_name in zip(axes.flat, img.dtype.fields):
+                    plot_map(axis, np.squeeze(img[comp_name]), show_xy_ticks=True, show_cbar=True,
+                             x_vec=ref_dims[1].values, y_vec=ref_dims[0].values, **kwargs)
+                    axis.set_title(comp_name, pad=15)
+                    axis.set_xlabel(ref_dims[1].name + ' (' + ref_dims[1].units + ')' + suffix[1])
+                    axis.set_ylabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + suffix[0])
+                # fig.suptitle(self.name)
+                fig.tight_layout()
+                return fig, axes
+            else:
+                fig, axis = plt.subplots(**fig_args)
+                # Need to convert to float since image could be unsigned integers or low precision floats
+                plot_map(axis, np.float(np.squeeze(img)), show_xy_ticks=True, show_cbar=True,
+                         cbar_label=self.data_descriptor, x_vec=ref_dims[1].values, y_vec=ref_dims[0].values, **kwargs)
+                axis.set_title(self.name, pad=15)
+                axis.set_xlabel(ref_dims[1].name + ' (' + ref_dims[1].units + ')' + suffix[1])
+                axis.set_ylabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + suffix[0])
+                fig.tight_layout()
+                return fig, axis
 
         if np.prod([len(item.values) for item in spec_dims]) == 1:
             if len(pos_dims) == 2:
