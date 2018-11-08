@@ -339,6 +339,7 @@ class USIDataset(h5py.Dataset):
             Informs the user as to how the data_slice has been shaped.
 
         """
+        # TODO: Accept sequences of integers and build a list of slice objects for each dimension
         if slice_dict is None:
             slice_dict = dict()
         else:
@@ -891,6 +892,9 @@ class USIDataset(h5py.Dataset):
         if np.prod([len(item.values) for item in spec_dims]) == 1:
             if len(pos_dims) == 2:
                 # 2D spatial map
+                # Check if we need to adjust the aspect ratio of the image (only if units are same):
+                if pos_dims[0].units == pos_dims[1].units:
+                    kwargs['infer_aspect'] = True
                 return plot_image(pos_dims, data_slice)
             elif np.prod([len(item.values) for item in pos_dims]) > 1:
                 # 1D position curve:
