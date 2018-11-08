@@ -501,7 +501,7 @@ class USIDataset(h5py.Dataset):
         # TODO: Shouldn't we simply squeeze before returning?
         return pos_slice, spec_slice
 
-    def __slice_unit_values(self, slice_dict=None, verbose=False):
+    def _get_dims_for_slice(self, slice_dict=None, verbose=False):
         """
         Provides Dimension objects that express the reference position and spectroscopic dimensions for this dataset
         once it is sliced via the provided slicing dictionary.
@@ -519,8 +519,6 @@ class USIDataset(h5py.Dataset):
             List of pyUSID.Dimension objects for each of the remaining position dimensions
         spec_dims : list
             List of pyUSID.Dimension objects for each of the remaining spectroscopic dimensions
-        pos_squeezed : bool
-            Whether or not all position dimensions have been removed
         """
 
         pos_labels = self.pos_dim_labels
@@ -590,14 +588,12 @@ class USIDataset(h5py.Dataset):
         spec_labels, spec_units, spec_unit_values = assemble_dimensions(spec_labels, spec_units, spec_unit_values)
 
         # Ensuring that there are always at least 1 position and spectroscopic dimensions:
-        pos_squeezed = len(pos_labels) == 0
-        if pos_squeezed:
+        if len(pos_labels) == 0:
             pos_labels = ['arb.']
             pos_units = ['a. u.']
             pos_unit_values = {pos_labels[-1]: np.array([1])}
 
-        spec_squeezed = len(spec_labels) == 0
-        if spec_squeezed:
+        if len(spec_labels) == 0:
             spec_labels = ['arb.']
             spec_units = ['a. u.']
             spec_unit_values = {spec_labels[-1]: np.array([1])}
@@ -609,12 +605,14 @@ class USIDataset(h5py.Dataset):
             print('Spectroscopic: Labels: {}, Units: {}, Values:'.format(spec_labels, spec_units))
             print(spec_unit_values)
 
-        # see if the total number of pos and spec keys are either 1 or 2
-        if not (0 < len(pos_unit_values) < 3) or not (0 < len(spec_unit_values) < 3):
-            raise ValueError('Number of position ({}) / spectroscopic dimensions ({}) not 1 or 2'
-                             '. Try slicing again'.format(len(pos_unit_values), len(spec_unit_values)))
+        pos_dims = []
+        for name, units in zip(pos_labels, pos_units):
+            pos_dims.append(Dimension(name, units, pos_unit_values[name]))
+        spec_dims = []
+        for name, units in zip(spec_labels, spec_units):
+            spec_dims.append(Dimension(name, units, spec_unit_values[name]))
 
-        return pos_labels, pos_units, pos_unit_values, pos_squeezed, spec_labels, spec_units, spec_unit_values
+        return pos_dims, spec_dims
 
     def slice_to_dataset(self, slice_dict, dset_name=None, verbose=False, **kwargs):
         """
@@ -649,17 +647,16 @@ class USIDataset(h5py.Dataset):
         if verbose:
             print('Decided / provided name of new sliced HDF5 dataset to be: {}'.format(dset_name))
 
-        pos_labels, pos_units, pos_unit_values, pos_squeezed, spec_labels, spec_units, spec_unit_values = self.__slice_unit_values(
-            slice_dict=slice_dict, verbose=verbose)
+        pos_dims, spec_dims = self._get_dims_for_slice(slice_dict=slice_dict, verbose=verbose)
 
         if verbose:
             print('Sliced ancillary datasets returned:\n------------------------------------------')
-            print('pos_labels: {}'.format(pos_labels))
-            print('pos_units: {}'.format(pos_units))
-            print('pos_unit_values: {}'.format(pos_unit_values))
-            print('spec_labels: {}'.format(spec_labels))
-            print('spec_units: {}'.format(spec_units))
-            print('spec_unit_values: {}'.format(spec_unit_values))
+            print('Position:')
+            for dim in pos_dims:
+                print(dim)
+            print('\nSpectroscopic:')
+            for dim in spec_dims:
+                print(dim)
 
         data_slice_2d, success = self.slice(slice_dict, ndim_form=False, as_scalar=False, verbose=verbose)
 
@@ -687,12 +684,7 @@ class USIDataset(h5py.Dataset):
                 print('Reusing this main datasets position datasets')
         else:
             if verbose:
-                print('Building new position dimensions:\n------------------------------------------')
-            pos_dims = []
-            for name, units in zip(pos_labels, pos_units):
-                pos_dims.append(Dimension(name, units, pos_unit_values[name]))
-                if verbose:
-                    print('\t{}'.format(pos_dims[-1]))
+                print('Using new Position dimensions:\n------------------------------------------')
 
         spec_sliced = False
         for dim_name in slice_dict.keys():
@@ -709,12 +701,7 @@ class USIDataset(h5py.Dataset):
                 print('Reusing this main datasets spectroscopic datasets')
         else:
             if verbose:
-                print('Building new spectroscopic dimensions:\n------------------------------------------')
-            spec_dims = []
-            for name, units in zip(spec_labels, spec_units):
-                spec_dims.append(Dimension(name, units, spec_unit_values[name]))
-                if verbose:
-                    print('\t{}'.format(spec_dims[-1]))
+                print('Using new spectroscopic dimensions:\n------------------------------------------')
 
         h5_group = create_results_group(self, 'slice')
 
@@ -743,11 +730,6 @@ class USIDataset(h5py.Dataset):
         """
 
         if slice_dict is None:
-            pos_labels = self.pos_dim_labels
-            pos_units = get_attr(self.h5_pos_inds, 'units')
-            spec_labels = self.spec_dim_labels
-            spec_units = get_attr(self.h5_spec_inds, 'units')
-
             if len(self.pos_dim_labels) > 2 or len(self.spec_dim_labels) > 2:
                 raise NotImplementedError('Unable to support visualization of more than 2 position / spectroscopic '
                                           'dimensions. Try slicing the dataset')
@@ -755,8 +737,20 @@ class USIDataset(h5py.Dataset):
             spec_unit_values = get_unit_values(self.h5_spec_inds, self.h5_spec_vals)
             pos_unit_values = get_unit_values(self.h5_pos_inds, self.h5_pos_vals)
 
+            pos_dims = []
+            for name, units in zip(self.pos_dim_labels, get_attr(self.h5_pos_inds, 'units')):
+                pos_dims.append(Dimension(name, units, pos_unit_values[name]))
+            spec_dims = []
+            for name, units in zip(self.spec_dim_labels, get_attr(self.h5_spec_inds, 'units')):
+                spec_dims.append(Dimension(name, units, spec_unit_values[name]))
+
         else:
-            pos_labels, pos_units, pos_unit_values, pos_squeezed, spec_labels, spec_units, spec_unit_values = self.__slice_unit_values(slice_dict=slice_dict, verbose=verbose)
+            pos_dims, spec_dims = self._get_dims_for_slice(slice_dict=slice_dict, verbose=verbose)
+
+            # see if the total number of pos and spec keys are either 1 or 2
+            if not (0 < len(pos_dims) < 3) or not (0 < len(spec_dims) < 3):
+                raise ValueError('Number of position ({}) / spectroscopic dimensions ({}) not 1 or 2'
+                                 '. Try slicing again'.format(len(pos_dims), len(spec_dims)))
 
             # now should be safe to slice:
             data_slice, success = self.slice(slice_dict, ndim_form=True)
@@ -770,17 +764,10 @@ class USIDataset(h5py.Dataset):
                 return data_slice
             # There is a chance that the data dimensionality may have reduced to 1:
             elif data_slice.ndim == 1:
-                if pos_squeezed:
+                if len(pos_dims) == 0:
                     data_slice = np.expand_dims(data_slice, axis=0)
                 else:
                     data_slice = np.expand_dims(data_slice, axis=-1)
-
-        pos_dims = []
-        for name, units in zip(pos_labels, pos_units):
-            pos_dims.append(Dimension(name, units, pos_unit_values[name]))
-        spec_dims = []
-        for name, units in zip(spec_labels, spec_units):
-            spec_dims.append(Dimension(name, units, spec_unit_values[name]))
 
         if verbose:
             print('Position Dimensions:')
