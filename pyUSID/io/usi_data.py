@@ -13,8 +13,8 @@ import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .hdf_utils import check_if_main, get_attr, \
-    get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims
+from .hdf_utils import check_if_main, get_attr, create_results_group, \
+    get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset
 from .dtype_utils import flatten_to_real, contains_integers, get_exponent, is_complex_dtype
 from .write_utils import Dimension
 from ..viz.jupyter_utils import simple_ndim_visualizer
@@ -312,7 +312,7 @@ class USIDataset(h5py.Dataset):
                 raise TypeError('The slices must be array-likes or slice objects.')
         return True
 
-    def slice(self, slice_dict, as_scalar=False, verbose=False):
+    def slice(self, slice_dict, ndim_form=True, as_scalar=False, verbose=False):
         """
         Slice the dataset based on an input dictionary of 'str': slice pairs.
         Each string should correspond to a dimension label.  The slices can be
@@ -322,6 +322,8 @@ class USIDataset(h5py.Dataset):
         ----------
         slice_dict : dict
             Dictionary of array-likes. for any dimension one needs to slice
+        ndim_form : bool, optional
+            Whether or not to return the slice in it's N-dimensional form. Default = True
         as_scalar : bool, optional
             Should the data be returned as scalar values only.
         verbose : bool, optional
@@ -406,9 +408,12 @@ class USIDataset(h5py.Dataset):
             print('data slice of shape: {}. Position indices of shape: {}, Spectroscopic indices of shape: {}'
                   '.'.format(data_slice.shape, pos_inds.shape, spec_inds.shape))
 
-        # TODO: if data is already loaded into memory, try to avoid I/O and slice in memory!!!!
-        data_slice, success = reshape_to_n_dims(data_slice, h5_pos=pos_inds, h5_spec=spec_inds, verbose=verbose)
-        data_slice = np.squeeze(data_slice)
+        success = True
+
+        if ndim_form:
+            # TODO: if data is already loaded into memory, try to avoid I/O and slice in memory!!!!
+            data_slice, success = reshape_to_n_dims(data_slice, h5_pos=pos_inds, h5_spec=spec_inds, verbose=verbose)
+            data_slice = np.squeeze(data_slice)
 
         if as_scalar:
             return flatten_to_real(data_slice), success
@@ -496,6 +501,155 @@ class USIDataset(h5py.Dataset):
         # TODO: Shouldn't we simply squeeze before returning?
         return pos_slice, spec_slice
 
+    def __slice_unit_values(self, slice_dict=None, verbose=False):
+
+        pos_labels = self.pos_dim_labels
+        pos_units = get_attr(self.h5_pos_inds, 'units')
+        spec_labels = self.spec_dim_labels
+        spec_units = get_attr(self.h5_spec_inds, 'units')
+
+        self.__validate_slice_dict(slice_dict)
+
+        # First work on slicing the ancillary matrices. Determine dimensionality before slicing n dims:
+        pos_slices, spec_slices = self._get_pos_spec_slices(slice_dict)
+        # Things are too big to print here.
+
+        pos_inds = self.h5_pos_inds[np.squeeze(pos_slices), :]
+        pos_vals = self.h5_pos_vals[np.squeeze(pos_slices), :]
+
+        if verbose:
+            print('Checking for and correcting the dimensionality of the indices and values datasets:')
+            print('Pos Inds: {}, Pos Vals: {}'.format(pos_inds.shape, pos_vals.shape))
+        if pos_inds.ndim == 1:
+            pos_inds = np.expand_dims(pos_inds, axis=0)
+            pos_vals = np.expand_dims(pos_vals, axis=0)
+
+        spec_inds = self.h5_spec_inds[:, np.squeeze(spec_slices)]
+        spec_vals = self.h5_spec_vals[:, np.squeeze(spec_slices)]
+
+        if verbose:
+            print('Checking for and correcting the dimensionality of the indices and values datasets:')
+            print('Spec Inds: {}, Spec Vals: {}'.format(spec_inds.shape, spec_vals.shape))
+
+        if spec_inds.ndim == 1:
+            spec_inds = np.expand_dims(spec_inds, axis=0)
+            spec_vals = np.expand_dims(spec_vals, axis=0)
+
+        if verbose:
+            print('After correction of shape:')
+            print('Pos Inds: {}, Pos Vals: {}, Spec Inds: {}, Spec Vals: {}'.format(pos_inds.shape, pos_vals.shape,
+                                                                                    spec_inds.shape,
+                                                                                    spec_vals.shape))
+
+        pos_unit_values = get_unit_values(pos_inds, pos_vals, all_dim_names=self.pos_dim_labels, is_spec=False,
+                                          verbose=False)
+        spec_unit_values = get_unit_values(spec_inds, spec_vals, all_dim_names=self.spec_dim_labels, is_spec=True,
+                                           verbose=False)
+
+        if verbose:
+            print('Position unit values:')
+            print(pos_unit_values)
+            print('Spectroscopic unit values:')
+            print(spec_unit_values)
+
+        # Now unit values will be correct for this slicing
+
+        # additional benefit - remove those dimensions which have at most 1 value:
+        def assemble_dimensions(full_labels, full_units, full_values):
+            new_labels = []
+            new_units = []
+            for dim_ind, dim_name in enumerate(full_labels):
+                if len(full_values[dim_name]) < 2:
+                    del (full_values[dim_name])
+                else:
+                    new_labels.append(dim_name)
+                    new_units.append(full_units[dim_ind])
+            return np.array(new_labels), np.array(new_units), full_values
+
+        pos_labels, pos_units, pos_unit_values = assemble_dimensions(pos_labels, pos_units, pos_unit_values)
+        spec_labels, spec_units, spec_unit_values = assemble_dimensions(spec_labels, spec_units, spec_unit_values)
+
+        # Ensuring that there are always at least 1 position and spectroscopic dimensions:
+        pos_squeezed = len(pos_labels) == 0
+        if pos_squeezed:
+            pos_labels = ['arb.']
+            pos_units = ['a. u.']
+            pos_unit_values = {pos_labels[-1]: np.array([1])}
+
+        spec_squeezed = len(spec_labels) == 0
+        if spec_squeezed:
+            spec_labels = ['arb.']
+            spec_units = ['a. u.']
+            spec_unit_values = {spec_labels[-1]: np.array([1])}
+
+        if verbose:
+            print('\n\nAfter removing singular dimensions:')
+            print('Position: Labels: {}, Units: {}, Values:'.format(pos_labels, pos_units))
+            print(pos_unit_values)
+            print('Spectroscopic: Labels: {}, Units: {}, Values:'.format(spec_labels, spec_units))
+            print(spec_unit_values)
+
+        # see if the total number of pos and spec keys are either 1 or 2
+        if not (0 < len(pos_unit_values) < 3) or not (0 < len(spec_unit_values) < 3):
+            raise ValueError('Number of position ({}) / spectroscopic dimensions ({}) not 1 or 2'
+                             '. Try slicing again'.format(len(pos_unit_values), len(spec_unit_values)))
+
+        return pos_labels, pos_units, pos_unit_values, pos_squeezed, spec_labels, spec_units, spec_unit_values
+
+    def slice_to_dataset(self, slice_dict, dset_name=None, verbose=False, **kwargs):
+
+        if slice_dict is None:
+            raise ValueError('slice_dict should not be None or be empty')
+
+        pos_labels, pos_units, pos_unit_values, pos_squeezed, spec_labels, spec_units, spec_unit_values = self.__slice_unit_values(
+            slice_dict=slice_dict, verbose=verbose)
+        data_slice_2d, success = self.slice(slice_dict, ndim_form=False, as_scalar=False, verbose=verbose)
+
+        if dset_name is None:
+            dset_name = self.name.split('/')[-1]
+        else:
+            if not isinstance(dset_name, (str, unicode)):
+                raise TypeError('dset_name must be of type string / unicode')
+
+        if not success:
+            raise ValueError('Unable to slice the dataset. success returned: {}'.format(success))
+
+        # check if a pos dimension was sliced:
+        pos_sliced = False
+        for dim_name in slice_dict.keys():
+            if dim_name in self.pos_dim_labels:
+                pos_sliced = True
+                break
+        if not pos_sliced:
+            pos_dims = None
+            kwargs['h5_pos_inds'] = self.h5_pos_inds
+            kwargs['h5_pos_vals'] = self.h5_pos_vals
+        else:
+            pos_dims = []
+            for name, units in zip(pos_labels, pos_units):
+                pos_dims.append(Dimension(name, units, pos_unit_values[name]))
+
+        spec_sliced = False
+        for dim_name in slice_dict.keys():
+            if dim_name in self.spec_dim_labels:
+                spec_sliced = True
+                break
+        if not spec_sliced:
+            spec_dims = None
+            kwargs['h5_spec_inds'] = self.h5_spec_inds
+            kwargs['h5_spec_vals'] = self.h5_spec_vals
+        else:
+            spec_dims = []
+            for name, units in zip(spec_labels, spec_units):
+                spec_dims.append(Dimension(name, units, spec_unit_values[name]))
+
+        h5_group = create_results_group(self, 'slice')
+
+        # TODO: Make this memory safe.
+        h5_trunc = write_main_dataset(h5_group, data_slice_2d, dset_name, get_attr(self, 'quantity'),
+                                      get_attr(self, 'units'), pos_dims, spec_dims, verbose=verbose, **kwargs)
+        return h5_trunc
+
     def visualize(self, slice_dict=None, verbose=False, **kwargs):
         """
         Interactive visualization of this dataset. Only available on jupyter notebooks
@@ -514,12 +668,13 @@ class USIDataset(h5py.Dataset):
         axis : matplotlib.Axes.axis object
             Axis within which the data was plotted. Note - the interactive visualizer does not return this object
         """
-        pos_labels = self.pos_dim_labels
-        pos_units = get_attr(self.h5_pos_inds, 'units')
-        spec_labels = self.spec_dim_labels
-        spec_units = get_attr(self.h5_spec_inds, 'units')
 
         if slice_dict is None:
+            pos_labels = self.pos_dim_labels
+            pos_units = get_attr(self.h5_pos_inds, 'units')
+            spec_labels = self.spec_dim_labels
+            spec_units = get_attr(self.h5_spec_inds, 'units')
+
             if len(self.pos_dim_labels) > 2 or len(self.spec_dim_labels) > 2:
                 raise NotImplementedError('Unable to support visualization of more than 2 position / spectroscopic '
                                           'dimensions. Try slicing the dataset')
@@ -528,102 +683,20 @@ class USIDataset(h5py.Dataset):
             pos_unit_values = get_unit_values(self.h5_pos_inds, self.h5_pos_vals)
 
         else:
-            self.__validate_slice_dict(slice_dict)
-
-            # First work on slicing the ancillary matrices. Determine dimensionality before slicing n dims:
-            pos_slices, spec_slices = self._get_pos_spec_slices(slice_dict)
-            # Things are too big to print here.
-
-            pos_inds = self.h5_pos_inds[np.squeeze(pos_slices), :]
-            pos_vals = self.h5_pos_vals[np.squeeze(pos_slices), :]
-
-            if verbose:
-                print('Checking for and correcting the dimensionality of the indices and values datasets:')
-                print('Pos Inds: {}, Pos Vals: {}'.format(pos_inds.shape, pos_vals.shape))
-            if pos_inds.ndim == 1:
-                pos_inds = np.expand_dims(pos_inds, axis=0)
-            if pos_vals.ndim == 1:
-                pos_vals = np.expand_dims(pos_vals, axis=0)
-
-            spec_inds = self.h5_spec_inds[:, np.squeeze(spec_slices)]
-            spec_vals = self.h5_spec_vals[:, np.squeeze(spec_slices)]
-
-            if verbose:
-                print('Checking for and correcting the dimensionality of the indices and values datasets:')
-                print('Spec Inds: {}, Spec Vals: {}'.format(spec_inds.shape, spec_vals.shape))
-
-            if spec_inds.ndim == 1:
-                spec_inds = np.expand_dims(spec_inds, axis=0)
-            if spec_vals.ndim == 1:
-                spec_vals = np.expand_dims(spec_vals, axis=0)
-
-            if verbose:
-                print('After correction of shape:')
-                print('Pos Inds: {}, Pos Vals: {}, Spec Inds: {}, Spec Vals: {}'.format(pos_inds.shape, pos_vals.shape,
-                                                                                        spec_inds.shape,
-                                                                                        spec_vals.shape))
-
-            pos_unit_values = get_unit_values(pos_inds, pos_vals, all_dim_names=self.pos_dim_labels, is_spec=False,
-                                              verbose=False)
-            spec_unit_values = get_unit_values(spec_inds, spec_vals, all_dim_names=self.spec_dim_labels, is_spec=True,
-                                               verbose=False)
-
-            if verbose:
-                print('Position unit values:')
-                print(pos_unit_values)
-                print('Spectroscopic unit values:')
-                print(spec_unit_values)
-
-            # Now unit values will be correct for this slicing
-
-            # additional benefit - remove those dimensions which have at most 1 value:
-            def assemble_dimensions(full_labels, full_units, full_values):
-                new_labels = []
-                new_units = []
-                for dim_ind, dim_name in enumerate(full_labels):
-                    if len(full_values[dim_name]) < 2:
-                        del (full_values[dim_name])
-                    else:
-                        new_labels.append(dim_name)
-                        new_units.append(full_units[dim_ind])
-                return np.array(new_labels), np.array(new_units), full_values
-
-            pos_labels, pos_units, pos_unit_values = assemble_dimensions(pos_labels, pos_units, pos_unit_values)
-            spec_labels, spec_units, spec_unit_values = assemble_dimensions(spec_labels, spec_units, spec_unit_values)
-
-            # Ensuring that there are always at least 1 position and spectroscopic dimensions:
-            pos_squeezed = len(pos_labels) == 0
-            if pos_squeezed:
-                pos_labels = ['arb.']
-                pos_units = ['a. u.']
-                pos_unit_values = {pos_labels[-1]: np.array([1])}
-
-            spec_squeezed = len(spec_labels) == 0
-            if spec_squeezed:
-                spec_labels = ['arb.']
-                spec_units = ['a. u.']
-                spec_unit_values = {spec_labels[-1]: np.array([1])}
-
-            if verbose:
-                print('\n\nAfter removing singular dimensions:')
-                print('Position: Labels: {}, Units: {}, Values:'.format(pos_labels, pos_units))
-                print(pos_unit_values)
-                print('Spectroscopic: Labels: {}, Units: {}, Values:'.format(spec_labels, spec_units))
-                print(spec_unit_values)
-
-            # see if the total number of pos and spec keys are either 1 or 2
-            if not (0 < len(pos_unit_values) < 3) or not (0 < len(spec_unit_values) < 3):
-                raise ValueError('Number of position ({}) / spectroscopic dimensions ({}) not 1 or 2'
-                                 '. Try slicing again'.format(len(pos_unit_values), len(spec_unit_values)))
+            pos_labels, pos_units, pos_unit_values, pos_squeezed, spec_labels, spec_units, spec_unit_values = self.__slice_unit_values(slice_dict=slice_dict, verbose=verbose)
 
             # now should be safe to slice:
-            data_slice, success = self.slice(slice_dict)
+            data_slice, success = self.slice(slice_dict, ndim_form=True)
             if not success:
                 raise ValueError('Something went wrong when slicing the dataset. slice message: {}'.format(success))
             # don't forget to remove singular dimensions via a squeeze
             data_slice = np.squeeze(data_slice)
+            # Unlikely event that all dimensions were removed and we are left with a scalar:
+            if data_slice.ndim == 0:
+                # Nothing to visualize - just return a value
+                return data_slice
             # There is a chance that the data dimensionality may have reduced to 1:
-            if data_slice.ndim == 1:
+            elif data_slice.ndim == 1:
                 if pos_squeezed:
                     data_slice = np.expand_dims(data_slice, axis=0)
                 else:
