@@ -502,6 +502,26 @@ class USIDataset(h5py.Dataset):
         return pos_slice, spec_slice
 
     def __slice_unit_values(self, slice_dict=None, verbose=False):
+        """
+        Provides Dimension objects that express the reference position and spectroscopic dimensions for this dataset
+        once it is sliced via the provided slicing dictionary.
+
+        Parameters
+        ----------
+        slice_dict : dict (optional)
+            Dictionary to slice one or more dimensions of the dataset by indices
+        verbose : bool (optional)
+            Whether or not to print debugging statements to stdout. Default = False
+
+        Returns
+        -------
+        pos_dims : list
+            List of pyUSID.Dimension objects for each of the remaining position dimensions
+        spec_dims : list
+            List of pyUSID.Dimension objects for each of the remaining spectroscopic dimensions
+        pos_squeezed : bool
+            Whether or not all position dimensions have been removed
+        """
 
         pos_labels = self.pos_dim_labels
         pos_units = get_attr(self.h5_pos_inds, 'units')
@@ -597,13 +617,28 @@ class USIDataset(h5py.Dataset):
         return pos_labels, pos_units, pos_unit_values, pos_squeezed, spec_labels, spec_units, spec_unit_values
 
     def slice_to_dataset(self, slice_dict, dset_name=None, verbose=False, **kwargs):
+        """
+        Slices the dataset, writes its output to back to the HDF5 file, and returns a USIDataset object
 
+        Parameters
+        ----------
+        slice_dict : dict
+            Dictionary to slice one or more dimensions of the dataset by indices
+        dset_name : str (optional)
+            Name of the new USID Main datset in the HDF5 file that will contain the sliced data.
+            Default - the sliced dataset takes the same name as this source dataset
+        verbose : bool (optional)
+            Whether or not to print debugging statements to stdout. Default = False
+        kwargs : keyword arguments
+            keyword arguments that will be passed on to write_main_data()
+
+        Returns
+        -------
+        h5_trunc : USIDataset
+            USIDataset containing the sliced data
+        """
         if slice_dict is None:
             raise ValueError('slice_dict should not be None or be empty')
-
-        pos_labels, pos_units, pos_unit_values, pos_squeezed, spec_labels, spec_units, spec_unit_values = self.__slice_unit_values(
-            slice_dict=slice_dict, verbose=verbose)
-        data_slice_2d, success = self.slice(slice_dict, ndim_form=False, as_scalar=False, verbose=verbose)
 
         if dset_name is None:
             dset_name = self.name.split('/')[-1]
@@ -611,37 +646,75 @@ class USIDataset(h5py.Dataset):
             if not isinstance(dset_name, (str, unicode)):
                 raise TypeError('dset_name must be of type string / unicode')
 
+        if verbose:
+            print('Decided / provided name of new sliced HDF5 dataset to be: {}'.format(dset_name))
+
+        pos_labels, pos_units, pos_unit_values, pos_squeezed, spec_labels, spec_units, spec_unit_values = self.__slice_unit_values(
+            slice_dict=slice_dict, verbose=verbose)
+
+        if verbose:
+            print('Sliced ancillary datasets returned:\n------------------------------------------')
+            print('pos_labels: {}'.format(pos_labels))
+            print('pos_units: {}'.format(pos_units))
+            print('pos_unit_values: {}'.format(pos_unit_values))
+            print('spec_labels: {}'.format(spec_labels))
+            print('spec_units: {}'.format(spec_units))
+            print('spec_unit_values: {}'.format(spec_unit_values))
+
+        data_slice_2d, success = self.slice(slice_dict, ndim_form=False, as_scalar=False, verbose=verbose)
+
         if not success:
             raise ValueError('Unable to slice the dataset. success returned: {}'.format(success))
+
+        if verbose:
+            print('Slicing the main dataset returned:\n------------------------------------------')
+            print('Reshape success: {}'.format(success))
+            print('2D data shape: {}'.format(data_slice_2d.shape))
 
         # check if a pos dimension was sliced:
         pos_sliced = False
         for dim_name in slice_dict.keys():
             if dim_name in self.pos_dim_labels:
                 pos_sliced = True
+                if verbose:
+                    print('Position dimension: {} was sliced'.format(dim_name))
                 break
         if not pos_sliced:
             pos_dims = None
             kwargs['h5_pos_inds'] = self.h5_pos_inds
             kwargs['h5_pos_vals'] = self.h5_pos_vals
+            if verbose:
+                print('Reusing this main datasets position datasets')
         else:
+            if verbose:
+                print('Building new position dimensions:\n------------------------------------------')
             pos_dims = []
             for name, units in zip(pos_labels, pos_units):
                 pos_dims.append(Dimension(name, units, pos_unit_values[name]))
+                if verbose:
+                    print('\t{}'.format(pos_dims[-1]))
 
         spec_sliced = False
         for dim_name in slice_dict.keys():
             if dim_name in self.spec_dim_labels:
                 spec_sliced = True
+                if verbose:
+                    print('Spectroscopic dimension: {} was sliced'.format(dim_name))
                 break
         if not spec_sliced:
             spec_dims = None
             kwargs['h5_spec_inds'] = self.h5_spec_inds
             kwargs['h5_spec_vals'] = self.h5_spec_vals
+            if verbose:
+                print('Reusing this main datasets spectroscopic datasets')
         else:
+            if verbose:
+                print('Building new spectroscopic dimensions:\n------------------------------------------')
             spec_dims = []
             for name, units in zip(spec_labels, spec_units):
                 spec_dims.append(Dimension(name, units, spec_unit_values[name]))
+                if verbose:
+                    print('\t{}'.format(spec_dims[-1]))
 
         h5_group = create_results_group(self, 'slice')
 
