@@ -174,6 +174,13 @@ except ImportError:
 # address those situations when too few or too many (> 1) peaks are found in a single spectra. Finally, we need to use
 # the index of the peak to find the amplitude from the spectra.
 #
+# .. note::
+#     ``_map_function()`` must be marked as a
+#     `static method <https://www.geeksforgeeks.org/class-method-vs-static-method-python/>`_ instead of the default
+#     ``class method``. This means that ``_map_function()`` should function exactly the same if it were outside the
+#     class we are defining. In other words, it should not make any references to properties or functions of the class
+#     such as ``self.my_important_variable`` or ``self.some_function()``.
+#
 # test()
 # ------
 # A useful test function should be able to find the peak amplitude for any single spectra in the dataset. So, given the
