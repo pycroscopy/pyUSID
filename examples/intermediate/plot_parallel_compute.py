@@ -206,6 +206,11 @@ axis.set_title('find_all_peaks found peaks at index: {}'.format(peak_inds), font
 raw_data = h5_main[()]
 
 ########################################################################################################################
+# .. note::
+#     This documentation is being generated automatically by a computer in the cloud whose workload cannot be controlled
+#     or predicted. Therefore, the computational times reported in this document may not be consistent and can even be
+#     contradictory. For best results, we recommend that download and run this document as a jupyter notebook.
+#
 # Serial computing
 # ----------------
 # A single call to the function does not take substantial time. However, performing the same operation on each of the
@@ -311,6 +316,14 @@ print('Parallel computation with {} cores took {} seconds'.format(cpu_cores, np.
 # diminishing benefits of additional cores beyond 2 cores for this specific problem in the plot below. This is because
 # the dataset is relatively small and each peak-finding operation is relatively quick. The overhead of adding additional
 # cores quickly outweighs the speedup in distributing the work among multiple CPU cores.
+#
+# .. note::
+#     This documentation is being generated automatically by a computer in the cloud whose workload cannot be controlled
+#     or predicted. Therefore, the computational times reported in this document may not be consistent and can even be
+#     contradictory. For best results, we recommend that download and run this document as a jupyter notebook.
+#
+#     If everything ran correctly, you should see the computational time decrease substantially from 1 to 2 cores but
+#     the decrease from 2 to 3 or 3 to 4 cores should be minimal or negligible.
 
 fig, axis = plt.subplots(figsize=(3.5, 3.5))
 axis.scatter(cores_vec, times_vec)
