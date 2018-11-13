@@ -8,7 +8,8 @@ Created on Tue Nov  3 15:07:16 2015
 from __future__ import division, print_function, absolute_import, unicode_literals
 import abc
 import time as tm
-from .io_utils import get_available_memory, get_time_stamp
+from .io_utils import get_time_stamp
+from ..processing.comp_utils import get_available_memory
 
 
 class Translator(object):
