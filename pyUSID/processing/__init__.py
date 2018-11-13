@@ -9,6 +9,8 @@ Submodules
 
 """
 
-from .process import Process, parallel_compute
+from .process import Process
+from .comp_utils import parallel_compute
+from . import comp_utils
 
-__all__ = ['parallel_compute', 'Process']
+__all__ = ['Process', 'parallel_compute', 'comp_utils']
