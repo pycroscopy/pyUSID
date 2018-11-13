@@ -6,80 +6,16 @@ Created on 7/17/16 10:08 AM
 from __future__ import division, print_function, absolute_import
 import numpy as np
 import psutil
-import joblib
 import time as tm
 import h5py
-import itertools
 from numbers import Number
-
 from multiprocessing import cpu_count
 
-try:
-    from mpi4py import MPI
-    if MPI.COMM_WORLD.Get_size() == 1:
-        # mpi4py available but NOT called via mpirun or mpiexec => single node
-        MPI = None
-except ImportError:
-    # mpi4py not even present! Single node by default:
-    MPI = None
-
+from .comp_utils import parallel_compute, get_MPI, group_ranks_by_socket, get_available_memory
 from ..io.hdf_utils import check_if_main, check_for_old, get_attributes
 from ..io.usi_data import USIDataset
 from ..io.dtype_utils import integers_to_slices
-from ..io.io_utils import recommend_cpu_cores, get_available_memory, format_time, format_size
-
-
-def group_ranks_by_socket(verbose=False):
-    """
-    Groups MPI ranks in COMM_WORLD by socket. Another way to think about this is that it assigns a master rank for each
-    rank such that there is a single master rank per socket (CPU). The results from this function can be used to split
-    MPI communicators based on the socket for intra-node communication.
-
-    This is necessary when wanting to carve up the memory for all ranks within a socket.
-    This is also relevant when trying to bring down the number of ranks that are writing to the HDF5 file.
-    This is all based on the premise that data analysis involves a fair amount of file writing and writing with
-    3 ranks is a lot better than writing with 100 ranks. An assumption is made that the communication between the
-    ranks within each socket would be faster than communicating across nodes / scokets. No assumption is made about the
-    names of each socket
-
-    Parameters
-    ----------
-    verbose : bool, optional
-        Whether or not to print debugging statements
-
-    Returns
-    -------
-    master_ranks : 1D unsigned integer numpy array
-        Array with values that signify which rank a given rank should consider its master.
-    """
-    comm = MPI.COMM_WORLD
-    size = comm.Get_size()
-    rank = comm.Get_rank()
-
-    # Step 1: Gather all the socket names:
-    sendbuf = MPI.Get_processor_name()
-    if verbose:
-        print('Rank: ', rank, ', sendbuf: ', sendbuf)
-    recvbuf = comm.allgather(sendbuf)
-    if verbose and rank == 0:
-        print('Rank: ', rank, ', recvbuf received: ', recvbuf)
-
-    # Step 2: Find all unique socket names:
-    recvbuf = np.array(recvbuf)
-    unique_sockets = np.unique(recvbuf)
-    if verbose and rank == 0:
-        print('Unique sockets: {}'.format(unique_sockets))
-
-    master_ranks = np.zeros(size, dtype=np.uint16)
-
-    for item in unique_sockets:
-        temp = np.where(recvbuf == item)[0]
-        master_ranks[temp] = temp[0]
-
-    if verbose and rank == 0:
-        print('Parent rank for all ranks: {}'.format(master_ranks))
-
-    return master_ranks
+from ..io.io_utils import format_time, format_size
 
 
 class Process(object):
@@ -105,6 +41,8 @@ class Process(object):
 
         if h5_main.file.mode != 'r+':
             raise TypeError('Need to ensure that the file is in r+ mode to write results back to the file')
+
+        MPI = get_MPI()
 
         if MPI is not None:
             # If we came here then, the user has intentionally asked for multi-node computation
@@ -144,7 +82,9 @@ class Process(object):
             """
 
         else:
-            print('No mpi4py found or script was not called via mpixexec / mpirun. Assuming single node computation')
+            if verbose:
+                print('No mpi4py found or script was not called via mpixexec / mpirun. '
+                      'Assuming single node computation')
             self.mpi_comm = None
             self.mpi_size = 1
             self.mpi_rank = 0
@@ -403,7 +343,7 @@ class Process(object):
             Default - 1024
             The amount a memory in Mb to use in the computation
         """
-        if MPI is None:
+        if self.mpi_comm is None:
             min_free_cores = 1 + int(psutil.cpu_count() > 4)
 
             if cores is None:
@@ -767,79 +707,3 @@ class Process(object):
         return self.h5_results_grp
 
 
-def parallel_compute(data, func, cores=1, lengthy_computation=False, func_args=None, func_kwargs=None, verbose=False):
-    """
-    Computes the provided function using multiple cores using the joblib library
-
-    Parameters
-    ----------
-    data : numpy.ndarray
-        Data to map function to. Function will be mapped to the first axis of data
-    func : callable
-        Function to map to data
-    cores : uint, optional
-        Number of logical cores to use to compute
-        Default - 1 (serial computation)
-    lengthy_computation : bool, optional
-        Whether or not each computation is expected to take substantial time.
-        Sometimes the time for adding more cores can outweigh the time per core
-        Default - False
-    func_args : list, optional
-        arguments to be passed to the function
-    func_kwargs : dict, optional
-        keyword arguments to be passed onto function
-    verbose : bool, optional. default = False
-        Whether or not to print statements that aid in debugging
-    Returns
-    -------
-    results : list
-        List of computational results
-    """
-
-    if not callable(func):
-        raise TypeError('Function argument is not callable')
-    if not isinstance(data, np.ndarray):
-        raise TypeError('data must be a numpy array')
-    if func_args is None:
-        func_args = list()
-    else:
-        if isinstance(func_args, tuple):
-            func_args = list(func_args)
-        if not isinstance(func_args, list):
-            raise TypeError('Arguments to the mapped function should be specified as a list')
-    if func_kwargs is None:
-        func_kwargs = dict()
-    else:
-        if not isinstance(func_kwargs, dict):
-            raise TypeError('Keyword arguments to the mapped function should be specified via a dictionary')
-
-    req_cores = cores
-    if MPI is not None:
-        rank = MPI.COMM_WORLD.Get_rank()
-        # Was unable to get the MPI + joblib framework to work. Did not compute anything at all. Just froze
-        cores = 1
-    else:
-        rank = 0
-        cores = recommend_cpu_cores(data.shape[0],
-                                    requested_cores=cores,
-                                    lengthy_computation=lengthy_computation,
-                                    verbose=verbose)
-
-    if verbose:
-        print('Rank {} starting computing on {} cores (requested {} cores)'.format(rank, cores, req_cores))
-
-    if cores > 1:
-        values = [joblib.delayed(func)(x, *func_args, **func_kwargs) for x in data]
-        results = joblib.Parallel(n_jobs=cores)(values)
-
-        # Finished reading the entire data set
-        print('Rank {} finished parallel computation'.format(rank))
-
-    else:
-        if verbose:
-            print("Rank {} computing serially ...".format(rank))
-        # List comprehension vs map vs for loop?
-        # https://stackoverflow.com/questions/1247486/python-list-comprehension-vs-map
-        results = [func(vector, *func_args, **func_kwargs) for vector in data]
-
-    return results
