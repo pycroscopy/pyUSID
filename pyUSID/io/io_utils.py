@@ -16,7 +16,8 @@ import numpy as np
 if sys.version_info.major == 3:
     unicode = str
 
-__all__ = ['get_time_stamp', 'file_dialog', 'format_quantity', 'format_time', 'format_size']
+__all__ = ['get_time_stamp', 'file_dialog', 'format_quantity', 'format_time', 'format_size',
+           'get_available_memory', 'get_available_memory']
 
 
 def check_ssh():
@@ -227,3 +228,58 @@ def formatted_str_to_number(str_val, magnitude_names, magnitude_values, separato
         if unit_name == components[1]:
             # Let it raise an exception. Don't catch
             return scaling * float(components[0])
+
+
+def get_available_memory():
+    """
+    Returns the available memory
+
+    Note
+    ----
+    This function has been moved to pyUSID.processing.comp_utils. PLease update your code to avoid future errors.
+
+    Returns
+    -------
+    mem : unsigned int
+        Memory in bytes
+    """
+    from warnings import warn
+    warn('Please use pyUSID.processing.comp_utils.get_available_memory() instead in the future', FutureWarning)
+    from ..processing.comp_utils import get_available_memory
+    return get_available_memory()
+
+
+def recommend_cpu_cores(num_jobs, requested_cores=None, lengthy_computation=False, min_free_cores=None, verbose=False):
+    """
+    Decides the number of cores to use for parallel computing
+
+    Parameters
+    ----------
+    num_jobs : unsigned int
+        Number of times a parallel operation needs to be performed
+    requested_cores : unsigned int (Optional. Default = None)
+        Number of logical cores to use for computation
+    lengthy_computation : Boolean (Optional. Default = False)
+        Whether or not each computation takes a long time. If each computation is quick, it may not make sense to take
+        a hit in terms of starting and using a larger number of cores, so use fewer cores instead.
+        Eg- BE SHO fitting is fast (<1 sec) so set this value to False,
+        Eg- Bayesian Inference is very slow (~ 10-20 sec)so set this to True
+    min_free_cores : uint (Optional, default = 1 if number of logical cores < 5 and 2 otherwise)
+        Number of CPU cores that should not be used)
+    verbose : Boolean (Optional.  Default = False)
+        Whether or not to print statements that aid in debugging
+
+    Returns
+    -------
+    requested_cores : unsigned int
+        Number of logical cores to use for computation
+
+    Note
+    ----
+    This function has been moved to pyUSID.processing.comp_utils. PLease update your code to avoid future errors.
+    """
+    from warnings import warn
+    warn('Please use pyUSID.processing.comp_utils.recommend_cpu_cores() instead in the future', FutureWarning)
+    from ..processing.comp_utils import recommend_cpu_cores
+    return recommend_cpu_cores(num_jobs, requested_cores=requested_cores, lengthy_computation=lengthy_computation,
+                               min_free_cores=min_free_cores, verbose=verbose)
