@@ -9,6 +9,7 @@ import numpy as np
 import psutil
 import joblib
 import time as tm
+from warnings import warn
 
 from ..io.hdf_utils import check_if_main, check_for_old, get_attributes
 from ..io.usi_data import USIDataset
@@ -61,6 +62,11 @@ class Process(object):
 
         self._results = None
         self.h5_results_grp = None
+
+        warn('The upcoming Process class will bring many upgrades. '
+             'Please see: https://pycroscopy.github.io/pyUSID/auto_examples/intermediate/plot_process.html for more '
+             'information. Sub classes will no longer have access to self._start_pos and self._end_pos and will need to'
+             ' use self._get_pixels_in_current_batch() instead.', FutureWarning)
 
         print('Consider calling test() to check results before calling compute() which computes on the entire'
               ' dataset and writes back to the HDF5 file')
