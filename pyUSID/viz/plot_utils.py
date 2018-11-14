@@ -500,14 +500,13 @@ def plot_line_family(axis, x_vec, line_family, line_names=None, label_prefix='',
     if not isinstance(x_vec, (list, tuple, np.ndarray)):
         raise TypeError('x_vec must be array-like of numbers')
     x_vec = np.array(x_vec)
-    #assert x_vec.ndim == 1, 'x_vec must be a 1D array' #This is unnecessary and breaks some existing uses of this function, so commenting out.
+    assert x_vec.ndim == 1, 'x_vec must be a 1D array'
     if not isinstance(line_family, list):
         line_family = np.array(line_family)
     if not isinstance(line_family, np.ndarray):
         raise TypeError('line_family must be a 2d array of numbers')
     assert line_family.ndim == 2, 'line_family must be a 2D array'
-    assert x_vec.shape[1] == line_family.shape[1], \
-        'The size of the 2nd dimension of line_family must match with of x_vec, but line fam has shape {} whereas xvec has shape {}'.format(line_family.shape, x_vec.shape)
+    assert x_vec.size == line_family.shape[1], 'The size of the 2nd dimension of line_family must match with of x_vec'
     num_lines = line_family.shape[0]
     for var, var_name in zip([label_suffix, label_prefix], ['label_suffix', 'label_prefix']):
         if not isinstance(var, (str, unicode)):
@@ -532,12 +531,7 @@ def plot_line_family(axis, x_vec, line_family, line_names=None, label_prefix='',
     line_names = ['{} {} {}'.format(label_prefix, cur_name, label_suffix) for cur_name in line_names]
 
     for line_ind in range(num_lines):
-        if x_vec.ndim==1:
-            axis.plot(x_vec, line_family[line_ind] + line_ind * y_offset,
-                  label=line_names[line_ind],
-                  color=cmap(int(255 * line_ind / (num_lines - 1))), **kwargs)
-        else:
-            axis.plot(x_vec[line_ind], line_family[line_ind] + line_ind * y_offset,
+        axis.plot(x_vec, line_family[line_ind] + line_ind * y_offset,
                   label=line_names[line_ind],
                   color=cmap(int(255 * line_ind / (num_lines - 1))), **kwargs)
 
