@@ -1662,7 +1662,7 @@ class TestHDFUtils(unittest.TestCase):
 
         os.remove(file_path)
 
-    def test_write_reduced_spec_dsets_2d_to_1d(self):
+    def test_write_reduced_anc_dsets_spec_2d_to_1d(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
         self.__delete_existing_file(duplicate_path)
         shutil.copy(test_h5_file_path, duplicate_path)
@@ -1671,11 +1671,11 @@ class TestHDFUtils(unittest.TestCase):
             h5_spec_vals_orig = h5_f['/Raw_Measurement/Spectroscopic_Values']
             new_base_name = 'Blah'
             # cycle_starts = np.where(h5_spec_inds_orig[0] == 0)[0]
-            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_spec_dsets(h5_spec_inds_orig.parent,
-                                                                                    h5_spec_inds_orig,
-                                                                                    h5_spec_vals_orig,
-                                                                                    'Bias',
-                                                                                    basename=new_base_name)
+            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_anc_dsets(h5_spec_inds_orig.parent,
+                                                                                   h5_spec_inds_orig,
+                                                                                   h5_spec_vals_orig,
+                                                                                   'Bias',
+                                                                                   basename=new_base_name)
 
             dim_names = ['Cycle']
             dim_units = ['']
@@ -1698,7 +1698,7 @@ class TestHDFUtils(unittest.TestCase):
 
         os.remove(duplicate_path)
 
-    def test_write_reduced_spec_dsets_1d_to_0d(self):
+    def test_write_reduced_anc_dsets_spec_1d_to_0d(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
         self.__delete_existing_file(duplicate_path)
 
@@ -1708,9 +1708,9 @@ class TestHDFUtils(unittest.TestCase):
                                                                                  write_utils.Dimension('Bias', 'V', 10),
                                                                                  is_spectral=True)
             new_base_name = 'Blah'
-            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_spec_dsets(h5_f, h5_spec_inds_orig,
-                                                                                    h5_spec_vals_orig,
-                                                                                    'Bias', basename=new_base_name)
+            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_anc_dsets(h5_f, h5_spec_inds_orig,
+                                                                                   h5_spec_vals_orig,
+                                                                                   'Bias', basename=new_base_name)
 
             dim_names = ['Single_Step']
             dim_units = ['a. u.']
@@ -1733,7 +1733,46 @@ class TestHDFUtils(unittest.TestCase):
 
         os.remove(duplicate_path)
 
-    def test_write_reduced_spec_dsets_3d_to_1d_fastest_n_slowest(self):
+    def test_write_reduced_anc_dsets_3d_to_1d_pos_fastest_n_slowest(self):
+        duplicate_path = 'copy_test_hdf_utils.h5'
+        self.__delete_existing_file(duplicate_path)
+
+        with h5py.File(duplicate_path) as h5_f:
+
+            dims = [write_utils.Dimension('X', 'nm', np.linspace(300, 350, 5)),
+                    write_utils.Dimension('Y', 'um', [-2, 4, 10]),
+                    write_utils.Dimension('Z', 'm', 2)]
+
+            h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f, dims, is_spectral=False)
+            new_base_name = 'Position'
+            h5_grp = h5_f.create_group('My_Group')
+            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_anc_dsets(h5_grp, h5_spec_inds_orig,
+                                                                                   h5_spec_vals_orig, ['X', 'Z'])
+
+            dim_names = ['Y']
+            dim_units = ['um']
+            ref_inds = np.expand_dims(np.arange(3), axis=1)
+            ref_vals = np.expand_dims([-2, 4, 10], axis=1)
+            for h5_dset, exp_dtype, exp_name, ref_data in zip([h5_spec_inds_new, h5_spec_vals_new],
+                                                              [h5_spec_inds_orig.dtype, h5_spec_vals_orig.dtype],
+                                                              [new_base_name + '_Indices', new_base_name + '_Values'],
+                                                              [ref_inds, ref_vals]):
+                self.assertIsInstance(h5_dset, h5py.Dataset)
+                self.assertEqual(h5_dset.parent, h5_grp)
+                self.assertEqual(h5_dset.name.split('/')[-1], exp_name)
+                self.assertTrue(np.allclose(ref_data, h5_dset[()]))
+                self.assertEqual(h5_dset.dtype, exp_dtype)
+                self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
+                self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
+                self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
+                # assert region references
+                for dim_ind, curr_name in enumerate(dim_names):
+                    self.assertTrue(np.allclose(np.squeeze(ref_data[:, dim_ind]),
+                                                np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
+
+        os.remove(duplicate_path)
+
+    def test_write_reduced_anc_dsets_3d_to_1d_spec_fastest_n_slowest(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
         self.__delete_existing_file(duplicate_path)
 
@@ -1745,10 +1784,10 @@ class TestHDFUtils(unittest.TestCase):
 
             h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f, dims, is_spectral=True)
             new_base_name = 'Blah'
-            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_spec_dsets(h5_f, h5_spec_inds_orig,
-                                                                                    h5_spec_vals_orig,
-                                                                                    ['Freq', 'Cycle'],
-                                                                                    basename=new_base_name)
+            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_anc_dsets(h5_f, h5_spec_inds_orig,
+                                                                                   h5_spec_vals_orig,
+                                                                                   ['Freq', 'Cycle'],
+                                                                                   basename=new_base_name)
 
             dim_names = ['Bias']
             dim_units = ['V']
@@ -1773,7 +1812,7 @@ class TestHDFUtils(unittest.TestCase):
 
         os.remove(duplicate_path)
 
-    def test_write_reduced_spec_dsets_3d_to_1d_fastest(self):
+    def test_write_reduced_anc_dsets_3d_to_1d_spec_fastest(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
         self.__delete_existing_file(duplicate_path)
 
@@ -1785,10 +1824,10 @@ class TestHDFUtils(unittest.TestCase):
 
             h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f, dims, is_spectral=True)
             new_base_name = 'Blah'
-            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_spec_dsets(h5_f, h5_spec_inds_orig,
-                                                                                    h5_spec_vals_orig,
-                                                                                    ['Freq', 'Bias'],
-                                                                                    basename=new_base_name)
+            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_anc_dsets(h5_f, h5_spec_inds_orig,
+                                                                                   h5_spec_vals_orig,
+                                                                                   ['Freq', 'Bias'],
+                                                                                   basename=new_base_name)
 
             dim_names = ['Cycle']
             dim_units = ['a.u.']
@@ -1813,7 +1852,7 @@ class TestHDFUtils(unittest.TestCase):
 
         os.remove(duplicate_path)
 
-    def test_write_reduced_spec_dsets_3d_to_1d_slowest(self):
+    def test_write_reduced_anc_dsets_3d_to_1d_spec_slowest(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
         self.__delete_existing_file(duplicate_path)
 
@@ -1825,10 +1864,10 @@ class TestHDFUtils(unittest.TestCase):
 
             h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f, dims, is_spectral=True)
             new_base_name = 'Blah'
-            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_spec_dsets(h5_f, h5_spec_inds_orig,
-                                                                                    h5_spec_vals_orig,
-                                                                                    ['Cycle', 'Bias'],
-                                                                                    basename=new_base_name)
+            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_anc_dsets(h5_f, h5_spec_inds_orig,
+                                                                                   h5_spec_vals_orig,
+                                                                                   ['Cycle', 'Bias'],
+                                                                                   basename=new_base_name)
 
             dim_names = ['Freq']
             dim_units = ['Hz']
@@ -1852,6 +1891,8 @@ class TestHDFUtils(unittest.TestCase):
                                                 np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
 
         os.remove(duplicate_path)
+
+
 
     def test_get_indices_for_region_ref_corners(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
