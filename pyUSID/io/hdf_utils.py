@@ -2070,7 +2070,8 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
     return h5_indices, h5_values
 
 
-def write_reduced_spec_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_name, basename='Spectroscopic'):
+def write_reduced_spec_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_name, basename='Spectroscopic',
+                             verbose=False):
     """
     Creates new Spectroscopic Indices and Values datasets from the input datasets
     and keeps the dimensions specified in keep_dim
@@ -2083,11 +2084,13 @@ def write_reduced_spec_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_na
             Spectroscopic indices dataset
     h5_spec_vals : HDF5 Dataset
             Spectroscopic values dataset
-    dim_name : str or unicode
-            Name of the dimension to remove
+    dim_name : str or unicode or list of strings
+            Names of the dimension(s) to remove
     basename : str or unicode, Optional
             String to which '_Indices' and '_Values' will be appended to get the names
             of the new datasets
+    verbose : bool, optional. Default = False
+            Whether or not to print debugging print statements
 
     Returns
     -------
@@ -2102,6 +2105,8 @@ def write_reduced_spec_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_na
     if basename is not None:
         if not isinstance(basename, (str, unicode)):
             raise TypeError('basename should be a string')
+        if basename.endswith('_'):
+            basename = basename[:-1]
 
     for sub_name in ['_Indices', '_Values']:
         if basename + sub_name in h5_parent_group.keys():
@@ -2112,23 +2117,57 @@ def write_reduced_spec_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_na
         if not isinstance(param, h5py.Dataset):
             raise TypeError(param_name + ' should be a h5py.Dataset object')
     if dim_name is not None:
-        if not isinstance(dim_name, (str, unicode)):
-            raise TypeError('dim_name should be a string')
+        if isinstance(dim_name, (str, unicode)):
+            dim_name = [dim_name]
+
+        if not isinstance(dim_name, (list, tuple)):
+            raise TypeError('dim_name should either be a string or a list of strings')
+        if not np.all([isinstance(item, (str, unicode)) for item in dim_name]):
+            raise TypeError('dim_name should either be a string or a list of strings')
 
     all_dim_names = list(get_attr(h5_spec_inds, 'labels'))
-    if dim_name not in all_dim_names:
-        raise KeyError('Requested dimension: {} not in the list of labels: {}'.format(dim_name, all_dim_names))
-    dim_ind = all_dim_names.index(dim_name)
-    step_starts = np.where(h5_spec_inds[dim_ind] == 0)[0]
-    keep_dim = np.array(all_dim_names) != dim_name
+    for item in dim_name:
+        if item not in all_dim_names:
+            raise KeyError('Requested dimension: {} not in the list of labels: {}'.format(item, all_dim_names))
 
-    if h5_spec_inds.shape[0] > 1:
+    if set(dim_name) != set(all_dim_names):
+        # At least one dimension will remain
+
+        if verbose:
+            print('All Dimensions: {}. Dimensions to be removed: {}'.format(all_dim_names, dim_name))
+
+        ind_mat = h5_spec_inds[()]
+
+        # For all dimensions, find where the index = 0
+        # basically, we are indexing all dimensions to 0
+        first_indices = []
+        keep_dim = np.ones(len(all_dim_names), dtype=bool)
+        for cur_dim in dim_name:
+            dim_ind = all_dim_names.index(cur_dim)
+            keep_dim[dim_ind] = False
+            # check equality against the minimum value instead of 0 to account for cases when a dimension does not start
+            # from 0 (already been sliced) - think of multi-dimensional slicing!
+            first_indices.append(ind_mat[dim_ind] == np.min(ind_mat[dim_ind]))
+        first_indices = np.vstack(first_indices)
+
+        if verbose:
+            print('Raw first_indices:')
+            print(first_indices)
+            print('Dimensions to keep: {}'.format(keep_dim))
+
+        step_starts = np.all(first_indices, axis=0)
+
+        if verbose:
+            print('Columns in dataset to keep:')
+            print(step_starts)
+
         '''
         Extract all rows that we want to keep from input indices and values
         '''
         # TODO: handle TypeError: Indexing elements must be in increasing order
-        ind_mat = h5_spec_inds[keep_dim, :][:, step_starts]
+        ind_mat = ind_mat[keep_dim, :][:, step_starts]
         val_mat = h5_spec_vals[keep_dim, :][:, step_starts]
+
         '''
         Create new Datasets to hold the data
         Name them based on basename
@@ -2147,7 +2186,8 @@ def write_reduced_spec_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_na
             write_region_references(dset, reg_ref_slices, verbose=False)
             write_simple_attrs(dset, {'labels': labels, 'units': h5_spec_inds.attrs['units'][keep_dim]})
 
-    else:  # Single spectroscopic dimension:
+    else:
+        # Remove all dimensions:
         h5_inds = h5_parent_group.create_dataset(basename + '_Indices', data=np.array([[0]]), dtype=INDICES_DTYPE)
         h5_vals = h5_parent_group.create_dataset(basename + '_Values', data=np.array([[0]]), dtype=VALUES_DTYPE)
 
