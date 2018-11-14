@@ -1698,6 +1698,161 @@ class TestHDFUtils(unittest.TestCase):
 
         os.remove(duplicate_path)
 
+    def test_write_reduced_spec_dsets_1d_to_0d(self):
+        duplicate_path = 'copy_test_hdf_utils.h5'
+        self.__delete_existing_file(duplicate_path)
+
+        with h5py.File(duplicate_path) as h5_f:
+
+            h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f,
+                                                                                 write_utils.Dimension('Bias', 'V', 10),
+                                                                                 is_spectral=True)
+            new_base_name = 'Blah'
+            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_spec_dsets(h5_f, h5_spec_inds_orig,
+                                                                                    h5_spec_vals_orig,
+                                                                                    'Bias', basename=new_base_name)
+
+            dim_names = ['Single_Step']
+            dim_units = ['a. u.']
+            ref_data = np.expand_dims(np.arange(1), axis=0)
+            for h5_dset, exp_dtype, exp_name in zip([h5_spec_inds_new, h5_spec_vals_new],
+                                                    [h5_spec_inds_orig.dtype, h5_spec_vals_orig.dtype],
+                                                    [new_base_name + '_Indices', new_base_name + '_Values']):
+                self.assertIsInstance(h5_dset, h5py.Dataset)
+                self.assertEqual(h5_dset.parent, h5_spec_inds_orig.parent)
+                self.assertEqual(h5_dset.name.split('/')[-1], exp_name)
+                self.assertTrue(np.allclose(ref_data, h5_dset[()]))
+                self.assertEqual(h5_dset.dtype, exp_dtype)
+                self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
+                self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
+                self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
+                # assert region references
+                for dim_ind, curr_name in enumerate(dim_names):
+                    self.assertTrue(np.allclose(np.squeeze(ref_data[dim_ind]),
+                                                np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
+
+        os.remove(duplicate_path)
+
+    def test_write_reduced_spec_dsets_3d_to_1d_fastest_n_slowest(self):
+        duplicate_path = 'copy_test_hdf_utils.h5'
+        self.__delete_existing_file(duplicate_path)
+
+        with h5py.File(duplicate_path) as h5_f:
+
+            dims = [write_utils.Dimension('Freq', 'Hz', np.linspace(300, 350, 5)),
+                    write_utils.Dimension('Bias', 'V', [-2, 4, 10]),
+                    write_utils.Dimension('Cycle', 'a.u.', 2)]
+
+            h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f, dims, is_spectral=True)
+            new_base_name = 'Blah'
+            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_spec_dsets(h5_f, h5_spec_inds_orig,
+                                                                                    h5_spec_vals_orig,
+                                                                                    ['Freq', 'Cycle'],
+                                                                                    basename=new_base_name)
+
+            dim_names = ['Bias']
+            dim_units = ['V']
+            ref_inds = np.expand_dims(np.arange(3), axis=0)
+            ref_vals = np.expand_dims([-2, 4, 10], axis=0)
+            for h5_dset, exp_dtype, exp_name, ref_data in zip([h5_spec_inds_new, h5_spec_vals_new],
+                                                              [h5_spec_inds_orig.dtype, h5_spec_vals_orig.dtype],
+                                                              [new_base_name + '_Indices', new_base_name + '_Values'],
+                                                              [ref_inds, ref_vals]):
+                self.assertIsInstance(h5_dset, h5py.Dataset)
+                self.assertEqual(h5_dset.parent, h5_spec_inds_orig.parent)
+                self.assertEqual(h5_dset.name.split('/')[-1], exp_name)
+                self.assertTrue(np.allclose(ref_data, h5_dset[()]))
+                self.assertEqual(h5_dset.dtype, exp_dtype)
+                self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
+                self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
+                self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
+                # assert region references
+                for dim_ind, curr_name in enumerate(dim_names):
+                    self.assertTrue(np.allclose(np.squeeze(ref_data[dim_ind]),
+                                                np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
+
+        os.remove(duplicate_path)
+
+    def test_write_reduced_spec_dsets_3d_to_1d_fastest(self):
+        duplicate_path = 'copy_test_hdf_utils.h5'
+        self.__delete_existing_file(duplicate_path)
+
+        with h5py.File(duplicate_path) as h5_f:
+
+            dims = [write_utils.Dimension('Freq', 'Hz', np.linspace(300, 350, 5)),
+                    write_utils.Dimension('Bias', 'V', [-2, 4, 10]),
+                    write_utils.Dimension('Cycle', 'a.u.', 2)]
+
+            h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f, dims, is_spectral=True)
+            new_base_name = 'Blah'
+            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_spec_dsets(h5_f, h5_spec_inds_orig,
+                                                                                    h5_spec_vals_orig,
+                                                                                    ['Freq', 'Bias'],
+                                                                                    basename=new_base_name)
+
+            dim_names = ['Cycle']
+            dim_units = ['a.u.']
+            ref_inds = np.expand_dims(np.arange(2), axis=0)
+            ref_vals = np.expand_dims([0, 1], axis=0)
+            for h5_dset, exp_dtype, exp_name, ref_data in zip([h5_spec_inds_new, h5_spec_vals_new],
+                                                              [h5_spec_inds_orig.dtype, h5_spec_vals_orig.dtype],
+                                                              [new_base_name + '_Indices', new_base_name + '_Values'],
+                                                              [ref_inds, ref_vals]):
+                self.assertIsInstance(h5_dset, h5py.Dataset)
+                self.assertEqual(h5_dset.parent, h5_spec_inds_orig.parent)
+                self.assertEqual(h5_dset.name.split('/')[-1], exp_name)
+                self.assertTrue(np.allclose(ref_data, h5_dset[()]))
+                self.assertEqual(h5_dset.dtype, exp_dtype)
+                self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
+                self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
+                self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
+                # assert region references
+                for dim_ind, curr_name in enumerate(dim_names):
+                    self.assertTrue(np.allclose(np.squeeze(ref_data[dim_ind]),
+                                                np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
+
+        os.remove(duplicate_path)
+
+    def test_write_reduced_spec_dsets_3d_to_1d_slowest(self):
+        duplicate_path = 'copy_test_hdf_utils.h5'
+        self.__delete_existing_file(duplicate_path)
+
+        with h5py.File(duplicate_path) as h5_f:
+
+            dims = [write_utils.Dimension('Freq', 'Hz', np.linspace(300, 350, 5)),
+                    write_utils.Dimension('Bias', 'V', [-2, 4, 10]),
+                    write_utils.Dimension('Cycle', 'a.u.', 2)]
+
+            h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f, dims, is_spectral=True)
+            new_base_name = 'Blah'
+            h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_spec_dsets(h5_f, h5_spec_inds_orig,
+                                                                                    h5_spec_vals_orig,
+                                                                                    ['Cycle', 'Bias'],
+                                                                                    basename=new_base_name)
+
+            dim_names = ['Freq']
+            dim_units = ['Hz']
+            ref_inds = np.expand_dims(np.arange(5), axis=0)
+            ref_vals = np.expand_dims(np.linspace(300, 350, 5), axis=0)
+            for h5_dset, exp_dtype, exp_name, ref_data in zip([h5_spec_inds_new, h5_spec_vals_new],
+                                                              [h5_spec_inds_orig.dtype, h5_spec_vals_orig.dtype],
+                                                              [new_base_name + '_Indices', new_base_name + '_Values'],
+                                                              [ref_inds, ref_vals]):
+                self.assertIsInstance(h5_dset, h5py.Dataset)
+                self.assertEqual(h5_dset.parent, h5_spec_inds_orig.parent)
+                self.assertEqual(h5_dset.name.split('/')[-1], exp_name)
+                self.assertTrue(np.allclose(ref_data, h5_dset[()]))
+                self.assertEqual(h5_dset.dtype, exp_dtype)
+                self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
+                self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
+                self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
+                # assert region references
+                for dim_ind, curr_name in enumerate(dim_names):
+                    self.assertTrue(np.allclose(np.squeeze(ref_data[dim_ind]),
+                                                np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
+
+        os.remove(duplicate_path)
+
     def test_get_indices_for_region_ref_corners(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
