@@ -49,6 +49,10 @@
 # 2. Computation on a single unit of data
 # 3. Writing results to disk
 #
+# .. note::
+#     The upcoming version of the Process class will allow user to run the same scientific code on personal computers as
+#     well as clusters of computers on the cloud or on high-performance-computing resources! Users do **not** need to
+#     structure their scientific code any differently to take advantage of the new scalability.
 #
 # Components of pyUSID.Process
 # -----------------------------------
@@ -174,6 +178,13 @@ except ImportError:
 # address those situations when too few or too many (> 1) peaks are found in a single spectra. Finally, we need to use
 # the index of the peak to find the amplitude from the spectra.
 #
+# .. note::
+#     ``_map_function()`` must be marked as a
+#     `static method <https://www.geeksforgeeks.org/class-method-vs-static-method-python/>`_ instead of the default
+#     ``class method``. This means that ``_map_function()`` should function exactly the same if it were outside the
+#     class we are defining. In other words, it should not make any references to properties or functions of the class
+#     such as ``self.my_important_variable`` or ``self.some_function()``.
+#
 # test()
 # ------
 # A useful test function should be able to find the peak amplitude for any single spectra in the dataset. So, given the
@@ -211,6 +222,31 @@ except ImportError:
 #   ``end_pos`` were successfully processed. Should the computation be interrupted after this point, we could resume
 #   from ``end_pos`` instead of starting from ``0`` again.
 # * update the ``start_pos`` internal variable to guide compute() to process the next batch of positions / pixels
+#
+# .. note::
+#     The upcoming version of the Process class has been written to work on a cluster of cloud-based- and
+#     high-performance-computing resources. As a part of these upgrades, sub-classes of the ``Process`` class, such as
+#     the one below, **will no longer have direct access to ``self._start_pos`` and ``self._end_pos``**. In order to
+#     find out which pixels to read from / write to, sub-classes will need to call
+#     ``self._get_pixels_in_current_batch()`` which will return an array of unsigned integers corresponding to the
+#     indices of the positions that will be / were processed in the current batch.
+#
+#     When using the upcoming version of the ``Process`` class, the ``_write_results_chunk()`` function in the
+#     subclasses will no longer need to:
+#
+#     * flush the HDF5 file
+#     * Perform any book-keeping or checkpointing
+#     * Update the start or end positions.
+#     All of these will be handled by the upcoming ``Process`` class. Below we illustrate how the function will be
+#     transformed to just two lines.
+#
+# .. code-block:: python
+#
+#    def _write_results_chunk(self):
+#        # get the list of positions that were just computed in this batch:
+#        pos_in_batch = self._get_pixels_in_current_batch()
+#        # write the results to the file
+#        self.h5_results[pos_in_batch, 0] = np.array(self._results)
 
 
 class PeakFinder(usid.Process):
@@ -273,13 +309,18 @@ class PeakFinder(usid.Process):
         Write the computed results back to the H5
         In this case, there isn't any more additional post-processing required
         """
+        # Find out the positions to write to:
+        pos_in_batch = slice(self._start_pos, self._end_pos)
+
         # write the results to the file
-        self.h5_results[self._start_pos: self._end_pos, 0] = np.array(self._results)
+        self.h5_results[pos_in_batch, 0] = np.array(self._results)
+
+        # In the upcoming version of the Process class all the lines below will become unnecessary:
 
         # Flush the results to ensure that they have indeed been written to the file
         self.h5_main.file.flush()
 
-        # update the 'last_pixel' to indicate that the process was succesfully completed on this many positions:
+        # update the 'last_pixel' to indicate that the process was successfully completed on this many positions:
         self.h5_results_grp.attrs['last_pixel'] = self._end_pos
 
         # Now update the start position

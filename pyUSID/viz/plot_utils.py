@@ -543,7 +543,7 @@ def plot_line_family(axis, x_vec, line_family, line_names=None, label_prefix='',
 
 
 def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=None,
-             num_ticks=4, stdevs=None, cbar_label=None, tick_font_size=None, **kwargs):
+             num_ticks=4, stdevs=None, cbar_label=None, tick_font_size=None, infer_aspect=False, **kwargs):
     """
     Plots an image within the given axis with a color bar + label and appropriate X, Y tick labels.
     This is particularly useful to get readily interpretable plots for papers
@@ -574,8 +574,11 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
         Labels for the colorbar. Use this for something like quantity (units)
     tick_font_size : unsigned int, optional, default = None
         Font size to apply to x, y, colorbar ticks and colorbar label
+    infer_aspect : bool, Optional. Default = False
+        Whether or not to adjust the aspect ratio of the image based on the provided x_vec and y_vec
+        The values of x_vec and y_vec will be assumed to have the same units.
     kwargs : dictionary
-        Anything else that will be passed on to imshow
+        Anything else that will be passed on to matplotlib.pyplot.imshow
 
     Returns
     -------
@@ -626,7 +629,6 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
             img = np.squeeze(img) / 10 ** y_exp
             z_suffix = ' x $10^{' + str(y_exp) + '}$'
 
-    im_handle = axis.imshow(img, **kwargs)
     assert isinstance(show_xy_ticks, bool)
 
     ########################################################################################################
@@ -652,6 +654,7 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
                 else:
                     tick_labs = ['{0:.1E}'.format(ind * tick_vals / img_size) for ind in chosen_ticks]
                     print(tick_labs)
+                tick_vals = np.linspace(0, tick_vals, img_size)
             else:
                 if not isinstance(tick_vals, (np.ndarray, list, tuple, range)) or len(tick_vals) != img_size:
                     raise ValueError(
@@ -670,17 +673,38 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
         if tick_font_size is not None:
             set_tick_font_size(axis, tick_font_size)
 
+        return tick_vals
+
     ########################################################################################################
 
     if show_xy_ticks is True or x_vec is not None:
-        set_ticks_for_axis(x_vec, True)
+        x_vec = set_ticks_for_axis(x_vec, True)
     else:
         axis.set_xticks([])
 
     if show_xy_ticks is True or y_vec is not None:
-        set_ticks_for_axis(y_vec, False)
+        y_vec = set_ticks_for_axis(y_vec, False)
     else:
         axis.set_yticks([])
+
+    if infer_aspect:
+        # Aspect ratio determined by this function will take precedence.
+        _ = kwargs.pop('infer_aspect', None)
+
+        """
+        At this stage, if x_vec and y_vec are not None, they should be arrays.
+        
+        This will be very useful when one dimension is coarsely sampled while another is finely sampled
+        and we want to visualize the image with the physically correct aspect ratio.
+        This CANNOT be performed automatically due to potentially incompatible units which are unknown to this func.
+        """
+
+        if x_vec is not None or y_vec is not None:
+            x_range = x_vec.max() - x_vec.min()
+            y_range = y_vec.max() - y_vec.min()
+            kwargs.update({'aspect': (y_range / x_range) * (img.shape[1] / img.shape[0])})
+
+    im_handle = axis.imshow(img, **kwargs)
 
     cbar = None
     if not isinstance(show_cbar, bool):
