@@ -12,6 +12,7 @@ import collections
 from warnings import warn
 from collections import Iterable
 import numpy as np
+import dask.array as da
 import socket
 from platform import platform
 
@@ -611,7 +612,8 @@ def create_region_reference(h5_main, ref_inds):
     return new_ref
 
 
-def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verbose=False, sort_dims=False):
+def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verbose=False, sort_dims=False,
+                      as_dask_array=False):
     """
     Reshape the input 2D matrix to be N-dimensions based on the
     position and spectroscopic datasets.
@@ -632,11 +634,16 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         If True, the data is sorted so that the dimensions are in order from fastest to slowest
         If False, the data is kept in the original order
         If `get_labels` is also True, the labels are sorted as well.
+    as_dask_array : bool, optional. Default = False
+        If False, ds_Nd will be a numpy.ndarray object - this is suitable if the HDF5 dataset fits into memory
+        If True, ds_Nd will be a dask.array object - This is suitable if the HDF5 dataset is too large to fit into
+        memory. Note that this will bea lazy computation meaning that the returned object just contains the instructions
+        . In order to get the actual value or content in numpy arrays, call ds_Nd.compute()
 
     Returns
     -------
-    ds_Nd : N-D numpy array
-        N dimensional numpy array arranged as [positions slowest to fastest, spectroscopic slowest to fastest]
+    ds_Nd : N-D numpy array or dask.array object
+        N dimensional array arranged as [positions slowest to fastest, spectroscopic slowest to fastest]
     success : boolean or string
         True if full reshape was successful
 
@@ -767,7 +774,10 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         print('Spectroscopic dimensions (sort applied):', spec_labs[spec_sort])
         print('Spectroscopic dimensionality (sort applied):', spec_dims)
 
-    ds_main = h5_main[()]
+    if as_dask_array:
+        ds_main = da.from_array(h5_main, chunks=h5_main.chunks)
+    else:
+        ds_main = h5_main[()]
 
     """
     Now we reshape the dataset based on those dimensions
@@ -776,12 +786,12 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
     for both the position and spectroscopic dimensions
     """
     try:
-        ds_Nd = np.reshape(ds_main, pos_dims[::-1] + spec_dims[::-1])
+        ds_Nd = ds_main.reshape(pos_dims[::-1] + spec_dims[::-1])
 
     except ValueError:
         warn('Could not reshape dataset to full N-dimensional form.  Attempting reshape based on position only.')
         try:
-            ds_Nd = np.reshape(ds_main, pos_dims[::-1] + [-1])
+            ds_Nd = ds_main.reshape(pos_dims[::-1] + [-1])
 
         except ValueError:
             warn('Reshape by position only also failed.  Will keep dataset in 2d form.')
@@ -827,7 +837,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         print('\nAxes will permuted in this order:', swap_axes)
         print('New labels ordering:', all_labels[swap_axes])
 
-    ds_Nd = np.transpose(ds_Nd, swap_axes)
+    ds_Nd = ds_Nd.transpose(tuple(swap_axes))
 
     results = [ds_Nd, True]
 
