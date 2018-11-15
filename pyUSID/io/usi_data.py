@@ -11,9 +11,10 @@ import os
 import sys
 import h5py
 import numpy as np
+import dask.array as da
 import matplotlib.pyplot as plt
 
-from .hdf_utils import check_if_main, get_attr, create_results_group, \
+from .hdf_utils import check_if_main, get_attr, create_results_group, write_reduced_anc_dsets, \
     get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset
 from .dtype_utils import flatten_to_real, contains_integers, get_exponent, is_complex_dtype
 from .write_utils import Dimension
@@ -265,7 +266,7 @@ class USIDataset(h5py.Dataset):
 
         self.__set_labels_and_sizes()
 
-    def get_n_dim_form(self, as_scalar=False):
+    def get_n_dim_form(self, as_scalar=False, as_dask_array=False):
         """
         Reshapes the dataset to an N-dimensional array
 
@@ -277,7 +278,8 @@ class USIDataset(h5py.Dataset):
         """
 
         if self.__n_dim_data is None:
-            self.__n_dim_data, success = reshape_to_n_dims(self, sort_dims=self.__sort_dims)
+            self.__n_dim_data, success = reshape_to_n_dims(self, sort_dims=self.__sort_dims,
+                                                           as_dask_array=as_dask_array)
 
             if success is not True:
                 raise ValueError('Unable to reshape data to N-dimensional form.')
@@ -312,7 +314,7 @@ class USIDataset(h5py.Dataset):
                 raise TypeError('The slices must be array-likes or slice objects.')
         return True
 
-    def slice(self, slice_dict, ndim_form=True, as_scalar=False, verbose=False):
+    def slice(self, slice_dict, ndim_form=True, as_scalar=False, verbose=False, as_dask_array=False):
         """
         Slice the dataset based on an input dictionary of 'str': slice pairs.
         Each string should correspond to a dimension label.  The slices can be
@@ -911,6 +913,52 @@ class USIDataset(h5py.Dataset):
 
         # If data has at least one dimension with 2 values in pos. AND spec., it can be visualized interactively:
         return simple_ndim_visualizer(data_slice, pos_dims, spec_dims, verbose=verbose, **kwargs)
+
+    def reduce(self, dims, ufunc=da.mean, to_hdf5=False, verbose=False):
+        """
+
+        Parameters
+        ----------
+        dims : str or list of str
+            Names of the position and/or spectroscopic dimensions that need to be reduced
+        ufunc : callable, optional. Default = dask.array.mean
+            Reduction function such as dask.array.mean available in dask.array
+        to_hdf5 : bool, optional. Default = False
+            Whether or not to write
+        verbose : bool, optional. Default = False
+            Whether or not to print any debugging statements to stdout
+
+        Returns
+        -------
+        reduced_array : dask.array object
+            Dask array object containing the reduced data.
+            Call compute() on this object to get the equivalent numpy array
+        """
+        if isinstance(dims, (str, unicode)):
+            dims = [dims]
+        if not isinstance(dims, (list, tuple)):
+            raise TypeError('dims should either be a string or a list of strings')
+        for curr_dim in self.n_dim_labels:
+            if not isinstance(curr_dim, (str, unicode)):
+                raise TypeError('dims should either be a string or a list of strings')
+            if curr_dim not in self.n_dim_labels:
+                raise KeyError('{} not a dimension in this dataset'.format(curr_dim))
+
+        if ufunc not in [da.all, da.any, da.max, da.mean, da.min, da.moment, da.prod, da.std, da.sum, da.var,
+                         da.nanmax, da.nanmean, da.nanmin, da.nanprod, da.nanstd, da.nansum, da.nanvar]:
+            raise NotImplementedError('ufunc must be a valid reduction function such as dask.array.mean')
+
+        # At this point, dims are valid
+        da_nd, status, labels = reshape_to_n_dims(self, get_labels=True, verbose=verbose, sort_dims=False,
+                                                  as_dask_array=True)
+
+        # Translate the names of the dimensions to the indices:
+        dim_inds = [np.where(labels == curr_dim)[0][0] for curr_dim in dims]
+
+        # Now apply the reduction:
+        reduced_array = ufunc(da_nd, axis=dim_inds)
+
+        return reduced_array
 
     def to_csv(self, output_path=None, force=False):
         """
