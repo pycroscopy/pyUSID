@@ -661,7 +661,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
     generate dummy values for them.
 
     """
-
+    # TODO: automatically switch on as_dask_array if the data is larger than memory
     # TODO: sort_dims does not appear to do much. Functions as though it was always True
 
     if h5_pos is None and h5_spec is None:
