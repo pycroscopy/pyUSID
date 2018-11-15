@@ -26,7 +26,7 @@ __all__ = ['get_attr', 'get_h5_obj_refs', 'get_indices_for_region_ref', 'get_dim
            'get_auxiliary_datasets', 'get_attributes', 'check_if_main', 'check_and_link_ancillary',
            'copy_region_refs', 'get_all_main', 'get_unit_values', 'check_for_matching_attrs', 'create_region_reference',
            'copy_attributes', 'reshape_to_n_dims', 'link_h5_objects_as_attrs',
-           'link_h5_obj_as_alias',
+           'link_h5_obj_as_alias', 'write_reduced_anc_dsets',
            'find_results_groups', 'reshape_from_n_dims', 'find_dataset', 'print_tree',
            'copy_main_attributes', 'create_empty_dataset', 'check_for_old', 'get_source_dataset',
            'link_as_main', 'copy_reg_ref_reduced_dim', 'simple_region_ref_copy', 'write_book_keeping_attrs',
