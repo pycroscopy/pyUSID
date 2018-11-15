@@ -964,13 +964,39 @@ def reshape_from_n_dims(data_n_dim, h5_pos=None, h5_spec=None, verbose=False):
         ds_pos = make_indices_matrix(pos_dims, is_position=True)
 
     elif h5_spec is not None and h5_pos is not None:
-        assert ds_pos.shape[0] * ds_spec.shape[1] == np.product(data_n_dim.shape)
+        if ds_pos.shape[0] * ds_spec.shape[1] != np.product(data_n_dim.shape):
+            raise ValueError('The product ({}) of the number of positions ({}) and spectroscopic ({}) observations is '
+                             'not equal to the product ({}) of the data shape ({})'
+                             '.'.format(ds_pos.shape[0] * ds_spec.shape[1], ds_pos.shape[0], ds_spec.shape[1],
+                                        np.product(data_n_dim.shape), data_n_dim.shape))
+
+        if ds_pos.shape[1] + ds_spec.shape[0] != data_n_dim.ndim:
+            # This may mean that the dummy position or spectroscopic axes has been squeezed out!
+            # Dask does NOT allow singular dimensions apparently. So cannot do expand_dims. Handle later
+
+            if ds_pos.size == 1 or ds_spec.size == 1:
+                if verbose:
+                    print('ALL Position dimensions squeezed: {}. ALL Spectroscopic dimensions squeezed: {}'
+                          '.'.format(ds_pos.size == 1, ds_spec.size == 1))
+            else:
+                raise ValueError('The number of position ({}) and spectroscopic ({}) dimensions do not match with the '
+                                 'dimensionality of the N-dimensional dataset: {}'
+                                 '.'.format(ds_pos.shape[1], ds_spec.shape[0], data_n_dim.ndim))
 
     '''
     Sort the indices from fastest to slowest
     '''
-    pos_sort = get_sort_order(np.transpose(ds_pos))
-    spec_sort = get_sort_order(ds_spec)
+    if ds_pos.size == 1:
+        # Position dimension squeezed out:
+        pos_sort = []
+    else:
+        pos_sort = get_sort_order(np.transpose(ds_pos))
+
+    if ds_spec.size == 1:
+        # Spectroscopic axis squeezed out:
+        spec_sort = []
+    else:
+        spec_sort = get_sort_order(ds_spec)
 
     if h5_spec is None:
         spec_sort = spec_sort[::-1]
