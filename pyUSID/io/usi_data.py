@@ -15,7 +15,8 @@ import dask.array as da
 import matplotlib.pyplot as plt
 
 from .hdf_utils import check_if_main, get_attr, create_results_group, write_reduced_anc_dsets, link_as_main, \
-    get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset, reshape_from_n_dims
+    get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset, reshape_from_n_dims, \
+    copy_attributes
 from .dtype_utils import flatten_to_real, contains_integers, get_exponent, is_complex_dtype
 from .write_utils import Dimension
 from ..viz.jupyter_utils import simple_ndim_visualizer
@@ -982,7 +983,7 @@ class USIDataset(h5py.Dataset):
             if dim_name in self.pos_dim_labels:
                 pos_sliced = True
                 if verbose:
-                    print('Position dimension: {} was reduced'.format(dim_name))
+                    print('Position dimension: {} was reduced. Breaking...'.format(dim_name))
                 break
         if not pos_sliced:
             h5_pos_inds = self.h5_pos_inds
@@ -998,18 +999,21 @@ class USIDataset(h5py.Dataset):
                 if cur_dim in self.pos_dim_labels:
                     pos_dim_names.append(cur_dim)
             if verbose:
-                print('Remaining position dimensions: {}'.format(pos_dim_names))
+                print('Position dimensions reduced: {}'.format(pos_dim_names))
 
             # Now create the reduced position datasets
             h5_pos_inds, h5_pos_vals = write_reduced_anc_dsets(h5_group, self.h5_pos_inds, self.h5_pos_vals,
                                                                pos_dim_names, is_spec=False, verbose=verbose)
+
+            if verbose:
+                print('Position dataset created: {}. Labels: {}'.format(h5_pos_inds, get_attr(h5_pos_inds, 'labels')))
 
         spec_sliced = False
         for dim_name in dims:
             if dim_name in self.spec_dim_labels:
                 spec_sliced = True
                 if verbose:
-                    print('Spectroscopic dimension: {} was reduced'.format(dim_name))
+                    print('Spectroscopic dimension: {} was reduced. Breaking...'.format(dim_name))
                 break
         if not spec_sliced:
             h5_spec_inds = self.h5_spec_inds
@@ -1026,27 +1030,43 @@ class USIDataset(h5py.Dataset):
                 if cur_dim in self.spec_dim_labels:
                     spec_dim_names.append(cur_dim)
             if verbose:
-                print('Remaining spectroscopic dimensions: {}'.format(spec_dim_names))
+                print('Spectroscopic dimensions reduced: {}'.format(spec_dim_names))
 
             # Now create the reduced position datasets
             h5_spec_inds, h5_spec_vals = write_reduced_anc_dsets(h5_group, self.h5_spec_inds, self.h5_spec_vals,
                                                                  spec_dim_names, is_spec=True, verbose=verbose)
 
-        # Now put the reduced N dimensional Dask array back to 2D form:
-        reduced_2d = reshape_from_n_dims(reduced_nd, h5_pos=h5_pos_inds, h5_spec=h5_spec_inds, verbose=verbose)
+            if verbose:
+                print('Spectroscopic dataset created: {}. Labels: {}'.format(h5_spec_inds,
+                                                                             get_attr(h5_spec_inds, 'labels')))
+
+                # Now put the reduced N dimensional Dask array back to 2D form:
+        reduced_2d, status = reshape_from_n_dims(reduced_nd, h5_pos=h5_pos_inds, h5_spec=h5_spec_inds, verbose=verbose)
+        if status != True and verbose:
+            print('Status from reshape_from_n_dims: {}'.format(status))
         if verbose:
-            print('Shape of flattened 2D reduced dataset: {}'.format(reduced_2d.shape))
+            print('2D reduced dataset: {}'.format(reduced_2d))
 
         # Create a HDF5 dataset to hold this flattened 2D data:
-        h5_red_main = h5_group.create_dataset(dset_name, shape=reduced_2d.shape, dtype=reduced_2d.dtype)
+        h5_red_main = h5_group.create_dataset(dset_name, shape=reduced_2d.shape,
+                                              dtype=reduced_2d.dtype)  # , compression=self.compression)
         if verbose:
-            print('Created an empty dataset to hold flattened dataset: {}'.format(h5_red_main))
+            print('Created an empty dataset to hold flattened dataset: {}. Chunks: {}'.format(h5_red_main,
+                                                                                              h5_red_main.chunks))
+
+        # Copy the mandatory attributes:
+        copy_attributes(self, h5_red_main)
 
         # Now make this dataset a main dataset:
         link_as_main(h5_red_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals)
+        if verbose:
+            print('{} is a main dataset?: {}'.format(h5_red_main, check_if_main(h5_red_main, verbose=verbose)))
 
         # Now write this data to the HDF5 dataset:
-        reduced_2d.to_hdf5(self.file.filename, h5_red_main.name, compression=self.compression)
+        if verbose:
+            print('About to write dask array to this dataset at path: {}, in file: {}'.format(h5_red_main.name,
+                                                                                              self.file.filename))
+        reduced_2d.to_hdf5(self.file.filename, h5_red_main.name)
 
         return reduced_nd, USIDataset(h5_red_main)
 
