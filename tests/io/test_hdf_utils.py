@@ -84,7 +84,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def setUp(self):
         self.__make_beps_file()
-        self.__make_sampling_file()
+        self.__make_sparse_sampling_file()
         self.__make_incomplete_measurement_file()
         self.__make_relaxation_file()
 
@@ -129,7 +129,7 @@ class TestHDFUtils(unittest.TestCase):
             h5_chan_grp_1 = h5_meas_grp.create_group('Channel_000')
             h5_chan_grp_2 = h5_meas_grp.create_group('Channel_001')
 
-            for chan_grp, add_attribute in zip([h5_chan_grp_1, h5_chan_grp_2], [False, True]):
+            for h5_chan_grp, add_attribute in zip([h5_chan_grp_1, h5_chan_grp_2], [False, True]):
 
                 this_pos_attrs = pos_attrs.copy()
                 if add_attribute:
@@ -284,16 +284,16 @@ class TestHDFUtils(unittest.TestCase):
             h5_chan_grp_1 = h5_meas_grp.create_group('Channel_000')
             h5_chan_grp_2 = h5_meas_grp.create_group('Channel_001')
 
-            for chan_grp, add_attribute in zip([h5_chan_grp_1,  h5_chan_grp_2], [False, True]):
+            for h5_chan_grp, add_attribute in zip([h5_chan_grp_1,  h5_chan_grp_2], [False, True]):
 
                 h5_spec_inds = h5_chan_grp.create_dataset('Spectroscopic_Indices', data=spec_ind_mat, dtype=np.uint16)
                 h5_spec_vals = h5_chan_grp.create_dataset('Spectroscopic_Values', data=spec_val_mat, dtype=np.float32)
 
                 this_spec_attrs = spec_attrs.copy()
                 if add_attribute:
-                    this_spec_attrs.copy({'dependent_dimensions': ['Field']})
+                    this_spec_attrs.update({'dependent_dimensions': ['Field']})
 
-                for dset in [h5_spec_inds, h5_spec_vals, h5_spec_inds_2, h5_spec_vals_2]:
+                for dset in [h5_spec_inds, h5_spec_vals]:
                     TestHDFUtils.__write_aux_reg_ref(dset, spec_attrs['labels'], is_spec=True)
                     TestHDFUtils.__write_string_list_as_attr(dset, this_spec_attrs)
                     # Write the unit values as attributes - testing purposes only:
