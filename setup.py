@@ -12,6 +12,8 @@ with open(os.path.join(here, 'pyUSID/__version__.py')) as f:
 
 # TODO: Move requirements to requirements.txt
 requirements = ['numpy>=1.13.0',
+                'toolz', # dask installation failing without this
+                'cytoolz', # dask installation failing without this
                 'dask',
                 'h5py>=2.6.0',
                 'matplotlib>=2.0.0',
