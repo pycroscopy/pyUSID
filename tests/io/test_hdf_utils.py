@@ -95,14 +95,13 @@ class TestHDFUtils(unittest.TestCase):
 
         with h5py.File(sparse_sampling_path) as h5_f:
             h5_meas_grp = h5_f.create_group('Measurement_000')
-            h5_chan_grp = h5_meas_grp.create_group('Channel_000')
 
             freq_pts = 3
             spec_inds = np.expand_dims(np.arange(freq_pts), 0)
             spec_vals = np.expand_dims(np.linspace(300, 330, freq_pts), 0)
 
-            h5_spec_inds = h5_chan_grp.create_dataset('Spectroscopic_Indices', data=spec_inds, dtype=np.uint16)
-            h5_spec_vals = h5_chan_grp.create_dataset('Spectroscopic_Values', data=spec_vals, dtype=np.float32)
+            h5_spec_inds = h5_meas_grp.create_dataset('Spectroscopic_Indices', data=spec_inds, dtype=np.uint16)
+            h5_spec_vals = h5_meas_grp.create_dataset('Spectroscopic_Values', data=spec_vals, dtype=np.float32)
 
             spec_attrs = {'labels': ['Frequency'], 'units': ['kHz']}
 
@@ -125,26 +124,34 @@ class TestHDFUtils(unittest.TestCase):
             pos_inds = np.tile(np.arange(len(chosen_pos)), (2, 1)).T
             pos_vals = full_vals[chosen_pos]
 
-            pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y'],
-                         'incomplete_dimensions': ['X', 'Y']}
+            pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
 
-            h5_pos_inds = h5_chan_grp.create_dataset('Position_Indices', data=pos_inds, dtype=np.uint16)
-            h5_pos_vals = h5_chan_grp.create_dataset('Position_Values', data=pos_vals, dtype=np.float32)
+            h5_chan_grp_1 = h5_meas_grp.create_group('Channel_000')
+            h5_chan_grp_2 = h5_meas_grp.create_group('Channel_001')
 
-            for dset in [h5_pos_inds, h5_pos_vals]:
-                TestHDFUtils.__write_aux_reg_ref(dset, pos_attrs['labels'], is_spec=False)
-                TestHDFUtils.__write_string_list_as_attr(dset, pos_attrs)
+            for chan_grp, add_attribute in zip([h5_chan_grp_1, h5_chan_grp_2], [False, True]):
 
-            h5_main = h5_chan_grp.create_dataset('Raw_Data',
-                                                 data=np.random.rand(len(chosen_pos), freq_pts),
-                                                 dtype=np.float32)
+                this_pos_attrs = pos_attrs.copy()
+                if add_attribute:
+                    this_pos_attrs.update({'incomplete_dimensions': ['X', 'Y']})
 
-            # Write mandatory attributes:
-            TestHDFUtils.__write_safe_attrs(h5_main, {'units': 'V', 'quantity': 'Cantilever Deflection'})
+                h5_pos_inds = h5_chan_grp.create_dataset('Position_Indices', data=pos_inds, dtype=np.uint16)
+                h5_pos_vals = h5_chan_grp.create_dataset('Position_Values', data=pos_vals, dtype=np.float32)
 
-            # Link ancillary    
-            for dset in [h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals]:
-                h5_main.attrs[dset.name.split('/')[-1]] = dset.ref
+                for dset in [h5_pos_inds, h5_pos_vals]:
+                    TestHDFUtils.__write_aux_reg_ref(dset, this_pos_attrs['labels'], is_spec=False)
+                    TestHDFUtils.__write_string_list_as_attr(dset, this_pos_attrs)
+
+                h5_main = h5_chan_grp.create_dataset('Raw_Data',
+                                                     data=np.random.rand(len(chosen_pos), freq_pts),
+                                                     dtype=np.float32)
+
+                # Write mandatory attributes:
+                TestHDFUtils.__write_safe_attrs(h5_main, {'units': 'V', 'quantity': 'Cantilever Deflection'})
+
+                # Link ancillary
+                for dset in [h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals]:
+                    h5_main.attrs[dset.name.split('/')[-1]] = dset.ref
 
     def __make_incomplete_measurement_file(self):
 
@@ -183,7 +190,10 @@ class TestHDFUtils(unittest.TestCase):
 
             pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
 
-            def _create_pos_and_main(h5_group, tot_positions, incomp_dim_names):
+            tot_positions =  4 * num_cols + 3
+            incomp_dim_names = ['X', 'Y']
+
+            def _create_pos_and_main(h5_group, add_attribute):
                 h5_pos_inds = h5_group.create_dataset('Position_Indices',
                                                       data=pos_inds[:tot_positions],
                                                       dtype=np.uint16)
@@ -192,7 +202,8 @@ class TestHDFUtils(unittest.TestCase):
                                                       dtype=np.float32)
 
                 this_pos_attrs = pos_attrs.copy()
-                this_pos_attrs.update({'incomplete_dimensions': incomp_dim_names})
+                if add_attribute:
+                    this_pos_attrs.update({'incomplete_dimensions': incomp_dim_names})
 
                 for dset in [h5_pos_inds, h5_pos_vals]:
                     TestHDFUtils.__write_aux_reg_ref(dset, pos_attrs['labels'], is_spec=False)
@@ -211,14 +222,9 @@ class TestHDFUtils(unittest.TestCase):
 
                 return h5_main
 
-            h5_main_1 = _create_pos_and_main(h5_meas_grp.create_group('Channel_000'),
-                                             4 * num_cols + 3,
-                                             ['X', 'Y'])
+            h5_main_1 = _create_pos_and_main(h5_meas_grp.create_group('Channel_000'), False)
 
-            # Maybe this needs to have 3 position dimensions and the middle one could be incomplete....
-            h5_main_2 = _create_pos_and_main(h5_meas_grp.create_group('Channel_001'),
-                                             3 * num_cols,
-                                             ['Y'])
+            h5_main_2 = _create_pos_and_main(h5_meas_grp.create_group('Channel_001'), True)
 
     def __make_relaxation_file(self):
 
@@ -227,7 +233,6 @@ class TestHDFUtils(unittest.TestCase):
 
         with h5py.File(relaxation_path) as h5_f:
             h5_meas_grp = h5_f.create_group('Measurement_000')
-            h5_chan_grp = h5_meas_grp.create_group('Channel_000')
 
             num_rows = 2
             num_cols = 11
@@ -239,16 +244,15 @@ class TestHDFUtils(unittest.TestCase):
 
             pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
 
-            h5_pos_inds = h5_chan_grp.create_dataset('Position_Indices', data=pos_inds, dtype=np.uint16)
-            h5_pos_vals = h5_chan_grp.create_dataset('Position_Values', data=pos_vals, dtype=np.float32)
+            h5_pos_inds = h5_meas_grp.create_dataset('Position_Indices', data=pos_inds, dtype=np.uint16)
+            h5_pos_vals = h5_meas_grp.create_dataset('Position_Values', data=pos_vals, dtype=np.float32)
 
             for dset in [h5_pos_inds, h5_pos_vals]:
                 TestHDFUtils.__write_aux_reg_ref(dset, pos_attrs['labels'], is_spec=False)
                 TestHDFUtils.__write_string_list_as_attr(dset, pos_attrs)
 
             spec_attrs = {'labels': ['Frequency', 'Repeats', 'DC_Offset', 'Field'],
-                          'units': ['kHz', 'a. u.', 'V', 'a.u.'],
-                          'dependent_dimensions': ['Field']}
+                          'units': ['kHz', 'a. u.', 'V', 'a.u.']}
 
             freq_pts = 3
             repeats = 5
@@ -277,26 +281,35 @@ class TestHDFUtils(unittest.TestCase):
             for dim_ind, dim_unit_vals in enumerate(spec_unit_vals):
                 spec_unit_vals_dict['unit_vals_dim_' + str(dim_ind)] = dim_unit_vals
 
-            h5_spec_inds = h5_chan_grp.create_dataset('Spectroscopic_Indices', data=spec_ind_mat, dtype=np.uint16)
-            h5_spec_vals = h5_chan_grp.create_dataset('Spectroscopic_Values', data=spec_val_mat, dtype=np.float32)
+            h5_chan_grp_1 = h5_meas_grp.create_group('Channel_000')
+            h5_chan_grp_2 = h5_meas_grp.create_group('Channel_001')
 
-            for dset in [h5_spec_inds, h5_spec_vals]:
-                TestHDFUtils.__write_aux_reg_ref(dset, spec_attrs['labels'], is_spec=True)
-                TestHDFUtils.__write_string_list_as_attr(dset, spec_attrs)
-                # Write the unit values as attributes - testing purposes only:
-                TestHDFUtils.__write_safe_attrs(dset, spec_unit_vals_dict)
+            for chan_grp, add_attribute in zip([h5_chan_grp_1,  h5_chan_grp_2], [False, True]):
 
-            h5_main = h5_chan_grp.create_dataset('Raw_Data',
-                                                 data=np.random.rand(num_rows * num_cols,
-                                                                     freq_pts * repeats * dc_offsets),
-                                                 dtype=np.float32)
+                h5_spec_inds = h5_chan_grp.create_dataset('Spectroscopic_Indices', data=spec_ind_mat, dtype=np.uint16)
+                h5_spec_vals = h5_chan_grp.create_dataset('Spectroscopic_Values', data=spec_val_mat, dtype=np.float32)
 
-            # Write mandatory attributes:
-            TestHDFUtils.__write_safe_attrs(h5_main, {'units': 'V', 'quantity': 'Cantilever Deflection'})
+                this_spec_attrs = spec_attrs.copy()
+                if add_attribute:
+                    this_spec_attrs.copy({'dependent_dimensions': ['Field']})
 
-            # Link ancillary    
-            for dset in [h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals]:
-                h5_main.attrs[dset.name.split('/')[-1]] = dset.ref
+                for dset in [h5_spec_inds, h5_spec_vals, h5_spec_inds_2, h5_spec_vals_2]:
+                    TestHDFUtils.__write_aux_reg_ref(dset, spec_attrs['labels'], is_spec=True)
+                    TestHDFUtils.__write_string_list_as_attr(dset, this_spec_attrs)
+                    # Write the unit values as attributes - testing purposes only:
+                    TestHDFUtils.__write_safe_attrs(dset, spec_unit_vals_dict)
+
+                h5_main = h5_chan_grp.create_dataset('Raw_Data',
+                                                     data=np.random.rand(num_rows * num_cols,
+                                                                         freq_pts * repeats * dc_offsets),
+                                                     dtype=np.float32)
+
+                # Write mandatory attributes:
+                TestHDFUtils.__write_safe_attrs(h5_main, {'units': 'V', 'quantity': 'Cantilever Deflection'})
+
+                # Link ancillary
+                for dset in [h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals]:
+                    h5_main.attrs[dset.name.split('/')[-1]] = dset.ref
 
     def __make_beps_file(self):
         if os.path.exists(std_beps_path):
