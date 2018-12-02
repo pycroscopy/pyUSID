@@ -2621,12 +2621,12 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
         main_shape = main_data
         if verbose:
             print('Selected empty dataset creation. OK so far')
-    elif isinstance(main_data, np.ndarray):
+    elif isinstance(main_data, (np.ndarray, da.core.Array)):
         if main_data.ndim != 2:
             raise ValueError('main_data should be a 2D array')
         main_shape = main_data.shape
         if verbose:
-            print('Provided numpy array for main_data OK so far')
+            print('Provided numpy or Dask array for main_data OK so far')
     else:
         raise TypeError('main_data should either be a numpy array or a tuple / list with the shape of the data')
 
@@ -2676,8 +2676,21 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
         h5_main = h5_parent_group.create_dataset(main_data_name, data=main_data, **kwargs)
         if verbose:
             print('Created main dataset with provided data')
+    elif isinstance(main_data, da.core.Array):
+        # Case 2 - Dask dataset
+        # step 0 - get rid of any automated dtype specification:
+        _ = kwargs.pop('dtype', None)
+        # step 1 - create the empty dataset:
+        h5_main = h5_parent_group.create_dataset(main_data_name, shape=main_data.shape, dtype=main_data.dtype,
+                                                 **kwargs)
+        if verbose:
+            print('Created empty dataset: {} for writing Dask dataset: {}'.format(h5_main, main_data))
+            print('Dask array will be written to HDF5 dataset: {} in file: {}'.format(h5_main.name,
+                                                                                      h5_main.file.filename))
+        # Step 2 - now ask Dask to dump data to disk
+        main_data.to_hdf5(h5_main.file.filename, h5_main.name)
     else:
-        # Case 2 - large empty dataset
+        # Case 3 - large empty dataset
         h5_main = h5_parent_group.create_dataset(main_data_name, main_data, **kwargs)
         if verbose:
             print('Created empty dataset for Main')
