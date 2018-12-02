@@ -725,11 +725,13 @@ class TestHDFUtils(unittest.TestCase):
             for key, exp in expected.items():
                 self.assertTrue(np.allclose(exp, ret_val[key]))
 
-    def test_get_unit_values_names_not_provided(self):
-        relax_inds, relax_vals, exp_unit_vals = self.__make_simple_relaxation_spec_dsets()
+    def test_get_unit_values_all_dim_names_not_provided(self):
+        with h5py.File(std_beps_path, mode='r') as h5_f:
+            h5_inds = h5_f['/Raw_Measurement/Position_Indices'][()]
+            h5_vals = h5_f['/Raw_Measurement/Position_Values'][()]
 
-        with self.assertRaises(TypeError):
-            _ = hdf_utils.get_unit_values(relax_inds, relax_vals, dim_names=['Frequency', 'DC_Offset'])
+            with self.assertRaises(TypeError):
+                _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Y'])
 
     def test_get_unit_values_dependent_dim(self):
         with h5py.File(relaxation_path, mode='r') as h5_f:
