@@ -1846,6 +1846,32 @@ def get_unit_values(ds_inds, ds_vals, dim_names=None, all_dim_names=None, is_spe
         if not isinstance(dset, allowed_types):
             raise TypeError(dset_name + ' should be of type: {}'.format(allowed_types))
 
+    # For now, we will throw an error if even a single dimension is listed as an incomplete dimension:
+    if isinstance(ds_inds, h5py.Dataset):
+        if np.any(['incomplete_dimensions' in dset.attrs.keys() for dset in [ds_inds, ds_vals]]):
+            try:
+                incomp_dims_inds = get_attr(ds_inds, 'incomplete_dimensions')
+            except KeyError:
+                incomp_dims_inds = None
+            try:
+                incomp_dims_vals = get_attr(ds_vals, 'incomplete_dimensions')
+            except KeyError:
+                incomp_dims_vals = None
+            if incomp_dims_inds is None and incomp_dims_vals is not None:
+                incomp_dims = incomp_dims_vals
+            elif incomp_dims_inds is not None and incomp_dims_vals is None:
+                incomp_dims = incomp_dims_inds
+            else:
+                # ensure that both attributes are the same
+                if incomp_dims_vals != incomp_dims_inds:
+                    raise ValueError('Provided indices ({}) and values ({}) datasets were marked with different values '
+                                     'for incomplete_datasets.'.format(incomp_dims_inds, incomp_dims_vals))
+                incomp_dims = incomp_dims_vals
+
+            all_dim_names = get_attr(ds_inds, 'labels')
+            raise ValueError('Among all dimensions: {}, These dimensions were marked as incomplete dimensions: {}'
+                             '. You are recommended to find unit values manually'.format(all_dim_names, incomp_dims))
+
     # Do we need to check that the provided inds and vals correspond to the same main dataset?
     if ds_inds.shape != ds_vals.shape:
         raise ValueError('h5_inds: {} and h5_vals: {} should have the same shapes'.format(ds_inds.shape, ds_vals.shape))
