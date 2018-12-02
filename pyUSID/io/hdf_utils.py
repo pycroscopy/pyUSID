@@ -1803,15 +1803,15 @@ def check_for_matching_attrs(h5_obj, new_parms=None, verbose=False):
     return all(tests)
 
 
-def get_unit_values(h5_inds, h5_vals, dim_names=None, all_dim_names=None, is_spec=None, verbose=False):
+def get_unit_values(ds_inds, ds_vals, dim_names=None, all_dim_names=None, is_spec=None, verbose=False):
     """
     Gets the unit arrays of values that describe the spectroscopic dimensions
 
     Parameters
     ----------
-    h5_inds : h5py.Dataset or numpy.ndarray
+    ds_inds : h5py.Dataset or numpy.ndarray
         Spectroscopic or Position Indices dataset
-    h5_vals : h5py.Dataset or numpy.ndarray
+    ds_vals : h5py.Dataset or numpy.ndarray
         Spectroscopic or Position Values dataset
     dim_names : str, or list of str, Optional
         Names of the dimensions of interest. Default = all
@@ -1842,22 +1842,22 @@ def get_unit_values(h5_inds, h5_vals, dim_names=None, all_dim_names=None, is_spe
         all_dim_names = np.array(all_dim_names)
         allowed_types = (h5py.Dataset, np.ndarray)
 
-    for dset, dset_name in zip([h5_inds, h5_vals], ['h5_inds', 'h5_vals']):
+    for dset, dset_name in zip([ds_inds, ds_vals], ['ds_inds', 'ds_vals']):
         if not isinstance(dset, allowed_types):
             raise TypeError(dset_name + ' should be of type: {}'.format(allowed_types))
 
     # Do we need to check that the provided inds and vals correspond to the same main dataset?
-    if h5_inds.shape != h5_vals.shape:
-        raise ValueError('h5_inds: {} and h5_vals: {} should have the same shapes'.format(h5_inds.shape, h5_vals.shape))
+    if ds_inds.shape != ds_vals.shape:
+        raise ValueError('h5_inds: {} and h5_vals: {} should have the same shapes'.format(ds_inds.shape, ds_vals.shape))
 
     if all_dim_names is None:
-        all_dim_names = get_attr(h5_inds, 'labels')
+        all_dim_names = get_attr(ds_inds, 'labels')
     if verbose:
         print('All dimensions: {}'.format(all_dim_names))
 
     # First load to memory
-    inds_mat = h5_inds[()]
-    vals_mat = h5_vals[()]
+    inds_mat = ds_inds[()]
+    vals_mat = ds_vals[()]
     
     if is_spec is None:
         # Attempt to recognize the type automatically
