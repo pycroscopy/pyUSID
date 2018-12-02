@@ -1967,6 +1967,7 @@ def get_unit_values(ds_inds, ds_vals, dim_names=None, all_dim_names=None, is_spe
             tile_starts = np.hstack((tile_starts, [len(inds_for_dim)]))
             subsections = [inds_for_dim[tile_starts[ind]: tile_starts[ind + 1]] for ind in range(len(tile_starts) - 1)]
             if np.max(np.diff(subsections, axis=0)) != 0:
+                # TODO: Should get unit values for ALL dimensions regardless of expectations to catch such scenarios.
                 raise ValueError('Values in each tile of this dimension are different')
 
         # Now looking within the first tile:

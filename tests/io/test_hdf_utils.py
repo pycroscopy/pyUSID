@@ -760,14 +760,32 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_get_unit_values_sparse_samp_w_attr(self):
         # What should the user expect this function to do? throw an error.
-        # Without the attribute, this function will have no idea that it is looking at a sparse sampling case
-        # it will return the first and second columns of vals blindly
         with h5py.File(sparse_sampling_path, mode='r') as h5_f:
             h5_inds = h5_f['/Measurement_000/Channel_001/Position_Indices']
             h5_vals = h5_f['/Measurement_000/Channel_001/Position_Values']
 
             with self.assertRaises(ValueError):
                 _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Y'])
+
+    def test_get_unit_values_incomp_dim_no_attr(self):
+        # What should the user expect this function to do? throw an error.
+        # Given that the unit values for each tile are different, it should throw a ValueError for X.
+        # Even though we know Y is incomplete, it won't know since it wasn't looking at X when just asked for Y
+        with h5py.File(incomplete_measurement_path, mode='r') as h5_f:
+            h5_inds = h5_f['/Measurement_000/Channel_000/Position_Indices']
+            h5_vals = h5_f['/Measurement_000/Channel_000/Position_Values']
+
+            with self.assertRaises(ValueError):
+                _ = hdf_utils.get_unit_values(h5_inds, h5_vals)
+
+            with self.assertRaises(ValueError):
+                _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['X'])
+
+            slowest_dim = 'Y'
+            act_val = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=[slowest_dim])
+            exp_val = {slowest_dim: np.unique(h5_vals[:, -1])}
+
+            self.assertTrue(np.allclose(exp_val[slowest_dim], act_val[slowest_dim]))
 
     def test_find_dataset_legal(self):
         with h5py.File(std_beps_path, mode='r') as h5_f:
