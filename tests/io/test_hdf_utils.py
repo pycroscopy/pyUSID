@@ -12,18 +12,15 @@ import h5py
 import numpy as np
 import dask.array as da
 import shutil
-from collections import OrderedDict
-
-sys.path.append("../../pyUSID/")
-from pyUSID.io import hdf_utils, write_utils, io_utils, USIDataset
-from pyUSID import __version__
-from platform import platform
 import socket
 
-std_beps_path = 'test_hdf_utils.h5'
-sparse_sampling_path = 'sparse_sampling.h5'
-incomplete_measurement_path = 'incomplete_measurement.h5'
-relaxation_path = 'relaxation.h5'
+sys.path.append("../../pyUSID/")
+from pyUSID.io import hdf_utils, io_utils, write_utils, USIDataset
+from pyUSID import __version__
+from platform import platform
+
+from . import data_utils
+
 
 if sys.version_info.major == 3:
     unicode = str
@@ -31,425 +28,52 @@ if sys.version_info.major == 3:
 
 class TestHDFUtils(unittest.TestCase):
 
-    @staticmethod
-    def __delete_existing_file(file_path):
-        if os.path.exists(file_path):
-            os.remove(file_path)
-
-    @staticmethod
-    def __write_safe_attrs(h5_object, attrs):
-        for key, val in attrs.items():
-            h5_object.attrs[key] = val
-
-    @staticmethod
-    def __write_string_list_as_attr(h5_object, attrs):
-        for key, val in attrs.items():
-            h5_object.attrs[key] = np.array(val, dtype='S')
-
-    @staticmethod
-    def __write_aux_reg_ref(h5_dset, labels, is_spec=True):
-        for index, reg_ref_name in enumerate(labels):
-            if is_spec:
-                reg_ref_tuple = (slice(index, index + 1), slice(None))
-            else:
-                reg_ref_tuple = (slice(None), slice(index, index + 1))
-            h5_dset.attrs[reg_ref_name] = h5_dset.regionref[reg_ref_tuple]
-
-    @staticmethod
-    def __write_main_reg_refs(h5_dset, attrs):
-        for reg_ref_name, reg_ref_tuple in attrs.items():
-            h5_dset.attrs[reg_ref_name] = h5_dset.regionref[reg_ref_tuple]
-        TestHDFUtils.__write_string_list_as_attr(h5_dset, {'labels': list(attrs.keys())})
-
     def setUp(self):
-        self.__make_beps_file()
-        self.__make_sparse_sampling_file()
-        self.__make_incomplete_measurement_file()
-        self.__make_relaxation_file()
-
-    def __make_sparse_sampling_file(self):
-
-        if os.path.exists(sparse_sampling_path):
-            os.remove(sparse_sampling_path)
-
-        with h5py.File(sparse_sampling_path) as h5_f:
-            h5_meas_grp = h5_f.create_group('Measurement_000')
-
-            freq_pts = 3
-            spec_inds = np.expand_dims(np.arange(freq_pts), 0)
-            spec_vals = np.expand_dims(np.linspace(300, 330, freq_pts), 0)
-
-            h5_spec_inds = h5_meas_grp.create_dataset('Spectroscopic_Indices', data=spec_inds, dtype=np.uint16)
-            h5_spec_vals = h5_meas_grp.create_dataset('Spectroscopic_Values', data=spec_vals, dtype=np.float32)
-
-            spec_attrs = {'labels': ['Frequency'], 'units': ['kHz']}
-
-            for dset in [h5_spec_inds, h5_spec_vals]:
-                TestHDFUtils.__write_aux_reg_ref(dset, spec_attrs['labels'], is_spec=True)
-                TestHDFUtils.__write_string_list_as_attr(dset, spec_attrs)
-
-            import random
-
-            num_rows = 5
-            num_cols = 7
-
-            full_vals = np.vstack((np.tile(np.arange(num_cols), num_rows),
-                                   np.repeat(np.arange(num_rows), num_cols))).T
-            full_vals = np.vstack((full_vals[:, 0] * 50, full_vals[:, 1] * 1.25)).T
-
-            fract = 0.25
-            chosen_pos = random.sample(range(num_rows * num_cols), int(fract * num_rows * num_cols))
-
-            pos_inds = np.tile(np.arange(len(chosen_pos)), (2, 1)).T
-            pos_vals = full_vals[chosen_pos]
-
-            pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
-
-            h5_chan_grp_1 = h5_meas_grp.create_group('Channel_000')
-            h5_chan_grp_2 = h5_meas_grp.create_group('Channel_001')
-
-            for h5_chan_grp, add_attribute in zip([h5_chan_grp_1, h5_chan_grp_2], [False, True]):
-
-                this_pos_attrs = pos_attrs.copy()
-                if add_attribute:
-                    this_pos_attrs.update({'incomplete_dimensions': ['X', 'Y']})
-
-                h5_pos_inds = h5_chan_grp.create_dataset('Position_Indices', data=pos_inds, dtype=np.uint16)
-                h5_pos_vals = h5_chan_grp.create_dataset('Position_Values', data=pos_vals, dtype=np.float32)
-
-                for dset in [h5_pos_inds, h5_pos_vals]:
-                    TestHDFUtils.__write_aux_reg_ref(dset, this_pos_attrs['labels'], is_spec=False)
-                    TestHDFUtils.__write_string_list_as_attr(dset, this_pos_attrs)
-
-                h5_main = h5_chan_grp.create_dataset('Raw_Data',
-                                                     data=np.random.rand(len(chosen_pos), freq_pts),
-                                                     dtype=np.float32)
-
-                # Write mandatory attributes:
-                TestHDFUtils.__write_safe_attrs(h5_main, {'units': 'V', 'quantity': 'Cantilever Deflection'})
-
-                # Link ancillary
-                for dset in [h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals]:
-                    h5_main.attrs[dset.name.split('/')[-1]] = dset.ref
-
-    def __make_incomplete_measurement_file(self):
-
-        if os.path.exists(incomplete_measurement_path):
-            os.remove(incomplete_measurement_path)
-
-        with h5py.File(incomplete_measurement_path) as h5_f:
-            h5_meas_grp = h5_f.create_group('Measurement_000')
-
-            freq_pts = 3
-            dc_offsets = 2
-
-            spec_inds = np.vstack((np.tile(np.arange(freq_pts), dc_offsets),
-                                   np.repeat(np.arange(dc_offsets), freq_pts)))
-
-            # make the values more interesting:
-            spec_vals = np.vstack((np.tile(np.linspace(320, 340, freq_pts), dc_offsets),
-                                   np.repeat(np.linspace(-8, 8, dc_offsets), freq_pts)))
-
-            h5_spec_inds = h5_meas_grp.create_dataset('Spectroscopic_Indices', data=spec_inds, dtype=np.uint16)
-            h5_spec_vals = h5_meas_grp.create_dataset('Spectroscopic_Values', data=spec_vals, dtype=np.float32)
-
-            spec_attrs = {'labels': ['Frequency', 'DC_Offset'], 'units': ['kHz', 'V']}
-
-            for dset in [h5_spec_inds, h5_spec_vals]:
-                TestHDFUtils.__write_aux_reg_ref(dset, spec_attrs['labels'], is_spec=True)
-                TestHDFUtils.__write_string_list_as_attr(dset, spec_attrs)
-
-            num_rows = 5
-            num_cols = 7
-
-            pos_inds = np.vstack((np.tile(np.arange(num_cols), num_rows),
-                                  np.repeat(np.arange(num_rows), num_cols))).T
-            # make the values more interesting:
-            pos_vals = np.vstack((pos_inds[:, 0] * 50, pos_inds[:, 1] * 1.25)).T
-
-            pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
-
-            tot_positions =  4 * num_cols + 3
-            incomp_dim_names = ['X', 'Y']
-
-            def _create_pos_and_main(h5_group, add_attribute):
-                h5_pos_inds = h5_group.create_dataset('Position_Indices',
-                                                      data=pos_inds[:tot_positions],
-                                                      dtype=np.uint16)
-                h5_pos_vals = h5_group.create_dataset('Position_Values',
-                                                      data=pos_vals[:tot_positions],
-                                                      dtype=np.float32)
-
-                this_pos_attrs = pos_attrs.copy()
-                if add_attribute:
-                    this_pos_attrs.update({'incomplete_dimensions': incomp_dim_names})
-
-                for dset in [h5_pos_inds, h5_pos_vals]:
-                    TestHDFUtils.__write_aux_reg_ref(dset, pos_attrs['labels'], is_spec=False)
-                    TestHDFUtils.__write_string_list_as_attr(dset, this_pos_attrs)
-
-                h5_main = h5_group.create_dataset('Raw_Data',
-                                                  data=np.random.rand(tot_positions, freq_pts * dc_offsets),
-                                                  dtype=np.float32)
-
-                # Write mandatory attributes:
-                TestHDFUtils.__write_safe_attrs(h5_main, {'units': 'V', 'quantity': 'Cantilever Deflection'})
-
-                # Link ancillary    
-                for dset in [h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals]:
-                    h5_main.attrs[dset.name.split('/')[-1]] = dset.ref
-
-                return h5_main
-
-            h5_main_1 = _create_pos_and_main(h5_meas_grp.create_group('Channel_000'), False)
-
-            h5_main_2 = _create_pos_and_main(h5_meas_grp.create_group('Channel_001'), True)
-
-    def __make_relaxation_file(self):
-
-        if os.path.exists(relaxation_path):
-            os.remove(relaxation_path)
-
-        with h5py.File(relaxation_path) as h5_f:
-            h5_meas_grp = h5_f.create_group('Measurement_000')
-
-            num_rows = 2
-            num_cols = 11
-
-            pos_inds = np.vstack((np.tile(np.arange(num_cols), num_rows),
-                                  np.repeat(np.arange(num_rows), num_cols))).T
-            # make the values more interesting:
-            pos_vals = np.vstack((pos_inds[:, 0] * 50, pos_inds[:, 1] * 1.25)).T
-
-            pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
-
-            h5_pos_inds = h5_meas_grp.create_dataset('Position_Indices', data=pos_inds, dtype=np.uint16)
-            h5_pos_vals = h5_meas_grp.create_dataset('Position_Values', data=pos_vals, dtype=np.float32)
-
-            for dset in [h5_pos_inds, h5_pos_vals]:
-                TestHDFUtils.__write_aux_reg_ref(dset, pos_attrs['labels'], is_spec=False)
-                TestHDFUtils.__write_string_list_as_attr(dset, pos_attrs)
-
-            spec_attrs = {'labels': ['Frequency', 'Repeats', 'DC_Offset', 'Field'],
-                          'units': ['kHz', 'a. u.', 'V', 'a.u.']}
-
-            freq_pts = 3
-            repeats = 5
-            dc_offsets = 7
-            field_inds = 1
-
-            spec_unit_vals = [np.linspace(320, 340, freq_pts),
-                              np.arange(repeats),
-                              3 * np.pi * np.linspace(0, 1, dc_offsets),
-                              np.array([1, 0])]
-
-            spec_ind_mat, spec_val_mat = write_utils.build_ind_val_matrices(spec_unit_vals[:-1])
-
-            # Manually creating the field array that starts with 1
-            field_ind_unit = np.hstack(([0], np.ones(repeats - field_inds, dtype=np.uint16)))
-            field_val_unit = np.hstack(([1], np.zeros(repeats - field_inds, dtype=np.uint16)))
-
-            # Manually appending to the indices and values table
-            spec_ind_mat = np.vstack((spec_ind_mat,
-                                      np.tile(np.repeat(field_ind_unit, freq_pts), dc_offsets)))
-
-            spec_val_mat = np.vstack((spec_val_mat,
-                                      np.tile(np.repeat(field_val_unit, freq_pts), dc_offsets)))
-
-            spec_unit_vals_dict = dict()
-            for dim_ind, dim_unit_vals in enumerate(spec_unit_vals):
-                spec_unit_vals_dict['unit_vals_dim_' + str(dim_ind)] = dim_unit_vals
-
-            h5_chan_grp_1 = h5_meas_grp.create_group('Channel_000')
-            h5_chan_grp_2 = h5_meas_grp.create_group('Channel_001')
-
-            for h5_chan_grp, add_attribute in zip([h5_chan_grp_1,  h5_chan_grp_2], [False, True]):
-
-                h5_spec_inds = h5_chan_grp.create_dataset('Spectroscopic_Indices', data=spec_ind_mat, dtype=np.uint16)
-                h5_spec_vals = h5_chan_grp.create_dataset('Spectroscopic_Values', data=spec_val_mat, dtype=np.float32)
-
-                this_spec_attrs = spec_attrs.copy()
-                if add_attribute:
-                    this_spec_attrs.update({'dependent_dimensions': ['Field']})
-
-                for dset in [h5_spec_inds, h5_spec_vals]:
-                    TestHDFUtils.__write_aux_reg_ref(dset, spec_attrs['labels'], is_spec=True)
-                    TestHDFUtils.__write_string_list_as_attr(dset, this_spec_attrs)
-                    # Write the unit values as attributes - testing purposes only:
-                    TestHDFUtils.__write_safe_attrs(dset, spec_unit_vals_dict)
-
-                h5_main = h5_chan_grp.create_dataset('Raw_Data',
-                                                     data=np.random.rand(num_rows * num_cols,
-                                                                         freq_pts * repeats * dc_offsets),
-                                                     dtype=np.float32)
-
-                # Write mandatory attributes:
-                TestHDFUtils.__write_safe_attrs(h5_main, {'units': 'V', 'quantity': 'Cantilever Deflection'})
-
-                # Link ancillary
-                for dset in [h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals]:
-                    h5_main.attrs[dset.name.split('/')[-1]] = dset.ref
-
-    def __make_beps_file(self):
-        if os.path.exists(std_beps_path):
-            os.remove(std_beps_path)
-
-        with h5py.File(std_beps_path) as h5_f:
-
-            h5_raw_grp = h5_f.create_group('Raw_Measurement')
-            TestHDFUtils.__write_safe_attrs(h5_raw_grp, {'att_1': 'string_val', 'att_2': 1.2345, 'att_3': [1, 2, 3, 4]})
-            TestHDFUtils.__write_string_list_as_attr(h5_raw_grp, {'att_4': ['str_1', 'str_2', 'str_3']})
-
-            _ = h5_raw_grp.create_group('Misc')
-
-            num_rows = 3
-            num_cols = 5
-            num_cycles = 2
-            num_cycle_pts = 7
-
-            source_dset_name = 'source_main'
-            tool_name = 'Fitter'
-
-            source_pos_data = np.vstack((np.tile(np.arange(num_cols), num_rows),
-                                         np.repeat(np.arange(num_rows), num_cols))).T
-            pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
-
-            h5_pos_inds = h5_raw_grp.create_dataset('Position_Indices', data=source_pos_data, dtype=np.uint16)
-            TestHDFUtils.__write_aux_reg_ref(h5_pos_inds, pos_attrs['labels'], is_spec=False)
-            TestHDFUtils.__write_string_list_as_attr(h5_pos_inds, pos_attrs)
-
-            # make the values more interesting:
-            source_pos_data = np.vstack((source_pos_data[:, 0] * 50, source_pos_data[:, 1] * 1.25)).T
-
-            h5_pos_vals = h5_raw_grp.create_dataset('Position_Values', data=source_pos_data, dtype=np.float32)
-            TestHDFUtils.__write_aux_reg_ref(h5_pos_vals, pos_attrs['labels'], is_spec=False)
-            TestHDFUtils.__write_string_list_as_attr(h5_pos_vals, pos_attrs)
-
-            source_spec_data = np.vstack((np.tile(np.arange(num_cycle_pts), num_cycles),
-                                          np.repeat(np.arange(num_cycles), num_cycle_pts)))
-            source_spec_attrs = {'units': ['V', ''], 'labels': ['Bias', 'Cycle']}
-
-            h5_source_spec_inds = h5_raw_grp.create_dataset('Spectroscopic_Indices', data=source_spec_data,
-                                                            dtype=np.uint16)
-            TestHDFUtils.__write_aux_reg_ref(h5_source_spec_inds, source_spec_attrs['labels'], is_spec=True)
-            TestHDFUtils.__write_string_list_as_attr(h5_source_spec_inds, source_spec_attrs)
-
-            # make spectroscopic axis interesting as well
-            source_spec_data = np.vstack(
-                (np.tile(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False)),
-                         num_cycles),
-                 np.repeat(np.arange(num_cycles), num_cycle_pts)))
-
-            h5_source_spec_vals = h5_raw_grp.create_dataset('Spectroscopic_Values', data=source_spec_data,
-                                                            dtype=np.float32)
-            TestHDFUtils.__write_aux_reg_ref(h5_source_spec_vals, source_spec_attrs['labels'], is_spec=True)
-            TestHDFUtils.__write_string_list_as_attr(h5_source_spec_vals, source_spec_attrs)
-
-            source_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
-            h5_source_main = h5_raw_grp.create_dataset(source_dset_name, data=source_main_data)
-            TestHDFUtils.__write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
-            TestHDFUtils.__write_main_reg_refs(h5_source_main, {'even_rows': (slice(0, None, 2), slice(None)),
-                                                   'odd_rows': (slice(1, None, 2), slice(None))})
-
-            # Now need to link as main!
-            for dset in [h5_pos_inds, h5_pos_vals, h5_source_spec_inds, h5_source_spec_vals]:
-                h5_source_main.attrs[dset.name.split('/')[-1]] = dset.ref
-
-            _ = h5_raw_grp.create_dataset('Ancillary', data=np.arange(5))
-
-            # Now add a few results:
-
-            h5_results_grp_1 = h5_raw_grp.create_group(source_dset_name + '-' + tool_name + '_000')
-            TestHDFUtils.__write_safe_attrs(h5_results_grp_1, {'att_1': 'string_val', 'att_2': 1.2345, 'att_3': [1, 2, 3, 4]})
-            TestHDFUtils.__write_string_list_as_attr(h5_results_grp_1, {'att_4': ['str_1', 'str_2', 'str_3']})
-
-            num_cycles = 1
-            num_cycle_pts = 7
-
-            results_spec_inds = np.expand_dims(np.arange(num_cycle_pts), 0)
-            results_spec_attrs = {'units': ['V'], 'labels': ['Bias']}
-
-            h5_results_1_spec_inds = h5_results_grp_1.create_dataset('Spectroscopic_Indices',
-                                                                     data=results_spec_inds, dtype=np.uint16)
-            TestHDFUtils.__write_aux_reg_ref(h5_results_1_spec_inds, results_spec_attrs['labels'], is_spec=True)
-            TestHDFUtils.__write_string_list_as_attr(h5_results_1_spec_inds, results_spec_attrs)
-
-            results_spec_vals = np.expand_dims(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False)), 0)
-
-            h5_results_1_spec_vals = h5_results_grp_1.create_dataset('Spectroscopic_Values', data=results_spec_vals,
-                                                                     dtype=np.float32)
-            TestHDFUtils.__write_aux_reg_ref(h5_results_1_spec_vals, results_spec_attrs['labels'], is_spec=True)
-            TestHDFUtils.__write_string_list_as_attr(h5_results_1_spec_vals, results_spec_attrs)
-
-            results_1_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
-            h5_results_1_main = h5_results_grp_1.create_dataset('results_main', data=results_1_main_data)
-            TestHDFUtils.__write_safe_attrs(h5_results_1_main, {'units': 'pF', 'quantity': 'Capacitance'})
-
-            # Now need to link as main!
-            for dset in [h5_pos_inds, h5_pos_vals, h5_results_1_spec_inds, h5_results_1_spec_vals]:
-                h5_results_1_main.attrs[dset.name.split('/')[-1]] = dset.ref
-
-            # add another result with different parameters
-
-            h5_results_grp_2 = h5_raw_grp.create_group(source_dset_name + '-' + tool_name + '_001')
-            TestHDFUtils.__write_safe_attrs(h5_results_grp_2, {'att_1': 'other_string_val', 'att_2': 5.4321, 'att_3': [4, 1, 3]})
-            TestHDFUtils.__write_string_list_as_attr(h5_results_grp_2, {'att_4': ['s', 'str_2', 'str_3']})
-
-            results_2_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
-            h5_results_2_main = h5_results_grp_2.create_dataset('results_main', data=results_2_main_data)
-            TestHDFUtils.__write_safe_attrs(h5_results_2_main, {'units': 'pF', 'quantity': 'Capacitance'})
-
-            h5_results_2_spec_inds = h5_results_grp_2.create_dataset('Spectroscopic_Indices',
-                                                                     data=results_spec_inds, dtype=np.uint16)
-            TestHDFUtils.__write_aux_reg_ref(h5_results_2_spec_inds, results_spec_attrs['labels'], is_spec=True)
-            TestHDFUtils.__write_string_list_as_attr(h5_results_2_spec_inds, results_spec_attrs)
-
-            h5_results_2_spec_vals = h5_results_grp_2.create_dataset('Spectroscopic_Values', data=results_spec_vals,
-                                                                     dtype=np.float32)
-            TestHDFUtils.__write_aux_reg_ref(h5_results_2_spec_vals, results_spec_attrs['labels'], is_spec=True)
-            TestHDFUtils.__write_string_list_as_attr(h5_results_2_spec_vals, results_spec_attrs)
-
-            # Now need to link as main!
-            for dset in [h5_pos_inds, h5_pos_vals, h5_results_2_spec_inds, h5_results_2_spec_vals]:
-                h5_results_2_main.attrs[dset.name.split('/')[-1]] = dset.ref
+        data_utils.make_beps_file()
+        data_utils.make_sparse_sampling_file()
+        data_utils.make_incomplete_measurement_file()
+        data_utils.make_relaxation_file()
 
     def tearDown(self):
-        for file_path in [std_beps_path, sparse_sampling_path, incomplete_measurement_path, relaxation_path]:
-            os.remove(file_path)
+        for file_path in [data_utils.std_beps_path, 
+                          data_utils.sparse_sampling_path,
+                          data_utils.incomplete_measurement_path,
+                          data_utils.relaxation_path]:
+            data_utils.delete_existing_file(file_path)
 
     def test_get_attr_illegal_01(self):
         with self.assertRaises(TypeError):
             hdf_utils.get_attr(np.arange(3), 'units')
 
     def test_get_attr_illegal_02(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             with self.assertRaises(TypeError):
                 hdf_utils.get_attr(h5_f['/Raw_Measurement/source_main'], 14)
 
     def test_get_attr_illegal_03(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             with self.assertRaises(TypeError):
                 hdf_utils.get_attr(h5_f['/Raw_Measurement/source_main'], ['quantity', 'units'])
 
     def test_get_attr_illegal_04(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             with self.assertRaises(KeyError):
                 hdf_utils.get_attr(h5_f['/Raw_Measurement/source_main'], 'non_existent')
 
     def test_get_attr_legal_01(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             returned = hdf_utils.get_attr(h5_f['/Raw_Measurement/source_main'], 'units')
             self.assertEqual(returned, 'A')
 
     def test_get_attr_legal_02(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             returned = hdf_utils.get_attr(h5_f['/Raw_Measurement/Position_Indices'], 'labels')
             self.assertTrue(np.all(returned == ['X', 'Y']))
 
     def test_get_attr_legal_03(self):
         attrs = {'att_1': 'string_val', 'att_2': 1.2345,
                  'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2', 'str_3']}
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_group = h5_f['/Raw_Measurement/source_main-Fitter_000']
             for key, expected_value in attrs.items():
                 self.assertTrue(np.all(hdf_utils.get_attr(h5_group, key) == expected_value))
@@ -458,7 +82,7 @@ class TestHDFUtils(unittest.TestCase):
         attrs = {'att_1': 'string_val', 'att_2': 1.2345,
                  'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2', 'str_3']}
         sub_attrs = ['att_1', 'att_4', 'att_3']
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_group = h5_f['/Raw_Measurement/source_main-Fitter_000']
             returned_attrs = hdf_utils.get_attributes(h5_group, sub_attrs)
             self.assertIsInstance(returned_attrs, dict)
@@ -468,7 +92,7 @@ class TestHDFUtils(unittest.TestCase):
     def test_get_attributes_all(self):
         attrs = {'att_1': 'string_val', 'att_2': 1.2345,
                  'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2', 'str_3']}
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_group = h5_f['/Raw_Measurement/source_main-Fitter_000']
             returned_attrs = hdf_utils.get_attributes(h5_group)
             self.assertIsInstance(returned_attrs, dict)
@@ -477,27 +101,27 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_get_attributes_illegal(self):
         sub_attrs = ['att_1', 'att_4', 'does_not_exist']
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_group = h5_f['/Raw_Measurement/source_main-Fitter_000']
             with self.assertRaises(KeyError):
                 _ = hdf_utils.get_attributes(h5_group, sub_attrs)
 
     def test_get_auxillary_datasets_single(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             h5_pos = h5_f['/Raw_Measurement/Position_Indices']
             [ret_val] = hdf_utils.get_auxiliary_datasets(h5_main, aux_dset_name='Position_Indices')
             self.assertEqual(ret_val, h5_pos)
 
     def test_get_auxillary_datasets_single(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             h5_pos = h5_f['/Raw_Measurement/Position_Indices']
             [ret_val] = hdf_utils.get_auxiliary_datasets(h5_main, aux_dset_name='Position_Indices')
             self.assertEqual(ret_val, h5_pos)
 
     def test_get_auxillary_datasets_multiple(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             h5_pos_inds = h5_f['/Raw_Measurement/Position_Indices']
             h5_pos_vals = h5_f['/Raw_Measurement/Position_Values']
@@ -506,7 +130,7 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(set(ret_val), set([h5_pos_inds, h5_pos_vals]))
 
     def test_get_auxillary_datasets_all(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             expected = [h5_f['/Raw_Measurement/Position_Indices'],
                         h5_f['/Raw_Measurement/Position_Values'],
@@ -516,13 +140,13 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(set(expected), set(ret_val))
 
     def test_get_auxillary_datasets_illegal(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             with self.assertRaises(KeyError):
                 _ = hdf_utils.get_auxiliary_datasets(h5_main, aux_dset_name='Does_Not_Exist')
 
     def test_get_dimensionality_legal_no_sort(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_dsets = [h5_f['/Raw_Measurement/Spectroscopic_Indices'],
                         h5_f['/Raw_Measurement/source_main-Fitter_000/Spectroscopic_Indices'],
                         h5_f['/Raw_Measurement/Position_Indices']]
@@ -533,7 +157,7 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertTrue(np.all(exp_shape == hdf_utils.get_dimensionality(h5_dset)))
 
     def test_get_dimensionality_legal_w_sort(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_dsets = [h5_f['/Raw_Measurement/Spectroscopic_Indices'],
                         h5_f['/Raw_Measurement/source_main-Fitter_000/Spectroscopic_Indices'],
                         h5_f['/Raw_Measurement/Position_Indices']]
@@ -547,7 +171,7 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertTrue(np.all(exp_shape == hdf_utils.get_dimensionality(h5_dset, index_sort=s_oder)))
 
     def test_get_h5_obj_refs_legal_01(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_obj_refs = [h5_f,
                               4.123,
                               np.arange(6),
@@ -566,7 +190,7 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(set(chosen_objs), set(returned_h5_objs))
 
     def test_get_h5_obj_refs_same_name(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_obj_refs = [h5_f['/Raw_Measurement/source_main-Fitter_001/Spectroscopic_Indices'],
                            h5_f['/Raw_Measurement/source_main-Fitter_000/Spectroscopic_Indices'],
                            h5_f['/Raw_Measurement/Spectroscopic_Values']]
@@ -580,7 +204,7 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(set(expected_objs), set(returned_h5_objs))
 
     def test_check_is_main_legal_01(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             expected_dsets = [h5_f['/Raw_Measurement/source_main'],
                               h5_f['/Raw_Measurement/source_main-Fitter_000/results_main'],
                               h5_f['/Raw_Measurement/source_main-Fitter_001/results_main']]
@@ -588,7 +212,7 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertTrue(hdf_utils.check_if_main(dset))
 
     def test_check_is_main_illegal_01(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             not_main_dsets = [h5_f,
                               4.123,
                               np.arange(6),
@@ -600,7 +224,7 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertFalse(hdf_utils.check_if_main(dset))
 
     def test_get_sort_order_simple(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_dsets = [h5_f['/Raw_Measurement/Spectroscopic_Indices'],
                         h5_f['/Raw_Measurement/source_main-Fitter_000/Spectroscopic_Indices'],
                         h5_f['/Raw_Measurement/Position_Indices']]
@@ -609,7 +233,7 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertTrue(np.all(exp_order == hdf_utils.get_sort_order(h5_dset)))
 
     def test_get_sort_order_reversed(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_dsets = [np.flipud(h5_f['/Raw_Measurement/Spectroscopic_Indices']),
                         h5_f['/Raw_Measurement/source_main-Fitter_000/Spectroscopic_Indices'],
                         np.fliplr(h5_f['/Raw_Measurement/Position_Indices'])]
@@ -618,7 +242,7 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertTrue(np.all(exp_order == hdf_utils.get_sort_order(h5_dset)))
 
     def test_get_source_dataset_legal(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_groups = [h5_f['/Raw_Measurement/source_main-Fitter_000'],
                         h5_f['/Raw_Measurement/source_main-Fitter_001']]
             h5_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
@@ -626,12 +250,12 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertEqual(h5_main, hdf_utils.get_source_dataset(h5_grp))
 
     def test_get_source_dataset_illegal(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             with self.assertRaises(ValueError):
                 _ = hdf_utils.get_source_dataset(h5_f['/Raw_Measurement/Misc'])
 
     def test_get_unit_values_source_spec_all(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Spectroscopic_Values']
             num_cycle_pts = 7
@@ -643,7 +267,7 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertTrue(np.allclose(exp, ret_val[key]))
 
     def test_get_unit_values_source_spec_all_explicit(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Spectroscopic_Values']
             num_cycle_pts = 7
@@ -655,21 +279,21 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertTrue(np.allclose(exp, ret_val[key]))
 
     def test_get_unit_values_illegal_key(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Spectroscopic_Values']
             with self.assertRaises(KeyError):
                 _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Cycle', 'Does not exist'])
 
     def test_get_unit_values_illegal_dset(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Ancillary']
             with self.assertRaises(ValueError):
                 _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Cycle', 'Bias'])
 
     def test_get_unit_values_source_spec_single(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Spectroscopic_Values']
             num_cycle_pts = 7
@@ -680,7 +304,7 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertTrue(np.allclose(exp, ret_val[key]))
 
     def test_get_unit_values_source_pos_all(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Position_Indices']
             h5_vals = h5_f['/Raw_Measurement/Position_Values']
             num_rows = 3
@@ -693,7 +317,7 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertTrue(np.allclose(exp, ret_val[key]))
 
     def test_get_unit_values_source_pos_single(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Position_Indices']
             h5_vals = h5_f['/Raw_Measurement/Position_Values']
             num_rows = 3
@@ -704,7 +328,7 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertTrue(np.allclose(exp, ret_val[key]))
 
     def test_get_unit_values_all_dim_names_not_provided(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Position_Indices'][()]
             h5_vals = h5_f['/Raw_Measurement/Position_Values'][()]
 
@@ -712,7 +336,7 @@ class TestHDFUtils(unittest.TestCase):
                 _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Y'])
 
     def test_get_unit_values_dependent_dim(self):
-        with h5py.File(relaxation_path, mode='r') as h5_f:
+        with h5py.File(data_utils.relaxation_path, mode='r') as h5_f:
             h5_inds = h5_f['/Measurement_000/Channel_000/Spectroscopic_Indices']
             h5_vals = h5_f['/Measurement_000/Channel_000/Spectroscopic_Values']
             spec_dim_names = hdf_utils.get_attr(h5_inds, 'labels')
@@ -726,7 +350,7 @@ class TestHDFUtils(unittest.TestCase):
         # What should the user expect this function to do? throw an error.
         # Without the attribute, this function will have no idea that it is looking at a sparse sampling case
         # it will return the first and second columns of vals blindly
-        with h5py.File(sparse_sampling_path, mode='r') as h5_f:
+        with h5py.File(data_utils.sparse_sampling_path, mode='r') as h5_f:
             h5_inds = h5_f['/Measurement_000/Channel_000/Position_Indices']
             h5_vals = h5_f['/Measurement_000/Channel_000/Position_Values']
             dim_names = hdf_utils.get_attr(h5_inds, 'labels')
@@ -738,7 +362,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_get_unit_values_sparse_samp_w_attr(self):
         # What should the user expect this function to do? throw an error.
-        with h5py.File(sparse_sampling_path, mode='r') as h5_f:
+        with h5py.File(data_utils.sparse_sampling_path, mode='r') as h5_f:
             h5_inds = h5_f['/Measurement_000/Channel_001/Position_Indices']
             h5_vals = h5_f['/Measurement_000/Channel_001/Position_Values']
 
@@ -750,7 +374,7 @@ class TestHDFUtils(unittest.TestCase):
         # Given that the unit values for each tile are different, it should throw a ValueError for X.
         # Even though we know Y is incomplete, it won't know since it wasn't looking at X.
         # However, now this function will automatically find unit values for ALL dimensions just to catch such scenarios
-        with h5py.File(incomplete_measurement_path, mode='r') as h5_f:
+        with h5py.File(data_utils.incomplete_measurement_path, mode='r') as h5_f:
             h5_inds = h5_f['/Measurement_000/Channel_000/Position_Indices']
             h5_vals = h5_f['/Measurement_000/Channel_000/Position_Values']
 
@@ -764,7 +388,7 @@ class TestHDFUtils(unittest.TestCase):
                 _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Y'])
 
     def test_find_dataset_legal(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_group = h5_f['/Raw_Measurement/']
             expected_dsets = [h5_f['/Raw_Measurement/Spectroscopic_Indices'],
                               h5_f['/Raw_Measurement/source_main-Fitter_000/Spectroscopic_Indices'],
@@ -773,13 +397,13 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(set(ret_val), set(expected_dsets))
 
     def test_find_dataset_illegal(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_group = h5_f['/Raw_Measurement/']
             ret_val = hdf_utils.find_dataset(h5_group, 'Does_Not_Exist')
             self.assertEqual(len(ret_val), 0)
 
     def test_find_results_groups_legal(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             expected_groups = [h5_f['/Raw_Measurement/source_main-Fitter_000'],
                                h5_f['/Raw_Measurement/source_main-Fitter_001']]
@@ -787,61 +411,61 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(set(ret_val), set(expected_groups))
 
     def test_find_results_groups_illegal(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             ret_val = hdf_utils.find_results_groups(h5_main, 'Blah')
             self.assertEqual(len(ret_val), 0)
 
     def test_check_for_matching_attrs_dset_no_attrs(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             self.assertTrue(hdf_utils.check_for_matching_attrs(h5_main, new_parms=None))
 
     def test_check_for_matching_attrs_dset_matching_attrs(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'units': 'A', 'quantity':'Current'}
             self.assertTrue(hdf_utils.check_for_matching_attrs(h5_main, new_parms=attrs))
 
     def test_check_for_matching_attrs_dset_one_mismatched_attrs(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'units': 'A', 'blah': 'meh'}
             self.assertFalse(hdf_utils.check_for_matching_attrs(h5_main, new_parms=attrs))
 
     def test_check_for_matching_attrs_grp(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main-Fitter_000']
             attrs = {'att_1': 'string_val', 'att_2': 1.2345,
                      'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2', 'str_3']}
             self.assertTrue(hdf_utils.check_for_matching_attrs(h5_main, new_parms=attrs))
 
     def test_check_for_matching_attrs_grp_mismatched_types_01(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main-Fitter_000']
             attrs = {'att_4': 'string_val'}
             self.assertFalse(hdf_utils.check_for_matching_attrs(h5_main, new_parms=attrs))
 
     def test_check_for_matching_attrs_grp_mismatched_types_02(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main-Fitter_000']
             attrs = {'att_1': ['str_1', 'str_2', 'str_3']}
             self.assertFalse(hdf_utils.check_for_matching_attrs(h5_main, new_parms=attrs))
 
     def test_check_for_matching_attrs_grp_mismatched_types_03(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main-Fitter_000']
             attrs = {'att_4': [1, 4.234, 'str_3']}
             self.assertFalse(hdf_utils.check_for_matching_attrs(h5_main, new_parms=attrs))
 
     def test_check_for_matching_attrs_grp_mismatched_types_04(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main-Fitter_000']
             attrs = {'att_4': [1, 4.234, 45]}
             self.assertFalse(hdf_utils.check_for_matching_attrs(h5_main, new_parms=attrs))
 
     def test_check_for_old_exact_match(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_1': 'string_val', 'att_2': 1.2345,
                      'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2', 'str_3']}
@@ -849,7 +473,7 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(h5_ret_grp, h5_f['/Raw_Measurement/source_main-Fitter_000'])
 
     def test_check_for_old_subset_but_match(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_2': 1.2345,
                      'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2', 'str_3']}
@@ -857,7 +481,7 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(h5_ret_grp, h5_f['/Raw_Measurement/source_main-Fitter_000'])
 
     def test_check_for_old_exact_match_02(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_1': 'other_string_val', 'att_2': 5.4321,
                      'att_3': [4, 1, 3], 'att_4': ['s', 'str_2', 'str_3']}
@@ -865,7 +489,7 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(h5_ret_grp, h5_f['/Raw_Measurement/source_main-Fitter_001'])
 
     def test_check_for_old_fail_01(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_1': [4, 1, 3], 'att_2': ['s', 'str_2', 'str_3'],
                      'att_3': 'other_string_val', 'att_4': 5.4321}
@@ -874,7 +498,7 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(len(ret_val), 0)
 
     def test_check_for_old_fail_02(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_x': [4, 1, 3], 'att_z': ['s', 'str_2', 'str_3'],
                      'att_y': 'other_string_val', 'att_4': 5.4321}
@@ -884,7 +508,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_link_as_main(self):
         file_path = 'link_as_main.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_raw_grp = h5_f.create_group('Raw_Measurement')
 
@@ -900,12 +524,12 @@ class TestHDFUtils(unittest.TestCase):
             pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
 
             h5_pos_inds = h5_raw_grp.create_dataset('Position_Indices', data=source_pos_data, dtype=np.uint16)
-            TestHDFUtils.__write_aux_reg_ref(h5_pos_inds, pos_attrs['labels'], is_spec=False)
-            TestHDFUtils.__write_string_list_as_attr(h5_pos_inds, pos_attrs)
+            data_utils.write_aux_reg_ref(h5_pos_inds, pos_attrs['labels'], is_spec=False)
+            data_utils.write_string_list_as_attr(h5_pos_inds, pos_attrs)
 
             h5_pos_vals = h5_raw_grp.create_dataset('Position_Values', data=source_pos_data, dtype=np.float32)
-            TestHDFUtils.__write_aux_reg_ref(h5_pos_vals, pos_attrs['labels'], is_spec=False)
-            TestHDFUtils.__write_string_list_as_attr(h5_pos_vals, pos_attrs)
+            data_utils.write_aux_reg_ref(h5_pos_vals, pos_attrs['labels'], is_spec=False)
+            data_utils.write_string_list_as_attr(h5_pos_vals, pos_attrs)
 
             source_spec_data = np.vstack((np.tile(np.arange(num_cycle_pts), num_cycles),
                                           np.repeat(np.arange(num_cycles), num_cycle_pts)))
@@ -913,17 +537,17 @@ class TestHDFUtils(unittest.TestCase):
 
             h5_source_spec_inds = h5_raw_grp.create_dataset('Spectroscopic_Indices', data=source_spec_data,
                                                             dtype=np.uint16)
-            TestHDFUtils.__write_aux_reg_ref(h5_source_spec_inds, source_spec_attrs['labels'], is_spec=True)
-            TestHDFUtils.__write_string_list_as_attr(h5_source_spec_inds, source_spec_attrs)
+            data_utils.write_aux_reg_ref(h5_source_spec_inds, source_spec_attrs['labels'], is_spec=True)
+            data_utils.write_string_list_as_attr(h5_source_spec_inds, source_spec_attrs)
 
             h5_source_spec_vals = h5_raw_grp.create_dataset('Spectroscopic_Values', data=source_spec_data,
                                                             dtype=np.float32)
-            TestHDFUtils.__write_aux_reg_ref(h5_source_spec_vals, source_spec_attrs['labels'], is_spec=True)
-            TestHDFUtils.__write_string_list_as_attr(h5_source_spec_vals, source_spec_attrs)
+            data_utils.write_aux_reg_ref(h5_source_spec_vals, source_spec_attrs['labels'], is_spec=True)
+            data_utils.write_string_list_as_attr(h5_source_spec_vals, source_spec_attrs)
 
             source_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
             h5_source_main = h5_raw_grp.create_dataset(source_dset_name, data=source_main_data)
-            TestHDFUtils.__write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
+            data_utils.write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
 
             self.assertFalse(hdf_utils.check_if_main(h5_source_main))
 
@@ -937,7 +561,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_link_as_main_size_mismatch(self):
         file_path = 'link_as_main.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_raw_grp = h5_f.create_group('Raw_Measurement')
 
@@ -953,12 +577,12 @@ class TestHDFUtils(unittest.TestCase):
             pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
 
             h5_pos_inds = h5_raw_grp.create_dataset('Position_Indices', data=source_pos_data, dtype=np.uint16)
-            TestHDFUtils.__write_aux_reg_ref(h5_pos_inds, pos_attrs['labels'], is_spec=False)
-            TestHDFUtils.__write_string_list_as_attr(h5_pos_inds, pos_attrs)
+            data_utils.write_aux_reg_ref(h5_pos_inds, pos_attrs['labels'], is_spec=False)
+            data_utils.write_string_list_as_attr(h5_pos_inds, pos_attrs)
 
             h5_pos_vals = h5_raw_grp.create_dataset('Position_Values', data=source_pos_data, dtype=np.float32)
-            TestHDFUtils.__write_aux_reg_ref(h5_pos_vals, pos_attrs['labels'], is_spec=False)
-            TestHDFUtils.__write_string_list_as_attr(h5_pos_vals, pos_attrs)
+            data_utils.write_aux_reg_ref(h5_pos_vals, pos_attrs['labels'], is_spec=False)
+            data_utils.write_string_list_as_attr(h5_pos_vals, pos_attrs)
 
             source_spec_data = np.vstack((np.tile(np.arange(num_cycle_pts), num_cycles),
                                           np.repeat(np.arange(num_cycles), num_cycle_pts)))
@@ -966,17 +590,17 @@ class TestHDFUtils(unittest.TestCase):
 
             h5_source_spec_inds = h5_raw_grp.create_dataset('Spectroscopic_Indices', data=source_spec_data,
                                                             dtype=np.uint16)
-            TestHDFUtils.__write_aux_reg_ref(h5_source_spec_inds, source_spec_attrs['labels'], is_spec=True)
-            TestHDFUtils.__write_string_list_as_attr(h5_source_spec_inds, source_spec_attrs)
+            data_utils.write_aux_reg_ref(h5_source_spec_inds, source_spec_attrs['labels'], is_spec=True)
+            data_utils.write_string_list_as_attr(h5_source_spec_inds, source_spec_attrs)
 
             h5_source_spec_vals = h5_raw_grp.create_dataset('Spectroscopic_Values', data=source_spec_data,
                                                             dtype=np.float32)
-            TestHDFUtils.__write_aux_reg_ref(h5_source_spec_vals, source_spec_attrs['labels'], is_spec=True)
-            TestHDFUtils.__write_string_list_as_attr(h5_source_spec_vals, source_spec_attrs)
+            data_utils.write_aux_reg_ref(h5_source_spec_vals, source_spec_attrs['labels'], is_spec=True)
+            data_utils.write_string_list_as_attr(h5_source_spec_vals, source_spec_attrs)
 
             source_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
             h5_source_main = h5_raw_grp.create_dataset(source_dset_name, data=source_main_data)
-            TestHDFUtils.__write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
+            data_utils.write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
 
             self.assertFalse(hdf_utils.check_if_main(h5_source_main))
 
@@ -989,7 +613,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_link_h5_obj_as_alias(self):
         file_path = 'link_as_alias.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
 
             h5_main = h5_f.create_dataset('main', data=np.arange(5))
@@ -1026,7 +650,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_link_h5_objects_as_attrs(self):
         file_path = 'link_h5_objects_as_attrs.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
 
             h5_main = h5_f.create_dataset('main', data=np.arange(5))
@@ -1052,7 +676,7 @@ class TestHDFUtils(unittest.TestCase):
         os.remove(file_path)
 
     def test_reshape_to_n_dims_h5_no_sort_reqd(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             num_rows = 3
             num_cols = 5
@@ -1074,7 +698,7 @@ class TestHDFUtils(unittest.TestCase):
             self.assertTrue(np.allclose(expected_n_dim, n_dim))
 
     def test_reshape_to_n_dims_h5_not_main_dset(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/Ancillary']
             h5_pos = h5_f['/Raw_Measurement/Position_Indices']
             h5_spec = h5_f['/Raw_Measurement/Spectroscopic_Indices']
@@ -1119,7 +743,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_reshape_to_n_dim_sort_required(self):
         file_path = 'reshape_to_n_dim_sort_required.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_raw_grp = h5_f.create_group('Raw_Measurement')
 
@@ -1136,12 +760,12 @@ class TestHDFUtils(unittest.TestCase):
             pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
 
             h5_pos_inds = h5_raw_grp.create_dataset('Position_Indices', data=source_pos_data, dtype=np.uint16)
-            TestHDFUtils.__write_aux_reg_ref(h5_pos_inds, pos_attrs['labels'], is_spec=False)
-            TestHDFUtils.__write_string_list_as_attr(h5_pos_inds, pos_attrs)
+            data_utils.write_aux_reg_ref(h5_pos_inds, pos_attrs['labels'], is_spec=False)
+            data_utils.write_string_list_as_attr(h5_pos_inds, pos_attrs)
 
             h5_pos_vals = h5_raw_grp.create_dataset('Position_Values', data=source_pos_data, dtype=np.float32)
-            TestHDFUtils.__write_aux_reg_ref(h5_pos_vals, pos_attrs['labels'], is_spec=False)
-            TestHDFUtils.__write_string_list_as_attr(h5_pos_vals, pos_attrs)
+            data_utils.write_aux_reg_ref(h5_pos_vals, pos_attrs['labels'], is_spec=False)
+            data_utils.write_string_list_as_attr(h5_pos_vals, pos_attrs)
 
             source_main_data = np.zeros(shape=(num_rows * num_cols, num_cycle_pts * num_cycles), dtype=np.float16)
             for row_ind in range(num_rows):
@@ -1153,7 +777,7 @@ class TestHDFUtils(unittest.TestCase):
 
             # source_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
             h5_source_main = h5_raw_grp.create_dataset(source_dset_name, data=source_main_data)
-            TestHDFUtils.__write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
+            data_utils.write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
 
             # make spectroscopic slow, fast instead of fast, slow
             source_spec_data = np.vstack((np.repeat(np.arange(num_cycles), num_cycle_pts),
@@ -1162,13 +786,13 @@ class TestHDFUtils(unittest.TestCase):
 
             h5_source_spec_inds = h5_raw_grp.create_dataset('Spectroscopic_Indices', data=source_spec_data,
                                                             dtype=np.uint16)
-            TestHDFUtils.__write_aux_reg_ref(h5_source_spec_inds, source_spec_attrs['labels'], is_spec=True)
-            TestHDFUtils.__write_string_list_as_attr(h5_source_spec_inds, source_spec_attrs)
+            data_utils.write_aux_reg_ref(h5_source_spec_inds, source_spec_attrs['labels'], is_spec=True)
+            data_utils.write_string_list_as_attr(h5_source_spec_inds, source_spec_attrs)
 
             h5_source_spec_vals = h5_raw_grp.create_dataset('Spectroscopic_Values', data=source_spec_data,
                                                             dtype=np.float32)
-            TestHDFUtils.__write_aux_reg_ref(h5_source_spec_vals, source_spec_attrs['labels'], is_spec=True)
-            TestHDFUtils.__write_string_list_as_attr(h5_source_spec_vals, source_spec_attrs)
+            data_utils.write_aux_reg_ref(h5_source_spec_vals, source_spec_attrs['labels'], is_spec=True)
+            data_utils.write_string_list_as_attr(h5_source_spec_vals, source_spec_attrs)
 
             # Now need to link as main!
             for dset in [h5_pos_inds, h5_pos_vals, h5_source_spec_inds, h5_source_spec_vals]:
@@ -1287,7 +911,7 @@ class TestHDFUtils(unittest.TestCase):
     def test_simple_region_ref_copy(self):
         # based on test_hdf_writer.test_write_legal_reg_ref_multi_dim_data()
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             data = np.random.rand(5, 7)
             h5_orig_dset = h5_f.create_dataset('test', data=data)
@@ -1296,7 +920,7 @@ class TestHDFUtils(unittest.TestCase):
             attrs = {'labels': {'even_rows': (slice(0, None, 2), slice(None)),
                                 'odd_rows': (slice(1, None, 2), slice(None))}}
 
-            TestHDFUtils.__write_main_reg_refs(h5_orig_dset, attrs['labels'])
+            data_utils.write_main_reg_refs(h5_orig_dset, attrs['labels'])
             h5_f.flush()
 
             # two atts point to region references. one for labels
@@ -1330,7 +954,7 @@ class TestHDFUtils(unittest.TestCase):
         os.remove(file_path)
 
     def test_get_all_main_legal(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             expected_dsets = [h5_f['/Raw_Measurement/source_main'],
                               h5_f['/Raw_Measurement/source_main-Fitter_000/results_main'],
                               h5_f['/Raw_Measurement/source_main-Fitter_001/results_main']]
@@ -1387,7 +1011,7 @@ class TestHDFUtils(unittest.TestCase):
         pos_data = np.vstack((np.tile(np.arange(num_cols), num_rows),
                               np.repeat(np.arange(num_rows), num_cols))).T
         file_path = 'test_write_ind_val_dsets.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path, mode='w') as h5_f:
             h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_f, descriptor, is_spectral=False)
 
@@ -1410,7 +1034,7 @@ class TestHDFUtils(unittest.TestCase):
         spec_data = np.vstack((np.tile(np.arange(num_cols), num_rows),
                               np.repeat(np.arange(num_rows), num_cols)))
         file_path = 'test_write_ind_val_dsets.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path, mode='w') as h5_f:
             h5_group = h5_f.create_group("Blah")
             h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_group, descriptor, is_spectral=True)
@@ -1441,7 +1065,7 @@ class TestHDFUtils(unittest.TestCase):
                               np.repeat(np.arange(num_rows), num_cols) * row_step + row_initial))
 
         file_path = 'test_write_ind_val_dsets.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path, mode='w') as h5_f:
             h5_group = h5_f.create_group("Blah")
             h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_group, descriptor, is_spectral=True,
@@ -1460,7 +1084,7 @@ class TestHDFUtils(unittest.TestCase):
             descriptor.append(write_utils.Dimension(name, units, np.arange(length)))
 
         file_path = 'test_write_ind_val_dsets.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path, mode='w') as h5_f:
             pass
 
@@ -1471,20 +1095,20 @@ class TestHDFUtils(unittest.TestCase):
         os.remove(file_path)
 
     def test_assign_group_index_existing(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_group = h5_f['/Raw_Measurement']
             ret_val = hdf_utils.assign_group_index(h5_group, 'source_main-Fitter')
             self.assertEqual(ret_val, 'source_main-Fitter_002')
 
     def test_assign_group_index_new(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_group = h5_f['/Raw_Measurement']
             ret_val = hdf_utils.assign_group_index(h5_group, 'blah_')
             self.assertEqual(ret_val, 'blah_000')
 
     def test_write_legal_atts_to_grp(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
 
             h5_group = h5_f.create_group('Blah')
@@ -1501,7 +1125,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_legal_atts_to_dset_01(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
 
             h5_dset = h5_f.create_dataset('Test', data=np.arange(3))
@@ -1521,7 +1145,7 @@ class TestHDFUtils(unittest.TestCase):
         os.remove(file_path)
 
     def test_is_editable_h5_read_only(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_group = h5_f['/Raw_Measurement']
             h5_main = h5_f['/Raw_Measurement/Ancillary']
             self.assertFalse(hdf_utils.is_editable_h5(h5_group))
@@ -1529,7 +1153,7 @@ class TestHDFUtils(unittest.TestCase):
             self.assertFalse(hdf_utils.is_editable_h5(h5_main))
 
     def test_is_editable_h5_r_plus(self):
-        with h5py.File(std_beps_path, mode='r+') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r+') as h5_f:
             h5_group = h5_f['/Raw_Measurement']
             h5_main = h5_f['/Raw_Measurement/Ancillary']
             self.assertTrue(hdf_utils.is_editable_h5(h5_group))
@@ -1538,7 +1162,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_is_editable_h5_w(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Test', data=np.arange(3))
             h5_group = h5_f.create_group('blah')
@@ -1554,7 +1178,7 @@ class TestHDFUtils(unittest.TestCase):
             _ = hdf_utils.is_editable_h5(np.arange(4))
 
         # closed file
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_group = h5_f['/Raw_Measurement']
 
         with self.assertRaises(ValueError):
@@ -1562,7 +1186,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_main_dset_small(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         main_data = np.random.rand(15, 14)
         main_data_name = 'Test_Main'
         quantity = 'Current'
@@ -1604,7 +1228,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_main_dset_dask(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         main_data = np.random.rand(15, 14)
         main_data_name = 'Test_Main'
         quantity = 'Current'
@@ -1647,7 +1271,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_main_dset_empty(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         main_data = (15, 14)
         main_data_name = 'Test_Main'
         quantity = 'Current'
@@ -1689,7 +1313,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_main_existing_spec_aux(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         main_data = np.random.rand(15, 14)
         main_data_name = 'Test_Main'
         quantity = 'Current'
@@ -1729,7 +1353,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_main_existing_both_aux(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         main_data = np.random.rand(15, 14)
         main_data_name = 'Test_Main'
         quantity = 'Current'
@@ -1771,7 +1395,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_main_dset_prod_sizes_mismatch(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         main_data = np.random.rand(15, 14)
         main_data_name = 'Test_Main'
         quantity = 'Current'
@@ -1799,7 +1423,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_clean_reg_refs_1d(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7))
             reg_ref = (slice(0, None, 2))
@@ -1809,7 +1433,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_clean_reg_refs_2d(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7, 5))
             reg_ref = (slice(0, None, 2), slice(None))
@@ -1819,7 +1443,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_clean_reg_refs_illegal_too_many_slices(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7, 5))
             reg_ref = (slice(0, None, 2), slice(None), slice(1, None, 2))
@@ -1830,7 +1454,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_clean_reg_refs_illegal_too_few_slices(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7, 5))
             reg_ref = (slice(0, None, 2))
@@ -1841,7 +1465,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_clean_reg_refs_out_of_bounds(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7, 5))
             reg_ref = (slice(0, 13, 2), slice(None))
@@ -1852,7 +1476,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_attempt_reg_ref_build_spec(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Indices', data=np.random.rand(2, 5))
             dim_names = ['Bias', 'Cycle']
@@ -1869,7 +1493,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_attempt_reg_ref_build_pos(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Indices', data=np.random.rand(5, 2))
             dim_names = ['Bias', 'Cycle']
@@ -1886,7 +1510,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_attempt_reg_ref_build_pos_too_many_dims(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Indices', data=np.random.rand(5, 2))
             dim_names = ['Bias', 'Cycle', 'Blah']
@@ -1896,7 +1520,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_attempt_reg_ref_build_pos_too_few_dims(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Indices', data=np.random.rand(5, 2))
             dim_names = ['Bias']
@@ -1906,7 +1530,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_reg_ref_main_one_dim(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         data = np.random.rand(7)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Main', data=data)
@@ -1927,7 +1551,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_reg_ref_main_1st_dim(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         data = np.random.rand(5, 7)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Main', data=data)
@@ -1948,7 +1572,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_reg_ref_main_2nd_dim(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         data = np.random.rand(5, 7)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Main', data=data)
@@ -1968,8 +1592,8 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_reduced_anc_dsets_spec_2d_to_1d(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
-        self.__delete_existing_file(duplicate_path)
-        shutil.copy(std_beps_path, duplicate_path)
+        data_utils.delete_existing_file(duplicate_path)
+        shutil.copy(data_utils.std_beps_path, duplicate_path)
         with h5py.File(duplicate_path) as h5_f:
             h5_spec_inds_orig = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_spec_vals_orig = h5_f['/Raw_Measurement/Spectroscopic_Values']
@@ -2004,7 +1628,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_reduced_anc_dsets_spec_1d_to_0d(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
-        self.__delete_existing_file(duplicate_path)
+        data_utils.delete_existing_file(duplicate_path)
 
         with h5py.File(duplicate_path) as h5_f:
 
@@ -2039,7 +1663,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_reduced_anc_dsets_3d_to_1d_pos_fastest_n_slowest(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
-        self.__delete_existing_file(duplicate_path)
+        data_utils.delete_existing_file(duplicate_path)
 
         with h5py.File(duplicate_path) as h5_f:
 
@@ -2078,7 +1702,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_reduced_anc_dsets_3d_to_1d_spec_fastest_n_slowest(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
-        self.__delete_existing_file(duplicate_path)
+        data_utils.delete_existing_file(duplicate_path)
 
         with h5py.File(duplicate_path) as h5_f:
 
@@ -2118,7 +1742,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_reduced_anc_dsets_3d_to_1d_spec_fastest(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
-        self.__delete_existing_file(duplicate_path)
+        data_utils.delete_existing_file(duplicate_path)
 
         with h5py.File(duplicate_path) as h5_f:
 
@@ -2158,7 +1782,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_reduced_anc_dsets_3d_to_1d_spec_slowest(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
-        self.__delete_existing_file(duplicate_path)
+        data_utils.delete_existing_file(duplicate_path)
 
         with h5py.File(duplicate_path) as h5_f:
 
@@ -2198,7 +1822,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_reduced_anc_dsets_3d_to_2d_spec_fastest_n_slowest(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
-        self.__delete_existing_file(duplicate_path)
+        data_utils.delete_existing_file(duplicate_path)
 
         with h5py.File(duplicate_path) as h5_f:
 
@@ -2239,7 +1863,7 @@ class TestHDFUtils(unittest.TestCase):
         os.remove(duplicate_path)
 
     def test_get_indices_for_region_ref_corners(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             reg_ref = hdf_utils.get_attr(h5_main, 'even_rows')
             ret_val = hdf_utils.get_indices_for_region_ref(h5_main, reg_ref, 'corners')
@@ -2249,7 +1873,7 @@ class TestHDFUtils(unittest.TestCase):
             self.assertTrue(np.allclose(ret_val, expected_corners))
 
     def test_get_indices_for_region_ref_slices(self):
-        with h5py.File(std_beps_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             reg_ref = hdf_utils.get_attr(h5_main, 'even_rows')
             ret_val = hdf_utils.get_indices_for_region_ref(h5_main, reg_ref, 'slices')
@@ -2267,7 +1891,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_book_keeping_attrs_file(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             hdf_utils.write_book_keeping_attrs(h5_f)
             self.__verify_book_keeping_attrs(h5_f)
@@ -2275,7 +1899,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_book_keeping_attrs_group(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_g = h5_f.create_group('group')
             hdf_utils.write_book_keeping_attrs(h5_g)
@@ -2284,7 +1908,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_write_book_keeping_attrs_dset(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('dset', data=[1, 2, 3])
             hdf_utils.write_book_keeping_attrs(h5_dset)
@@ -2300,7 +1924,7 @@ class TestHDFUtils(unittest.TestCase):
         easy_attrs = {'1_string': 'Current', '1_number': 35.23}
         also_easy_attr = {'N_numbers': [1, -53.6, 0.000463]}
         hard_attrs = {'N_strings': np.array(['a', 'bc', 'def'], dtype='S')}
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_f.attrs.update(easy_attrs)
             h5_f.attrs.update(also_easy_attr)
@@ -2320,7 +1944,7 @@ class TestHDFUtils(unittest.TestCase):
         easy_attrs = {'1_string': 'Current', '1_number': 35.23}
         also_easy_attr = {'N_numbers': [1, -53.6, 0.000463]}
         hard_attrs = {'N_strings': np.array(['a', 'bc', 'def'], dtype='S')}
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_group = h5_f.create_group('Group')
             h5_group.attrs.update(easy_attrs)
@@ -2338,7 +1962,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_copy_attributes_dset_w_reg_ref_group_but_skipped(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         data = np.random.rand(5, 7)
         easy_attrs = {'1_string': 'Current', '1_number': 35.23}
         with h5py.File(file_path) as h5_f:
@@ -2360,7 +1984,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_copy_attributes_dset_w_reg_ref_group_to_file(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         data = np.random.rand(5, 7)
         easy_attrs = {'1_string': 'Current', '1_number': 35.23}
         with h5py.File(file_path) as h5_f:
@@ -2385,7 +2009,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_copy_attributes_dset_w_reg_ref_group(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         data = np.random.rand(5, 7)
         easy_attrs = {'1_string': 'Current', '1_number': 35.23}
         with h5py.File(file_path) as h5_f:
@@ -2416,7 +2040,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_copy_attributes_illegal_to_from_reg_ref(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         data = np.random.rand(5, 7)
         with h5py.File(file_path) as h5_f:
             h5_dset_source = h5_f.create_dataset('Source', data=data)
@@ -2435,7 +2059,7 @@ class TestHDFUtils(unittest.TestCase):
     def test_copy_main_attributes_valid(self):
         file_path = 'test.h5'
         main_attrs = {'quantity': 'Current', 'units': 'nA'}
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset_source = h5_f.create_dataset('Main_01', data=[1, 23])
             h5_dset_source.attrs.update(main_attrs)
@@ -2448,7 +2072,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_copy_main_attributes_no_main_attrs(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset_source = h5_f.create_dataset('Main_01', data=[1, 23])
             h5_group = h5_f.create_group('Group')
@@ -2459,7 +2083,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_copy_main_attributes_wrong_objects(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset_source = h5_f.create_dataset('Main_01', data=[1, 23])
             h5_group = h5_f.create_group('Group')
@@ -2473,7 +2097,7 @@ class TestHDFUtils(unittest.TestCase):
         file_path = 'test.h5'
         existing_attrs = {'a': 1, 'b': 'Hello'}
         easy_attrs = {'1_string': 'Current', '1_number': 35.23}
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
             h5_dset_source.attrs.update(existing_attrs)
@@ -2493,7 +2117,7 @@ class TestHDFUtils(unittest.TestCase):
         file_path = 'test.h5'
         existing_attrs = {'a': 1, 'b': 'Hello'}
         easy_attrs = {'1_string': 'Current', '1_number': 35.23}
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
             h5_dset_source.attrs.update(existing_attrs)
@@ -2513,7 +2137,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_create_empty_dataset_w_region_refs(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         data = np.random.rand(5, 7)
         main_attrs = {'quantity': 'Current', 'units': 'nA'}
         with h5py.File(file_path) as h5_f:
@@ -2535,7 +2159,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_create_empty_dataset_existing_dset_name(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
             _ = h5_f.create_dataset('Existing', data=[4, 5, 6])
@@ -2552,7 +2176,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_create_index_group_first_group(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_group = hdf_utils.create_indexed_group(h5_f, 'Hello')
             self.assertIsInstance(h5_group, h5py.Group)
@@ -2569,7 +2193,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_create_index_group_second(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_group_1 = hdf_utils.create_indexed_group(h5_f, 'Hello')
             self.assertIsInstance(h5_group_1, h5py.Group)
@@ -2586,7 +2210,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_create_index_group_w_suffix_(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_group = hdf_utils.create_indexed_group(h5_f, 'Hello_')
             self.assertIsInstance(h5_group, h5py.Group)
@@ -2597,7 +2221,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_create_index_group_empty_base_name(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             with self.assertRaises(ValueError):
                 _ = hdf_utils.create_indexed_group(h5_f, '    ')
@@ -2606,7 +2230,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_create_results_group_first(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Main', data=[1,2,3])
             h5_group = hdf_utils.create_results_group(h5_dset, 'Tool')
@@ -2625,7 +2249,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_create_results_group_second(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
             h5_group = hdf_utils.create_results_group(h5_dset, 'Tool')
@@ -2643,7 +2267,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_create_results_group_empty_tool_name(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
             with self.assertRaises(ValueError):
@@ -2652,7 +2276,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_create_results_group_not_dataset(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
             with self.assertRaises(TypeError):
                 _ = hdf_utils.create_results_group(h5_f, 'Tool')
@@ -2661,7 +2285,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_create_region_ref(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         data = np.random.rand(5, 7)
         with h5py.File(file_path) as h5_f:
             h5_dset = h5_f.create_dataset('Source', data=data)
@@ -2683,7 +2307,7 @@ class TestHDFUtils(unittest.TestCase):
 
     def test_copy_region_refs(self):
         file_path = 'test.h5'
-        self.__delete_existing_file(file_path)
+        data_utils.delete_existing_file(file_path)
         data = np.random.rand(11, 7)
         with h5py.File(file_path) as h5_f:
             h5_dset_source = h5_f.create_dataset('Source', data=data)
