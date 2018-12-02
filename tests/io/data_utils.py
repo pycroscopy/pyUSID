@@ -3,6 +3,8 @@ import os
 import sys
 import h5py
 import numpy as np
+from io import StringIO
+from contextlib import contextmanager
 
 std_beps_path = 'test_hdf_utils.h5'
 sparse_sampling_path = 'sparse_sampling.h5'
@@ -44,6 +46,34 @@ def write_main_reg_refs(h5_dset, attrs):
     for reg_ref_name, reg_ref_tuple in attrs.items():
         h5_dset.attrs[reg_ref_name] = h5_dset.regionref[reg_ref_tuple]
     write_string_list_as_attr(h5_dset, {'labels': list(attrs.keys())})
+
+
+@contextmanager
+def capture_stdout():
+    """
+    context manager encapsulating a pattern for capturing stdout writes
+    and restoring sys.stdout even upon exceptions
+
+    Examples:
+    >>> with capture_stdout() as get_value:
+    >>>     print("here is a print")
+    >>>     captured = get_value()
+    >>> print('Gotcha: ' + captured)
+
+    >>> with capture_stdout() as get_value:
+    >>>     print("here is a print")
+    >>>     raise Exception('oh no!')
+    >>> print('Does printing still work?')
+    """
+    # Redirect sys.stdout
+    out = StringIO()
+    sys.stdout = out
+    # Yield a method clients can use to obtain the value
+    try:
+        yield out.getvalue
+    finally:
+        # Restore the normal stdout
+        sys.stdout = sys.__stdout__
 
 
 def make_sparse_sampling_file():

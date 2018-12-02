@@ -10,11 +10,12 @@ import os
 import sys
 import h5py
 import numpy as np
-from io import StringIO
-from contextlib import contextmanager
+
 
 sys.path.append("../../pyUSID/")
 from pyUSID.io import USIDataset, hdf_utils
+
+from . import data_utils
 
 if sys.version_info.major == 3:
     unicode = str
@@ -22,32 +23,7 @@ if sys.version_info.major == 3:
 test_h5_file_path = 'test_pycro_dataset.h5'
 
 
-@contextmanager
-def capture_stdout():
-    """
-    context manager encapsulating a pattern for capturing stdout writes
-    and restoring sys.stdout even upon exceptions
 
-    Examples:
-    >>> with capture_stdout() as get_value:
-    >>>     print("here is a print")
-    >>>     captured = get_value()
-    >>> print('Gotcha: ' + captured)
-
-    >>> with capture_stdout() as get_value:
-    >>>     print("here is a print")
-    >>>     raise Exception('oh no!')
-    >>> print('Does printing still work?')
-    """
-    # Redirect sys.stdout
-    out = StringIO()
-    sys.stdout = out
-    # Yield a method clients can use to obtain the value
-    try:
-        yield out.getvalue
-    finally:
-        # Restore the normal stdout
-        sys.stdout = sys.__stdout__
 
 
 class TestUSIDataset(unittest.TestCase):
@@ -537,14 +513,14 @@ class TestUSIDataset(unittest.TestCase):
             sorted_str = 'Data dimensions are sorted in order from fastest changing dimension to slowest.\n'
             # Initial state should be unsorted
             self.assertFalse(pycro_main._USIDataset__sort_dims)
-            with capture_stdout() as get_value:
+            with data_utils.capture_stdout() as get_value:
                 pycro_main.get_current_sorting()
                 test_str = get_value()
             self.assertTrue(test_str == unsorted_str)
             # Toggle sorting.  Sorting should now be true.
             pycro_main.toggle_sorting()
             self.assertTrue(pycro_main._USIDataset__sort_dims)
-            with capture_stdout() as get_value:
+            with data_utils.capture_stdout() as get_value:
                 pycro_main.get_current_sorting()
                 test_str = get_value()
             self.assertTrue(test_str == sorted_str)
