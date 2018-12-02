@@ -61,28 +61,6 @@ class TestHDFUtils(unittest.TestCase):
             h5_dset.attrs[reg_ref_name] = h5_dset.regionref[reg_ref_tuple]
         TestHDFUtils.__write_string_list_as_attr(h5_dset, {'labels': list(attrs.keys())})
 
-    @staticmethod
-    def __make_simple_relaxation_spec_dsets():
-        unit_vals = OrderedDict()
-        unit_vals['Frequency'] =np.linspace(300, 350, 3)
-        unit_vals['Pulse_Repeat'] = np.arange(5)
-        unit_vals['DC_Offset'] = np.sin(2 * np.pi * np.linspace(0, 1, 7))
-        unit_vals['Field'] = np.array([1, 0])
-
-        relax_inds, relax_vals = write_utils.build_ind_val_matrices([unit_vals['Frequency'],
-                                                                     unit_vals['Pulse_Repeat'],
-                                                                     unit_vals['DC_Offset']])
-
-        # Now add a fourth dimension for the field that is closely tied with the DC offset:
-        # This time let the indices for Field start with 0
-        field_unit_inds = np.hstack(([0], np.ones(4, dtype=np.uint16)))
-        relax_inds = np.vstack((relax_inds,
-                                np.tile(np.repeat(field_unit_inds, 3), 7)))
-        field_unit_vals = np.hstack(([1], np.zeros(4, dtype=np.uint16)))
-        relax_vals = np.vstack((relax_vals,
-                                np.tile(np.repeat(field_unit_vals, 3), 7)))
-        return relax_inds, relax_vals, unit_vals
-
     def setUp(self):
         self.__make_beps_file()
         self.__make_sparse_sampling_file()
