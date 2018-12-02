@@ -731,13 +731,16 @@ class TestHDFUtils(unittest.TestCase):
         with self.assertRaises(TypeError):
             _ = hdf_utils.get_unit_values(relax_inds, relax_vals, dim_names=['Frequency', 'DC_Offset'])
 
-    def test_get_unit_values_no_n_dim_form(self):
-        relax_inds, relax_vals, exp_unit_vals = self.__make_simple_relaxation_spec_dsets()
-
-        ret_vals = hdf_utils.get_unit_values(relax_inds, relax_vals, all_dim_names=list(exp_unit_vals.keys()))
-
-        for key, expected in exp_unit_vals.items():
-            self.assertTrue(np.allclose(expected, ret_vals[key]))
+    def test_get_unit_values_dependent_dim(self):
+        with h5py.File(relaxation_path, mode='r') as h5_f:
+            h5_inds = h5_f['/Measurement_000/Channel_000/Spectroscopic_Indices']
+            h5_vals = h5_f['/Measurement_000/Channel_000/Spectroscopic_Values']
+            spec_dim_names = hdf_utils.get_attr(h5_inds, 'labels')
+            ret_dict = hdf_utils.get_unit_values(h5_inds, h5_vals)
+            for dim_ind, dim_name in enumerate(spec_dim_names):
+                exp_val = hdf_utils.get_attr(h5_inds, 'unit_vals_dim_' + str(dim_ind))
+                act_val = ret_dict[dim_name]
+                self.assertTrue(np.allclose(exp_val, act_val))
 
     def test_find_dataset_legal(self):
         with h5py.File(std_beps_path, mode='r') as h5_f:
