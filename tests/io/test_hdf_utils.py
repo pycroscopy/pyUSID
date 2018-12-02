@@ -744,6 +744,31 @@ class TestHDFUtils(unittest.TestCase):
                 act_val = ret_dict[dim_name]
                 self.assertTrue(np.allclose(exp_val, act_val))
 
+    def test_get_unit_values_sparse_samp_no_attr(self):
+        # What should the user expect this function to do? throw an error.
+        # Without the attribute, this function will have no idea that it is looking at a sparse sampling case
+        # it will return the first and second columns of vals blindly
+        with h5py.File(sparse_sampling_path, mode='r') as h5_f:
+            h5_inds = h5_f['/Measurement_000/Channel_000/Position_Indices']
+            h5_vals = h5_f['/Measurement_000/Channel_000/Position_Values']
+            dim_names = hdf_utils.get_attr(h5_inds, 'labels')
+            ret_dict = hdf_utils.get_unit_values(h5_inds, h5_vals)
+            for dim_ind, dim_name in enumerate(dim_names):
+                exp_val = h5_vals[:, dim_ind]
+                act_val = ret_dict[dim_name]
+                self.assertTrue(np.allclose(exp_val, act_val))
+
+    def test_get_unit_values_sparse_samp_w_attr(self):
+        # What should the user expect this function to do? throw an error.
+        # Without the attribute, this function will have no idea that it is looking at a sparse sampling case
+        # it will return the first and second columns of vals blindly
+        with h5py.File(sparse_sampling_path, mode='r') as h5_f:
+            h5_inds = h5_f['/Measurement_000/Channel_001/Position_Indices']
+            h5_vals = h5_f['/Measurement_000/Channel_001/Position_Values']
+
+            with self.assertRaises(ValueError):
+                _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Y'])
+
     def test_find_dataset_legal(self):
         with h5py.File(std_beps_path, mode='r') as h5_f:
             h5_group = h5_f['/Raw_Measurement/']
