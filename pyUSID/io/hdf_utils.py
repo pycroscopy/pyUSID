@@ -1929,7 +1929,7 @@ def get_unit_values(ds_inds, ds_vals, dim_names=None, all_dim_names=None, is_spe
                 raise KeyError('Dimension {} does not exist in the provided ancillary datasets'.format(dim_name))
 
     unit_values = dict()
-    for dim_name in dim_names:
+    for dim_name in all_dim_names:
         # Find the row in the spectroscopic indices that corresponds to the dimensions we want to slice:
         if verbose:
             print('Looking for dimension: {} in {}'.format(dim_name, dim_names))
@@ -1967,15 +1967,17 @@ def get_unit_values(ds_inds, ds_vals, dim_names=None, all_dim_names=None, is_spe
             tile_starts = np.hstack((tile_starts, [len(inds_for_dim)]))
             subsections = [inds_for_dim[tile_starts[ind]: tile_starts[ind + 1]] for ind in range(len(tile_starts) - 1)]
             if np.max(np.diff(subsections, axis=0)) != 0:
-                # TODO: Should get unit values for ALL dimensions regardless of expectations to catch such scenarios.
-                raise ValueError('Values in each tile of this dimension are different')
+                # Should get unit values for ALL dimensions regardless of expectations to catch such scenarios.
+                raise ValueError('Values in each tile of dimension: {} are different'.format(dim_name))
 
         # Now looking within the first tile:
         subsection = inds_for_dim[tile_starts[0]:tile_starts[1]]
         # remove all repetitions. ie - take indices only where jump == 1
         step_inds = np.hstack(([0], np.where(np.hstack(([0], np.diff(subsection))))[0]))
         # Finally, use these indices to get the values
-        unit_values[dim_name] = vals_mat[desired_row_ind, step_inds]
+        if dim_name in dim_names:
+            # Only add this dimension to dictionary if requwested.
+            unit_values[dim_name] = vals_mat[desired_row_ind, step_inds]
 
     return unit_values
 

@@ -770,7 +770,8 @@ class TestHDFUtils(unittest.TestCase):
     def test_get_unit_values_incomp_dim_no_attr(self):
         # What should the user expect this function to do? throw an error.
         # Given that the unit values for each tile are different, it should throw a ValueError for X.
-        # Even though we know Y is incomplete, it won't know since it wasn't looking at X when just asked for Y
+        # Even though we know Y is incomplete, it won't know since it wasn't looking at X.
+        # However, now this function will automatically find unit values for ALL dimensions just to catch such scenarios
         with h5py.File(incomplete_measurement_path, mode='r') as h5_f:
             h5_inds = h5_f['/Measurement_000/Channel_000/Position_Indices']
             h5_vals = h5_f['/Measurement_000/Channel_000/Position_Values']
@@ -781,11 +782,8 @@ class TestHDFUtils(unittest.TestCase):
             with self.assertRaises(ValueError):
                 _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['X'])
 
-            slowest_dim = 'Y'
-            act_val = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=[slowest_dim])
-            exp_val = {slowest_dim: np.unique(h5_vals[:, -1])}
-
-            self.assertTrue(np.allclose(exp_val[slowest_dim], act_val[slowest_dim]))
+            with self.assertRaises(ValueError):
+                _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Y'])
 
     def test_find_dataset_legal(self):
         with h5py.File(std_beps_path, mode='r') as h5_f:
