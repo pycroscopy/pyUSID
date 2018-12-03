@@ -2536,7 +2536,7 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
     ----------
     h5_parent_group : h5py.Group
         Parent group under which the datasets will be created
-    main_data : np.ndarray or list / tuple
+    main_data : numpy.ndarray, dask.array.core.Array, list or tuple
         2D matrix formatted as [position, spectral] or a list / tuple with the shape for an empty dataset.
         If creating an empty dataset - the dtype must be specified via a kwarg.
     main_data_name : String / Unicode
@@ -2714,10 +2714,11 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
                                                  **kwargs)
         if verbose:
             print('Created empty dataset: {} for writing Dask dataset: {}'.format(h5_main, main_data))
-            print('Dask array will be written to HDF5 dataset: {} in file: {}'.format(h5_main.name,
-                                                                                      h5_main.file.filename))
+            print('Dask array will be written to HDF5 dataset: "{}" in file: "{}"'.format(h5_main.name,
+                                                                                          h5_main.file.filename))
         # Step 2 - now ask Dask to dump data to disk
-        main_data.to_hdf5(h5_main.file.filename, h5_main.name)
+        da.to_hdf5(h5_main.file.filename, {h5_main.name: main_data})
+        # main_data.to_hdf5(h5_main.file.filename, h5_main.name)  # Does not work with python 2 for some reason
     else:
         # Case 3 - large empty dataset
         h5_main = h5_parent_group.create_dataset(main_data_name, main_data, **kwargs)
