@@ -6,6 +6,15 @@ Frequently asked questions
 pyUSID philosophy
 ---------------------
 
+How is pyUSID different from h5py?
+----------------------------------
+Given that the vast majority of pyUSID's capability is focused towards accessing and manipulating data in hierarchical
+data format (HDF5) files, it is only natural that comparisons may be drawn between ``pyUSID`` and ``h5py`` (the popular python
+package used by many for reading and writing to HDF5 files). ``pyUSID`` does indeed use ``h5py`` underneath and in no way
+is an alternative to ``h5py``. Rather, ``pyUSID`` provides functions that greatly simplify the task of reading and writing
+to Universal Spectroscopy and Imaging Data (USID) formatted HDF5 files. In addition to file and data handling tools,
+pyUSID also provides data visualization tools and a framework for processing data.
+
 Is pyUSID specific to any communities?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Not at all**. We have ensured that the basic data model, file formatting, and processing paradigm are general enough that they can be extended to any other scientific domain so long as each experiment involves ``N`` identical observations of ``S`` values.
