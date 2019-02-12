@@ -10,6 +10,7 @@ Getting Started
 * If you are interested in contributing your code to pyUSID, please look at our `guidelines <./contribution_guidelines.html>`_
 * We also have a handy document for converting your `matlab code to python <./matlab_to_python.html>`_.
 * If you need detailed documentation on all our classes, functions, etc., please visit our `API <./api.html>`_
+* For a concise change-log, please see the `release history <https://github.com/pycroscopy/pyUSID/releases>`_.
 * Please `get in touch <./contact.html>`_ if you would like to use USID and pyUSID for other new or mature scientific packages.
 * Have questions? See our `FAQ <./faq.html>`_ to see if we have already answered them.
 * Need help or need to get in touch with us? See our `contact <./contact.html>`_ information.
@@ -31,10 +32,10 @@ Tips and pitfalls
 ~~~~~~~~~~~~~~~~~
 For the python novices by a python novice - **Nick Mostovych, Brown University**
 
-* Documentation and examples on this website are for the latest version of pyUSID. If something does not work as shown on this website,
+* Documentation and examples on this website are for the **latest** version of pyUSID. If something does not work as shown on this website,
   chances are that you may be using an older version of pyUSID. Follow the instructions to `update pyUSID to the latest version <./install.html#updating-pyUSID>`_
 * pyUSID has excellent documentation (+ examples too) for all functions. If you are ever confused with the usage of a
-  function or class and you can get help in numerous ways:
+  function or class, you can get help in numerous ways:
 
   * If you are using jupyter notebooks, just hit the ``Shift+Tab`` keys after typing the name of your function.
     See `this quick video <https://www.youtube.com/watch?v=TgqMK1SG7XI>`_ for a demo.
@@ -46,4 +47,4 @@ For the python novices by a python novice - **Nick Mostovych, Brown University**
 * Many functions in pyUSID have a ``verbose`` keyword argument that can be set to ``True`` to get detailed print logs of intermediate steps in the function.
   This is **very** handy for debugging code
 
-If there are tips or pitfalls you would like to add to this list, please `write to us <./contact.html>`_
+If there are tips or pitfalls you would like to add to this list, please `get in touch to us <./contact.html>`_
