@@ -28,8 +28,9 @@ requirements = ['numpy>=1.13.0',
                 # 'pyqt;python_version<"3.5"',
                 'pyqt5;python_version>="3.5"',
                 'pyqtgraph>=0.10',
-
-                'scikit-image>=0.12.3',
+                'scikit-image>=0.12.3;python_version<"3.4"',
+                'scikit-image<0.14.2;python_version=="3.4"',  # Dask removed python 3.4 support that causes 2019 and newer skimage to fail
+                'scikit-image>=0.12.3;python_version>="3.5"',
                 ]
 
 setup(
