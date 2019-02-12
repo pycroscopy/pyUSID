@@ -56,7 +56,7 @@ import os
 # Warning package in case something goes wrong
 from warnings import warn
 import subprocess
-import sys
+
 
 def install(package):
     subprocess.call([sys.executable, "-m", "pip", "install", package])
