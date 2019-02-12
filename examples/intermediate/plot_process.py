@@ -450,17 +450,9 @@ print(h5_peak_amps)
 ########################################################################################################################
 # Visualize
 # ---------
-# Since ``Peak_Response`` is a USIDataset, we could use its ability to provide its own N dimensional form:
+# Since ``Peak_Response`` is a USIDataset, we could use its built-in ``visualize()`` function:
 
-amplitudes = np.squeeze(h5_peak_amps.get_n_dim_form())
-print('N dimensional shape of Peak_Response: {}'.format(amplitudes.shape))
-
-########################################################################################################################
-# Finally, we can look at a map of the peak amplitude for the entire dataset:
-
-fig, axis = plt.subplots(figsize=(4, 4))
-axis.imshow(amplitudes)
-axis.set_title('Peak Amplitudes', fontsize=16)
+h5_peak_amps.visualize()
 
 ########################################################################################################################
 # Clean up
