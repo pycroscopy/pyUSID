@@ -28,7 +28,7 @@ deploy:
 # Github pages deployment
   - provider: pages
     skip_cleanup: true
-    github_token: $GITHUBTOKEN
+    github-token: $GITHUBTOKEN
     local_dir: docs/_build/html
     on:
       branch: master
