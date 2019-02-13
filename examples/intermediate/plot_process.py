@@ -54,13 +54,8 @@
 # 2. Computation on a single unit of data
 # 3. Writing results to disk
 #
-# .. note::
-#     The upcoming version of the Process class will allow user to run the same scientific code on personal computers as
-#     well as clusters of computers on the cloud or on high-performance-computing resources! Users do **not** need to
-#     structure their scientific code any differently to take advantage of the new scalability.
-#
 # Components of pyUSID.Process
-# -----------------------------------
+# ----------------------------
 # The most important functions in the Process class are:
 #
 # * ``__init__()`` - instantiates a 'Process' object of this class after validating the inputs.
@@ -75,7 +70,7 @@
 #   pre-processing of input data and post-processing of results if necessary. If neither are required, this function
 #   essentially applies the parallel computation on ``_map_function()``.
 # * ``compute()`` - this does the bulk of the work of (iteratively) reading a chunk of data >> processing in parallel
-#   via ``_unit_computation()`` >> calling ``write_results_chunk()`` to write data. Most sub-classes, including the one
+#   via ``_unit_computation()`` >> calling ``_write_results_chunk()`` to write data. Most sub-classes, including the one
 #   below, do not need to extend / modify this function.
 #
 # Recommended pre-requisite reading
@@ -524,6 +519,9 @@ os.remove(h5_path)
 # * ``pycroscopy.processing.SignalFilter``
 # * ``pycroscopy.analysis.GIVBayesian``
 #
+# Both these classes work on personal computers as well as a cluster of computers (e.g. - a high-performance computing
+# cluster).
+#
 # Tips and tricks
 # ================
 # Here we will cover a few common use-cases that will hopefully guide you in structuring your computational problem
@@ -586,7 +584,3 @@ os.remove(h5_path)
 # functionality that is challenging to efficiently attain without ``_unit_computation()``. Note that when the
 # ``_unit_computation()`` is overridden, the developer is responsible for the correct usage of ``parallel_compute()``,
 # especially passing arguments and keyword arguments.
-#
-# Other Notes
-# -----------
-# We are exploring Dask as a framework for embarrassingly parallel computation.
