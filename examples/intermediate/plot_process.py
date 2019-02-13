@@ -516,8 +516,8 @@ os.remove(h5_path)
 # Please see the following pycroscopy classes to learn more about the advanced functionalities such as resuming
 # computations, checking of existing results, using unit_computation(), etc.:
 #
-# * ``pycroscopy.processing.SignalFilter``
-# * ``pycroscopy.analysis.GIVBayesian``
+# * `SignalFilter <https://github.com/pycroscopy/pycroscopy/blob/master/pycroscopy/processing/signal_filter.py>`_
+# * `GIVBayesian <https://github.com/pycroscopy/pycroscopy/blob/master/pycroscopy/analysis/giv_bayesian.py>`_
 #
 # Both these classes work on personal computers as well as a cluster of computers (e.g. - a high-performance computing
 # cluster).
