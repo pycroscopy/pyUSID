@@ -56,7 +56,7 @@ import os
 # Warning package in case something goes wrong
 from warnings import warn
 import subprocess
-import sys
+
 
 def install(package):
     subprocess.call([sys.executable, "-m", "pip", "install", package])
@@ -339,33 +339,20 @@ fig.tight_layout()
 # best-practices for parallel computing (multiple CPU cores) when compared to traditional serial computing (single
 # CPU core):
 #
-# * There is noticeable time overhead involved with setting up each parallel computing job. For very simple or small
-#   computations, this overhead may outweigh the speed-up gained with using multiple cores.
+# * There is noticeable time overhead involved with setting up each compute worker (CPU core in this case).
+#   For very simple or small computations, this overhead may outweigh the speed-up gained with using multiple cores.
 # * Parallelizing computations that read and write to files at each iteration may be actually be noticeably *slower*
-#   than serial computation since each core will compete with all other cores for rights to read and write to the file(s)
-#   and these input/output operations are by far the slowest components of the computation. Instead, it makes sense to
+#   than serial computation since the cores will compete for rights to read and write to the file(s)
+#   and these input/output operations are by far the slowest components of the workflow. Instead, it makes sense to
 #   read large amounts of data from the necessary files once, perform the computation, and then write to the files once
-#   after all the computation is complete. In fact, this is what we automatically do in the ``Fitter`` and
-#   ``Process`` classes in pycroscopy
+#   after all the computation is complete. In fact, this is what we automatically do in the ``Process`` class in pyUSID.
+#   Please see `another example <./plot_process.html>`_ on how to write a Process class to formalize data processing.
 #
-
-########################################################################################################################
-# Formalizing data processing and pyUSID.Process
-# ----------------------------------------------
+# .. note::
+#     ``parallel_compute()`` will revert to serial processing when called within the message passing interface (MPI)
+#     context in a high-performance computing (HPC) cluster. Due to conflicts between MPI, numpy, and joblib, it is
+#     recommended to use a pure MPI approach for computing instead of the MPI + OpenMP (joblib) paradigm.
 #
-# Data processing / analysis typically involves a few basic operations:
-#
-# 1. Reading data from file
-# 2. Parallel computation
-# 3. Writing results to disk
-#
-# The Process class in pyUSID has modularized these operations for simpler and faster development of standardized,
-# easy-to-debug code. In the case of this example, one would only need to write the find_all_peaks() function along with
-# the appropriate data reading and data writing functions. Other common operations can be inherited from
-# pyUSID.Process.
-#
-# Please see another example on how to write a Process class for pyUSID based on this example
-
 ########################################################################################################################
 # Lets not forget to close and delete the temporarily downloaded file:
 

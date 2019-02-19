@@ -34,8 +34,13 @@
 #
 # * **memory management** - reading chunks of datasets that can be processed with the available memory, something very
 #   crucial for very large datasets that cannot entirely fit into the computer's memory
-# * **considerate CPU usage for parallel computing** - using all but one or two CPU cores for the (parallel) computation
-#   , which allows the user to continue using the computer for other activities such as reading mail, etc.
+# * **Scalable parallel computing** -
+#
+#   * On personal computers - considerate CPU usage - Process will use all but one or two CPU cores for the (parallel)
+#     computation, which allows the user to continue using the computer for other activities such as reading mail, etc.
+#   * New in pyUSID v. 0.0.5 - Ability to scale to multiple computers in a cluster. The Process class can scale the same
+#     scientific code written for personal computers to use multiple computers (or nodes) on a high performance
+#     computing (HPC) resource or a cloud-based cluster to dramatically reduce the computational time
 # * **pausing and resuming computation** - interrupting and resuming the computation at a more convenient time,
 #   something that is especially valuable for lengthy computations.
 # * **avoiding repeated computation and returning existing results** - pyUSID.Process will return existing results
@@ -49,13 +54,8 @@
 # 2. Computation on a single unit of data
 # 3. Writing results to disk
 #
-# .. note::
-#     The upcoming version of the Process class will allow user to run the same scientific code on personal computers as
-#     well as clusters of computers on the cloud or on high-performance-computing resources! Users do **not** need to
-#     structure their scientific code any differently to take advantage of the new scalability.
-#
 # Components of pyUSID.Process
-# -----------------------------------
+# ----------------------------
 # The most important functions in the Process class are:
 #
 # * ``__init__()`` - instantiates a 'Process' object of this class after validating the inputs.
@@ -70,7 +70,7 @@
 #   pre-processing of input data and post-processing of results if necessary. If neither are required, this function
 #   essentially applies the parallel computation on ``_map_function()``.
 # * ``compute()`` - this does the bulk of the work of (iteratively) reading a chunk of data >> processing in parallel
-#   via ``_unit_computation()`` >> calling ``write_results_chunk()`` to write data. Most sub-classes, including the one
+#   via ``_unit_computation()`` >> calling ``_write_results_chunk()`` to write data. Most sub-classes, including the one
 #   below, do not need to extend / modify this function.
 #
 # Recommended pre-requisite reading
@@ -217,36 +217,9 @@ except ImportError:
 # ---------------------
 # The result of ``compute()`` will be a list of amplitude values. All we need to do is:
 #
+# * call the ``self._get_pixels_in_current_batch()`` to find out which pixels were processed in this batch
 # * write the results into the HDF5 dataset
-# * Set the ``last_pixel`` attribute to the value of the ``end_pos`` internal variable to indicate that pixels upto
-#   ``end_pos`` were successfully processed. Should the computation be interrupted after this point, we could resume
-#   from ``end_pos`` instead of starting from ``0`` again.
-# * update the ``start_pos`` internal variable to guide compute() to process the next batch of positions / pixels
 #
-# .. note::
-#     The upcoming version of the Process class has been written to work on a cluster of cloud-based- and
-#     high-performance-computing resources. As a part of these upgrades, sub-classes of the ``Process`` class, such as
-#     the one below, **will no longer have direct access to ``self._start_pos`` and ``self._end_pos``**. In order to
-#     find out which pixels to read from / write to, sub-classes will need to call
-#     ``self._get_pixels_in_current_batch()`` which will return an array of unsigned integers corresponding to the
-#     indices of the positions that will be / were processed in the current batch.
-#
-#     When using the upcoming version of the ``Process`` class, the ``_write_results_chunk()`` function in the
-#     subclasses will no longer need to:
-#
-#     * flush the HDF5 file
-#     * Perform any book-keeping or checkpointing
-#     * Update the start or end positions.
-#     All of these will be handled by the upcoming ``Process`` class. Below we illustrate how the function will be
-#     transformed to just two lines.
-#
-# .. code-block:: python
-#
-#    def _write_results_chunk(self):
-#        # get the list of positions that were just computed in this batch:
-#        pos_in_batch = self._get_pixels_in_current_batch()
-#        # write the results to the file
-#        self.h5_results[pos_in_batch, 0] = np.array(self._results)
 
 
 class PeakFinder(usid.Process):
@@ -310,21 +283,10 @@ class PeakFinder(usid.Process):
         In this case, there isn't any more additional post-processing required
         """
         # Find out the positions to write to:
-        pos_in_batch = slice(self._start_pos, self._end_pos)
+        pos_in_batch = self._get_pixels_in_current_batch()
 
         # write the results to the file
         self.h5_results[pos_in_batch, 0] = np.array(self._results)
-
-        # In the upcoming version of the Process class all the lines below will become unnecessary:
-
-        # Flush the results to ensure that they have indeed been written to the file
-        self.h5_main.file.flush()
-
-        # update the 'last_pixel' to indicate that the process was successfully completed on this many positions:
-        self.h5_results_grp.attrs['last_pixel'] = self._end_pos
-
-        # Now update the start position
-        self._start_pos = self._end_pos
 
     @staticmethod
     def _map_function(spectra, *args, **kwargs):
@@ -483,17 +445,9 @@ print(h5_peak_amps)
 ########################################################################################################################
 # Visualize
 # ---------
-# Since ``Peak_Response`` is a USIDataset, we could use its ability to provide its own N dimensional form:
+# Since ``Peak_Response`` is a USIDataset, we could use its built-in ``visualize()`` function:
 
-amplitudes = np.squeeze(h5_peak_amps.get_n_dim_form())
-print('N dimensional shape of Peak_Response: {}'.format(amplitudes.shape))
-
-########################################################################################################################
-# Finally, we can look at a map of the peak amplitude for the entire dataset:
-
-fig, axis = plt.subplots(figsize=(4, 4))
-axis.imshow(amplitudes)
-axis.set_title('Peak Amplitudes', fontsize=16)
+h5_peak_amps.visualize()
 
 ########################################################################################################################
 # Clean up
@@ -562,8 +516,11 @@ os.remove(h5_path)
 # Please see the following pycroscopy classes to learn more about the advanced functionalities such as resuming
 # computations, checking of existing results, using unit_computation(), etc.:
 #
-# * ``pycroscopy.processing.SignalFilter``
-# * ``pycroscopy.analysis.GIVBayesian``
+# * `SignalFilter <https://github.com/pycroscopy/pycroscopy/blob/master/pycroscopy/processing/signal_filter.py>`_
+# * `GIVBayesian <https://github.com/pycroscopy/pycroscopy/blob/master/pycroscopy/analysis/giv_bayesian.py>`_
+#
+# Both these classes work on personal computers as well as a cluster of computers (e.g. - a high-performance computing
+# cluster).
 #
 # Tips and tricks
 # ================
@@ -627,7 +584,3 @@ os.remove(h5_path)
 # functionality that is challenging to efficiently attain without ``_unit_computation()``. Note that when the
 # ``_unit_computation()`` is overridden, the developer is responsible for the correct usage of ``parallel_compute()``,
 # especially passing arguments and keyword arguments.
-#
-# Other Notes
-# -----------
-# We are exploring Dask as a framework for embarrassingly parallel computation.

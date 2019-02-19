@@ -506,7 +506,8 @@ def plot_line_family(axis, x_vec, line_family, line_names=None, label_prefix='',
     if not isinstance(line_family, np.ndarray):
         raise TypeError('line_family must be a 2d array of numbers')
     assert line_family.ndim == 2, 'line_family must be a 2D array'
-    assert x_vec.size == line_family.shape[1], 'The size of the 2nd dimension of line_family must match with of x_vec'
+    #    assert x_vec.shape[1] == line_family.shape[1], \
+    #        'The size of the 2nd dimension of line_family must match with of x_vec, but line fam has shape {} whereas xvec has shape {}'.format(line_family.shape, x_vec.shape)
     num_lines = line_family.shape[0]
     for var, var_name in zip([label_suffix, label_prefix], ['label_suffix', 'label_prefix']):
         if not isinstance(var, (str, unicode)):
