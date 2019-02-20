@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Utilities for transforming and validating data types
+
 Created on Tue Nov  3 21:14:25 2015
 
 @author: Suhas Somnath, Chris Smith

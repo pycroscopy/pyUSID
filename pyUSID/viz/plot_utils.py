@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Utilities for generating static image and line plots of near-publishable quality
+
 Created on Thu May 05 13:29:12 2016
 
 @author: Suhas Somnath, Chris R. Smith

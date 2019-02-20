@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Abstract :class:`~pyUSID.io.translator.Translator` base-class
+
 Created on Tue Nov  3 15:07:16 2015
 
 @author: Suhas Somnath
@@ -16,7 +18,7 @@ class Translator(object):
     """
     Abstract class that defines the most basic functionality of a data format translator.
     A translator converts experimental data from binary / proprietary
-    data formats to a single standardized HDF5 data file
+    data formats to a single standardized USID HDF5 data file
     """
     __metaclass__ = abc.ABCMeta
 

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Utilities that assist in writing USID related data to HDF5 files
+
 Created on Thu Sep  7 21:14:25 2017
 
 @author: Suhas Somnath, Chris Smith

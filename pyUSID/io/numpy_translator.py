@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+:class:`~pyUSID.io.numpy_translator.NumpyTranslator` capable of translating numeric arrays to USID HDF5 files
+
 Created on Fri Jan 27 17:58:35 2017
 
 @author: Suhas Somnath
@@ -22,7 +24,7 @@ if sys.version_info.major == 3:
 
 class NumpyTranslator(Translator):
     """
-    Writes a numpy array to .h5
+    Translator that writes numeric arrays (already in memory) that describe a USID dataset to a HDF5 file
     """
 
     def translate(self, h5_path, data_name, raw_data, quantity, units, pos_dims, spec_dims,

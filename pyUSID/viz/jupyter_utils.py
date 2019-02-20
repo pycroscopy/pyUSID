@@ -1,4 +1,5 @@
 """
+Utilities for interactive visualization of data in Jupyter notebooks
 Created on 11/11/16 10:08 AM
 @author: Suhas Somnath, Chris Smith
 """
