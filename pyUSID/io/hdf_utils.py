@@ -48,19 +48,14 @@ def print_tree(parent, rel_paths=False, main_dsets_only=False):
 
     Parameters
     ----------
-    parent : h5py.Group
-        HDF5 tree to print
-    rel_paths : (Optional) bool. Default = False
+    parent : :class:`h5py.Group`
+        HDF5 (sub-)tree to print
+    rel_paths : bool, optional. Default = False
         True - prints the relative paths for all elements.
         False - prints a tree-like structure with only the element names
     main_dsets_only : bool, optional. default=False
         True - prints only groups and Main datasets
         False - prints all dataset and group objects
-
-    Returns
-    -------
-    None
-
     """
 
     def __print(name, obj):
@@ -92,10 +87,10 @@ def get_all_main(parent, verbose=False):
 
     Parameters
     ----------
-    parent : h5py.Group
+    parent : :class:`h5py.Group`
         HDF5 Group to search within
-    verbose : bool
-        If true, extra print statements are enabled
+    verbose : bool, optional. Default = False
+        If true, extra print statements (usually for debugging) are enabled
 
     Returns
     -------
@@ -136,14 +131,14 @@ def get_auxiliary_datasets(h5_object, aux_dset_name=None):
 
     Parameters
     ----------
-    h5_object : h5py.Dataset, h5py.Group or h5py.File object
+    h5_object : :class:`h5py.Dataset`, :class:`h5py.Group` or :class:`h5py.File`
         Dataset object reference.
-    aux_dset_name : str or list of strings, optional, default = all (DataSet.attrs).
-        Name of auxiliary Dataset objects to return.
+    aux_dset_name : str or :class:`list` of str, optional. Default = all
+        Name of auxiliary :class:`h5py.Dataset` objects to return.
 
     Returns
     -------
-    list of h5py.Reference of auxiliary dataset objects.
+    list of :class:`h5py.Reference` of auxiliary :class:`h5py.Dataset` objects.
 
     """
     if not isinstance(h5_object, (h5py.Dataset, h5py.Group, h5py.File)):
@@ -180,7 +175,7 @@ def get_attr(h5_object, attr_name):
 
     Parameters
     ----------
-    h5_object : h5py.Dataset, h5py.Group or h5py.File object
+    h5_object : :class:`h5py.Dataset`, :class:`h5py.Group` or :class:`h5py.File`
         object whose attribute is desired
     attr_name : str
         Name of the attribute of interest
@@ -218,14 +213,15 @@ def get_attributes(h5_object, attr_names=None):
 
     Parameters
     ----------
-    h5_object : h5py.Dataset
+    h5_object : :class:`h5py.Dataset`
         Dataset object reference.
-    attr_names : string or list of strings, optional, default = all (DataSet.attrs).
+    attr_names : str or :class:`list` of str, optional. Default = all
         Name of attribute object to return.
 
     Returns
     -------
-    Dictionary containing (name,value) pairs of attributes
+    att_dict : dict
+        Dictionary containing (name,value) pairs of attributes
 
     """
     if not isinstance(h5_object, (h5py.Dataset, h5py.Group, h5py.File)):
@@ -304,7 +300,7 @@ def find_dataset(h5_group, dset_name):
 
     Parameters
     ----------
-    h5_group : h5py.Group
+    h5_group : :class:`h5py.Group`
         Group to search within for the Dataset
     dset_name : str
         Name of the dataset to search for
@@ -340,7 +336,7 @@ def find_dataset(h5_group, dset_name):
 
 def find_results_groups(h5_main, tool_name):
     """
-    Finds a list of all groups containing results of the process of name tool_name being applied to the dataset
+    Finds a list of all groups containing results of the process of name `tool_name` being applied to the dataset
 
     Parameters
     ----------
@@ -351,7 +347,7 @@ def find_results_groups(h5_main, tool_name):
 
     Returns
     -------
-    groups : list of references to h5 group objects
+    groups : list of references to :class:`h5py.Group` objects
         groups whose name contains the tool name and the dataset name
 
     """
@@ -1075,7 +1071,7 @@ def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs
         Data type of the fit / guess datasets
     dset_name : String / Unicode
         Name of the dataset
-    h5_group : h5py.Group object, optional. Default = None
+    h5_group : :class:`h5py.Group`, optional. Default = None
         Group within which this dataset will be created
     new_attrs : dictionary (Optional)
         Any new attributes that need to be written to the dataset
@@ -1163,9 +1159,9 @@ def copy_attributes(source, dest, skip_refs=True):
 
     Parameters
     ----------
-    source : h5py.Dataset, h5py.Group, or h5py.File object
+    source : h5py.Dataset, :class:`h5py.Group`, or :class:`h5py.File`
         Object containing the desired attributes
-    dest : h5py.Dataset, h5py.Group, or h5py.File object
+    dest : h5py.Dataset, :class:`h5py.Group`, or :class:`h5py.File`
         Object to which the attributes need to be copied to
     skip_refs : bool, optional. default = True
         Whether or not the references (dataset and region) should be skipped
@@ -1639,7 +1635,7 @@ def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=
     Returns
     -------
     group : list
-           List of all groups with parameters matching those in `new_parms`
+           List of all :class:`h5py.Group` objects with parameters matching those in `new_parms`
 
     """
     if not isinstance(h5_base, h5py.Dataset):
@@ -1686,7 +1682,7 @@ def check_for_matching_attrs(h5_obj, new_parms=None, verbose=False):
 
     Parameters
     ----------
-    h5_obj : h5py object (Dataset or Group)
+    h5_obj : h5py object (Dataset or :class:`h5py.Group`)
         Object whose attributes will be compared against new_parms
     new_parms : dict, optional. default = empty dictionary
         Parameters to compare against the attributes present in h5_obj
@@ -1922,12 +1918,12 @@ def get_source_dataset(h5_group):
 
     Parameters
     ----------
-    h5_group : h5py.Datagroup
+    h5_group : :class:`h5py.Group`
         Child group whose source dataset will be returned
 
     Returns
     -------
-    h5_source : Pycrodataset object
+    h5_source : USIDataset object
         Main dataset from which this group was generated
 
     """
@@ -1993,7 +1989,7 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
 
     Parameters
     ----------
-    h5_parent_group : h5py.Group or h5py.File
+    h5_parent_group : :class:`h5py.Group` or :class:`h5py.File`
         Group under which the indices and values datasets will be created
     dimensions : Dimension or array-like of Dimension objects
         Sequence of Dimension objects that provides all necessary instructions for constructing the indices and values
@@ -2080,7 +2076,7 @@ def write_reduced_spec_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_na
 
     Parameters
     ----------
-    h5_parent_group : h5py.Group or h5py.File
+    h5_parent_group : :class:`h5py.Group` or :class:`h5py.File`
         Group under which the indices and values datasets will be created
     h5_spec_inds : HDF5 Dataset
             Spectroscopic indices dataset
@@ -2114,7 +2110,7 @@ def write_reduced_anc_dsets(h5_parent_group, h5_inds, h5_vals, dim_name, basenam
 
     Parameters
     ----------
-    h5_parent_group : h5py.Group or h5py.File
+    h5_parent_group : :class:`h5py.Group` or h5py.File
         Group under which the indices and values datasets will be created
     h5_inds : HDF5 Dataset
             Spectroscopic or Positions indices dataset
@@ -2282,7 +2278,7 @@ def assign_group_index(h5_parent_group, base_name, verbose=False):
 
     Parameters
     ----------
-    h5_parent_group : h5py.Group object
+    h5_parent_group : :class:`h5py.Group` object
         Parent group under which the new group object will be created
     base_name : str or unicode
         Base name of the new group without index
@@ -2331,7 +2327,7 @@ def create_indexed_group(h5_parent_group, base_name):
 
     Parameters
     ----------
-    h5_parent_group : h5py.Group or h5py.File object
+    h5_parent_group : :class:`h5py.Group` or :class:`h5py.File`
         File or group within which the new group will be created
     base_name : str or unicode
         Prefix for the group name. This need not end with a '_'. It will be added automatically
@@ -2360,7 +2356,7 @@ def write_book_keeping_attrs(h5_obj):
 
     Parameters
     ----------
-    h5_obj : h5py.Object
+    h5_obj : :class:`h5py.Dataset`, :class:`h5py.Group`, or :class:`h5py.File`
         Object to which basic book-keeping attributes need to be written
 
     """
@@ -2386,7 +2382,7 @@ def create_results_group(h5_main, tool_name):
 
     Returns
     -------
-    h5_group : h5py.Group object
+    h5_group : :class:`h5py.Group`
         Results group which can now house the results datasets
 
     """
@@ -2426,7 +2422,7 @@ def write_simple_attrs(h5_obj, attrs, obj_type='', verbose=False):
 
     Parameters
     ----------
-    h5_obj : h5py.File, h5py.Group, or h5py.Dataset object
+    h5_obj : :class:`h5py.File`, :class:`h5py.Group`, or h5py.Dataset object
         h5py object to which the attributes will be written to
     attrs : dict
         Dictionary containing the attributes as key-value pairs
@@ -2468,7 +2464,7 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
 
     Parameters
     ----------
-    h5_parent_group : h5py.Group
+    h5_parent_group : :class:`h5py.Group`
         Parent group under which the datasets will be created
     main_data : np.ndarray or list / tuple
         2D matrix formatted as [position, spectral] or a list / tuple with the shape for an empty dataset.
