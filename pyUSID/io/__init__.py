@@ -8,6 +8,7 @@ Submodules
     :toctree: _autosummary
 
     hdf_utils
+    dtype_utils
     image
     io_utils
     numpy_translator
