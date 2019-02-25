@@ -25,9 +25,6 @@ requirements = ['numpy>=1.13.0',
 
                 'unittest2;python_version<"3.0"',
 
-                # 'pyqt;python_version<"3.5"',
-                'pyqt5;python_version>="3.5"',
-                'pyqtgraph>=0.10',
                 'scikit-image>=0.12.3;python_version<"3.4"',
                 'scikit-image<0.14.2;python_version=="3.4"',  # Dask removed python 3.4 support that causes 2019 and newer skimage to fail
                 'scikit-image>=0.12.3;python_version>="3.5"',
@@ -70,7 +67,8 @@ setup(
     include_package_data=True,
     # https://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-dependencies
     extras_require={
-        'MPI':  ["mpi4py"]
+        'MPI':  ["mpi4py"],
+        'File_Widgets': ['pyqt5'],
     },
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
