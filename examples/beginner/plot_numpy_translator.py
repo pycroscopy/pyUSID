@@ -37,6 +37,13 @@ The process of copying data from the original format to **h5USID** files is call
 **Translation** and the classes available in pyUSID and children packages such as pycroscopy that perform these
 operation are called **Translators**.
 
+The rough process of translation is the same regardless of the origin, complexity, or size of the raw data:
+
+1. Investigating how to read the proprietary data file
+2. Extracting the metadata
+3. Extracting the data
+4. Writing the metadata and data to a h5USID file
+
 This document will show how one can write data present as numpy arrays can be written out easily into h5USID files
 using the NumpyTranslator. This topic has been divided into two parts, the first part (this document) will assume that
 we have managed to read the proprietary file format and extract all the data and metadata into memory. The

@@ -43,13 +43,14 @@ we will intentionally assume that no such translator is available. Using a handf
 we will translate the files from the source **.asc** format to h5USID files.
 
 
-
 Recommended pre-requisite reading
 ---------------------------------
 
 Before proceeding with this example, we recommend reading the previous documents to learn more about:
 
 * `Universal Spectroscopic and Imaging Data (USID) model </../../USID/usid_model.html>`_
+* The `previous chapter <./plot_numpy_translator.html>`_ for this topic that goes over the NumpyTranslator in greater
+  detail
 
 .. tip::
     You can download and run this document as a Jupyter notebook using the link at the bottom of this page.
@@ -106,8 +107,8 @@ except ImportError:
 ####################################################################################
 # Step 0. Procure the Raw Data file
 # =================================
+# Here we will download a compressed data file from Github and unpack it:
 
-# Download the compressed data file from Github:
 url = 'https://raw.githubusercontent.com/pycroscopy/pycroscopy/master/data/STS.zip'
 zip_path = 'STS.zip'
 if os.path.exists(zip_path):
