@@ -60,15 +60,15 @@ class ImageTranslator(NumpyTranslator):
             if not isinstance(h5_path, (str, unicode)):
                 raise ValueError("'h5_path' argument for ImageTranslator should be a str or unicode (if provided)")
             # NOT checking the extension of the file path for simplicity
-            if os.path.exists(os.path.abspath(h5_path)):
-                raise ValueError("There is already a valid file at the location specified by the 'h5_path' argument "
-                                 "for ImageTranslator. Please consider providing an alternate path or deleting the "
-                                 "specified file")
         else:
             base_name, _ = os.path.splitext(image_path)
-
             h5_name = base_name + '.h5'
             h5_path = os.path.join(image_path, h5_name)
+
+        if os.path.exists(os.path.abspath(h5_path)):
+            raise FileExistsError("ImageTranslator: There is already a valid (output HDF5) file at:\n{}\n"
+                                  "Please consider providing an alternate path or deleting the "
+                                  "specified file".format(h5_path))
 
         return image_path, h5_path
 
@@ -86,6 +86,7 @@ class ImageTranslator(NumpyTranslator):
             Default is None
         bin_factor : uint or array-like of uint, optional
             Downsampling factor for each dimension.  Default is None.
+            If specifying different binning for each dimension, please specify as (height binning, width binning)
         interp_func : int, optional. Default = :attr:`PIL.Image.BICUBIC`
             How the image will be interpolated to provide the downsampled or binned image.
             For more information see instructions for the `resample` argument for :meth:`PIL.Image.resize`
@@ -128,8 +129,11 @@ class ImageTranslator(NumpyTranslator):
 
             # Unfortunately, we need to make a round-trip through PIL for the interpolation. Not possible with numpy
             img_obj = Image.fromarray(image)
-            img_obj = img_obj.resize((usize, vsize), resample=interp_func)
+            img_obj = img_obj.resize((vsize, usize), resample=interp_func)
             image = np.asarray(img_obj)
+
+        # Working around occasional "cannot modify read-only array" error
+        image = image.copy()
 
         image_parms = {'normalized': normalize, 'image_min': np.min(image), 'image_max': np.max(image)}
 
@@ -140,12 +144,21 @@ class ImageTranslator(NumpyTranslator):
             image -= np.min(image)
             image = image / np.float32(np.max(image))
 
+        """
+        Enable the line below if there is a need make the image "look" the right side up. This would be manipulation
+        # of the original data. Therefore it remains commented
+        """
+        # image = np.flipud(image)
+
         '''
         Ready to write to h5
         '''
 
-        pos_dims = [Dimension('X', 'a.u.', np.arange(usize)), Dimension('Y', 'a.u.', np.arange(vsize))]
+        pos_dims = [Dimension('Y', 'a.u.', np.arange(usize)), Dimension('X', 'a.u.', np.arange(vsize))]
         spec_dims = Dimension('arb', 'a.u.', [1])
+
+        # Need to transpose to for correct reshaping
+        image = image.transpose()
 
         h5_path = super(ImageTranslator, self).translate(h5_path, 'Raw_Data', image.reshape((-1, 1)),
                                                          'Intensity', 'a.u.', pos_dims, spec_dims,
