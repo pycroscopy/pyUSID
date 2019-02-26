@@ -13,6 +13,7 @@ with open(os.path.join(here, 'pyUSID/__version__.py')) as f:
 # TODO: Move requirements to requirements.txt
 requirements = ['numpy>=1.13.0',
                 'h5py>=2.6.0',
+                'pillow'
                 'matplotlib>=2.0.0',
 
                 'psutil',
@@ -24,10 +25,6 @@ requirements = ['numpy>=1.13.0',
                 'ipython>=6.0;python_version>="3.3"',  # Beginning with IPython 6.0, Python 3.3 and above is required.
 
                 'unittest2;python_version<"3.0"',
-
-                'scikit-image>=0.12.3;python_version<"3.4"',
-                'scikit-image<0.14.2;python_version=="3.4"',  # Dask removed python 3.4 support that causes 2019 and newer skimage to fail
-                'scikit-image>=0.12.3;python_version>="3.5"',
                 ]
 
 setup(
@@ -48,6 +45,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: CPython',
         'Topic :: Scientific/Engineering :: Information Analysis'],
     keywords=['imaging', 'spectra', 'multidimensional', 'data format', 'universal', 'hdf5'],
