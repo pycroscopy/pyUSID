@@ -38,8 +38,12 @@ The process of copying data from the original format to **h5USID** files is call
 operation are called **Translators**.
 
 This document will show how one can write data present as numpy arrays can be written out easily into h5USID files
-using the NumpyTranslator. In the interest of brevity, we will assume that we have managed to read the proprietary
-file format and extract all the data and metadata into memory. We will focus only on writing the data to h5USID.
+using the NumpyTranslator. This topic has been divided into two parts, the first part (this document) will assume that
+we have managed to read the proprietary file format and extract all the data and metadata into memory. The
+`second part <./plot_translation_extraction.html>`_ will go over the complementary portions that have been ignored in
+this example.
+
+In this document, we will focus only on writing the data to h5USID.
 We will be working with a ``Band Excitation Piezoresponse Force Microscopy (BE-PFM)`` imaging dataset
 acquired from an atomic force microscope. In this dataset, a spectra was collected for each position in a two
 # dimensional grid of spatial locations, thereby resulting in a 3D dataset.
