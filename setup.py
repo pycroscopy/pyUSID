@@ -13,7 +13,7 @@ with open(os.path.join(here, 'pyUSID/__version__.py')) as f:
 # TODO: Move requirements to requirements.txt
 requirements = ['numpy>=1.13.0',
                 'h5py>=2.6.0',
-                'pillow'
+                'pillow',
                 'matplotlib>=2.0.0',
 
                 'psutil',
