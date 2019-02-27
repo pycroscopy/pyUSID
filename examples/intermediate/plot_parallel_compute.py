@@ -354,6 +354,8 @@ fig.tight_layout()
 #     recommended to use a pure MPI approach for computing instead of the MPI + OpenMP (joblib) paradigm.
 #
 ########################################################################################################################
+# Cleaning up
+# ~~~~~~~~~~~
 # Lets not forget to close and delete the temporarily downloaded file:
 
 h5_file.close()
