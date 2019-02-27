@@ -380,7 +380,7 @@ spec_dims = usid.Dimension(bias_qty, bias_units, bias_vec)
 
 ####################################################################################
 # Given that the spectra were acquired column-by-column and then row-by-row, we would need to arrange the `Position`
-# dimensions as ``X``followed by ``Y``.
+# dimensions as ``X`` followed by ``Y``.
 
 pos_dims = [usid.Dimension(x_qty, x_units, x_vec),
             usid.Dimension(y_qty, y_units, y_vec)]
@@ -455,9 +455,7 @@ with h5py.File(h5_path_1, mode='r') as h5_file:
 # ==================
 # Writing a python class that extends the ``NumpyTranslator`` class is far less intimidating than it sounds. The code
 # that goes into the class is virtually identical to what has been written above. In fact the code that will be written
-# below is very similar to real ``Translator`` classes found in our sister package - `pycroscopy`. Again, for the sake
-# of brevity, we will be skipping the sections that deal with extracting the metadata and data from the proprietary file
-# and concentrate on the file writing aspects of the ``Translator`` class
+# below is very similar to real ``Translator`` classes found in our sister package - `pycroscopy`.
 
 
 class ExampleTranslator(usid.NumpyTranslator):
@@ -585,7 +583,7 @@ class ExampleTranslator(usid.NumpyTranslator):
 # As you could tell by now, the code in this class is virtually identical to the code above.
 # Perhaps the biggest differences between the two codes come in the definition of the class and section ``2.B.4``:
 #
-# In the ``2.A.4`` above, we had instantiated the ``NumpyTranslator`` and called its ``translate()`` method:
+# In section ``2.A.4`` above, we had instantiated the ``NumpyTranslator`` and called its ``translate()`` method:
 #
 # .. code-block:: python
 #
