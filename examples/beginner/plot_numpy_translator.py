@@ -122,7 +122,7 @@ except ImportError:
 # =========================
 # Here we will download a compressed data file from Github and unpack it:
 
-url = 'https://raw.githubusercontent.com/pycroscopy/pycroscopy/master/data/STS.zip'
+url = 'https://raw.githubusercontent.com/pycroscopy/pyUSID/master/data/STS.zip'
 zip_path = 'STS.zip'
 if os.path.exists(zip_path):
     os.remove(zip_path)
