@@ -913,6 +913,7 @@ def plot_curves(excit_wfms, datasets, line_colors=[], dataset_names=[], evenly_s
                 axes_lin[count].plot(ex_wfm, dataset[posn], color=col_val, **kwargs)
         if h5_pos is not None:
             # print('Row ' + str(h5_pos[posn,1]) + ' Col ' + str(h5_pos[posn,0]))
+            # TODO: Do NOT assume 2 pos dims. Also format with low precision, use correct dim name, units as well
             axes_lin[count].set_title('Row ' + str(h5_pos[posn, 1]) + ' Col ' + str(h5_pos[posn, 0]), fontsize=12)
         else:
             axes_lin[count].set_title(subtitle_prefix + ' ' + str(posn), fontsize=12)
