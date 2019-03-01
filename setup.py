@@ -16,6 +16,7 @@ requirements = ['numpy>=1.13.0',
                 'cytoolz', # dask installation failing without this
                 'dask',
                 'h5py>=2.6.0',
+                'pillow',
                 'matplotlib>=2.0.0',
 
                 'psutil',
@@ -27,13 +28,6 @@ requirements = ['numpy>=1.13.0',
                 'ipython>=6.0;python_version>="3.3"',  # Beginning with IPython 6.0, Python 3.3 and above is required.
 
                 'unittest2;python_version<"3.0"',
-
-                # 'pyqt;python_version<"3.5"',
-                'pyqt5;python_version>="3.5"',
-                'pyqtgraph>=0.10',
-                'scikit-image>=0.12.3;python_version<"3.4"',
-                'scikit-image<0.14.2;python_version=="3.4"',  # Dask removed python 3.4 support that causes 2019 and newer skimage to fail
-                'scikit-image>=0.12.3;python_version>="3.5"',
                 ]
 
 setup(
@@ -54,6 +48,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: CPython',
         'Topic :: Scientific/Engineering :: Information Analysis'],
     keywords=['imaging', 'spectra', 'multidimensional', 'data format', 'universal', 'hdf5'],
@@ -73,7 +68,8 @@ setup(
     include_package_data=True,
     # https://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-dependencies
     extras_require={
-        'MPI':  ["mpi4py"]
+        'MPI':  ["mpi4py"],
+        'File_Widgets': ['pyqt5'],
     },
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these

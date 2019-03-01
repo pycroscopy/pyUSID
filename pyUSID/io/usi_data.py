@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+:class:`~pyUSID.io.usi_data.USIDataset` class that simplifies slicing, visualization, reshaping, etc. of USID datasets
+
 Created on Thu Sep  7 21:14:25 2017
 
 @author: Suhas Somnath, Chris Smith
@@ -27,15 +29,17 @@ if sys.version_info.major == 3:
 
 
 class USIDataset(h5py.Dataset):
+    """
+     A class that simplifies slicing, visualization, reshaping, reduction etc. of USID datasets in HDF5 files.
+    This class extends the :class:`h5py.Dataset`.
+    """
 
     def __init__(self, h5_ref, sort_dims=False):
         """
-        New data object that extends the h5py.Dataset.
-
         Parameters
         ----------
-        h5_ref : hdf5.Dataset
-            The base dataset to be extended
+        h5_ref : :class:`h5py.Dataset`
+            The dataset which is actually a USID dataset
         sort_dims : bool
             Should the dimensions be sorted internally from fastest changing to slowest.
 
@@ -51,13 +55,13 @@ class USIDataset(h5py.Dataset):
 
         Attributes
         ----------
-        self.h5_spec_vals : h5py.Dataset
+        self.h5_spec_vals : :class:`h5py.Dataset`
             Associated Spectroscopic Values dataset
-        self.h5_spec_inds : h5py.Dataset
+        self.h5_spec_inds : :class:`h5py.Dataset`
             Associated Spectroscopic Indices dataset
-        self.h5_pos_vals : h5py.Dataset
+        self.h5_pos_vals : :class:`h5py.Dataset`
             Associated Position Values dataset
-        self.h5_pos_inds : h5py.Dataset
+        self.h5_pos_inds : :class:`h5py.Dataset`
             Associated Position Indices dataset
         self.pos_dim_labels : list of str
             The labels for the position dimensions.
@@ -202,7 +206,7 @@ class USIDataset(h5py.Dataset):
 
     def get_pos_values(self, dim_name):
         """
-        Extract the values for the specified position dimension
+        Extract the reference values for the specified position dimension
 
         Parameters
         ----------
@@ -211,7 +215,7 @@ class USIDataset(h5py.Dataset):
 
         Returns
         -------
-        dim_values : numpy.ndarray
+        dim_values : :class:`numpy.ndarray`
             Array containing the unit values of the dimension `dim_name`
 
         """
@@ -230,7 +234,7 @@ class USIDataset(h5py.Dataset):
 
         Returns
         -------
-        dim_values : numpy.ndarray
+        dim_values : :class:`numpy.ndarray`
             Array containing the unit values of the dimension `dim_name`
 
         """
@@ -273,7 +277,7 @@ class USIDataset(h5py.Dataset):
 
         Returns
         -------
-        n_dim_data : numpy.ndarray
+        n_dim_data : :class:`numpy.ndarray`
             N-dimensional form of the dataset
 
         """
@@ -436,9 +440,9 @@ class USIDataset(h5py.Dataset):
 
         Returns
         -------
-        pos_slice : list of uints
+        pos_slice : list of unsigned int
             Position indices included in the slice
-        spec_slice : list of uints
+        spec_slice : list of unsigned int
             Spectroscopic indices included in the slice
         """
         self.__validate_slice_dict(slice_dict)
@@ -520,9 +524,9 @@ class USIDataset(h5py.Dataset):
         Returns
         -------
         pos_dims : list
-            List of pyUSID.Dimension objects for each of the remaining position dimensions
+            List of :class:`~pyUSID.io.write_utils.Dimension` objects for each of the remaining position dimensions
         spec_dims : list
-            List of pyUSID.Dimension objects for each of the remaining spectroscopic dimensions
+            List of :class:`~pyUSID.io.write_utils.Dimension` objects for each of the remaining spectroscopic dimensions
         """
 
         pos_labels = self.pos_dim_labels
@@ -716,7 +720,7 @@ class USIDataset(h5py.Dataset):
 
     def visualize(self, slice_dict=None, verbose=False, **kwargs):
         """
-        Interactive visualization of this dataset. Only available on jupyter notebooks
+        Interactive visualization of this dataset. **Only available on jupyter notebooks**
 
         Parameters
         ----------
@@ -727,9 +731,9 @@ class USIDataset(h5py.Dataset):
 
         Returns
         -------
-        fig : matplotlib.figure handle
+        fig : :class:`matplotlib.figure` handle
             Handle for the figure object
-        axis : matplotlib.Axes.axis object
+        axis : :class:`matplotlib.Axes.axis` object
             Axis within which the data was plotted. Note - the interactive visualizer does not return this object
         """
 

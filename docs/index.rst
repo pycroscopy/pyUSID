@@ -21,7 +21,6 @@ Documentation Index
     getting_started
     install
     external_guides
-    package_organization
     auto_examples/index
     data_format
     contribution_guidelines

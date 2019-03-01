@@ -1,5 +1,9 @@
 """
+:class:`~pyUSID.processing.process.Process` - An abstract class for formulating scientific problems as computational
+problems
+
 Created on 7/17/16 10:08 AM
+
 @author: Suhas Somnath, Chris Smith
 """
 
@@ -20,22 +24,22 @@ from ..io.io_utils import format_time, format_size
 
 class Process(object):
     """
-    Encapsulates the typical steps performed when applying a processing function to  a dataset.
+    An abstract class for formulating scientific problems as computational problems. This class handles the tedious,
+    science-agnostic, file-operations, parallel-computations, and book-keeping operations such that children classes
+    only need to specify application-relevant code for processing the data.
     """
 
     def __init__(self, h5_main, cores=None, max_mem_mb=4*1024, verbose=False):
         """
         Parameters
         ----------
-        h5_main : h5py.Dataset instance
-            The dataset over which the analysis will be performed. This dataset should be linked to the spectroscopic
-            indices and values, and position indices and values datasets.
+        h5_main : :class:`~pyUSID.io.usi_data.USIDataset`
+            The USID main HDF5 dataset over which the analysis will be performed.
         cores : uint, optional
-            Default - all available cores - 2
-            How many cores to use for the computation
+            How many cores to use for the computation. Default: all available cores - 2 if operating outside MPI context
         max_mem_mb : uint, optional
             How much memory to use for the computation.  Default 1024 Mb
-        verbose : Boolean, (Optional, default = False)
+        verbose : bool, Optional, default = False
             Whether or not to print debugging statements
         """
 
@@ -182,7 +186,7 @@ class Process(object):
     def _estimate_compute_time_per_pixel(self, *args, **kwargs):
         """
         Estimates how long it takes to compute an average pixel's worth of data. This information should be used by the
-        user to limit the number of pixels that will be processed per batch to make best use of checkpointing. This
+        user to limit the number of pixels that will be processed per batch to make best use of check-pointing. This
         function is exposed to the developer of the child classes. An approximate can be derived if it is simpler
 
         Returns
@@ -201,16 +205,21 @@ class Process(object):
 
         Returns
         -------
-        pixels_in_batch : numpy.ndarray
+        pixels_in_batch : :class:`numpy.ndarray`
             1D array of unsigned integers denoting the pixels that will be read, processed, and written back to
         """
         return self.__pixels_in_batch
 
     def test(self, **kwargs):
         """
-        Tests the process on a subset (for example a pixel) of the whole data. The class can be reinstantiated with
+        Tests the process on a subset (for example a pixel) of the whole data. The class can be re-instantiated with
         improved parameters and tested repeatedly until the user is content, at which point the user can call
-        compute() on the whole dataset. This is not a function that is expected to be called in mpi
+        :meth:`~pyUSID.processing.process.Process.compute` on the whole dataset.
+
+        Notes
+        -----
+        This is not a function that is expected to be called in MPI
+
         Parameters
         ----------
         kwargs - dict, optional
@@ -224,6 +233,7 @@ class Process(object):
     def _check_for_duplicates(self):
         """
         Checks for instances where the process was applied to the same dataset with the same parameters
+
         Returns
         -------
         duplicate_h5_groups : list of h5py.Group objects
@@ -261,7 +271,7 @@ class Process(object):
                             print('Status dataset: {} was not of the expected shape or datatype'.format(status_dset))
 
                     # Finally, check how far the computation was completed.
-                    if len(np.where(status_dset[()] == 0)[0]) == 0:
+                    if len(np.where(status_dset[()] == 0)[0]) != 0:  # If there are pixels uncompleted
                         # remove from duplicates and move to partial
                         partial_h5_groups.append(duplicate_h5_groups.pop(index))
                         # Let's write the legacy attribute for safety
@@ -271,8 +281,9 @@ class Process(object):
                     else:
                         # Optionally calculate how much was completed:
                         if self.mpi_rank == 0:
-                            percent_complete = int(100 * len(np.where(status_dset[()] == 0)[0]) / status_dset.shape[0])
-                            print('Group: {}: computation was {}% completed'.format(curr_group, percent_complete))
+                            if len(np.where(status_dset[()] == 0)[0]) > 0:  # if there are unfinished pixels
+                                percent_complete = int(100 * len(np.where(status_dset[()] == 0)[0]) / status_dset.shape[0])
+                                print('Group: {}: computation was {}% completed'.format(curr_group, percent_complete))
 
                 # Case 2: Legacy results group:
                 if 'last_pixel' not in curr_group.attrs.keys():
@@ -309,9 +320,10 @@ class Process(object):
     def use_partial_computation(self, h5_partial_group=None):
         """
         Extracts the necessary parameters from the provided h5 group to resume computation
+
         Parameters
         ----------
-        h5_partial_group : h5py.Group object
+        h5_partial_group : :class:`h5py.Group`
             Group containing partially computed results
         """
         # Attempt to automatically take partial results
@@ -330,17 +342,15 @@ class Process(object):
 
     def _set_memory_and_cores(self, cores=None, mem=None):
         """
-        Checks hardware limitations such as memory, # cpus and sets the recommended datachunk sizes and the
-        number of cores to be used by analysis methods. This function can work with clusters with heterogeneous
+        Checks hardware limitations such as memory, number of CPU cores and sets the recommended data chunk sizes and
+        the number of cores to be used by analysis methods. This function can work with clusters with heterogeneous
         memory sizes (e.g. CADES SHPC Condo).
 
         Parameters
         ----------
-        cores : uint, optional
-            Default - 1
-            How many cores to use for the computation
-        mem : uint, optional
-            Default - 1024
+        cores : uint, optional, Default = 1
+            How many cores to use for the computation.
+        mem : uint, optional, Default = 1024
             The amount a memory in Mb to use in the computation
         """
         if self.mpi_comm is None:
@@ -398,13 +408,14 @@ class Process(object):
     @staticmethod
     def _map_function(*args, **kwargs):
         """
-        The function that manipulates the data on a single instance (position). This will be used by _unit_computation()
-        to process a chunk of data in parallel
+        The function that manipulates the data on a single instance (position). This will be used by
+        :meth:`~pyUSID.processing.process.Process._unit_computation` to process a chunk of data in parallel
+
         Parameters
         ----------
         args : list
             arguments to the function in the correct order
-        kwargs : dictionary
+        kwargs : dict
             keyword arguments to the function
         Returns
         -------
@@ -496,7 +507,9 @@ class Process(object):
 
     def compute(self, override=False, *args, **kwargs):
         """
-        Creates placeholders for the results, applies the unit computation to chunks of the dataset
+        Creates placeholders for the results, applies the :meth:`~pyUSID.processing.process.Process._unit_computation`
+        to chunks of the dataset
+
         Parameters
         ----------
         override : bool, optional. default = False
@@ -504,11 +517,12 @@ class Process(object):
             group with partial results. Set to True to force fresh computation.
         args : list
             arguments to the mapped function in the correct order
-        kwargs : dictionary
+        kwargs : dict
             keyword arguments to the mapped function
+
         Returns
         -------
-        h5_results_grp : h5py.Group object
+        h5_results_grp : :class:`h5py.Group`
             Group containing all the results
         """
 

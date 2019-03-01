@@ -1,42 +1,81 @@
 """
+:class:`~pyUSID.io.image.ImageTranslator` class that translates conventional 2D images to USID HDF5 files
+
 Created on Feb 9, 2016
 
-@author: Chris Smith
+@author: Suhas Somnath, Chris Smith
 """
 
 from __future__ import division, print_function, absolute_import, unicode_literals
 
 import os
+import sys
 import h5py
 import numpy as np
-from skimage.io import imread
-from skimage.measure import block_reduce
+from PIL import Image
 
-from .translator import Translator, generate_dummy_main_parms
-from .write_utils import Dimension, calc_chunks
-from .hdf_utils import write_main_dataset, write_simple_attrs
+from .numpy_translator import NumpyTranslator
+from .write_utils import Dimension
+from .hdf_utils import write_simple_attrs
+
+if sys.version_info.major == 3:
+    unicode = str
 
 
-class ImageTranslator(Translator):
+class ImageTranslator(NumpyTranslator):
     """
-    Translates data from a set of image files to an HDF5 file
+    Translates data from an image file to an HDF5 file
     """
 
     def __init__(self, *args, **kwargs):
         super(ImageTranslator, self).__init__(*args, **kwargs)
 
-        self.rebin = False
-        self.bin_factor = 1
-        self.hdf = None
-        self.binning_func = self.__no_bin
-        self.bin_func = None
-        self.image_path = None
-        self.h5_path = None
-
-    def translate(self, image_path, h5_path=None, bin_factor=None, bin_func=np.mean, normalize=False, **image_args):
+    @staticmethod
+    def _parse_file_path(image_path, h5_path=None):
         """
-        Basic method that adds Ptychography data to existing hdf5 thisfile
-        You must have already done the basic translation with BEodfTranslator
+        Returns a list of all files in the directory given by path
+
+        Parameters
+        ---------------
+        image_path : str
+            absolute path to the image file
+        h5_path : str, optional
+            absolute path to the desired output HDF5 file. If nothing is provided, a valid file path will be provided
+
+        Returns
+        ----------
+        image_path : str
+            Absolute file path to the image
+        h5_path : str
+            absolute path to the desired output HDF5 file.
+        """
+        if not isinstance(image_path, (str, unicode)):
+            raise ValueError("'image_path' argument for ImageTranslator should be a str or unicode")
+        if not os.path.exists(os.path.abspath(image_path)):
+            raise ValueError('Specified image does not exist.')
+        else:
+            image_path = os.path.abspath(image_path)
+
+        if h5_path is not None:
+            if not isinstance(h5_path, (str, unicode)):
+                raise ValueError("'h5_path' argument for ImageTranslator should be a str or unicode (if provided)")
+            # NOT checking the extension of the file path for simplicity
+        else:
+            base_name, _ = os.path.splitext(image_path)
+            h5_name = base_name + '.h5'
+            h5_path = os.path.join(image_path, h5_name)
+
+        if os.path.exists(os.path.abspath(h5_path)):
+            raise FileExistsError("ImageTranslator: There is already a valid (output HDF5) file at:\n{}\n"
+                                  "Please consider providing an alternate path or deleting the "
+                                  "specified file".format(h5_path))
+
+        return image_path, h5_path
+
+    def translate(self, image_path, h5_path=None, bin_factor=None, interp_func=Image.BICUBIC, normalize=False,
+                  **image_args):
+        """
+        Translates the image in the provided file into a USID HDF5 file
 
         Parameters
         ----------------
@@ -45,16 +84,14 @@ class ImageTranslator(Translator):
         h5_path : str, optional
             Absolute path to where the HDF5 file should be located.
             Default is None
-        bin_factor : array_like of uint, optional
+        bin_factor : uint or array-like of uint, optional
             Downsampling factor for each dimension.  Default is None.
-        bin_func : callable, optional
-            Function which will be called to calculate the return value
-            of each block.  Function must implement an axis parameter,
-            i.e. numpy.mean.  Ignored if bin_factor is None.  Default is
-            numpy.mean.
-        normalize : boolean, optional
-            Should the raw image be normalized when read in
-            Default False
+            If specifying different binning for each dimension, please specify as (height binning, width binning)
+        interp_func : int, optional. Default = :attr:`PIL.Image.BICUBIC`
+            How the image will be interpolated to provide the downsampled or binned image.
+            For more information see instructions for the `resample` argument for :meth:`PIL.Image.resize`
+        normalize : boolean, optional. Default = False
+            Should the raw image be normalized between the values of 0 and 1
         image_args : dict
             Arguments to be passed to read_image.  Arguments depend on the type of image.
 
@@ -64,36 +101,42 @@ class ImageTranslator(Translator):
             HDF5 Dataset object that contains the flattened images
 
         """
-        image_path, h5_path = self._parse_file_path(image_path)
+        image_path, h5_path = self._parse_file_path(image_path, h5_path=h5_path)
 
-        image, image_parms = read_image(image_path, **image_args)
+        image = read_image(image_path, **image_args)
+        image_parms = dict()
         usize, vsize = image.shape[:2]
-
-        self.image_path = image_path
-        self.h5_path = h5_path
 
         '''
         Check if a bin_factor is given.  Set up binning objects if it is.
         '''
         if bin_factor is not None:
-            self.rebin = True
             if isinstance(bin_factor, int):
-                self.bin_factor = (bin_factor, bin_factor)
+                bin_factor = (bin_factor, bin_factor)
             elif len(bin_factor) == 2:
-                self.bin_factor = tuple(bin_factor)
+                bin_factor = tuple(bin_factor)
             else:
                 raise ValueError('Input parameter `bin_factor` must be a length 2 array_like or an integer.\n' +
                                  '{} was given.'.format(bin_factor))
-            usize = int(usize / self.bin_factor[0])
-            vsize = int(vsize / self.bin_factor[1])
-            self.binning_func = block_reduce
-            self.bin_func = bin_func
 
-        image = self.binning_func(image, self.bin_factor, self.bin_func)
+            if interp_func not in [Image.NEAREST, Image.BILINEAR, Image.BICUBIC, Image.LANCZOS]:
+                raise ValueError("'interp_func' argument for ImageTranslator.translate must be one of "
+                                 "PIL.Image.NEAREST, PIL.Image.BILINEAR, PIL.Image.BICUBIC, PIL.Image.LANCZOS")
 
-        image_parms['normalized'] = normalize
-        image_parms['image_min'] = np.min(image)
-        image_parms['image_max'] = np.max(image)
+            image_parms.update({'image_binning_size': bin_factor, 'image_PIL_resample_mode': interp_func})
+            usize = int(usize / bin_factor[0])
+            vsize = int(vsize / bin_factor[1])
+
+            # Unfortunately, we need to make a round-trip through PIL for the interpolation. Not possible with numpy
+            img_obj = Image.fromarray(image)
+            img_obj = img_obj.resize((vsize, usize), resample=interp_func)
+            image = np.asarray(img_obj)
+
+        # Working around occasional "cannot modify read-only array" error
+        image = image.copy()
+
+        image_parms = {'normalized': normalize, 'image_min': np.min(image), 'image_max': np.max(image)}
+
         '''
         Normalize Raw Image
         '''
@@ -101,161 +144,58 @@ class ImageTranslator(Translator):
             image -= np.min(image)
             image = image / np.float32(np.max(image))
 
-        h5_main = self._setup_h5(usize, vsize, image.dtype.type, image_parms)
-
-        h5_main = self._read_data(image, h5_main)
-
-        return h5_main
-
-    def _setup_h5(self, usize, vsize, data_type, image_parms):
         """
-        Setup the HDF5 file in which to store the data including creating
-        the Position and Spectroscopic datasets
-
-        Parameters
-        ----------
-        usize : int
-            Number of pixel columns in the images
-        vsize : int
-            Number of pixel rows in the images
-        data_type : type
-            Data type to save image as
-        image_parms : dict
-            Image parameters to be stored as attributes of the measurement
-            group
-
-        Returns
-        -------
-        h5_main : h5py.Dataset
-            HDF5 Dataset that the images will be written into
+        Enable the line below if there is a need make the image "look" the right side up. This would be manipulation
+        # of the original data. Therefore it remains commented
         """
-        num_pixels = usize * vsize
+        # image = np.flipud(image)
 
-        root_parms = generate_dummy_main_parms()
-        root_parms['data_type'] = 'ImageData'
+        '''
+        Ready to write to h5
+        '''
 
-        root_parms.update(image_parms)
+        pos_dims = [Dimension('Y', 'a.u.', np.arange(usize)), Dimension('X', 'a.u.', np.arange(vsize))]
+        spec_dims = Dimension('arb', 'a.u.', [1])
 
-        main_parms = {'image_size_u': usize,
-                      'image_size_v': vsize,
-                      'num_pixels': num_pixels,
-                      'translator': 'Image'}
+        # Need to transpose to for correct reshaping
+        image = image.transpose()
 
-        self.h5_file = h5py.File(self.h5_path)
+        h5_path = super(ImageTranslator, self).translate(h5_path, 'Raw_Data', image.reshape((-1, 1)),
+                                                         'Intensity', 'a.u.', pos_dims, spec_dims,
+                                                         translator_name='Image', parm_dict=image_parms)
 
-        # Root attributes first:
-        write_simple_attrs(self.h5_file, root_parms)
+        with h5py.File(h5_path, mode='r+') as h5_f:
 
-        # Create the hdf5 data Group
-        meas_grp = self.h5_file.create_group('Measurement_000')
-        write_simple_attrs(meas_grp, main_parms)
-        chan_grp = meas_grp.create_group('Channel_000')
-        # Get the Position and Spectroscopic Datasets
+            # For legacy reasons:
+            write_simple_attrs(h5_f, {'data_type': 'ImageData'})
 
-        pos_dims = [Dimension('X', 'a.u.', np.arange(usize)), Dimension('Y', 'a.u.', np.arange(vsize))]
-
-        chunking = calc_chunks([num_pixels, 1],
-                               data_type(0).itemsize,
-                               unit_chunks=[1, 1])
-
-        h5_main = write_main_dataset(chan_grp, (usize * vsize, 1), 'Raw_Data', 'Intensity', 'a.u.',
-                                     pos_dims, Dimension('None', 'a.u.', [1]), dtype=data_type, chunks=chunking)
-
-        self.h5_file.flush()
-
-        return h5_main
-
-    @staticmethod
-    def _parse_file_path(image_path):
-        """
-        Returns a list of all files in the directory given by path
-
-        Parameters
-        ---------------
-        image_path : string / unicode
-            absolute path to directory containing files
-
-        Returns
-        ----------
-        image_path : str
-            Absolute file path to the image
-        image_ext : str
-            File extension of image
-        """
-        if not os.path.exists(os.path.abspath(image_path)):
-            raise ValueError('Specified image does not exist.')
-        else:
-            image_path = os.path.abspath(image_path)
-
-        base_name, _ = os.path.splitext(image_path)
-
-        h5_name = base_name + '.h5'
-        h5_path = os.path.join(image_path, h5_name)
-
-        return image_path, h5_path
-
-    @staticmethod
-    def __no_bin(image, *args, **kwargs):
-        """
-        Does absolutely nothing to the image.  Exists so that we can have
-        a bin function to call whether we actually rebin the image or not.
-
-        Parameters
-        ----------
-        image : ndarray
-            Image
-        args:
-            Argument list
-        kwargs:
-            Keyword argument list
-
-        Returns
-        -------
-        image : ndarray
-            The input image
-        """
-        return image
-
-    @staticmethod
-    def _read_data(image, h5_main):
-        """
-        Read the image into the dataset
-
-        image : numpy.array
-            Numpy array containing the image
-        h5_main : h5py.Dataset
-            HDF5 Dataset that will hold the image
-        """
-
-        h5_main[:] = image.reshape(h5_main.shape)
-
-        h5_main.file.flush()
-
-        return h5_main
+        return h5_path
 
 
-def read_image(image_path, *args, **kwargs):
+def read_image(image_path, as_grayscale=True, *args, **kwargs):
     """
-    Read the image file at `image_path` into a numpy array
+    Read the image file at `image_path` into a numpy array either via numpy (.txt) or via pillow (.jpg, .tif, etc.)
 
     Parameters
     ----------
     image_path : str
         Path to the image file
+    as_grayscale : bool, optional. Default = True
+        Whether or not to read the image as a grayscale image
 
     Returns
     -------
-    image : numpy.ndarray
+    image : :class:`numpy.ndarray`
         Array containing the image from the file `image_path`
-    image_parms : dict
-        Dictionary containing image parameters.  If image type does not have
-        parameters then an empty dictionary is returned.
-
     """
     ext = os.path.splitext(image_path)[1]
     if ext == '.txt':
-        return np.loadtxt(image_path, *args, **kwargs), dict()
+        return np.loadtxt(image_path, *args, **kwargs)
     else:
-        # Set the as_grey argument to True is not already provided.
-        kwargs['as_grey'] = (kwargs.pop('as_grey', True))
-        return imread(image_path, *args, **kwargs), dict()
+        img_obj = Image.open(image_path)
+        if as_grayscale:
+            img_obj = img_obj.convert(mode="L", **kwargs)
+
+        # Open the image as a numpy array
+        np_array = np.asarray(img_obj)
+        return np_array

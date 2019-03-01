@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+Utilities that assist in computation
+
+Created on Tue Nov  3 21:14:25 2015
+
+@author: Suhas Somnath, Chris Smith
+"""
 import joblib
 import numpy as np
 from multiprocessing import cpu_count
@@ -10,7 +18,7 @@ def get_MPI():
 
     Returns
     -------
-    MPI : mpi4py.MPI object or None
+    MPI : :class:`mpi4py.MPI` object or None
     """
     try:
         from mpi4py import MPI
@@ -44,7 +52,7 @@ def group_ranks_by_socket(verbose=False):
 
     Returns
     -------
-    master_ranks : 1D unsigned integer numpy array
+    master_ranks : 1D unsigned integer :class:`numpy.ndarray`
         Array with values that signify which rank a given rank should consider its master.
     """
     MPI = get_MPI()
@@ -91,7 +99,7 @@ def parallel_compute(data, func, cores=1, lengthy_computation=False, func_args=N
         Function to map to data
     cores : uint, optional
         Number of logical cores to use to compute
-        Default - 1 (serial computation)
+        Default - 1 (serial computation). Ignored in the MPI context - each rank will execute serially
     lengthy_computation : bool, optional
         Whether or not each computation is expected to take substantial time.
         Sometimes the time for adding more cores can outweigh the time per core

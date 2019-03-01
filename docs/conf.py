@@ -399,7 +399,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/{.major}'.format(sys.
                        'numpy': ('https://docs.scipy.org/doc/numpy/', None),
                        'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
                        'matplotlib': ('https://matplotlib.org/', None),
-                       'sklearn': ('http://scikit-learn.org/stable', None),
+                       'h5py': ('http://docs.h5py.org/en/latest/', None),
                        'sphinx': ('http://www.sphinx-doc.org/en/stable', None),
                        }
 

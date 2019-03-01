@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Utilities for transforming and validating data types
+
 Created on Tue Nov  3 21:14:25 2015
 
 @author: Suhas Somnath, Chris Smith
@@ -23,8 +25,8 @@ def contains_integers(iter_int, min_val=None):
 
     Parameters
     ----------
-    iter_int : Iterable of integers
-        Iterable of integers
+    iter_int : :class:`collections.Iterable`
+        Iterable (e.g. list, tuple, etc.) of integers
     min_val : int, optional, default = None
         The value above which each element of iterable must possess. By default, this is ignored.
 
@@ -48,33 +50,34 @@ def contains_integers(iter_int, min_val=None):
         return False
 
 
-def flatten_complex_to_real(ds_main):
+def flatten_complex_to_real(dataset):
     """
     Stacks the real values followed by the imaginary values in the last dimension of the given N dimensional matrix.
     Thus a complex matrix of shape (2, 3, 5) will turn into a matrix of shape (2, 3, 10)
 
     Parameters
     ----------
-    ds_main : complex array-like or h5py.Dataset
-        Dataset of interest
+    dataset : array-like or :class:`h5py.Dataset`
+        Dataset of complex data type
 
     Returns
     -------
-    retval : ND real numpy array
+    retval : :class:`numpy.ndarray`
+        N-dimensional numpy array
     """
-    if not isinstance(ds_main, (h5py.Dataset, np.ndarray)):
-        raise TypeError('ds_main should either be a h5py.Dataset or numpy array')
-    if not is_complex_dtype(ds_main.dtype):
-        raise TypeError("Expected a complex valued matrix")
+    if not isinstance(dataset, (h5py.Dataset, np.ndarray)):
+        raise TypeError('dataset should either be a h5py.Dataset or numpy array')
+    if not is_complex_dtype(dataset.dtype):
+        raise TypeError("Expected a complex valued dataset")
 
-    axis = np.array(ds_main).ndim - 1
+    axis = np.array(dataset).ndim - 1
     if axis == -1:
-        return np.hstack([np.real(ds_main), np.imag(ds_main)])
+        return np.hstack([np.real(dataset), np.imag(dataset)])
     else:  # along the last axis
-        return np.concatenate([np.real(ds_main), np.imag(ds_main)], axis=axis)
+        return np.concatenate([np.real(dataset), np.imag(dataset)], axis=axis)
 
 
-def flatten_compound_to_real(ds_main):
+def flatten_compound_to_real(dataset):
     """
     Flattens the individual components in a structured array or compound valued hdf5 dataset along the last axis to form
     a real valued array. Thus a compound h5py.Dataset or structured numpy matrix of shape (2, 3, 5) having 3 components
@@ -84,29 +87,29 @@ def flatten_compound_to_real(ds_main):
 
     Parameters
     ----------
-    ds_main : numpy array that is a structured array or h5py.Dataset of compound dtype
-        Dataset of interest
+    dataset : :class:`numpy.ndarray`, or :class:`h5py.Dataset`
+        Numpy array that is a structured array or a :class:`h5py.Dataset` of compound dtype
 
     Returns
     -------
     retval : n-dimensional real numpy array
         real valued dataset
     """
-    if isinstance(ds_main, h5py.Dataset):
-        if len(ds_main.dtype) == 0:
+    if isinstance(dataset, h5py.Dataset):
+        if len(dataset.dtype) == 0:
             raise TypeError("Expected compound h5py dataset")
-        return np.concatenate([np.array(ds_main[name]) for name in ds_main.dtype.names], axis=len(ds_main.shape) - 1)
-    elif isinstance(ds_main, np.ndarray):
-        if len(ds_main.dtype) == 0:
+        return np.concatenate([np.array(dataset[name]) for name in dataset.dtype.names], axis=len(dataset.shape) - 1)
+    elif isinstance(dataset, np.ndarray):
+        if len(dataset.dtype) == 0:
             raise TypeError("Expected structured numpy array")
-        if ds_main.ndim > 0:
-            return np.concatenate([ds_main[name] for name in ds_main.dtype.names], axis=ds_main.ndim - 1)
+        if dataset.ndim > 0:
+            return np.concatenate([dataset[name] for name in dataset.dtype.names], axis=dataset.ndim - 1)
         else:
-            return np.hstack([ds_main[name] for name in ds_main.dtype.names])
-    elif isinstance(ds_main, np.void):
-        return np.hstack([ds_main[name] for name in ds_main.dtype.names])
+            return np.hstack([dataset[name] for name in dataset.dtype.names])
+    elif isinstance(dataset, np.void):
+        return np.hstack([dataset[name] for name in dataset.dtype.names])
     else:
-        raise TypeError('Datatype {} not supported in struct_to_scalar'.format(type(ds_main)))
+        raise TypeError('Datatype {} not supported in struct_to_scalar'.format(type(dataset)))
 
 
 def flatten_to_real(ds_main):
@@ -115,13 +118,13 @@ def flatten_to_real(ds_main):
 
     Parameters
     ----------
-    ds_main : nD compound, complex or real numpy array or HDF5 dataset
-        Data that could be compound, complex or real
+    ds_main : :class:`numpy.ndarray`, or :class:`h5py.Dataset`
+        Compound, complex or real valued numpy array or HDF5 dataset
 
     Returns
     ----------
-    ds_main : nD numpy array
-        Data raveled to a float data type
+    ds_main : :class:`numpy.ndarray`
+        Array raveled to a float data type
     """
     if not isinstance(ds_main, (h5py.Dataset, np.ndarray)):
         ds_main = np.array(ds_main)
@@ -139,7 +142,7 @@ def get_compound_sub_dtypes(struct_dtype):
 
     Parameters
     ----------
-    struct_dtype : numpy.dtype object
+    struct_dtype : :class:`numpy.dtype`
         dtype of a structured array
 
     Returns
@@ -162,21 +165,21 @@ def check_dtype(h5_dset):
 
     Parameters
     ----------
-    h5_dset : HDF5 Dataset
+    h5_dset : :class:`h5py.Dataset`
         Dataset of interest
 
     Returns
     -------
-    func : function
+    func : callable
         function that will convert the dataset to a float
-    is_complex : Boolean
+    is_complex : bool
         is the input dataset complex?
-    is_compound : Boolean
+    is_compound : bool
         is the input dataset compound?
-    n_features : Unsigned integer, the length of the 2nd dimension of
-        the data after func is called on it
-    type_mult : Unsigned integer
-        multiplier that converts from the typesize of the input dtype to the
+    n_features : Unsigned int
+        Unsigned integer - the length of the 2nd dimension of the data after `func` is called on it
+    type_mult : Unsigned int
+        multiplier that converts from the typesize of the input :class:`~numpy.dtype` to the
         typesize of the data after func is run on it
     """
     if not isinstance(h5_dset, h5py.Dataset):
@@ -222,15 +225,15 @@ def stack_real_to_complex(ds_real):
 
     Parameters
     ------------
-    ds_real : n dimensional real-valued numpy array or h5py.Dataset
-        Data arranged as [instance, 2 x features]
+    ds_real : :class:`numpy.ndarray` or :class:`h5py.Dataset`
+        n dimensional real-valued numpy array or HDF5 dataset where data arranged as [instance, 2 x features],
         where the first half of the features are the real component and the
         second half contains the imaginary components
 
     Returns
     ----------
-    ds_compound : 2D complex numpy array
-        Data arranged as [sample, features]
+    ds_compound : :class:`numpy.ndarray`
+        2D complex numpy array arranged as [sample, features]
     """
     if not isinstance(ds_real, (np.ndarray, h5py.Dataset)):
         if not isinstance(ds_real, Iterable):
@@ -253,15 +256,15 @@ def stack_real_to_compound(ds_real, compound_type):
 
     Parameters
     ------------
-    ds_real : n dimensional real-valued numpy array or h5py.Dataset
-        Data arranged as [instance, features]
-    compound_type : dtype
-        Target complex datatype
+    ds_real : :class:`numpy.ndarray` or :class:`h5py.Dataset`
+        n dimensional real-valued numpy array or HDF5 dataset where data arranged as [instance, features]
+    compound_type : :class:`numpy.dtype`
+        Target complex data-type
 
     Returns
     ----------
-    ds_compound : ND complex numpy array
-        Data arranged as [sample, features]
+    ds_compound : :class:`numpy.ndarray`
+        N-dimensional complex-valued numpy array arranged as [sample, features]
     """
     if not isinstance(ds_real, (np.ndarray, h5py.Dataset)):
         if not isinstance(ds_real, Iterable):
@@ -296,15 +299,15 @@ def stack_real_to_target_dtype(ds_real, new_dtype):
 
     Parameters
     ----------
-    ds_real : nD real numpy array or HDF5 dataset
-        Source dataset
-    new_dtype : dtype
-        Target data type
+    ds_real : :class:`numpy.ndarray` or :class:`h5py.Dataset`
+        n dimensional real-valued numpy array or HDF5 dataset
+    new_dtype : :class:`numpy.dtype`
+        Target data-type
 
     Returns
     ----------
-    ret_val : nD numpy array
-        Data of the target data type
+    ret_val :  :class:`numpy.ndarray`
+        N-dimensional array of the target data-type
     """
     if is_complex_dtype(new_dtype):
         return stack_real_to_complex(ds_real)
@@ -322,12 +325,12 @@ def validate_dtype(dtype):
     Parameters
     ----------
     dtype : object
-        Object that is hopefully a h5py.Datatype, np.dtype object.
+        Object that is hopefully a :class:`h5py.Datatype`, or :class:`numpy.dtype` object
 
     Returns
     -------
     status : bool
-        True if the object was a valid dtype
+        True if the object was a valid data-type
     """
     if isinstance(dtype, (h5py.Datatype, np.dtype)):
         pass
@@ -346,7 +349,7 @@ def is_complex_dtype(dtype):
     Parameters
     ----------
     dtype : object
-        Object that is a h5py.Datatype, np.dtype object.
+        Object that is a class:`h5py.Datatype`, or :class:`numpy.dtype` object
 
     Returns
     -------
@@ -365,13 +368,13 @@ def integers_to_slices(int_array):
 
     Parameters
     ----------
-    int_array : collections.Iterable object
-        iterable object like a list or numpy array
+    int_array : :class:`collections.Iterable`
+        iterable object like a :class:`list` or :class:`numpy.ndarray`
 
     Returns
     -------
-    sequences : list of slice objects
-        slices denoting sequences of consecutive numbers
+    sequences : list
+        List of :class:`slice` objects each denoting sequences of consecutive numbers
     """
     if not contains_integers(int_array):
         raise ValueError('Expected a list, tuple, or numpy array of integers')
@@ -380,19 +383,21 @@ def integers_to_slices(int_array):
         """
         Converts a sequence of iterables to tuples with start and stop bounds
 
+        @author: @juanchopanza and @luca from stackoverflow
+
         Parameters
         ----------
-        integer_array : collections.Iterable object
-            iterable object like a list
+        integer_array : :class:`collections.Iterable`
+            iterable object like a :class:`list`
+
         Returns
         -------
-        iterable : generator object
+        iterable : :class:`generator`
             Cast to list or similar to use
 
         Note
         ----
         From https://stackoverflow.com/questions/4628333/converting-a-list-of-integers-into-range-in-python
-        Credits: @juanchopanza and @luca
         """
         integer_array = sorted(set(integer_array))
         for key, group in groupby(enumerate(integer_array),

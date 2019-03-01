@@ -37,7 +37,7 @@ Who uses pyUSID?
 * Please `get in touch <./contact.html>`_ with us if you would like your group / university to be added here.
 
 Why is pyUSID written in python and not C / Fortran / Julia?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Here are some of the main reasons pyUSID is written in python:
 
 * **Ease of use**: One of the main objectives of pyUSID is to **lower the barrier** to advanced data analytics for domain scientists such as material scientists. A C++ / Fortran version of pyUSID would certainly have been more efficient than the current python code-base. However, the learning curve for writing efficient C code is far steeper compared to python / Julia / Matlab for the average domain scientist. Focusing on science is a big enough job for domain scientists and we want to make it as easy as possible to adopt pyUSID even for those who are novices at programming.
@@ -46,6 +46,21 @@ Here are some of the main reasons pyUSID is written in python:
 * **Industry standard**: Furthermore, python's unchallenged leadership in the data analytics / deep learning field have only validated it as the language of choice.
 
 We welcome you to develop application programming interfaces (APIs) for languages besides python.
+
+Why not just use the base HDF libraries or h5py instead?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+USID represents all data, regardless of dimensionality as a flattened 2D matrix.
+The base HDF libraries and h5py do not know anything about USID and do not support USID-specific operations via simple 1-line commands such as:
+
+* writing a complex, N-dimensional data cube to disk,
+* folding back the 2D USID data from HDF5 into its original N-dimensional shape (if and where available)
+* slicing datasets by dimensions without reading the entire dataset into memory and reshaping it,
+* reducing specified dimensions, etc.
+* interactively visualizing N-dimensional datasets
+
+All of the above functionalities (and far more) are available in pyUSID.
+Moreover, pyUSID also provides numerous plotting utilities, that we ourselves have used for generating publication-quality figures.
+Finally, pyUSID also provides computational tools and a convenient framework for translating scientific problems into computational problems via the ``pyUSID.Process`` class.
 
 pyUSID is written in python, so it is going to be slow since it cannot use all the cores on my CPU, right?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

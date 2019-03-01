@@ -566,14 +566,16 @@ h5_analysis_group = usid.hdf_utils.create_results_group(h5_norm, 'Fitting')
 usid.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
-# write_reduced_spec_dsets()
-# ---------------------------
-# Now we make the new spectroscopic indices and values datasets while removing the ``Bias`` dimension
+# write_reduced_anc_dsets()
+# -------------------------
+# Now we make the new spectroscopic indices and values datasets while removing the ``Bias`` dimension using the
+# ``write_reduced_anc_dsets()`` function. This is especially useful when performing dimensionality reduction
+# statistically (machine learning / simpler methods such as averaging) or by fitting a dimension to some functional form
 
-h5_spec_inds, h5_spec_vals = usid.hdf_utils.write_reduced_spec_dsets(h5_analysis_group,
-                                                                   h5_norm.h5_spec_inds,
-                                                                   h5_norm.h5_spec_vals,
-                                                                   'Bias')
+h5_spec_inds, h5_spec_vals = usid.hdf_utils.write_reduced_anc_dsets(h5_analysis_group,
+                                                                    h5_norm.h5_spec_inds,
+                                                                    h5_norm.h5_spec_vals,
+                                                                    'Bias', is_spec=True)
 print(h5_spec_inds)
 
 ########################################################################################################################
