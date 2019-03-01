@@ -271,7 +271,7 @@ class Process(object):
                             print('Status dataset: {} was not of the expected shape or datatype'.format(status_dset))
 
                     # Finally, check how far the computation was completed.
-                    if len(np.where(status_dset[()] == 0)[0]) == 0:
+                    if len(np.where(status_dset[()] == 0)[0]) != 0:  # If there are pixels uncompleted
                         # remove from duplicates and move to partial
                         partial_h5_groups.append(duplicate_h5_groups.pop(index))
                         # Let's write the legacy attribute for safety
@@ -281,8 +281,9 @@ class Process(object):
                     else:
                         # Optionally calculate how much was completed:
                         if self.mpi_rank == 0:
-                            percent_complete = int(100 * len(np.where(status_dset[()] == 0)[0]) / status_dset.shape[0])
-                            print('Group: {}: computation was {}% completed'.format(curr_group, percent_complete))
+                            if len(np.where(status_dset[()] == 0)[0]) > 0:  # if there are unfinished pixels
+                                percent_complete = int(100 * len(np.where(status_dset[()] == 0)[0]) / status_dset.shape[0])
+                                print('Group: {}: computation was {}% completed'.format(curr_group, percent_complete))
 
                 # Case 2: Legacy results group:
                 if 'last_pixel' not in curr_group.attrs.keys():
