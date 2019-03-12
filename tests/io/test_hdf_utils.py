@@ -299,6 +299,205 @@ class TestHDFUtils(unittest.TestCase):
             self.assertIsInstance(ret_val, list)
             self.assertEqual(len(ret_val), 0)
 
+    def test_create_index_group_first_group(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_group = hdf_utils.create_indexed_group(h5_f, 'Hello')
+            self.assertIsInstance(h5_group, h5py.Group)
+            self.assertEqual(h5_group.name, '/Hello_000')
+            self.assertEqual(h5_group.parent, h5_f)
+            self.__verify_book_keeping_attrs(h5_group)
+
+            h5_sub_group = hdf_utils.create_indexed_group(h5_group, 'Test')
+            self.assertIsInstance(h5_sub_group, h5py.Group)
+            self.assertEqual(h5_sub_group.name, '/Hello_000/Test_000')
+            self.assertEqual(h5_sub_group.parent, h5_group)
+            self.__verify_book_keeping_attrs(h5_sub_group)
+        os.remove(file_path)
+
+    def test_create_index_group_second(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_group_1 = hdf_utils.create_indexed_group(h5_f, 'Hello')
+            self.assertIsInstance(h5_group_1, h5py.Group)
+            self.assertEqual(h5_group_1.name, '/Hello_000')
+            self.assertEqual(h5_group_1.parent, h5_f)
+            self.__verify_book_keeping_attrs(h5_group_1)
+
+            h5_group_2 = hdf_utils.create_indexed_group(h5_f, 'Hello')
+            self.assertIsInstance(h5_group_2, h5py.Group)
+            self.assertEqual(h5_group_2.name, '/Hello_001')
+            self.assertEqual(h5_group_2.parent, h5_f)
+            self.__verify_book_keeping_attrs(h5_group_2)
+        os.remove(file_path)
+
+    def test_create_index_group_w_suffix_(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_group = hdf_utils.create_indexed_group(h5_f, 'Hello_')
+            self.assertIsInstance(h5_group, h5py.Group)
+            self.assertEqual(h5_group.name, '/Hello_000')
+            self.assertEqual(h5_group.parent, h5_f)
+            self.__verify_book_keeping_attrs(h5_group)
+        os.remove(file_path)
+
+    def test_create_index_group_empty_base_name(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            with self.assertRaises(ValueError):
+                _ = hdf_utils.create_indexed_group(h5_f, '    ')
+
+        os.remove(file_path)
+
+    def test_create_results_group_first(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
+            h5_group = hdf_utils.create_results_group(h5_dset, 'Tool')
+            self.assertIsInstance(h5_group, h5py.Group)
+            self.assertEqual(h5_group.name, '/Main-Tool_000')
+            self.assertEqual(h5_group.parent, h5_f)
+            self.__verify_book_keeping_attrs(h5_group)
+
+            h5_dset = h5_group.create_dataset('Main_Dataset', data=[1, 2, 3])
+            h5_sub_group = hdf_utils.create_results_group(h5_dset, 'SHO_Fit')
+            self.assertIsInstance(h5_sub_group, h5py.Group)
+            self.assertEqual(h5_sub_group.name, '/Main-Tool_000/Main_Dataset-SHO_Fit_000')
+            self.assertEqual(h5_sub_group.parent, h5_group)
+            self.__verify_book_keeping_attrs(h5_sub_group)
+        os.remove(file_path)
+
+    def test_create_results_group_second(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
+            h5_group = hdf_utils.create_results_group(h5_dset, 'Tool')
+            self.assertIsInstance(h5_group, h5py.Group)
+            self.assertEqual(h5_group.name, '/Main-Tool_000')
+            self.assertEqual(h5_group.parent, h5_f)
+            self.__verify_book_keeping_attrs(h5_group)
+
+            h5_sub_group = hdf_utils.create_results_group(h5_dset, 'Tool')
+            self.assertIsInstance(h5_sub_group, h5py.Group)
+            self.assertEqual(h5_sub_group.name, '/Main-Tool_001')
+            self.assertEqual(h5_sub_group.parent, h5_f)
+            self.__verify_book_keeping_attrs(h5_sub_group)
+        os.remove(file_path)
+
+    def test_create_results_group_empty_tool_name(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
+            with self.assertRaises(ValueError):
+                _ = hdf_utils.create_results_group(h5_dset, '   ')
+        os.remove(file_path)
+
+    def test_create_results_group_not_dataset(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            with self.assertRaises(TypeError):
+                _ = hdf_utils.create_results_group(h5_f, 'Tool')
+
+        os.remove(file_path)
+
+    def test_assign_group_index_existing(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_group = h5_f['/Raw_Measurement']
+            ret_val = hdf_utils.assign_group_index(h5_group, 'source_main-Fitter')
+            self.assertEqual(ret_val, 'source_main-Fitter_002')
+
+    def test_assign_group_index_new(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_group = h5_f['/Raw_Measurement']
+            ret_val = hdf_utils.assign_group_index(h5_group, 'blah_')
+            self.assertEqual(ret_val, 'blah_000')
+
+    def test_write_legal_atts_to_grp(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+
+            h5_group = h5_f.create_group('Blah')
+
+            attrs = {'att_1': 'string_val', 'att_2': 1.234, 'att_3': [1, 2, 3.14, 4],
+                     'att_4': ['s', 'tr', 'str_3']}
+
+            hdf_utils.write_simple_attrs(h5_group, attrs)
+
+            for key, expected_val in attrs.items():
+                self.assertTrue(np.all(hdf_utils.get_attr(h5_group, key) == expected_val))
+
+        os.remove(file_path)
+
+    def test_write_legal_atts_to_dset_01(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+
+            h5_dset = h5_f.create_dataset('Test', data=np.arange(3))
+
+            attrs = {'att_1': 'string_val',
+                     'att_2': 1.2345,
+                     'att_3': [1, 2, 3, 4],
+                     'att_4': ['str_1', 'str_2', 'str_3']}
+
+            hdf_utils.write_simple_attrs(h5_dset, attrs)
+
+            self.assertEqual(len(h5_dset.attrs), len(attrs))
+
+            for key, expected_val in attrs.items():
+                self.assertTrue(np.all(hdf_utils.get_attr(h5_dset, key) == expected_val))
+
+        os.remove(file_path)
+
+    def test_is_editable_h5_read_only(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_group = h5_f['/Raw_Measurement']
+            h5_main = h5_f['/Raw_Measurement/Ancillary']
+            self.assertFalse(hdf_utils.is_editable_h5(h5_group))
+            self.assertFalse(hdf_utils.is_editable_h5(h5_f))
+            self.assertFalse(hdf_utils.is_editable_h5(h5_main))
+
+    def test_is_editable_h5_r_plus(self):
+        with h5py.File(data_utils.std_beps_path, mode='r+') as h5_f:
+            h5_group = h5_f['/Raw_Measurement']
+            h5_main = h5_f['/Raw_Measurement/Ancillary']
+            self.assertTrue(hdf_utils.is_editable_h5(h5_group))
+            self.assertTrue(hdf_utils.is_editable_h5(h5_f))
+            self.assertTrue(hdf_utils.is_editable_h5(h5_main))
+
+    def test_is_editable_h5_w(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Test', data=np.arange(3))
+            h5_group = h5_f.create_group('blah')
+            self.assertTrue(hdf_utils.is_editable_h5(h5_group))
+            self.assertTrue(hdf_utils.is_editable_h5(h5_f))
+            self.assertTrue(hdf_utils.is_editable_h5(h5_dset))
+
+        os.remove(file_path)
+
+    def test_is_editable_h5_illegal(self):
+        # wrong kind of object
+        with self.assertRaises(TypeError):
+            _ = hdf_utils.is_editable_h5(np.arange(4))
+
+        # closed file
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_group = h5_f['/Raw_Measurement']
+
+        with self.assertRaises(ValueError):
+            _ = hdf_utils.is_editable_h5(h5_group)
+
     def test_link_as_main(self):
         file_path = 'link_as_main.h5'
         data_utils.delete_existing_file(file_path)
@@ -468,25 +667,6 @@ class TestHDFUtils(unittest.TestCase):
 
         os.remove(file_path)
 
-    def test_get_indices_for_region_ref_corners(self):
-        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            reg_ref = hdf_utils.get_attr(h5_main, 'even_rows')
-            ret_val = hdf_utils.get_indices_for_region_ref(h5_main, reg_ref, 'corners')
-            expected_pos = np.repeat(np.arange(h5_main.shape[0])[::2], 2)
-            expected_spec = np.tile(np.array([0, h5_main.shape[1] - 1]), expected_pos.size // 2)
-            expected_corners = np.vstack((expected_pos, expected_spec)).T
-            self.assertTrue(np.allclose(ret_val, expected_corners))
-
-    def test_get_indices_for_region_ref_slices(self):
-        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            reg_ref = hdf_utils.get_attr(h5_main, 'even_rows')
-            ret_val = hdf_utils.get_indices_for_region_ref(h5_main, reg_ref, 'slices')
-            spec_slice = slice(0, h5_main.shape[1] - 1, None)
-            expected_slices = np.array([[slice(x, x, None), spec_slice] for x in np.arange(h5_main.shape[0])[::2]])
-            self.assertTrue(np.all(ret_val == expected_slices))
-
     def __verify_book_keeping_attrs(self, h5_obj):
         time_stamp = io_utils.get_time_stamp()
         in_file = h5_obj.attrs['timestamp']
@@ -565,6 +745,25 @@ class TestHDFUtils(unittest.TestCase):
             for key, val in hard_attrs.items():
                 self.assertTrue(np.all([x == y for x, y in zip(val, h5_dset.attrs[key])]))
         os.remove(file_path)
+
+    def test_get_indices_for_region_ref_corners(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_main = h5_f['/Raw_Measurement/source_main']
+            reg_ref = hdf_utils.get_attr(h5_main, 'even_rows')
+            ret_val = hdf_utils.get_indices_for_region_ref(h5_main, reg_ref, 'corners')
+            expected_pos = np.repeat(np.arange(h5_main.shape[0])[::2], 2)
+            expected_spec = np.tile(np.array([0, h5_main.shape[1] - 1]), expected_pos.size // 2)
+            expected_corners = np.vstack((expected_pos, expected_spec)).T
+            self.assertTrue(np.allclose(ret_val, expected_corners))
+
+    def test_get_indices_for_region_ref_slices(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_main = h5_f['/Raw_Measurement/source_main']
+            reg_ref = hdf_utils.get_attr(h5_main, 'even_rows')
+            ret_val = hdf_utils.get_indices_for_region_ref(h5_main, reg_ref, 'slices')
+            spec_slice = slice(0, h5_main.shape[1] - 1, None)
+            expected_slices = np.array([[slice(x, x, None), spec_slice] for x in np.arange(h5_main.shape[0])[::2]])
+            self.assertTrue(np.all(ret_val == expected_slices))
 
     def test_copy_attributes_dset_w_reg_ref_group_but_skipped(self):
         file_path = 'test.h5'
@@ -780,205 +979,6 @@ class TestHDFUtils(unittest.TestCase):
             self.assertTrue(np.allclose(h5_duplicate[()], np.zeros(3)))
             self.assertEqual(h5_duplicate.dtype, np.float16)
         os.remove(file_path)
-
-    def test_create_index_group_first_group(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            h5_group = hdf_utils.create_indexed_group(h5_f, 'Hello')
-            self.assertIsInstance(h5_group, h5py.Group)
-            self.assertEqual(h5_group.name, '/Hello_000')
-            self.assertEqual(h5_group.parent, h5_f)
-            self.__verify_book_keeping_attrs(h5_group)
-
-            h5_sub_group = hdf_utils.create_indexed_group(h5_group, 'Test')
-            self.assertIsInstance(h5_sub_group, h5py.Group)
-            self.assertEqual(h5_sub_group.name, '/Hello_000/Test_000')
-            self.assertEqual(h5_sub_group.parent, h5_group)
-            self.__verify_book_keeping_attrs(h5_sub_group)
-        os.remove(file_path)
-
-    def test_create_index_group_second(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            h5_group_1 = hdf_utils.create_indexed_group(h5_f, 'Hello')
-            self.assertIsInstance(h5_group_1, h5py.Group)
-            self.assertEqual(h5_group_1.name, '/Hello_000')
-            self.assertEqual(h5_group_1.parent, h5_f)
-            self.__verify_book_keeping_attrs(h5_group_1)
-
-            h5_group_2 = hdf_utils.create_indexed_group(h5_f, 'Hello')
-            self.assertIsInstance(h5_group_2, h5py.Group)
-            self.assertEqual(h5_group_2.name, '/Hello_001')
-            self.assertEqual(h5_group_2.parent, h5_f)
-            self.__verify_book_keeping_attrs(h5_group_2)
-        os.remove(file_path)
-
-    def test_create_index_group_w_suffix_(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            h5_group = hdf_utils.create_indexed_group(h5_f, 'Hello_')
-            self.assertIsInstance(h5_group, h5py.Group)
-            self.assertEqual(h5_group.name, '/Hello_000')
-            self.assertEqual(h5_group.parent, h5_f)
-            self.__verify_book_keeping_attrs(h5_group)
-        os.remove(file_path)
-
-    def test_create_index_group_empty_base_name(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            with self.assertRaises(ValueError):
-                _ = hdf_utils.create_indexed_group(h5_f, '    ')
-
-        os.remove(file_path)
-
-    def test_create_results_group_first(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
-            h5_group = hdf_utils.create_results_group(h5_dset, 'Tool')
-            self.assertIsInstance(h5_group, h5py.Group)
-            self.assertEqual(h5_group.name, '/Main-Tool_000')
-            self.assertEqual(h5_group.parent, h5_f)
-            self.__verify_book_keeping_attrs(h5_group)
-
-            h5_dset = h5_group.create_dataset('Main_Dataset', data=[1, 2, 3])
-            h5_sub_group = hdf_utils.create_results_group(h5_dset, 'SHO_Fit')
-            self.assertIsInstance(h5_sub_group, h5py.Group)
-            self.assertEqual(h5_sub_group.name, '/Main-Tool_000/Main_Dataset-SHO_Fit_000')
-            self.assertEqual(h5_sub_group.parent, h5_group)
-            self.__verify_book_keeping_attrs(h5_sub_group)
-        os.remove(file_path)
-
-    def test_create_results_group_second(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
-            h5_group = hdf_utils.create_results_group(h5_dset, 'Tool')
-            self.assertIsInstance(h5_group, h5py.Group)
-            self.assertEqual(h5_group.name, '/Main-Tool_000')
-            self.assertEqual(h5_group.parent, h5_f)
-            self.__verify_book_keeping_attrs(h5_group)
-
-            h5_sub_group = hdf_utils.create_results_group(h5_dset, 'Tool')
-            self.assertIsInstance(h5_sub_group, h5py.Group)
-            self.assertEqual(h5_sub_group.name, '/Main-Tool_001')
-            self.assertEqual(h5_sub_group.parent, h5_f)
-            self.__verify_book_keeping_attrs(h5_sub_group)
-        os.remove(file_path)
-
-    def test_create_results_group_empty_tool_name(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
-            with self.assertRaises(ValueError):
-                _ = hdf_utils.create_results_group(h5_dset, '   ')
-        os.remove(file_path)
-
-    def test_create_results_group_not_dataset(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            with self.assertRaises(TypeError):
-                _ = hdf_utils.create_results_group(h5_f, 'Tool')
-
-        os.remove(file_path)
-
-    def test_assign_group_index_existing(self):
-        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
-            h5_group = h5_f['/Raw_Measurement']
-            ret_val = hdf_utils.assign_group_index(h5_group, 'source_main-Fitter')
-            self.assertEqual(ret_val, 'source_main-Fitter_002')
-
-    def test_assign_group_index_new(self):
-        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
-            h5_group = h5_f['/Raw_Measurement']
-            ret_val = hdf_utils.assign_group_index(h5_group, 'blah_')
-            self.assertEqual(ret_val, 'blah_000')
-
-    def test_write_legal_atts_to_grp(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-
-            h5_group = h5_f.create_group('Blah')
-
-            attrs = {'att_1': 'string_val', 'att_2': 1.234, 'att_3': [1, 2, 3.14, 4],
-                     'att_4': ['s', 'tr', 'str_3']}
-
-            hdf_utils.write_simple_attrs(h5_group, attrs)
-
-            for key, expected_val in attrs.items():
-                self.assertTrue(np.all(hdf_utils.get_attr(h5_group, key) == expected_val))
-
-        os.remove(file_path)
-
-    def test_write_legal_atts_to_dset_01(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-
-            h5_dset = h5_f.create_dataset('Test', data=np.arange(3))
-
-            attrs = {'att_1': 'string_val',
-                     'att_2': 1.2345,
-                     'att_3': [1, 2, 3, 4],
-                     'att_4': ['str_1', 'str_2', 'str_3']}
-
-            hdf_utils.write_simple_attrs(h5_dset, attrs)
-
-            self.assertEqual(len(h5_dset.attrs), len(attrs))
-
-            for key, expected_val in attrs.items():
-                self.assertTrue(np.all(hdf_utils.get_attr(h5_dset, key) == expected_val))
-
-        os.remove(file_path)
-
-    def test_is_editable_h5_read_only(self):
-        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
-            h5_group = h5_f['/Raw_Measurement']
-            h5_main = h5_f['/Raw_Measurement/Ancillary']
-            self.assertFalse(hdf_utils.is_editable_h5(h5_group))
-            self.assertFalse(hdf_utils.is_editable_h5(h5_f))
-            self.assertFalse(hdf_utils.is_editable_h5(h5_main))
-
-    def test_is_editable_h5_r_plus(self):
-        with h5py.File(data_utils.std_beps_path, mode='r+') as h5_f:
-            h5_group = h5_f['/Raw_Measurement']
-            h5_main = h5_f['/Raw_Measurement/Ancillary']
-            self.assertTrue(hdf_utils.is_editable_h5(h5_group))
-            self.assertTrue(hdf_utils.is_editable_h5(h5_f))
-            self.assertTrue(hdf_utils.is_editable_h5(h5_main))
-
-    def test_is_editable_h5_w(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            h5_dset = h5_f.create_dataset('Test', data=np.arange(3))
-            h5_group = h5_f.create_group('blah')
-            self.assertTrue(hdf_utils.is_editable_h5(h5_group))
-            self.assertTrue(hdf_utils.is_editable_h5(h5_f))
-            self.assertTrue(hdf_utils.is_editable_h5(h5_dset))
-
-        os.remove(file_path)
-
-    def test_is_editable_h5_illegal(self):
-        # wrong kind of object
-        with self.assertRaises(TypeError):
-            _ = hdf_utils.is_editable_h5(np.arange(4))
-
-        # closed file
-        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
-            h5_group = h5_f['/Raw_Measurement']
-
-        with self.assertRaises(ValueError):
-            _ = hdf_utils.is_editable_h5(h5_group)
 
     def test_copy_reg_ref_reduced_dim(self):
         # TODO: Fill this test in at earliest convenience. Overriden temporarily
