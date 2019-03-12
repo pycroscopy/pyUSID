@@ -36,7 +36,7 @@ class Translator(object):
         self.max_ram = min(max_mem_mb * 1024 ** 2, 0.75 * get_available_memory())
 
     @abc.abstractmethod
-    def translate(self, filepath, *args, **kwargs):
+    def translate(self, *args, **kwargs):
         """
         Abstract method.
         To be implemented by extensions of this class. God I miss Java!
