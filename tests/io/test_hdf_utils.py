@@ -746,25 +746,6 @@ class TestHDFUtils(unittest.TestCase):
                 self.assertTrue(np.all([x == y for x, y in zip(val, h5_dset.attrs[key])]))
         os.remove(file_path)
 
-    def test_get_indices_for_region_ref_corners(self):
-        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            reg_ref = hdf_utils.get_attr(h5_main, 'even_rows')
-            ret_val = hdf_utils.get_indices_for_region_ref(h5_main, reg_ref, 'corners')
-            expected_pos = np.repeat(np.arange(h5_main.shape[0])[::2], 2)
-            expected_spec = np.tile(np.array([0, h5_main.shape[1] - 1]), expected_pos.size // 2)
-            expected_corners = np.vstack((expected_pos, expected_spec)).T
-            self.assertTrue(np.allclose(ret_val, expected_corners))
-
-    def test_get_indices_for_region_ref_slices(self):
-        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            reg_ref = hdf_utils.get_attr(h5_main, 'even_rows')
-            ret_val = hdf_utils.get_indices_for_region_ref(h5_main, reg_ref, 'slices')
-            spec_slice = slice(0, h5_main.shape[1] - 1, None)
-            expected_slices = np.array([[slice(x, x, None), spec_slice] for x in np.arange(h5_main.shape[0])[::2]])
-            self.assertTrue(np.all(ret_val == expected_slices))
-
     def test_copy_attributes_dset_w_reg_ref_group_but_skipped(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
@@ -979,6 +960,25 @@ class TestHDFUtils(unittest.TestCase):
             self.assertTrue(np.allclose(h5_duplicate[()], np.zeros(3)))
             self.assertEqual(h5_duplicate.dtype, np.float16)
         os.remove(file_path)
+
+    def test_get_indices_for_region_ref_corners(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_main = h5_f['/Raw_Measurement/source_main']
+            reg_ref = hdf_utils.get_attr(h5_main, 'even_rows')
+            ret_val = hdf_utils.get_indices_for_region_ref(h5_main, reg_ref, 'corners')
+            expected_pos = np.repeat(np.arange(h5_main.shape[0])[::2], 2)
+            expected_spec = np.tile(np.array([0, h5_main.shape[1] - 1]), expected_pos.size // 2)
+            expected_corners = np.vstack((expected_pos, expected_spec)).T
+            self.assertTrue(np.allclose(ret_val, expected_corners))
+
+    def test_get_indices_for_region_ref_slices(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_main = h5_f['/Raw_Measurement/source_main']
+            reg_ref = hdf_utils.get_attr(h5_main, 'even_rows')
+            ret_val = hdf_utils.get_indices_for_region_ref(h5_main, reg_ref, 'slices')
+            spec_slice = slice(0, h5_main.shape[1] - 1, None)
+            expected_slices = np.array([[slice(x, x, None), spec_slice] for x in np.arange(h5_main.shape[0])[::2]])
+            self.assertTrue(np.all(ret_val == expected_slices))
 
     def test_copy_reg_ref_reduced_dim(self):
         # TODO: Fill this test in at earliest convenience. Overriden temporarily
