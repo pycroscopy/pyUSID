@@ -54,6 +54,8 @@ def capture_stdout():
     context manager encapsulating a pattern for capturing stdout writes
     and restoring sys.stdout even upon exceptions
 
+    https://stackoverflow.com/questions/17067560/intercept-pythons-print-statement-and-display-in-gui
+
     Examples:
     >>> with capture_stdout() as get_value:
     >>>     print("here is a print")
