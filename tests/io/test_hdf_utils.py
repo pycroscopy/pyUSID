@@ -498,6 +498,108 @@ class TestHDFUtils(unittest.TestCase):
         with self.assertRaises(ValueError):
             _ = hdf_utils.is_editable_h5(h5_group)
 
+    def test_link_h5_obj_as_alias(self):
+        file_path = 'link_as_alias.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+
+            h5_main = h5_f.create_dataset('main', data=np.arange(5))
+            h5_anc = h5_f.create_dataset('Ancillary', data=np.arange(3))
+            h5_group = h5_f.create_group('Results')
+
+            # Linking to dataset:
+            hdf_utils.link_h5_obj_as_alias(h5_main, h5_anc, 'Blah')
+            hdf_utils.link_h5_obj_as_alias(h5_main, h5_group, 'Something')
+            self.assertEqual(h5_f[h5_main.attrs['Blah']], h5_anc)
+            self.assertEqual(h5_f[h5_main.attrs['Something']], h5_group)
+
+            # Linking ot Group:
+            hdf_utils.link_h5_obj_as_alias(h5_group, h5_main, 'Center')
+            hdf_utils.link_h5_obj_as_alias(h5_group, h5_anc, 'South')
+            self.assertEqual(h5_f[h5_group.attrs['Center']], h5_main)
+            self.assertEqual(h5_f[h5_group.attrs['South']], h5_anc)
+
+            # Linking to file:
+            hdf_utils.link_h5_obj_as_alias(h5_f, h5_main, 'Paris')
+            hdf_utils.link_h5_obj_as_alias(h5_f, h5_group, 'France')
+            self.assertEqual(h5_f[h5_f.attrs['Paris']], h5_main)
+            self.assertEqual(h5_f[h5_f.attrs['France']], h5_group)
+
+            # Non h5 object
+            with self.assertRaises(TypeError):
+                hdf_utils.link_h5_obj_as_alias(h5_group, np.arange(5), 'Center')
+
+            # H5 reference but not the object
+            with self.assertRaises(TypeError):
+                hdf_utils.link_h5_obj_as_alias(h5_group, h5_f.attrs['Paris'], 'Center')
+
+        os.remove(file_path)
+
+    def test_link_h5_objects_as_attrs(self):
+        file_path = 'link_h5_objects_as_attrs.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+
+            h5_main = h5_f.create_dataset('main', data=np.arange(5))
+            h5_anc = h5_f.create_dataset('Ancillary', data=np.arange(3))
+            h5_group = h5_f.create_group('Results')
+
+            hdf_utils.link_h5_objects_as_attrs(h5_f, [h5_anc, h5_main, h5_group])
+            for exp, name in zip([h5_main, h5_anc, h5_group], ['main', 'Ancillary', 'Results']):
+                self.assertEqual(exp, h5_f[h5_f.attrs[name]])
+
+            # Single object
+            hdf_utils.link_h5_objects_as_attrs(h5_main, h5_anc)
+            self.assertEqual(h5_f[h5_main.attrs['Ancillary']], h5_anc)
+
+            # Linking to a group:
+            hdf_utils.link_h5_objects_as_attrs(h5_group, [h5_anc, h5_main])
+            for exp, name in zip([h5_main, h5_anc], ['main', 'Ancillary']):
+                self.assertEqual(exp, h5_group[h5_group.attrs[name]])
+
+            with self.assertRaises(TypeError):
+                hdf_utils.link_h5_objects_as_attrs(h5_main, np.arange(4))
+
+        os.remove(file_path)
+
+    def __verify_book_keeping_attrs(self, h5_obj):
+        time_stamp = io_utils.get_time_stamp()
+        in_file = h5_obj.attrs['timestamp']
+        self.assertEqual(time_stamp[:time_stamp.rindex('_')], in_file[:in_file.rindex('_')])
+        self.assertEqual(__version__, h5_obj.attrs['pyUSID_version'])
+        self.assertEqual(socket.getfqdn(), h5_obj.attrs['machine_id'])
+        self.assertEqual(platform(), h5_obj.attrs['platform'])
+
+    def test_write_book_keeping_attrs_file(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            hdf_utils.write_book_keeping_attrs(h5_f)
+            self.__verify_book_keeping_attrs(h5_f)
+        os.remove(file_path)
+
+    def test_write_book_keeping_attrs_group(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_g = h5_f.create_group('group')
+            hdf_utils.write_book_keeping_attrs(h5_g)
+            self.__verify_book_keeping_attrs(h5_g)
+        os.remove(file_path)
+
+    def test_write_book_keeping_attrs_dset(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('dset', data=[1, 2, 3])
+            hdf_utils.write_book_keeping_attrs(h5_dset)
+            self.__verify_book_keeping_attrs(h5_dset)
+        os.remove(file_path)
+
+    def test_write_book_keeping_attrs_invalid(self):
+        with self.assertRaises(TypeError):
+            hdf_utils.write_book_keeping_attrs(np.arange(4))
+
     def test_link_as_main(self):
         file_path = 'link_as_main.h5'
         data_utils.delete_existing_file(file_path)
@@ -602,108 +704,6 @@ class TestHDFUtils(unittest.TestCase):
                                        h5_source_spec_vals)
 
         os.remove(file_path)
-
-    def test_link_h5_obj_as_alias(self):
-        file_path = 'link_as_alias.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-
-            h5_main = h5_f.create_dataset('main', data=np.arange(5))
-            h5_anc = h5_f.create_dataset('Ancillary', data=np.arange(3))
-            h5_group = h5_f.create_group('Results')
-
-            # Linking to dataset:
-            hdf_utils.link_h5_obj_as_alias(h5_main, h5_anc, 'Blah')
-            hdf_utils.link_h5_obj_as_alias(h5_main, h5_group, 'Something')
-            self.assertEqual(h5_f[h5_main.attrs['Blah']], h5_anc)
-            self.assertEqual(h5_f[h5_main.attrs['Something']], h5_group)
-
-            # Linking ot Group:
-            hdf_utils.link_h5_obj_as_alias(h5_group, h5_main, 'Center')
-            hdf_utils.link_h5_obj_as_alias(h5_group, h5_anc, 'South')
-            self.assertEqual(h5_f[h5_group.attrs['Center']], h5_main)
-            self.assertEqual(h5_f[h5_group.attrs['South']], h5_anc)
-
-            # Linking to file:
-            hdf_utils.link_h5_obj_as_alias(h5_f, h5_main, 'Paris')
-            hdf_utils.link_h5_obj_as_alias(h5_f, h5_group, 'France')
-            self.assertEqual(h5_f[h5_f.attrs['Paris']], h5_main)
-            self.assertEqual(h5_f[h5_f.attrs['France']], h5_group)
-
-            # Non h5 object
-            with self.assertRaises(TypeError):
-                hdf_utils.link_h5_obj_as_alias(h5_group, np.arange(5), 'Center')
-
-            # H5 reference but not the object
-            with self.assertRaises(TypeError):
-                hdf_utils.link_h5_obj_as_alias(h5_group, h5_f.attrs['Paris'], 'Center')
-
-        os.remove(file_path)
-
-    def test_link_h5_objects_as_attrs(self):
-        file_path = 'link_h5_objects_as_attrs.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-
-            h5_main = h5_f.create_dataset('main', data=np.arange(5))
-            h5_anc = h5_f.create_dataset('Ancillary', data=np.arange(3))
-            h5_group = h5_f.create_group('Results')
-
-            hdf_utils.link_h5_objects_as_attrs(h5_f, [h5_anc, h5_main, h5_group])
-            for exp, name in zip([h5_main, h5_anc, h5_group], ['main', 'Ancillary', 'Results']):
-                self.assertEqual(exp, h5_f[h5_f.attrs[name]])
-
-            # Single object
-            hdf_utils.link_h5_objects_as_attrs(h5_main, h5_anc)
-            self.assertEqual(h5_f[h5_main.attrs['Ancillary']], h5_anc)
-
-            # Linking to a group:
-            hdf_utils.link_h5_objects_as_attrs(h5_group, [h5_anc, h5_main])
-            for exp, name in zip([h5_main, h5_anc], ['main', 'Ancillary']):
-                self.assertEqual(exp, h5_group[h5_group.attrs[name]])
-
-            with self.assertRaises(TypeError):
-                hdf_utils.link_h5_objects_as_attrs(h5_main, np.arange(4))
-
-        os.remove(file_path)
-
-    def __verify_book_keeping_attrs(self, h5_obj):
-        time_stamp = io_utils.get_time_stamp()
-        in_file = h5_obj.attrs['timestamp']
-        self.assertEqual(time_stamp[:time_stamp.rindex('_')], in_file[:in_file.rindex('_')])
-        self.assertEqual(__version__, h5_obj.attrs['pyUSID_version'])
-        self.assertEqual(socket.getfqdn(), h5_obj.attrs['machine_id'])
-        self.assertEqual(platform(), h5_obj.attrs['platform'])
-
-    def test_write_book_keeping_attrs_file(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            hdf_utils.write_book_keeping_attrs(h5_f)
-            self.__verify_book_keeping_attrs(h5_f)
-        os.remove(file_path)
-
-    def test_write_book_keeping_attrs_group(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            h5_g = h5_f.create_group('group')
-            hdf_utils.write_book_keeping_attrs(h5_g)
-            self.__verify_book_keeping_attrs(h5_g)
-        os.remove(file_path)
-
-    def test_write_book_keeping_attrs_dset(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            h5_dset = h5_f.create_dataset('dset', data=[1, 2, 3])
-            hdf_utils.write_book_keeping_attrs(h5_dset)
-            self.__verify_book_keeping_attrs(h5_dset)
-        os.remove(file_path)
-
-    def test_write_book_keeping_attrs_invalid(self):
-        with self.assertRaises(TypeError):
-            hdf_utils.write_book_keeping_attrs(np.arange(4))
 
     def test_copy_attributes_file_dset(self):
         file_path = 'test.h5'
