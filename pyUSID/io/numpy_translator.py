@@ -16,10 +16,12 @@ import numpy as np
 import dask.array as da
 from .write_utils import Dimension
 from .translator import Translator, generate_dummy_main_parms
-from .hdf_utils import write_main_dataset, write_simple_attrs
+from .hdf_utils import write_main_dataset, write_simple_attrs, create_indexed_group, write_book_keeping_attrs
 
 if sys.version_info.major == 3:
     unicode = str
+
+__all__ = ['ArrayTranslator', 'NumpyTranslator']
 
 
 class ArrayTranslator(Translator):
@@ -105,10 +107,10 @@ class ArrayTranslator(Translator):
                     raise ValueError('keys for extra_dsets should not be empty')
                 if np.any([key in x for x in ['Spectroscopic_Indices', 'Spectroscopic_Values', 'Position_Indices',
                                               'Position_Values', 'Raw_Data']]):
-                    raise ValueError('keys for extra_dsets cannot match reserved names for existing datasets')
+                    raise KeyError('keys for extra_dsets cannot match reserved names for existing datasets')
                 # Now check for data:
-                if not isinstance(val, (list, tuple, np.ndarray)):
-                    raise TypeError('values for extra_dsets should be a tuple, list, or numpy array')
+                if not isinstance(val, (list, tuple, np.ndarray, da.core.Array)):
+                    raise TypeError('values for extra_dsets should be a tuple, list, or numpy / dask array')
         else:
             extra_dsets = dict()
 
@@ -127,18 +129,22 @@ class ArrayTranslator(Translator):
 
             # Root attributes first:
             write_simple_attrs(h5_f, global_parms)
+            write_book_keeping_attrs(h5_f)
 
             # measurement group next
-            meas_grp = h5_f.create_group('Measurement_000')
+            meas_grp = create_indexed_group(h5_f, 'Measurement')
             write_simple_attrs(meas_grp, parm_dict)
 
             # channel group next
-            chan_grp = meas_grp.create_group('Channel_000')
+            chan_grp = create_indexed_group(meas_grp, 'Channel')
 
             _ = write_main_dataset(chan_grp, raw_data, 'Raw_Data', quantity, units, pos_dims, spec_dims, **kwargs)
 
             for key, val in extra_dsets.items():
-                chan_grp.create_dataset(key.strip(), data=val)
+                if isinstance(val, da.core.Array):
+                    da.to_hdf5(chan_grp.file.filename, {chan_grp + '/' + key: val})
+                else:
+                    chan_grp.create_dataset(key.strip(), data=val)
 
         return h5_path
 
