@@ -31,27 +31,46 @@ class TestNumpyTranslator(unittest.TestCase):
     def reserved_name_for_extra_dsets(self):
         translator = ArrayTranslator()
         with self.assertRaises(KeyError):
+            self.__delete_existing_file(file_path)
             _ = translator.translate(file_path, 'Blah', np.arange(5, 3), 'quant', 'unit',
-                                     write_utils.Dimension('Posiiton_Dim', 5),
+                                     write_utils.Dimension('Position_Dim', 5),
                                      write_utils.Dimension('Spec_Dim', 3),
                                      extra_dsets={'Spectroscopic_Indices': np.arange(4),
                                                   'Blah_other': np.arange(15)})
 
     def illegal_extra_dsets(self):
         translator = ArrayTranslator()
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
+            self.__delete_existing_file(file_path)
             _ = translator.translate(file_path, 'Blah', np.arange(5, 3), 'quant', 'unit',
-                                     write_utils.Dimension('Posiiton_Dim', 5),
+                                     write_utils.Dimension('Position_Dim', 5),
                                      write_utils.Dimension('Spec_Dim', 3),
                                      extra_dsets={'Blah_other': 'I am not an array'})
 
     def illegal_extra_dset_name(self):
         translator = ArrayTranslator()
         with self.assertRaises(KeyError):
+            self.__delete_existing_file(file_path)
             _ = translator.translate(file_path, 'Blah', np.arange(5, 3), 'quant', 'unit',
-                                     write_utils.Dimension('Posiiton_Dim', 5),
+                                     write_utils.Dimension('Position_Dim', 5),
                                      write_utils.Dimension('Spec_Dim', 3),
                                      extra_dsets={' ': [1, 2, 3]})
+
+    def illegal_dimensions_position(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(ValueError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', np.arange(15, 3), 'quant', 'unit',
+                                     [write_utils.Dimension('Dim_1', 5), write_utils.Dimension('Dim_2', 4)],
+                                     write_utils.Dimension('Spec_Dim', 3))
+
+    def illegal_dimensions_spec(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(ValueError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', np.arange(5, 13), 'quant', 'unit',
+                                     write_utils.Dimension('Dim_1', 5),
+                                     [write_utils.Dimension('Spec_Dim', 3), write_utils.Dimension('Dim_2', 4)])
 
     def quick_numpy_translation(self):
         self.__base_translation_tester(main_dset_as_dask=False, extra_dsets_type='numpy', use_parm_dict=False)
@@ -88,6 +107,7 @@ class TestNumpyTranslator(unittest.TestCase):
                 extra_dsets_type = None
 
         self.__delete_existing_file(file_path)
+
         main_data = np.random.rand(15, 14)
         if main_dset_as_dask:
             main_data = da.from_array(main_data)
