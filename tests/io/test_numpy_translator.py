@@ -10,12 +10,15 @@ import os
 import sys
 import h5py
 import numpy as np
+import dask.array as da
 from .data_utils import validate_aux_dset_pair
 sys.path.append("../../pyUSID/")
-from pyUSID.io import NumpyTranslator, write_utils, hdf_utils, USIDataset
+from pyUSID.io import ArrayTranslator, write_utils, hdf_utils, USIDataset
 
 if sys.version_info.major == 3:
     unicode = str
+
+file_path = 'test_array_translator.h5'
 
 
 class TestNumpyTranslator(unittest.TestCase):
@@ -25,19 +28,69 @@ class TestNumpyTranslator(unittest.TestCase):
         if os.path.exists(file_path):
             os.remove(file_path)
 
-    def test_legal_translation(self):
-        data_name = 'TestDataType'
-        attrs = {'att_1': 'string_val',
-                 'att_2': 1.2345,
-                 'att_3': [1, 2, 3, 4],
-                 'att_4': ['str_1', 'str_2', 'str_3']}
+    def reserved_name_for_extra_dsets(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(KeyError):
+            _ = translator.translate(file_path, 'Blah', np.arange(5, 3), 'quant', 'unit',
+                                     write_utils.Dimension('Posiiton_Dim', 5),
+                                     write_utils.Dimension('Spec_Dim', 3),
+                                     extra_dsets={'Spectroscopic_Indices': np.arange(4),
+                                                  'Blah_other': np.arange(15)})
 
-        extra_dsets = {'dset_1': np.random.rand(5), 'dset_2': np.arange(25)}
+    def illegal_extra_dsets(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(KeyError):
+            _ = translator.translate(file_path, 'Blah', np.arange(5, 3), 'quant', 'unit',
+                                     write_utils.Dimension('Posiiton_Dim', 5),
+                                     write_utils.Dimension('Spec_Dim', 3),
+                                     extra_dsets={'Blah_other': 'I am not an array'})
 
-        file_path = 'test_numpy_translator.h5'
+    def illegal_extra_dset_name(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(KeyError):
+            _ = translator.translate(file_path, 'Blah', np.arange(5, 3), 'quant', 'unit',
+                                     write_utils.Dimension('Posiiton_Dim', 5),
+                                     write_utils.Dimension('Spec_Dim', 3),
+                                     extra_dsets={' ': [1, 2, 3]})
+
+    def quick_numpy_translation(self):
+        self.__base_translation_tester(main_dset_as_dask=False, extra_dsets_type='numpy', use_parm_dict=False)
+
+    def quick_numpy_tranlsation_plus_parms(self):
+        self.__base_translation_tester(main_dset_as_dask=False, extra_dsets_type='numpy', use_parm_dict=True)
+
+    def quick_dask_main_translation(self):
+        self.__base_translation_tester(main_dset_as_dask=True, extra_dsets_type='numpy', use_parm_dict=False)
+
+    def all_dsets_as_dask(self):
+        self.__base_translation_tester(main_dset_as_dask=True, extra_dsets_type='dask', use_parm_dict=False)
+
+    def __base_translation_tester(self, main_dset_as_dask=False, extra_dsets_type='numpy', use_parm_dict=True):
+        data_name = 'My_Awesome_Measurement'
+
+        if use_parm_dict:
+            attrs = {'att_1': 'string_val',
+                     'att_2': 1.2345,
+                     'att_3': [1, 2, 3, 4],
+                     'att_4': ['str_1', 'str_2', 'str_3']}
+        else:
+            attrs = None
+
+        extra_dsets = {}
+        if extra_dsets_type is not None:
+            ref_dsets = {'dset_1': np.random.rand(5), 'dset_2': np.arange(25)}
+            if extra_dsets_type == 'numpy':
+                extra_dsets = ref_dsets
+            elif extra_dsets_type == 'dask':
+                for key, val in ref_dsets.items():
+                    extra_dsets.update(key, da.from_array(val, chunks=val.shape))
+            else:
+                extra_dsets_type = None
+
         self.__delete_existing_file(file_path)
         main_data = np.random.rand(15, 14)
-        main_data_name = 'Test_Main'
+        if main_dset_as_dask:
+            main_data = da.from_array(main_data)
         quantity = 'Current'
         units = 'nA'
 
@@ -60,7 +113,7 @@ class TestNumpyTranslator(unittest.TestCase):
         spec_data = np.vstack((np.tile(np.arange(7), 2),
                                np.repeat(np.arange(2), 7)))
 
-        translator = NumpyTranslator()
+        translator = ArrayTranslator()
         _ = translator.translate(file_path, data_name, main_data, quantity, units, pos_dims, spec_dims, parm_dict=attrs,
                                  extra_dsets=extra_dsets)
 
@@ -76,9 +129,10 @@ class TestNumpyTranslator(unittest.TestCase):
             self.assertIsInstance(h5_meas_grp, h5py.Group)
 
             # check the attributes under this group
-            self.assertEqual(len(h5_meas_grp.attrs), len(attrs))
-            for key, expected_val in attrs.items():
-                self.assertTrue(np.all(hdf_utils.get_attr(h5_meas_grp, key) == expected_val))
+            # self.assertEqual(len(h5_meas_grp.attrs), len(attrs))
+            if use_parm_dict:
+                for key, expected_val in attrs.items():
+                    self.assertTrue(np.all(hdf_utils.get_attr(h5_meas_grp, key) == expected_val))
 
             # Again, this group should only have one group - Channel_000
             self.assertEqual(len(h5_meas_grp.items()), 1)
@@ -86,7 +140,7 @@ class TestNumpyTranslator(unittest.TestCase):
             h5_chan_grp = h5_meas_grp['Channel_000']
             self.assertIsInstance(h5_chan_grp, h5py.Group)
 
-            # This channel group is not expected to have any attributes but it will contain the main dataset
+            # This channel group is not expected to have any (custom) attributes but it will contain the main dataset
             self.assertEqual(len(h5_chan_grp.items()), 5 + len(extra_dsets))
             for dset_name in ['Raw_Data', 'Position_Indices', 'Position_Values', 'Spectroscopic_Indices',
                               'Spectroscopic_Values']:
@@ -109,11 +163,14 @@ class TestNumpyTranslator(unittest.TestCase):
                                           spec_data, h5_main=pycro_main, is_spectral=True)
 
             # Now validate each of the extra datasets:
-            for key, val in extra_dsets.items():
-                self.assertTrue(key in h5_chan_grp.keys())
-                h5_dset = h5_chan_grp[key]
-                self.assertIsInstance(h5_dset, h5py.Dataset)
-                self.assertTrue(np.allclose(val, h5_dset[()]))
+            if extra_dsets_type is not None:
+                for key, val in extra_dsets.items():
+                    self.assertTrue(key in h5_chan_grp.keys())
+                    h5_dset = h5_chan_grp[key]
+                    self.assertIsInstance(h5_dset, h5py.Dataset)
+                    if extra_dsets_type == 'dask':
+                        val = val.compute()
+                    self.assertTrue(np.allclose(val, h5_dset[()]))
 
         os.remove(file_path)
 
