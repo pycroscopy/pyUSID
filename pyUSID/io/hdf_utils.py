@@ -18,6 +18,7 @@ import dask.array as da
 import socket
 from platform import platform
 
+from .reg_ref import clean_reg_ref
 from .write_utils import INDICES_DTYPE, VALUES_DTYPE, get_aux_dset_slicing, clean_string_att, make_indices_matrix, \
     Dimension, build_ind_val_matrices
 from .io_utils import get_time_stamp
@@ -33,8 +34,8 @@ __all__ = ['get_attr', 'get_h5_obj_refs', 'get_indices_for_region_ref', 'get_dim
            'copy_main_attributes', 'create_empty_dataset', 'check_for_old', 'get_source_dataset',
            'link_as_main', 'copy_reg_ref_reduced_dim', 'simple_region_ref_copy', 'write_book_keeping_attrs',
            'is_editable_h5', 'write_ind_val_dsets', 'write_reduced_spec_dsets',
-           'write_simple_attrs', 'write_main_dataset', 'attempt_reg_ref_build', 'write_region_references',
-           'assign_group_index', 'clean_reg_ref', 'create_results_group', 'create_indexed_group'
+           'write_simple_attrs', 'write_main_dataset', 'write_region_references',
+           'assign_group_index', 'create_results_group', 'create_indexed_group'
            ]
 
 if sys.version_info.major == 3:
@@ -2743,60 +2744,6 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
     return USIDataset(h5_main)
 
 
-def attempt_reg_ref_build(h5_dset, dim_names, verbose=False):
-    """
-
-    Parameters
-    ----------
-    h5_dset : h5.Dataset instance
-        Dataset to which region references need to be added as attributes
-    dim_names : list or tuple
-        List of the names of the region references (typically names of dimensions)
-    verbose : bool, optional. Default=False
-        Whether or not to print debugging statements
-
-    Returns
-    -------
-    labels_dict : dict
-        The slicing information must be formatted using tuples of slice objects.
-        For example {'region_1':(slice(None, None), slice (0,1))}
-    """
-    if not isinstance(h5_dset, h5py.Dataset):
-        raise TypeError('h5_dset should be a h5py.Dataset object but is instead of type '
-                        '{}.'.format(type(h5_dset)))
-    if not isinstance(dim_names, (list, tuple)):
-        raise TypeError('slices should be a list or tuple but is instead of type '
-                        '{}'.format(type(dim_names)))
-
-    if len(h5_dset.shape) != 2:
-        return dict()
-
-    if not np.all([isinstance(obj, (str, unicode)) for obj in dim_names]):
-        raise TypeError('Unable to automatically generate region references for dataset: {} since one or more names'
-                        ' of the region references was not a string'.format(h5_dset.name))
-
-    labels_dict = dict()
-    if len(dim_names) == h5_dset.shape[0]:
-        if verbose:
-            print('Most likely a spectroscopic indices / values dataset')
-        for dim_index, curr_name in enumerate(dim_names):
-            labels_dict[curr_name] = (slice(dim_index, dim_index + 1), slice(None))
-    elif len(dim_names) == h5_dset.shape[1]:
-        if verbose:
-            print('Most likely a position indices / values dataset')
-        for dim_index, curr_name in enumerate(dim_names):
-            labels_dict[curr_name] = (slice(None), slice(dim_index, dim_index + 1))
-
-    if len(labels_dict) > 0:
-        warn('Attempted to automatically build region reference dictionary for dataset: {}.\n'
-             'Please specify region references as a tuple of slice objects for each attribute'.format(h5_dset.name))
-    else:
-        if verbose:
-            print('Could not build region references since dataset had shape:{} and number of region references is '
-                  '{}'.format(h5_dset.shape, len(dim_names)))
-    return labels_dict
-
-
 def write_region_references(h5_dset, reg_ref_dict, add_labels_attr=True, verbose=False):
     """
     Creates attributes of a h5py.Dataset that refer to regions in the dataset
@@ -2866,56 +2813,3 @@ def write_region_references(h5_dset, reg_ref_dict, add_labels_attr=True, verbose
             print('Wrote Region References of Dataset %s' % (h5_dset.name.split('/')[-1]))
 
 
-def clean_reg_ref(h5_dset, reg_ref_tuple, verbose=False):
-    """
-    Makes sure that the provided instructions for a region reference are indeed valid
-    This method has become necessary since h5py allows the writing of region references larger than the maxshape
-
-    Parameters
-    ----------
-    h5_dset : h5.Dataset instance
-        Dataset to which region references will be added as attributes
-    reg_ref_tuple : list / tuple
-        The slicing information formatted using tuples of slice objects.
-    verbose : Boolean (Optional. Default = False)
-        Whether or not to print status messages
-
-    Returns
-    -------
-    is_valid : bool
-        Whether or not this
-    """
-    if not isinstance(reg_ref_tuple, (tuple, dict, slice)):
-        raise TypeError('slices should be a tuple, list, or slice but is instead of type '
-                        '{}'.format(type(reg_ref_tuple)))
-    if not isinstance(h5_dset, h5py.Dataset):
-        raise TypeError('h5_dset should be a h5py.Dataset object but is instead of type '
-                        '{}'.format(type(h5_dset)))
-
-    if isinstance(reg_ref_tuple, slice):
-        # 1D dataset
-        reg_ref_tuple = [reg_ref_tuple]
-
-    if len(reg_ref_tuple) != len(h5_dset.shape):
-        raise ValueError('Region reference tuple did not have the same dimensions as the h5 dataset')
-
-    if verbose:
-        print('Comparing {} with h5 dataset maxshape of {}'.format(reg_ref_tuple, h5_dset.maxshape))
-
-    new_reg_refs = list()
-
-    for reg_ref_slice, max_size in zip(reg_ref_tuple, h5_dset.maxshape):
-        if not isinstance(reg_ref_slice, slice):
-            raise TypeError('slices should be a tuple or a list but is instead of type '
-                            '{}'.format(type(reg_ref_slice)))
-
-        # For now we will simply make sure that the end of the slice is <= maxshape
-        if max_size is not None and reg_ref_slice.stop is not None:
-            reg_ref_slice = slice(reg_ref_slice.start, min(reg_ref_slice.stop, max_size), reg_ref_slice.step)
-
-        new_reg_refs.append(reg_ref_slice)
-
-    if verbose:
-        print('Region reference tuple now: {}'.format(new_reg_refs))
-
-    return tuple(new_reg_refs)
