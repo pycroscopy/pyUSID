@@ -12,30 +12,27 @@ import sys
 import h5py
 import collections
 from warnings import warn
-from collections import Iterable
 import numpy as np
 import dask.array as da
 import socket
 from platform import platform
 
-from .reg_ref import clean_reg_ref
+from .reg_ref import simple_region_ref_copy, copy_reg_ref_reduced_dim, create_region_reference,write_region_references
 from .write_utils import INDICES_DTYPE, VALUES_DTYPE, get_aux_dset_slicing, clean_string_att, make_indices_matrix, \
     Dimension, build_ind_val_matrices
 from .io_utils import get_time_stamp
 from .dtype_utils import contains_integers, validate_dtype
 from ..__version__ import version as py_usid_version
 
-__all__ = ['get_attr', 'get_h5_obj_refs', 'get_indices_for_region_ref', 'get_dimensionality', 'get_sort_order',
+__all__ = ['get_attr', 'get_h5_obj_refs', 'get_dimensionality', 'get_sort_order',
            'get_auxiliary_datasets', 'get_attributes', 'check_if_main', 'check_and_link_ancillary',
-           'copy_region_refs', 'get_all_main', 'get_unit_values', 'check_for_matching_attrs', 'create_region_reference',
-           'copy_attributes', 'reshape_to_n_dims', 'link_h5_objects_as_attrs',
+           'get_all_main', 'get_unit_values', 'check_for_matching_attrs', 'copy_attributes', 'reshape_to_n_dims', 'link_h5_objects_as_attrs',
            'link_h5_obj_as_alias', 'write_reduced_anc_dsets',
            'find_results_groups', 'reshape_from_n_dims', 'find_dataset', 'print_tree',
            'copy_main_attributes', 'create_empty_dataset', 'check_for_old', 'get_source_dataset',
-           'link_as_main', 'copy_reg_ref_reduced_dim', 'simple_region_ref_copy', 'write_book_keeping_attrs',
+           'link_as_main', 'write_book_keeping_attrs',
            'is_editable_h5', 'write_ind_val_dsets', 'write_reduced_spec_dsets',
-           'write_simple_attrs', 'write_main_dataset', 'write_region_references',
-           'assign_group_index', 'create_results_group', 'create_indexed_group'
+           'write_simple_attrs', 'write_main_dataset', 'assign_group_index', 'create_results_group', 'create_indexed_group'
            ]
 
 if sys.version_info.major == 3:
@@ -367,129 +364,6 @@ def find_results_groups(h5_main, tool_name):
     return groups
 
 
-def get_indices_for_region_ref(h5_main, ref, return_method='slices'):
-    """
-    Given an hdf5 region reference and the dataset it refers to,
-    return an array of indices within that dataset that
-    correspond to the reference.
-
-    Parameters
-    ----------
-    h5_main : HDF5 Dataset
-        dataset that the reference can be returned from
-    ref : HDF5 Region Reference
-        Region reference object
-    return_method : {'slices', 'corners', 'points'}
-        slices : the reference is return as pairs of slices
-
-        corners : the reference is returned as pairs of corners representing
-        the starting and ending indices of each block
-
-        points : the reference is returns as a list of tuples of points
-
-    Returns
-    -------
-    ref_inds : Numpy Array
-        array of indices in the source dataset that ref accesses
-
-    """
-    if not isinstance(h5_main, h5py.Dataset):
-        raise TypeError('h5_main should be a h5py.Dataset object')
-    if not isinstance(ref, h5py.RegionReference):
-        raise TypeError('ref should be a h5py.RegionReference object')
-    if return_method is not None:
-        if not isinstance(return_method, (str, unicode)):
-            raise TypeError('return_method should be a string')
-
-    if return_method == 'points':
-        def __corners_to_point_array(start, stop):
-            """
-            Convert a pair of tuples representing two opposite corners of an HDF5 region reference
-            into a list of arrays for each dimension.
-
-            Parameters
-            ----------
-            start : Tuple
-                the starting indices of the region
-            stop : Tuple
-                the final indices of the region
-
-            Returns
-            -------
-            inds : Tuple of arrays
-                the list of points in each dimension
-
-            """
-            ranges = []
-            for i in range(len(start)):
-                if start[i] == stop[i]:
-                    ranges.append([stop[i]])
-                else:
-                    ranges.append(np.arange(start[i], stop[i] + 1, dtype=np.uint))
-            grid = np.meshgrid(*ranges, indexing='ij')
-
-            ref_inds = np.asarray(zip(*(x.flat for x in grid)))
-
-            return ref_inds
-
-        return_func = __corners_to_point_array
-    elif return_method == 'corners':
-        def __corners_to_corners(start, stop):
-            return start, stop
-
-        return_func = __corners_to_corners
-    elif return_method == 'slices':
-        def __corners_to_slices(start, stop):
-            """
-            Convert a pair of tuples representing two opposite corners of an HDF5 region reference
-            into a pair of slices.
-
-            Parameters
-            ----------
-            start : Tuple
-                the starting indices of the region
-            stop : Tuple
-                the final indices of the region
-
-            Returns
-            -------
-            slices : list
-                pair of slices representing the region
-
-            """
-            slices = []
-            for idim in range(len(start)):
-                slices.append(slice(start[idim], stop[idim]))
-
-            return slices
-
-        return_func = __corners_to_slices
-
-    region = h5py.h5r.get_region(ref, h5_main.id)
-    reg_type = region.get_select_type()
-    if reg_type == 2:
-        """
-        Reference is hyperslabs
-        """
-        ref_inds = []
-        for start, end in region.get_select_hyper_blocklist():
-            ref_inds.append(return_func(start, end))
-        ref_inds = np.array(ref_inds).reshape(-1, len(start))
-
-    elif reg_type == 3:
-        """
-        Reference is single block
-        """
-        start, end = region.get_select_bounds()
-
-        ref_inds = return_func(start, end)
-    else:
-        warn('No method currently exists for converting this type of reference.')
-        ref_inds = np.empty(0)
-
-    return ref_inds
-
-
 def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
     """
     This function will add references to auxilliary datasets as attributes
@@ -570,45 +444,6 @@ def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
             __check_and_link_single(None, name)
 
     h5_dset.file.flush()
-
-
-def create_region_reference(h5_main, ref_inds):
-    """
-    Create a region reference in the destination dataset using an iterable of pairs of indices
-    representing the start and end points of a hyperslab block
-
-    Parameters
-    ----------
-    h5_main : HDF5 dataset
-        dataset the region will be created in
-    ref_inds : Iterable
-        index pairs, [start indices, final indices] for each block in the
-        hyperslab
-
-    Returns
-    -------
-    new_ref : HDF5 Region reference
-        reference in `h5_main` for the blocks of points defined by `ref_inds`
-
-    """
-    if not isinstance(h5_main, h5py.Dataset):
-        raise TypeError('h5_main should be a h5py.Dataset object')
-    if not isinstance(ref_inds, Iterable):
-        raise TypeError('ref_inds should be a list or tuple')
-
-    h5_space = h5_main.id.get_space()
-    h5_space.select_none()
-
-    for start, stop in ref_inds:
-        block = stop - start + 1
-        h5_space.select_hyperslab(tuple(start), (1, 1), block=tuple(block), op=1)
-
-    if not h5_space.select_valid():
-        warn('Could not create new region reference.')
-        return None
-    new_ref = h5py.h5r.create(h5_main.id, b'.', h5py.h5r.DATASET_REGION, space=h5_space)
-
-    return new_ref
 
 
 def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verbose=False, sort_dims=False,
@@ -1401,184 +1236,6 @@ def link_h5_obj_as_alias(h5_main, h5_ancillary, alias_name):
         raise TypeError('alias_name should be a string')
     alias_name = alias_name.strip()
     h5_main.attrs[alias_name] = h5_ancillary.ref
-
-
-def copy_region_refs(h5_source, h5_target):
-    """
-    Check the input dataset for plot groups, copy them if they exist
-    Also make references in the Spectroscopic Values and Indices tables
-
-    Parameters
-    ----------
-    h5_source : HDF5 Dataset
-            source dataset to copy references from
-    h5_target : HDF5 Dataset
-            target dataset the references from h5_source are copied to
-
-    """
-    '''
-    Check both h5_source and h5_target to ensure that are Main
-    '''
-    are_main = all([check_if_main(h5_source), check_if_main(h5_target)])
-    if not all([isinstance(h5_source, h5py.Dataset), isinstance(h5_target, h5py.Dataset)]):
-        raise TypeError('Inputs to copyRegionRefs must be HDF5 Datasets or PycroDatasets.')
-
-    if are_main:
-        h5_source_inds = h5_source.file[h5_source.attrs['Spectroscopic_Indices']]
-
-        h5_spec_inds = h5_target.file[h5_target.attrs['Spectroscopic_Indices']]
-        h5_spec_vals = h5_target.file[h5_target.attrs['Spectroscopic_Values']]
-
-    for key in h5_source.attrs.keys():
-        if not isinstance(h5_source.attrs[key], h5py.RegionReference):
-            continue
-
-        if are_main:
-            if h5_source_inds.shape[0] == h5_spec_inds.shape[0]:
-                '''
-                Spectroscopic dimensions are identical.
-                Do direct copy.
-                '''
-                ref_inds = simple_region_ref_copy(h5_source, h5_target, key)
-
-            else:
-                '''
-                Spectroscopic dimensions are different.
-                Do the dimension reducing copy.
-                '''
-                ref_inds = copy_reg_ref_reduced_dim(h5_source, h5_target, h5_source_inds, h5_spec_inds, key)
-
-            '''
-            Create references for Spectroscopic Indices and Values
-            Set the end-point of each hyperslab in the position dimension to the number of
-            rows in the index array
-            '''
-
-            ref_inds[:, 1, 0][ref_inds[:, 1, 0] > h5_spec_inds.shape[0]] = h5_spec_inds.shape[0] - 1
-            spec_inds_ref = create_region_reference(h5_spec_inds, ref_inds)
-            h5_spec_inds.attrs[key] = spec_inds_ref
-            spec_vals_ref = create_region_reference(h5_spec_vals, ref_inds)
-            h5_spec_vals.attrs[key] = spec_vals_ref
-
-        else:
-            '''
-            If not main datasets, then only simple copy can be used.
-            '''
-            simple_region_ref_copy(h5_source, h5_target, key)
-
-
-def copy_reg_ref_reduced_dim(h5_source, h5_target, h5_source_inds, h5_target_inds, key):
-    """
-    Copies a region reference from one dataset to another taking into account that a dimension
-    has been lost from source to target
-
-    Parameters
-    ----------
-    h5_source : HDF5 Dataset
-            source dataset for region reference copy
-    h5_target : HDF5 Dataset
-            target dataset for region reference copy
-    h5_source_inds : HDF5 Dataset
-            indices of each dimension of the h5_source dataset
-    h5_target_inds : HDF5 Dataset
-            indices of each dimension of the h5_target dataset
-    key : String
-            Name of attribute in h5_source that contains
-            the Region Reference to copy
-
-    Returns
-    -------
-    ref_inds : Nx2x2 array of unsigned integers
-            Array containing pairs of points that define
-            the corners of each hyperslab in the region
-            reference
-
-    """
-    for param, param_name in zip([h5_source, h5_target, h5_source_inds, h5_target_inds],
-                                 ['h5_source', 'h5_target', 'h5_source_inds', 'h5_target_inds']):
-        if not isinstance(param, h5py.Dataset):
-            raise TypeError(param_name + ' should be a h5py.Dataset object')
-    if not isinstance(key, (str, unicode)):
-        raise TypeError('key should be a string')
-    key = key.strip()
-
-    '''
-    Determine which dimension is missing from the target
-    '''
-    lost_dim = []
-    for dim in h5_source_inds.attrs['labels']:
-        if dim not in h5_target_inds.attrs['labels']:
-            lost_dim.append(np.where(h5_source_inds.attrs['labels'] == dim)[0])
-    ref = h5_source.attrs[key]
-    ref_inds = get_indices_for_region_ref(h5_source, ref, return_method='corners')
-    '''
-    Convert to proper spectroscopic dimensions
-    First is special case for a region reference that spans the entire dataset
-    '''
-    if len(ref_inds.shape) == 2 and all(ref_inds[0] == [0, 0]) and all(ref_inds[1] + 1 == h5_source.shape):
-        ref_inds[1, 1] = h5_target.shape[1] - 1
-        ref_inds = np.expand_dims(ref_inds, 0)
-    else:
-        '''
-    More common case of reference made of hyperslabs
-        '''
-        spec_ind_zeroes = np.where(h5_source_inds[lost_dim] == 0)[1]
-
-        ref_inds = ref_inds.reshape([-1, 2, 2])
-
-        for start, stop in ref_inds[:-1]:
-            start[1] = np.where(start[1] == spec_ind_zeroes)[0]
-            stop[1] = np.where(stop[1] == spec_ind_zeroes - 1)[0] - 1
-
-        ref_inds[-1, 0, 1] = np.where(ref_inds[-1, 0, 1] == spec_ind_zeroes)[0]
-        stop = np.where(ref_inds[-1, 1, 1] == spec_ind_zeroes - 1)[0]
-        if stop.size == 0:
-            stop = len(spec_ind_zeroes)
-        ref_inds[-1, 1, 1] = stop - 1
-    '''
-    Create the new reference from the indices
-    '''
-    h5_target.attrs[key] = create_region_reference(h5_target, ref_inds)
-
-    return ref_inds
-
-
-def simple_region_ref_copy(h5_source, h5_target, key):
-    """
-    Copies a region reference from one dataset to another
-    without alteration
-
-    Parameters
-    ----------
-    h5_source : HDF5 Dataset
-            source dataset for region reference copy
-    h5_target : HDF5 Dataset
-            target dataset for region reference copy
-    key : String
-            Name of attribute in h5_source that contains
-            the Region Reference to copy
-
-    Returns
-    -------
-    ref_inds : Nx2x2 array of unsigned integers
-            Array containing pairs of points that define
-            the corners of each hyperslab in the region
-            reference
-
-    """
-    for param, param_name in zip([h5_source, h5_target], ['h5_source', 'h5_target']):
-        if not isinstance(param, h5py.Dataset):
-            raise TypeError(param_name + ' should be a h5py.Dataset object')
-    if not isinstance(key, (str, unicode)):
-        raise TypeError('key should be a string')
-
-    ref = h5_source.attrs[key]
-    ref_inds = get_indices_for_region_ref(h5_source, ref, return_method='corners')
-    ref_inds = ref_inds.reshape([-1, 2, 2])
-    ref_inds[:, 1, 1] = h5_target.shape[1] - 1
-    target_ref = create_region_reference(h5_target, ref_inds)
-    h5_target.attrs[key] = target_ref
-    return ref_inds
 
 
 def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals, anc_dsets=None):
@@ -2744,72 +2401,65 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
     return USIDataset(h5_main)
 
 
-def write_region_references(h5_dset, reg_ref_dict, add_labels_attr=True, verbose=False):
+def copy_region_refs(h5_source, h5_target):
     """
-    Creates attributes of a h5py.Dataset that refer to regions in the dataset
+    Check the input dataset for plot groups, copy them if they exist
+    Also make references in the Spectroscopic Values and Indices tables
 
     Parameters
     ----------
-    h5_dset : h5.Dataset instance
-        Dataset to which region references will be added as attributes
-    reg_ref_dict : dict
-        The slicing information must be formatted using tuples of slice objects.
-        For example {'region_1':(slice(None, None), slice (0,1))}
-    add_labels_attr : bool, optional, default = True
-        Whether or not to write an attribute named 'labels' with the
-    verbose : Boolean (Optional. Default = False)
-        Whether or not to print status messages
+    h5_source : HDF5 Dataset
+            source dataset to copy references from
+    h5_target : HDF5 Dataset
+            target dataset the references from h5_source are copied to
+
     """
-    if not isinstance(reg_ref_dict, dict):
-        raise TypeError('slices should be a dictionary but is instead of type '
-                        '{}'.format(type(reg_ref_dict)))
-    if not isinstance(h5_dset, h5py.Dataset):
-        raise TypeError('h5_dset should be a h5py.Dataset object but is instead of type '
-                        '{}'.format(type(h5_dset)))
-
-    if verbose:
-        print('Starting to write Region References to Dataset', h5_dset.name, 'of shape:', h5_dset.shape)
-    for reg_ref_name, reg_ref_tuple in reg_ref_dict.items():
-        if verbose:
-            print('About to write region reference:', reg_ref_name, ':', reg_ref_tuple)
-
-        reg_ref_tuple = clean_reg_ref(h5_dset, reg_ref_tuple, verbose=verbose)
-
-        h5_dset.attrs[reg_ref_name] = h5_dset.regionref[reg_ref_tuple]
-
-        if verbose:
-            print('Wrote Region Reference:%s' % reg_ref_name)
-
     '''
-    Next, write these label names as an attribute called labels
-    Now make an attribute called 'labels' that is a list of strings 
-    First ascertain the dimension of the slicing:
+    Check both h5_source and h5_target to ensure that are Main
     '''
-    if add_labels_attr:
-        found_dim = False
-        dimen_index = None
+    are_main = all([check_if_main(h5_source), check_if_main(h5_target)])
+    if not all([isinstance(h5_source, h5py.Dataset), isinstance(h5_target, h5py.Dataset)]):
+        raise TypeError('Inputs to copyRegionRefs must be HDF5 Datasets or PycroDatasets.')
 
-        for key, val in reg_ref_dict.items():
-            if not isinstance(val, (list, tuple)):
-                reg_ref_dict[key] = [val]
+    if are_main:
+        h5_source_inds = h5_source.file[h5_source.attrs['Spectroscopic_Indices']]
 
-        for dimen_index, slice_obj in enumerate(list(reg_ref_dict.values())[0]):
-            # We make the assumption that checking the start is sufficient
-            if slice_obj.start is not None:
-                found_dim = True
-                break
-        if found_dim:
-            headers = [None] * len(reg_ref_dict)  # The list that will hold all the names
-            for col_name in reg_ref_dict.keys():
-                headers[reg_ref_dict[col_name][dimen_index].start] = col_name
-            if verbose:
-                print('Writing header attributes: {}'.format('labels'))
-            # Now write the list of col / row names as an attribute:
-            h5_dset.attrs['labels'] = clean_string_att(headers)
+        h5_spec_inds = h5_target.file[h5_target.attrs['Spectroscopic_Indices']]
+        h5_spec_vals = h5_target.file[h5_target.attrs['Spectroscopic_Values']]
+
+    for key in h5_source.attrs.keys():
+        if not isinstance(h5_source.attrs[key], h5py.RegionReference):
+            continue
+
+        if are_main:
+            if h5_source_inds.shape[0] == h5_spec_inds.shape[0]:
+                '''
+                Spectroscopic dimensions are identical.
+                Do direct copy.
+                '''
+                ref_inds = simple_region_ref_copy(h5_source, h5_target, key)
+
+            else:
+                '''
+                Spectroscopic dimensions are different.
+                Do the dimension reducing copy.
+                '''
+                ref_inds = copy_reg_ref_reduced_dim(h5_source, h5_target, h5_source_inds, h5_spec_inds, key)
+
+            '''
+            Create references for Spectroscopic Indices and Values
+            Set the end-point of each hyperslab in the position dimension to the number of
+            rows in the index array
+            '''
+
+            ref_inds[:, 1, 0][ref_inds[:, 1, 0] > h5_spec_inds.shape[0]] = h5_spec_inds.shape[0] - 1
+            spec_inds_ref = create_region_reference(h5_spec_inds, ref_inds)
+            h5_spec_inds.attrs[key] = spec_inds_ref
+            spec_vals_ref = create_region_reference(h5_spec_vals, ref_inds)
+            h5_spec_vals.attrs[key] = spec_vals_ref
+
         else:
-            warn('Unable to write region references for %s' % (h5_dset.name.split('/')[-1]))
-
-        if verbose:
-            print('Wrote Region References of Dataset %s' % (h5_dset.name.split('/')[-1]))
-
-
+            '''
+            If not main datasets, then only simple copy can be used.
+            '''
+            simple_region_ref_copy(h5_source, h5_target, key)
