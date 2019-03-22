@@ -72,7 +72,7 @@ class ArrayTranslator(Translator):
                                  ['h5_path', 'data_name', 'translator_name', 'quantity', 'units']):
             if not isinstance(arg, (str, unicode)):
                 raise TypeError('{} should be of type - str; was of type - {}'.format(arg_name, type(arg)))
-            if not len(arg.strip()) == 0:
+            if len(arg.strip()) == 0:
                 raise ValueError('{} should not be an empty string'.format(arg_name))
 
         if not isinstance(raw_data, (np.ndarray, da.core.Array)):
