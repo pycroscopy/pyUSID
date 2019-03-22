@@ -10,6 +10,7 @@ import os
 import sys
 import h5py
 import numpy as np
+from .data_utils import validate_aux_dset_pair
 sys.path.append("../../pyUSID/")
 from pyUSID.io import NumpyTranslator, write_utils, hdf_utils, USIDataset
 
@@ -23,40 +24,6 @@ class TestNumpyTranslator(unittest.TestCase):
     def __delete_existing_file(file_path):
         if os.path.exists(file_path):
             os.remove(file_path)
-
-    def __validate_aux_dset_pair(self, h5_group, h5_inds, h5_vals, dim_names, dim_units, inds_matrix,
-                                 vals_matrix=None, base_name=None, h5_main=None, is_spectral=True):
-        if vals_matrix is None:
-            vals_matrix = inds_matrix
-        if base_name is None:
-            if is_spectral:
-                base_name = 'Spectroscopic'
-            else:
-                base_name = 'Position'
-        else:
-            self.assertIsInstance(base_name, (str, unicode))
-
-        for h5_dset, exp_dtype, exp_name, ref_data in zip([h5_inds, h5_vals],
-                                                          [write_utils.INDICES_DTYPE, write_utils.VALUES_DTYPE],
-                                                          [base_name + '_Indices', base_name + '_Values'],
-                                                          [inds_matrix, vals_matrix]):
-            if isinstance(h5_main, h5py.Dataset):
-                self.assertEqual(h5_main.file[h5_main.attrs[exp_name]], h5_dset)
-            self.assertIsInstance(h5_dset, h5py.Dataset)
-            self.assertEqual(h5_dset.parent, h5_group)
-            self.assertEqual(h5_dset.name.split('/')[-1], exp_name)
-            self.assertTrue(np.allclose(ref_data, h5_dset[()]))
-            self.assertEqual(h5_dset.dtype, exp_dtype)
-            self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
-            self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
-            self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
-            # assert region references
-            for dim_ind, curr_name in enumerate(dim_names):
-                expected = np.squeeze(ref_data[:, dim_ind])
-                if is_spectral:
-                    expected = np.squeeze(ref_data[dim_ind])
-                self.assertTrue(np.allclose(expected,
-                                            np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
 
     def test_legal_translation(self):
         data_name = 'TestDataType'
@@ -134,10 +101,10 @@ class TestNumpyTranslator(unittest.TestCase):
             self.assertEqual(pycro_main.parent, h5_chan_grp)
             self.assertTrue(np.allclose(main_data, pycro_main[()]))
 
-            self.__validate_aux_dset_pair(h5_chan_grp, pycro_main.h5_pos_inds, pycro_main.h5_pos_vals, pos_names, pos_units,
+            validate_aux_dset_pair(self, h5_chan_grp, pycro_main.h5_pos_inds, pycro_main.h5_pos_vals, pos_names, pos_units,
                                           pos_data, h5_main=pycro_main, is_spectral=False)
 
-            self.__validate_aux_dset_pair(h5_chan_grp, pycro_main.h5_spec_inds, pycro_main.h5_spec_vals, spec_names,
+            validate_aux_dset_pair(self, h5_chan_grp, pycro_main.h5_spec_inds, pycro_main.h5_spec_vals, spec_names,
                                           spec_units,
                                           spec_data, h5_main=pycro_main, is_spectral=True)
 

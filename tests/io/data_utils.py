@@ -5,6 +5,10 @@ import h5py
 import numpy as np
 from io import StringIO
 from contextlib import contextmanager
+import sys
+sys.path.append("../../pyUSID/")
+from pyUSID.io.hdf_utils import get_attr
+from pyUSID.io.write_utils import INDICES_DTYPE, VALUES_DTYPE
 
 std_beps_path = 'test_hdf_utils.h5'
 sparse_sampling_path = 'sparse_sampling.h5'
@@ -76,6 +80,41 @@ def capture_stdout():
     finally:
         # Restore the normal stdout
         sys.stdout = sys.__stdout__
+
+
+def validate_aux_dset_pair(test_class, h5_group, h5_inds, h5_vals, dim_names, dim_units, inds_matrix,
+                           vals_matrix=None, base_name=None, h5_main=None, is_spectral=True):
+    if vals_matrix is None:
+        vals_matrix = inds_matrix
+    if base_name is None:
+        if is_spectral:
+            base_name = 'Spectroscopic'
+        else:
+            base_name = 'Position'
+    else:
+        test_class.assertIsInstance(base_name, (str, unicode))
+
+    for h5_dset, exp_dtype, exp_name, ref_data in zip([h5_inds, h5_vals],
+                                                      [INDICES_DTYPE, VALUES_DTYPE],
+                                                      [base_name + '_Indices', base_name + '_Values'],
+                                                      [inds_matrix, vals_matrix]):
+        if isinstance(h5_main, h5py.Dataset):
+            test_class.assertEqual(h5_main.file[h5_main.attrs[exp_name]], h5_dset)
+        test_class.assertIsInstance(h5_dset, h5py.Dataset)
+        test_class.assertEqual(h5_dset.parent, h5_group)
+        test_class.assertEqual(h5_dset.name.split('/')[-1], exp_name)
+        test_class.assertTrue(np.allclose(ref_data, h5_dset[()]))
+        test_class.assertEqual(h5_dset.dtype, exp_dtype)
+        test_class.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
+        test_class.assertTrue(np.all([x == y for x, y in zip(dim_names, get_attr(h5_dset, 'labels'))]))
+        test_class.assertTrue(np.all([x == y for x, y in zip(dim_units, get_attr(h5_dset, 'units'))]))
+        # assert region references
+        for dim_ind, curr_name in enumerate(dim_names):
+            expected = np.squeeze(ref_data[:, dim_ind])
+            if is_spectral:
+                expected = np.squeeze(ref_data[dim_ind])
+            test_class.assertTrue(np.allclose(expected,
+                                              np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
 
 
 def make_sparse_sampling_file():

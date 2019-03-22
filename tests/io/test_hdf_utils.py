@@ -490,40 +490,6 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(len(main_dsets), len(expected_dsets))
             self.assertTrue(np.all([x.name == y.name for x, y in zip(main_dsets, expected_dsets)]))
 
-    def __validate_aux_dset_pair(self, h5_group, h5_inds, h5_vals, dim_names, dim_units, inds_matrix,
-                                 vals_matrix=None, base_name=None, h5_main=None, is_spectral=True):
-        if vals_matrix is None:
-            vals_matrix = inds_matrix
-        if base_name is None:
-            if is_spectral:
-                base_name = 'Spectroscopic'
-            else:
-                base_name = 'Position'
-        else:
-            self.assertIsInstance(base_name, (str, unicode))
-
-        for h5_dset, exp_dtype, exp_name, ref_data in zip([h5_inds, h5_vals],
-                                                          [write_utils.INDICES_DTYPE, write_utils.VALUES_DTYPE],
-                                                          [base_name + '_Indices', base_name + '_Values'],
-                                                          [inds_matrix, vals_matrix]):
-            if isinstance(h5_main, h5py.Dataset):
-                self.assertEqual(h5_main.file[h5_main.attrs[exp_name]], h5_dset)
-            self.assertIsInstance(h5_dset, h5py.Dataset)
-            self.assertEqual(h5_dset.parent, h5_group)
-            self.assertEqual(h5_dset.name.split('/')[-1], exp_name)
-            self.assertTrue(np.allclose(ref_data, h5_dset[()]))
-            self.assertEqual(h5_dset.dtype, exp_dtype)
-            self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
-            self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
-            self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
-            # assert region references
-            for dim_ind, curr_name in enumerate(dim_names):
-                expected = np.squeeze(ref_data[:, dim_ind])
-                if is_spectral:
-                    expected = np.squeeze(ref_data[dim_ind])
-                self.assertTrue(np.allclose(expected,
-                                            np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
-
     def test_write_ind_val_dsets_legal_bare_minimum_pos(self):
         num_cols = 3
         num_rows = 2
@@ -542,8 +508,8 @@ class TestHDFUtils(unittest.TestCase):
         with h5py.File(file_path, mode='w') as h5_f:
             h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_f, descriptor, is_spectral=False)
 
-            self. __validate_aux_dset_pair(h5_f, h5_inds, h5_vals, dim_names, dim_units, pos_data,
-                                           is_spectral=False)
+            data_utils.validate_aux_dset_pair(self,h5_f, h5_inds, h5_vals, dim_names, dim_units, pos_data,
+                                              is_spectral=False)
 
         os.remove(file_path)
 
@@ -566,7 +532,7 @@ class TestHDFUtils(unittest.TestCase):
             h5_group = h5_f.create_group("Blah")
             h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_group, descriptor, is_spectral=True)
 
-            self.__validate_aux_dset_pair(h5_group, h5_inds, h5_vals, dim_names, dim_units, spec_data,
+            data_utils.validate_aux_dset_pair(self, h5_group, h5_inds, h5_vals, dim_names, dim_units, spec_data,
                                           is_spectral=True)
         os.remove(file_path)
 
@@ -597,7 +563,7 @@ class TestHDFUtils(unittest.TestCase):
             h5_group = h5_f.create_group("Blah")
             h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_group, descriptor, is_spectral=True,
                                                              base_name=new_base_name)
-            self.__validate_aux_dset_pair(h5_group, h5_inds, h5_vals, dim_names, dim_units, spec_inds,
+            data_utils.validate_aux_dset_pair(self, h5_group, h5_inds, h5_vals, dim_names, dim_units, spec_inds,
                                           vals_matrix=spec_vals, base_name=new_base_name, is_spectral=True)
         os.remove(file_path)
 
@@ -656,10 +622,10 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(usid_main.parent, h5_f)
             self.assertTrue(np.allclose(main_data, usid_main[()]))
 
-            self.__validate_aux_dset_pair(h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
+            data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
                                           pos_data, h5_main=usid_main, is_spectral=False)
 
-            self.__validate_aux_dset_pair(h5_f, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names, spec_units,
+            data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names, spec_units,
                                           spec_data, h5_main=usid_main, is_spectral=True)
         os.remove(file_path)
 
@@ -699,10 +665,10 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(usid_main.parent, h5_f)
             self.assertTrue(np.allclose(main_data, usid_main[()]))
 
-            self.__validate_aux_dset_pair(h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
+            data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
                                           pos_data, h5_main=usid_main, is_spectral=False)
 
-            self.__validate_aux_dset_pair(h5_f, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names, spec_units,
+            data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names, spec_units,
                                           spec_data, h5_main=usid_main, is_spectral=True)
         os.remove(file_path)
 
@@ -741,10 +707,10 @@ class TestHDFUtils(unittest.TestCase):
             self.assertEqual(usid_main.parent, h5_f)
             self.assertEqual(main_data, usid_main.shape)
 
-            self.__validate_aux_dset_pair(h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
+            data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
                                           pos_data, h5_main=usid_main, is_spectral=False)
 
-            self.__validate_aux_dset_pair(h5_f, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names, spec_units,
+            data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names, spec_units,
                                           spec_data, h5_main=usid_main, is_spectral=True)
         os.remove(file_path)
 
@@ -776,14 +742,14 @@ class TestHDFUtils(unittest.TestCase):
 
         with h5py.File(file_path) as h5_f:
             h5_spec_inds, h5_spec_vals = hdf_utils.write_ind_val_dsets(h5_f, spec_dims, is_spectral=True)
-            self.__validate_aux_dset_pair(h5_f, h5_spec_inds, h5_spec_vals, spec_names, spec_units, spec_data,
+            data_utils.validate_aux_dset_pair(self,h5_f, h5_spec_inds, h5_spec_vals, spec_names, spec_units, spec_data,
                                           is_spectral=True)
 
             usid_main = hdf_utils.write_main_dataset(h5_f, main_data, main_data_name, quantity, dset_units, pos_dims,
                                                       None, h5_spec_inds=h5_spec_inds, h5_spec_vals=h5_spec_vals,
                                                       main_dset_attrs=None)
 
-            self.__validate_aux_dset_pair(h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
+            data_utils.validate_aux_dset_pair(self,h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
                                           pos_data, h5_main=usid_main, is_spectral=False)
 
         os.remove(file_path)
@@ -823,10 +789,10 @@ class TestHDFUtils(unittest.TestCase):
                                                       h5_pos_vals=h5_pos_vals, h5_pos_inds=h5_pos_inds,
                                                       main_dset_attrs=None)
 
-            self.__validate_aux_dset_pair(h5_f, h5_pos_inds, h5_pos_vals, pos_names, pos_units,
+            data_utils.validate_aux_dset_pair(self,h5_f, h5_pos_inds, h5_pos_vals, pos_names, pos_units,
                                           pos_data, h5_main=usid_main, is_spectral=False)
 
-            self.__validate_aux_dset_pair(h5_f, h5_spec_inds, h5_spec_vals, spec_names,spec_units,
+            data_utils.validate_aux_dset_pair(self,h5_f, h5_spec_inds, h5_spec_vals, spec_names,spec_units,
                                           spec_data, h5_main=usid_main, is_spectral=True)
         os.remove(file_path)
 
