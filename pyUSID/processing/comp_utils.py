@@ -87,7 +87,7 @@ def group_ranks_by_socket(verbose=False):
     return master_ranks
 
 
-def parallel_compute(data, func, cores=1, lengthy_computation=False, func_args=None, func_kwargs=None, verbose=False):
+def parallel_compute(data, func, cores=None, lengthy_computation=False, func_args=None, func_kwargs=None, verbose=False):
     """
     Computes the provided function using multiple cores using the joblib library
 
@@ -99,7 +99,8 @@ def parallel_compute(data, func, cores=1, lengthy_computation=False, func_args=N
         Function to map to data
     cores : uint, optional
         Number of logical cores to use to compute
-        Default - 1 (serial computation). Ignored in the MPI context - each rank will execute serially
+        Default - All cores - 1 (total cores <= 4) or - 2 (cores > 4) depending on number of cores. 
+        Ignored in the MPI context - each rank will execute serially
     lengthy_computation : bool, optional
         Whether or not each computation is expected to take substantial time.
         Sometimes the time for adding more cores can outweigh the time per core
