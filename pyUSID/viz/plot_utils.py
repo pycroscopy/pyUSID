@@ -1095,7 +1095,7 @@ def plot_scree(scree, title='Scree', **kwargs):
 
 
 def plot_map_stack(map_stack, num_comps=9, stdevs=2, color_bar_mode=None, evenly_spaced=False, reverse_dims=False,
-                   subtitle='Component', title='Map Stack', colorbar_label='', fig_mult=(5, 5), pad_mult=(0.1, 0.07),
+                   subtitle='Component', title=None, colorbar_label='', fig_mult=(5, 5), pad_mult=(0.1, 0.07),
                    x_label=None, y_label=None, title_yoffset=None, title_size=None, **kwargs):
     """
     Plots the provided stack of maps
@@ -1104,32 +1104,34 @@ def plot_map_stack(map_stack, num_comps=9, stdevs=2, color_bar_mode=None, evenly
     -------------
     map_stack : 3D real numpy array
         structured as [component, rows, cols]
-    num_comps : unsigned int
+    num_comps : int, Optional
         Number of components to plot
-    stdevs : int
-        Number of standard deviations to consider for plotting
+    stdevs : int, Optional
+        Number of standard deviations to consider for plotting. Set to None if no clipping is desired
     color_bar_mode : String, Optional
         Options are None, single or each. Default None
-    evenly_spaced : bool
-        Default False
-    reverse_dims : Boolean (Optional), default = False
+    evenly_spaced : bool, Optional. Default = False
+        If set to True - The slices / component will be selected at intervals from the first to last
+        If set to False - The first ``num_comps`` images will be plotted instead
+    reverse_dims : bool, Optional. Default = False
         Set this to True to accept data structured as [rows, cols, component]
     subtitle : String or list of strings
         The titles for each of the plots.
         If a single string is provided, the plot titles become ['title 01', title 02', ...].
         if a list of strings (equal to the number of components) are provided, these are used instead.
-    title : String
-        ###Insert description here### Default 'Map Stack'
-    colorbar_label : String
+    title : str, Optinal
+        Title for the plot grid that will appear at the top
+    colorbar_label : str, Optional
         label for colorbar. Default is an empty string.
     fig_mult : length 2 array_like of uints
         Size multipliers for the figure.  Figure size is calculated as (num_rows*`fig_mult[0]`, num_cols*`fig_mult[1]`).
         Default (4, 4)
-    pad_mult : length 2 array_like of floats
+    pad_mult : tuple, list, array-like, Optional
+        Array-like of floats of length 2.
         Multipliers for the axis padding between plots in the stack.  Padding is calculated as
         (pad_mult[0]*fig_mult[1], pad_mult[1]*fig_mult[0]) for the width and height padding respectively.
         Default (0.1, 0.07)
-    x_label : (optional) String
+    x_label : str, Optional
         X Label for all plots
     y_label : (optional) String
         Y label for all plots
