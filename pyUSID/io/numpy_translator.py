@@ -142,7 +142,7 @@ class ArrayTranslator(Translator):
 
             for key, val in extra_dsets.items():
                 if isinstance(val, da.core.Array):
-                    da.to_hdf5(chan_grp.file.filename, {chan_grp + '/' + key: val})
+                    da.to_hdf5(chan_grp.file.filename, {chan_grp.name + '/' + key: val})
                 else:
                     chan_grp.create_dataset(key.strip(), data=val)
 
