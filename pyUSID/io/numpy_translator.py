@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-:class:`~pyUSID.io.numpy_translator.NumpyTranslator` capable of translating numeric arrays to USID HDF5 files
+:class:`~pyUSID.io.numpy_translator.ArrayTranslator` capable of translating numeric arrays to USID HDF5 files
 
 Created on Fri Jan 27 17:58:35 2017
 
@@ -30,43 +30,47 @@ class ArrayTranslator(Translator):
     """
 
     def translate(self, h5_path, data_name, raw_data, quantity, units, pos_dims, spec_dims,
-                  translator_name='NumpyTranslator', parm_dict=None, extra_dsets=None, **kwargs):
+                  translator_name='ArrayTranslator', parm_dict=None, extra_dsets=None, **kwargs):
         """
         Writes the provided datasets and parameters to an h5 file
 
         Parameters
         ----------
-        h5_path : String / Unicode
+        h5_path : str
             Absolute path of the h5 file to be written
-        data_name : String / Unicode
+        data_name : str
             Name of the scientific data type. Example - 'SEM'
-        raw_data : :class:``np.ndarray` or :class:`dask.array.core.Array`
+        raw_data : :class:`np.ndarray` or :class:`dask.array.core.Array`
             2D matrix formatted as [position, spectral]
-        quantity : String / Unicode
+        quantity : str
             Name of the physical quantity stored in the dataset. Example - 'Current'
-        units : String / Unicode
+        units : str
             Name of units for the quantity stored in the dataset. Example - 'A' for amperes
-        pos_dims : Dimension or array-like of Dimension objects
-            Sequence of Dimension objects that provides all necessary instructions for constructing the
-            indices and values datasets
+        pos_dims : :class:`~pyUSID.io.write_utils.Dimension` or array-like of :class:`~pyUSID.io.write_utils.Dimension`
+            objects
+            Sequence of :class:`~pyUSID.io.write_utils.Dimension` objects that provides all necessary instructions for
+            constructing the indices and values datasets
             Object specifying the instructions necessary for building the Position indices and values datasets
-        spec_dims : Dimension or array-like of Dimension objects
-            Sequence of Dimension objects that provides all necessary instructions for constructing the
-            indices and values datasets
+        spec_dims : :class:`~pyUSID.io.write_utils.Dimension` or array-like of :class:`~pyUSID.io.write_utils.Dimension`
+            objects
+            Sequence of :class:`~pyUSID.io.write_utils.Dimension` objects that provides all necessary instructions for
+            constructing the indices and values datasets
             Object specifying the instructions necessary for building the Spectroscopic indices and values datasets
-        translator_name : str / unicode, Optional
+        translator_name : str, Optional
             Name of the translator. Example - 'HitachiSEMTranslator'
         parm_dict : dict, Optional
             Dictionary of parameters that will be written under the group 'Measurement_000'
         extra_dsets : dict, Optional
             Dictionary whose values will be written into individual HDF5 datasets and whose corresponding keys provide
             the names of the datasets. You are recommended to limit these to simple and small datasets.
-        kwargs: will be passed onto hdf_utils.write_main_dset() which will in turn will be passed onto the creation of
-            the dataset. Please pass chunking, compression, dtype, and other arguments this way
+        kwargs: dict, Optional.
+            Additional keyword arguments that will be passed onto :meth:`pyUSID.hdf_utils.write_main_dset()` which will
+            in turn will be passed onto the creation of the dataset. Please pass chunking, compression, dtype, and other
+            arguments this way
 
         Returns
         -------
-        h5_path : String / unicode
+        h5_path : str
             Absolute path of the written h5 file
 
         """
