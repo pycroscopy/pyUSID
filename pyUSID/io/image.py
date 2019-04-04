@@ -14,7 +14,7 @@ import h5py
 import numpy as np
 from PIL import Image
 
-from .numpy_translator import NumpyTranslator
+from .numpy_translator import ArrayTranslator
 from .write_utils import Dimension
 from .hdf_utils import write_simple_attrs
 
@@ -22,7 +22,7 @@ if sys.version_info.major == 3:
     unicode = str
 
 
-class ImageTranslator(NumpyTranslator):
+class ImageTranslator(ArrayTranslator):
     """
     Translates data from an image file to an HDF5 file
     """
@@ -162,7 +162,7 @@ class ImageTranslator(NumpyTranslator):
 
         h5_path = super(ImageTranslator, self).translate(h5_path, 'Raw_Data', image.reshape((-1, 1)),
                                                          'Intensity', 'a.u.', pos_dims, spec_dims,
-                                                         translator_name='Image', parm_dict=image_parms)
+                                                         translator_name='ImageTranslator', parm_dict=image_parms)
 
         with h5py.File(h5_path, mode='r+') as h5_f:
 
