@@ -1561,6 +1561,10 @@ def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals, 
     anc_dsets : (Optional) list of h5py.Dataset objects
         Datasets that will be linked with their own names
 
+    Returns
+    -------
+    h5_main : USIDataset
+        The provided main dataset expressed as a USIDataset object instead of a plain h5py.Dataset object
     """
     # TODO: Make sure that the dimensions of spec and pos match with the data!
     for param, param_name in zip([h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals],
@@ -1588,6 +1592,9 @@ def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals, 
 
         for dset in anc_dsets:
             link_h5_objects_as_attrs(h5_main, dset)
+
+    from .usi_data import USIDataset
+    return USIDataset(h5_main)
 
 
 def copy_main_attributes(h5_main, h5_new):
