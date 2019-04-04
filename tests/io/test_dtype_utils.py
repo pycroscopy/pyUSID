@@ -74,6 +74,16 @@ class TestDtypeUtils(unittest.TestCase):
         with self.assertRaises(TypeError):
             _ = dtype_utils.contains_integers(14)
 
+    def test_contains_integers_illegal_min_val(self):
+        with self.assertRaises(TypeError):
+            _ = dtype_utils.contains_integers([1, 2, 3, 4], min_val='hello')
+
+        with self.assertRaises(TypeError):
+            _ = dtype_utils.contains_integers([1, 2, 3, 4], min_val=[1, 2])
+
+        with self.assertRaises(ValueError):
+            _ = dtype_utils.contains_integers([1, 2, 3, 4], min_val=1.234)
+
     def test_integers_to_slices_illegal(self):
         with self.assertRaises(TypeError):
             dtype_utils.integers_to_slices(slice(1, 15))
@@ -158,6 +168,13 @@ class TestDtypeUtils(unittest.TestCase):
             actual = dtype_utils.stack_real_to_complex(h5_real)
             self.assertTrue(np.allclose(actual, expected))
 
+    def test_stack_real_nd_to_target_complex_h5_legal(self):
+        with h5py.File(file_path, mode='r') as h5_f:
+            h5_real = h5_f['real2']
+            expected = h5_real[:, :, :3] + 1j * h5_real[:, :, 3:]
+            actual = dtype_utils.stack_real_to_target_dtype(h5_real, np.complex)
+            self.assertTrue(np.allclose(actual, expected))
+
     def test_stack_real_nd_to_complex_h5_illegal(self):
         with h5py.File(file_path, mode='r') as h5_f:
             with self.assertRaises(TypeError):
@@ -235,6 +252,16 @@ class TestDtypeUtils(unittest.TestCase):
         actual = dtype_utils.stack_real_to_compound(real_val, struc_dtype)
         self.assertTrue(compare_structured_arrays(actual, structured_array))
 
+    def test_real_to_compound_1d_list(self):
+        num_elems = 5
+        structured_array = np.zeros(shape=num_elems, dtype=struc_dtype)
+        structured_array['r'] = r_vals = np.random.random(size=num_elems)
+        structured_array['g'] = g_vals = np.random.randint(0, high=1024, size=num_elems)
+        structured_array['b'] = b_vals = np.random.random(size=num_elems)
+        real_val = np.concatenate((r_vals, g_vals, b_vals))
+        actual = dtype_utils.stack_real_to_compound(list(real_val), struc_dtype)
+        self.assertTrue(compare_structured_arrays(actual, structured_array))
+
     def test_compound_to_real_nd(self):
         num_elems = (5, 7, 2, 3)
         structured_array = np.zeros(shape=num_elems, dtype=struc_dtype)
@@ -269,6 +296,21 @@ class TestDtypeUtils(unittest.TestCase):
         real_val = np.concatenate((r_vals, g_vals, b_vals), axis=len(num_elems) - 1)
         actual = dtype_utils.stack_real_to_compound(real_val, struc_dtype)
         self.assertTrue(compare_structured_arrays(actual, structured_array))
+
+    def test_real_to_target_compound_nd(self):
+        num_elems = (2, 3, 5, 7)
+        structured_array = np.zeros(shape=num_elems, dtype=struc_dtype)
+        structured_array['r'] = r_vals = np.random.random(size=num_elems)
+        structured_array['g'] = g_vals = np.random.randint(0, high=1024, size=num_elems)
+        structured_array['b'] = b_vals = np.random.random(size=num_elems)
+        real_val = np.concatenate((r_vals, g_vals, b_vals), axis=len(num_elems) - 1)
+        actual = dtype_utils.stack_real_to_target_dtype(real_val, struc_dtype)
+        self.assertTrue(compare_structured_arrays(actual, structured_array))
+
+    def test_real_to_target_cast(self):
+        uint_array = np.random.randint(0, high=15, size=(3, 4, 5), dtype=np.uint16)
+        actual = dtype_utils.stack_real_to_target_dtype(uint_array, np.float32)
+        self.assertTrue(np.allclose(actual, uint_array))
 
     def test_real_to_compound_nd_h5_legal(self):
         with h5py.File(file_path, mode='r') as h5_f:
@@ -306,6 +348,11 @@ class TestDtypeUtils(unittest.TestCase):
             _ = dtype_utils.stack_real_to_compound(r_vals, np.float32)
         with self.assertRaises(ValueError):
             _ = dtype_utils.stack_real_to_compound(r_vals, struc_dtype)
+
+    def test_flatten_to_real_real_nd(self):
+        real_array = 5 * np.random.rand(2, 3, 5, 7)
+        actual = dtype_utils.flatten_to_real(real_array)
+        self.assertTrue(np.allclose(actual, real_array))
 
     def test_flatten_to_real_complex_nd(self):
         complex_array = 5 * np.random.rand(2, 3, 5, 7) + 7j * np.random.rand(2, 3, 5, 7)
@@ -400,6 +447,10 @@ class TestDtypeUtils(unittest.TestCase):
             self.assertEqual(n_features, 3 * h5_f['compound'].shape[1])
             self.assertEqual(type_mult, 3 * np.float32(0).itemsize)
 
+    def test_check_dtype_non_hdf(self):
+        with self.assertRaises(TypeError):
+            _ = dtype_utils.check_dtype(np.arange(15))
+
     def test_get_compound_sub_dtypes_valid(self):
         input_dict = {'names': ['r', 'g', 'b'], 'formats': [np.float32, np.uint16, np.float64]}
         expected = dict()
@@ -433,6 +484,26 @@ class TestDtypeUtils(unittest.TestCase):
 
         for dtype in [np.complex, np.complex64, np.complex128]:
             self.assertTrue(dtype_utils.is_complex_dtype(dtype))
+
+    def test_get_exponent_negative_small(self):
+        expected = -7
+        self.assertEqual(expected,
+                         dtype_utils.get_exponent(np.arange(5) * -10**expected))
+
+    def test_get_exponent_positive_large(self):
+        expected = 4
+        self.assertEqual(expected,
+                         dtype_utils.get_exponent(np.arange(6) * 10 ** expected))
+
+    def test_get_exponent_mixed_large(self):
+        expected = 4
+        self.assertEqual(expected,
+                         dtype_utils.get_exponent(np.random.randint(-8, high=3, size=(5, 5)) * 10 ** expected))
+
+    def test_get_exponent_illegal_type(self):
+        with self.assertRaises(TypeError):
+            _ = dtype_utils.get_exponent('hello')
+            _ = dtype_utils.get_exponent([1, 2, 3])
 
 
 if __name__ == '__main__':
