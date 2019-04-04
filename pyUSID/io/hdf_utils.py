@@ -897,9 +897,15 @@ def get_dimensionality(ds_index, index_sort=None):
     else:
         if not contains_integers(index_sort, min_val=0):
             raise ValueError('index_sort should contain integers > 0')
-        if np.array(index_sort).ndim != 1:
+        index_sort = np.array(index_sort)
+        if index_sort.ndim != 1:
             raise ValueError('index_sort should be a 1D array')
-        assert len(np.unique(index_sort)) <= ds_index.shape[0]
+        if len(np.unique(index_sort)) > ds_index.shape[0]:
+            raise ValueError('length of index_sort ({}) should be smaller than number of dimensions in provided dataset'
+                             ' ({}'.format(len(np.unique(index_sort)), ds_index.shape[0]))
+        if set(np.arange(ds_index.shape[0])) !=  set(index_sort):
+            raise ValueError('Sort order of dimensions ({}) not  matching  with number of dimensions ({})'
+                             ''.format(index_sort, ds_index.shape[0]))
 
     sorted_dims = [len(np.unique(row)) for row in np.array(ds_index, ndmin=2)[index_sort]]
     return sorted_dims
