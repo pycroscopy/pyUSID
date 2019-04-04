@@ -32,45 +32,47 @@ class TestNumpyTranslator(unittest.TestCase):
         translator = ArrayTranslator()
         with self.assertRaises(KeyError):
             self.__delete_existing_file(file_path)
-            _ = translator.translate(file_path, 'Blah', np.arange(5, 3), 'quant', 'unit',
-                                     write_utils.Dimension('Position_Dim', 5),
-                                     write_utils.Dimension('Spec_Dim', 3),
+            _ = translator.translate(file_path, 'Blah', np.random.rand(5, 3), 'quant', 'unit',
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3),
                                      extra_dsets={'Spectroscopic_Indices': np.arange(4),
                                                   'Blah_other': np.arange(15)})
 
     def test_illegal_extra_dsets(self):
         translator = ArrayTranslator()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             self.__delete_existing_file(file_path)
-            _ = translator.translate(file_path, 'Blah', np.arange(5, 3), 'quant', 'unit',
-                                     write_utils.Dimension('Position_Dim', 5),
-                                     write_utils.Dimension('Spec_Dim', 3),
+            _ = translator.translate(file_path, 'Blah', np.random.rand(5, 3), 'quant', 'unit',
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3),
                                      extra_dsets={'Blah_other': 'I am not an array'})
 
     def test_illegal_extra_dset_name(self):
         translator = ArrayTranslator()
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             self.__delete_existing_file(file_path)
-            _ = translator.translate(file_path, 'Blah', np.arange(5, 3), 'quant', 'unit',
-                                     write_utils.Dimension('Position_Dim', 5),
-                                     write_utils.Dimension('Spec_Dim', 3),
+            _ = translator.translate(file_path, 'Blah', np.random.rand(5, 3), 'quant', 'unit',
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3),
                                      extra_dsets={' ': [1, 2, 3]})
 
     def test_illegal_dimensions_position(self):
         translator = ArrayTranslator()
         with self.assertRaises(ValueError):
             self.__delete_existing_file(file_path)
-            _ = translator.translate(file_path, 'Blah', np.arange(15, 3), 'quant', 'unit',
-                                     [write_utils.Dimension('Dim_1', 5), write_utils.Dimension('Dim_2', 4)],
-                                     write_utils.Dimension('Spec_Dim', 3))
+            _ = translator.translate(file_path, 'Blah', np.random.rand(15, 3), 'quant', 'unit',
+                                     [write_utils.Dimension('Dim_1', 'au', 5),
+                                      write_utils.Dimension('Dim_2', 'au', 4)],
+                                     write_utils.Dimension('Spec_Dim', 'au', 3))
 
     def test_illegal_dimensions_spec(self):
         translator = ArrayTranslator()
         with self.assertRaises(ValueError):
             self.__delete_existing_file(file_path)
-            _ = translator.translate(file_path, 'Blah', np.arange(5, 13), 'quant', 'unit',
-                                     write_utils.Dimension('Dim_1', 5),
-                                     [write_utils.Dimension('Spec_Dim', 3), write_utils.Dimension('Dim_2', 4)])
+            _ = translator.translate(file_path, 'Blah', np.random.rand(5, 13), 'quant', 'unit',
+                                     write_utils.Dimension('Dim_1', 'au', 5),
+                                     [write_utils.Dimension('Spec_Dim', 'au', 3),
+                                      write_utils.Dimension('Dim_2', 'au', 4)])
 
     def test_quick_numpy_translation(self):
         self.__base_translation_tester(main_dset_as_dask=False, extra_dsets_type='numpy', use_parm_dict=False)
@@ -102,7 +104,7 @@ class TestNumpyTranslator(unittest.TestCase):
                 extra_dsets = ref_dsets
             elif extra_dsets_type == 'dask':
                 for key, val in ref_dsets.items():
-                    extra_dsets.update(key, da.from_array(val, chunks=val.shape))
+                    extra_dsets.update({key: da.from_array(val, chunks=val.shape)})
             else:
                 extra_dsets_type = None
 
@@ -110,7 +112,7 @@ class TestNumpyTranslator(unittest.TestCase):
 
         main_data = np.random.rand(15, 14)
         if main_dset_as_dask:
-            main_data = da.from_array(main_data)
+            main_data = da.from_array(main_data, chunks=main_data.shape)
         quantity = 'Current'
         units = 'nA'
 
