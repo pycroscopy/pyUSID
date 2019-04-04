@@ -28,7 +28,7 @@ class TestNumpyTranslator(unittest.TestCase):
         if os.path.exists(file_path):
             os.remove(file_path)
 
-    def reserved_name_for_extra_dsets(self):
+    def test_reserved_name_for_extra_dsets(self):
         translator = ArrayTranslator()
         with self.assertRaises(KeyError):
             self.__delete_existing_file(file_path)
@@ -38,7 +38,7 @@ class TestNumpyTranslator(unittest.TestCase):
                                      extra_dsets={'Spectroscopic_Indices': np.arange(4),
                                                   'Blah_other': np.arange(15)})
 
-    def illegal_extra_dsets(self):
+    def test_illegal_extra_dsets(self):
         translator = ArrayTranslator()
         with self.assertRaises(ValueError):
             self.__delete_existing_file(file_path)
@@ -47,7 +47,7 @@ class TestNumpyTranslator(unittest.TestCase):
                                      write_utils.Dimension('Spec_Dim', 3),
                                      extra_dsets={'Blah_other': 'I am not an array'})
 
-    def illegal_extra_dset_name(self):
+    def test_illegal_extra_dset_name(self):
         translator = ArrayTranslator()
         with self.assertRaises(KeyError):
             self.__delete_existing_file(file_path)
@@ -56,7 +56,7 @@ class TestNumpyTranslator(unittest.TestCase):
                                      write_utils.Dimension('Spec_Dim', 3),
                                      extra_dsets={' ': [1, 2, 3]})
 
-    def illegal_dimensions_position(self):
+    def test_illegal_dimensions_position(self):
         translator = ArrayTranslator()
         with self.assertRaises(ValueError):
             self.__delete_existing_file(file_path)
@@ -64,7 +64,7 @@ class TestNumpyTranslator(unittest.TestCase):
                                      [write_utils.Dimension('Dim_1', 5), write_utils.Dimension('Dim_2', 4)],
                                      write_utils.Dimension('Spec_Dim', 3))
 
-    def illegal_dimensions_spec(self):
+    def test_illegal_dimensions_spec(self):
         translator = ArrayTranslator()
         with self.assertRaises(ValueError):
             self.__delete_existing_file(file_path)
@@ -72,16 +72,16 @@ class TestNumpyTranslator(unittest.TestCase):
                                      write_utils.Dimension('Dim_1', 5),
                                      [write_utils.Dimension('Spec_Dim', 3), write_utils.Dimension('Dim_2', 4)])
 
-    def quick_numpy_translation(self):
+    def test_quick_numpy_translation(self):
         self.__base_translation_tester(main_dset_as_dask=False, extra_dsets_type='numpy', use_parm_dict=False)
 
-    def quick_numpy_tranlsation_plus_parms(self):
+    def test_quick_numpy_tranlsation_plus_parms(self):
         self.__base_translation_tester(main_dset_as_dask=False, extra_dsets_type='numpy', use_parm_dict=True)
 
-    def quick_dask_main_translation(self):
+    def test_quick_dask_main_translation(self):
         self.__base_translation_tester(main_dset_as_dask=True, extra_dsets_type='numpy', use_parm_dict=False)
 
-    def all_dsets_as_dask(self):
+    def test_all_dsets_as_dask(self):
         self.__base_translation_tester(main_dset_as_dask=True, extra_dsets_type='dask', use_parm_dict=False)
 
     def __base_translation_tester(self, main_dset_as_dask=False, extra_dsets_type='numpy', use_parm_dict=True):
@@ -168,19 +168,19 @@ class TestNumpyTranslator(unittest.TestCase):
                 h5_dset = h5_chan_grp[dset_name]
                 self.assertIsInstance(h5_dset, h5py.Dataset)
 
-            pycro_main = USIDataset(h5_chan_grp['Raw_Data'])
+            usid_main = USIDataset(h5_chan_grp['Raw_Data'])
 
-            self.assertIsInstance(pycro_main, USIDataset)
-            self.assertEqual(pycro_main.name.split('/')[-1], 'Raw_Data')
-            self.assertEqual(pycro_main.parent, h5_chan_grp)
-            self.assertTrue(np.allclose(main_data, pycro_main[()]))
+            self.assertIsInstance(usid_main, USIDataset)
+            self.assertEqual(usid_main.name.split('/')[-1], 'Raw_Data')
+            self.assertEqual(usid_main.parent, h5_chan_grp)
+            self.assertTrue(np.allclose(main_data, usid_main[()]))
 
-            validate_aux_dset_pair(self, h5_chan_grp, pycro_main.h5_pos_inds, pycro_main.h5_pos_vals, pos_names, pos_units,
-                                          pos_data, h5_main=pycro_main, is_spectral=False)
+            validate_aux_dset_pair(self, h5_chan_grp, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
+                                          pos_data, h5_main=usid_main, is_spectral=False)
 
-            validate_aux_dset_pair(self, h5_chan_grp, pycro_main.h5_spec_inds, pycro_main.h5_spec_vals, spec_names,
+            validate_aux_dset_pair(self, h5_chan_grp, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names,
                                           spec_units,
-                                          spec_data, h5_main=pycro_main, is_spectral=True)
+                                          spec_data, h5_main=usid_main, is_spectral=True)
 
             # Now validate each of the extra datasets:
             if extra_dsets_type is not None:
