@@ -21,7 +21,7 @@ if sys.version_info.major == 3:
 file_path = 'test_array_translator.h5'
 
 
-class TestNumpyTranslator(unittest.TestCase):
+class TestArrayTranslator(unittest.TestCase):
 
     @staticmethod
     def __delete_existing_file(file_path):
