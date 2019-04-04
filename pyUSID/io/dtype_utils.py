@@ -39,10 +39,15 @@ def contains_integers(iter_int, min_val=None):
         raise TypeError('iter_int should be an Iterable')
     if len(iter_int) == 0:
         return False
+
+    if min_val is not None:
+        if not isinstance(min_val, (int, float)):
+            raise TypeError('min_val should be an integer. Provided object was of type: {}'.format(type(min_val)))
+        if min_val % 1 != 0:
+            raise ValueError('min_val should be an integer')
+
     try:
         if min_val is not None:
-            if min_val % 1 != 0:
-                raise ValueError('min_val should be an integer')
             return np.all([x % 1 == 0 and x >= min_val for x in iter_int])
         else:
             return np.all([x % 1 == 0 for x in iter_int])
@@ -311,10 +316,11 @@ def stack_real_to_target_dtype(ds_real, new_dtype):
     """
     if is_complex_dtype(new_dtype):
         return stack_real_to_complex(ds_real)
-    elif len(new_dtype) > 0:
-        return stack_real_to_compound(ds_real, new_dtype)
-    else:
-        return new_dtype.type(ds_real)
+    try:
+        if len(new_dtype) > 0:
+            return stack_real_to_compound(ds_real, new_dtype)
+    except TypeError:
+        return new_dtype(ds_real)
 
 
 def validate_dtype(dtype):
@@ -424,6 +430,8 @@ def get_exponent(vector):
     exponent : int
         Scale / exponent for the given vector
     """
+    if not isinstance(vector, np.ndarray):
+        raise TypeError('vector should be of type numpy.ndarray. Provided object of type: {}'.format(type(vector)))
     if np.max(np.abs(vector)) == np.max(vector):
         exponent = np.log10(np.max(vector))
     else:
