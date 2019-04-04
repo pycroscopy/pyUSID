@@ -22,7 +22,7 @@ using all available CPU cores in a computer**
 # facilitate the efficient use of all CPU cores with minimal modifications to the existing code.
 #
 # ``pyUSID.parallel_compute()`` is a very handy function that simplifies parallel computation significantly to a
-# ``single function call`` and will be discussed in this document.
+# **single function call** and will be discussed in this document.
 #
 # Example scientific problem
 # ---------------------------
@@ -37,7 +37,7 @@ using all available CPU cores in a computer**
 # faster than it would take a single core to compute the results. There is an important caveat to this statement and it
 # will be discussed at the end of this document.
 #
-# ``Here, we will learn how to fit the thousands of spectra using all available cores on a computer.``
+# **Here, we will learn how to fit the thousands of spectra using all available cores on a computer.**
 # Note, that this is applicable only for a single CPU. Please refer to another advanced example for multi-CPU computing.
 #
 # .. note::
