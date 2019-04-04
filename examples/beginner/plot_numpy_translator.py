@@ -680,7 +680,7 @@ with h5py.File(h5_path_2, mode='r') as h5_file:
 # A single, robust Translator class can handle the finer variations / modes in the data. See the
 # `IgorIBWTranslator <https://github.com/pycroscopy/pycroscopy/blob/master/pycroscopy/io/translators/igor_ibw.py>`_
 # as an example.
-
+#
 # We have found python packages online to open a few proprietary file formats and have written translators using these
 # packages. If you are having trouble reading the data in your files and cannot find any packages online, consider
 # contacting the manufacturer of the instrument which generated the data in the proprietary format for help.

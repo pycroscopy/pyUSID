@@ -150,6 +150,7 @@ def simple_ndim_visualizer(data_mat, pos_dims, spec_dims, spec_xdim=None, pos_xd
         for dimension in dim_list:
             assert isinstance(dimension, Dimension)
             if dimension.name in slice_dict.keys():
+                # TODO: Format to only have 1-2 digits of precision / use scientific notation
                 slice_str += '{} = {} {}\n'.format(dimension.name,
                                                    dimension.values[slice_dict[dimension.name]],
                                                    dimension.units)

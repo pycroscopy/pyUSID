@@ -87,10 +87,9 @@ What do I do when something is broken?
 Often, others may have encountered the same problem and may have brought up a similar issue. Try searching on google and trying out some suggested solutions. If this does not work, raise an ``issue`` `here <https://github.com/pycroscopy/pyUSID/issues>`_ and one of us will work with you to resolve the problem.
 
 How can I reference pyUSID?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-For now, please use: *Somnath, Suhas, Chris R. Smith, and Stephen Jesse. pyUSID. Computer software. Vers. 0.0.1. Oak Ridge National Laboratory, 01 June 2018. Web. <https://pycroscopy.github.io/pyUSID/about.html>*.
-
-We are writing a journal paper that you should be able to cite soon.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Please reference our `Arxiv <https://arxiv.org/abs/1903.09515>`_ paper for now.
+This manuscript was submitted to Advanced Structural and Chemical Imaging recently and is currently being peer-reviewed.
 
 Becoming a part of the effort
 -----------------------------

@@ -12,6 +12,7 @@ Getting Started
 * For a concise change-log, please see the `release history <https://github.com/pycroscopy/pyUSID/releases>`_.
 * Please `get in touch <./contact.html>`_ if you would like to use USID and pyUSID for other new or mature scientific packages.
 * Have questions? See our `FAQ <./faq.html>`_ to see if we have already answered them.
+* Need more information? Please see our `Arxiv <https://arxiv.org/abs/1903.09515>`_ paper.
 * Need help or need to get in touch with us? See our `contact <./contact.html>`_ information.
 
 Guide for python novices

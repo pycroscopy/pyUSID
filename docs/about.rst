@@ -20,8 +20,9 @@ What?
 
 * pyUSID uses a data-centric approach wherein the raw data collected from the instrument, results from analysis
   and processing routines are all written to the same h5USID file for traceability, reproducibility, and provenance.
-* Just as scipy uses numpy underneath, scientific packages like **pycroscopy** use **pyUSID** for all file-handling, general plotting utilities and a data processing framework
+* Just as scipy uses numpy underneath, scientific packages like **pycroscopy** use **pyUSID** for all file-handling, data processing, and generating plots for journal publications
 * pyUSID uses popular packages such as numpy, h5py, joblib, matplotlib, etc. for most of the storage, computation, and visualization.
+* For more information, please see our recent `Arxiv <https://arxiv.org/abs/1903.09515>`_ **paper**
 * See a high-level overview of pyUSID in this `presentation <https://github.com/pycroscopy/pyUSID/blob/master/docs/USID_pyUSID_pycroscopy.pdf>`_
 * Jump to our `GitHub project <https://github.com/pycroscopy/pyUSID>`_
 
