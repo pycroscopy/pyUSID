@@ -56,6 +56,10 @@ class TestHDFUtils(unittest.TestCase):
         os.remove(file_path)
 
     def test_get_dimensionality_legal_no_sort(self):
+        self.__helper_get_dimensionality_no_sort(hdf_dsets=True)
+        self.__helper_get_dimensionality_no_sort(hdf_dsets=False)
+
+    def __helper_get_dimensionality_no_sort(self, hdf_dsets=True):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_dsets = [h5_f['/Raw_Measurement/Spectroscopic_Indices'],
                         h5_f['/Raw_Measurement/source_main-Fitter_000/Spectroscopic_Indices'],
@@ -64,6 +68,8 @@ class TestHDFUtils(unittest.TestCase):
                                [7],
                                [5, 3]]
             for h5_dset, exp_shape in zip(h5_dsets, expected_shapes):
+                if not hdf_dsets:
+                    h5_dset = h5_dset[()]
                 self.assertTrue(np.all(exp_shape == hdf_utils.get_dimensionality(h5_dset)))
 
     def test_get_dimensionality_legal_w_sort(self):
@@ -79,6 +85,18 @@ class TestHDFUtils(unittest.TestCase):
                            [1, 0]]
             for h5_dset, s_oder, exp_shape in zip(h5_dsets, sort_orders, expected_shapes):
                 self.assertTrue(np.all(exp_shape == hdf_utils.get_dimensionality(h5_dset, index_sort=s_oder)))
+
+    def test_get_dimensionality_not_hdf_dset(self):
+        for obj in [15, 'srds']:
+            with self.assertRaises(TypeError):
+                _ = hdf_utils.get_dimensionality(obj)
+
+    def test_get_dimensionality_invalid_sort(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_dset = h5_f['/Raw_Measurement/Spectroscopic_Indices']
+            with self.assertRaises(ValueError):
+                _ = hdf_utils.get_dimensionality(h5_dset, index_sort=[3, 4])
+                _ = hdf_utils.get_dimensionality(h5_dset, index_sort=['a', np.arange(5)])
 
     def test_check_is_main_legal_01(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
@@ -99,6 +117,12 @@ class TestHDFUtils(unittest.TestCase):
                               h5_f['/Raw_Measurement/Spectroscopic_Values']]
             for dset in not_main_dsets:
                 self.assertFalse(hdf_utils.check_if_main(dset))
+
+    def test_get_sort_order_invalid_types(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            for obj in ['fdfdfd', h5_f]:
+                with self.assertRaises(TypeError):
+                    _ = hdf_utils.get_sort_order(obj)
 
     def test_get_sort_order_simple(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
