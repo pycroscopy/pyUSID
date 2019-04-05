@@ -155,7 +155,7 @@ class ImageTranslator(ArrayTranslator):
         '''
 
         pos_dims = [Dimension('Y', 'a.u.', np.arange(usize)), Dimension('X', 'a.u.', np.arange(vsize))]
-        spec_dims = Dimension('arb', 'a.u.', [1])
+        spec_dims = Dimension('arb', 'a.u.', 1)
 
         # Need to transpose to for correct reshaping
         image = image.transpose()
