@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+Utilities for reading and writing USID datasets that are highly model-dependent (with or without N-dimensional form)
+
+Created on Tue Nov  3 21:14:25 2015
+
+@author: Suhas Somnath, Chris Smith
+"""
 from warnings import warn
 import sys
 import h5py

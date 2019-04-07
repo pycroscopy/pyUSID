@@ -1,4 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+Simple yet handy HDF5 utilities, independent of the  USID model
 
+Created on Tue Nov  3 21:14:25 2015
+
+@author: Suhas Somnath, Chris Smith
+"""
 import socket
 import sys
 from platform import platform

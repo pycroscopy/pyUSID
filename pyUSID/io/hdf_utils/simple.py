@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+Lower-level and simpler USID-specific HDF5 utilities that facilitate higher-level data operations
+
+Created on Tue Nov  3 21:14:25 2015
+
+@author: Suhas Somnath, Chris Smith
+"""
 import collections
 from warnings import warn
 import sys
