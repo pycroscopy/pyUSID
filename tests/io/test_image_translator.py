@@ -19,7 +19,7 @@ if sys.version_info.major == 3:
     unicode = str
 
 image_path = 'random_image.png'
-rand_image = np.random.randint(0, high=255, size=(128, 256))
+rand_image = np.uint16(np.random.randint(0, high=255, size=(128, 256)))
 
 
 class TestImageTranslator(unittest.TestCase):
@@ -31,46 +31,59 @@ class TestImageTranslator(unittest.TestCase):
 
     def setUp(self):
         result = Image.fromarray(rand_image.astype(np.uint8))
+        for file_path in [image_path, image_path.replace('.png', '.h5')]:
+            self.__delete_existing_file(file_path)
         result.save(image_path)
 
     def tearDown(self):
         self.__delete_existing_file(image_path)
 
     def test_basic_translate(self):
-        self.__main_translate(h5_path=None, bin_factor=None, interp_func=Image.BICUBIC, normalize=False)
+        self.__main_translate()
 
     def test_binning_single_default_interp(self):
-        pass
+        self.__main_translate(bin_factor=2)
 
     def test_binning_tuple_default_interp(self):
-        pass
+        self.__main_translate(bin_factor=(1, 2))
 
     def test_binning_too_many_dims(self):
-        pass
+        with self.assertRaises(ValueError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path, bin_factor=(1, 2, 3))
 
     def test_binning_float_parms(self):
-        pass
+        with self.assertRaises(TypeError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path, bin_factor=1.34)
 
     def test_binning_invalid_dtype(self):
-        pass
+        with self.assertRaises(TypeError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path, bin_factor=['dfrdd', True])
 
     def test_binning_custom_interp(self):
-        pass
+        self.__main_translate(bin_factor=2, interp_func=Image.NEAREST)
 
     def test_binning_invalid_interp(self):
-        pass
+        with self.assertRaises(ValueError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path, bin_factor=2, interp_func='dsdsdsd')
 
     def test_invalid_h5_path(self):
-        pass
+        with self.assertRaises(TypeError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path, h5_path=np.arange(4))
 
     def test_valid_h5_path(self):
-        pass
+        self.__main_translate(h5_path='custom_path.h5')
+        self.__main_translate(h5_path='custom_path.txt')
 
     def test_normalize_only(self):
-        pass
+        self.__main_translate(normalize=True)
 
-    def test_normalize_and_default_bin(self):
-        pass
+    def test_normalize_and_default_interp(self):
+        self.__main_translate(normalize=True, bin_factor=2)
 
     def test_kwargs_to_pillow(self):
         pass
@@ -109,13 +122,15 @@ class TestImageTranslator(unittest.TestCase):
 
     def __main_translate(self, **kwargs):
 
-        h5_path = image_path.replace('.png', '.h5')
+        h5_path = kwargs.pop('h5_path', image_path.replace('.png', '.h5'))
         self.__delete_existing_file(h5_path)
 
         input_image = rand_image.copy()
         usize, vsize = input_image.shape[:2]
+        print(np.min(input_image), np.max(input_image))
 
         translator = ImageTranslator()
+        print(kwargs)
         h5_path = translator.translate(image_path, **kwargs)
 
         image_parms = dict()
@@ -127,23 +142,33 @@ class TestImageTranslator(unittest.TestCase):
             else:
                 if isinstance(bin_factor, int):
                     bin_factor = (bin_factor, bin_factor)
-                interp_func = kwargs.pop('interp_func', None)
+                interp_func = kwargs.pop('interp_func', Image.BICUBIC)
 
-                image_parms.update({'image_binning_size': bin_factor,
+                print('Test passes: {}, {}'.format((int(vsize / bin_factor[1]), int(usize / bin_factor[0])),
+                                                   interp_func))
+
+                image_parms.update({'image_binning_size': np.array(bin_factor),
                                     'image_PIL_resample_mode': interp_func})
 
                 img_obj = Image.fromarray(input_image)
-                img_obj = img_obj.resize((vsize // bin_factor[1],
-                                          usize // bin_factor[0]),
+                img_obj = img_obj.convert(mode="L")
+                img_obj = img_obj.resize((int(vsize / bin_factor[1]), int(usize / bin_factor[0])),
                                          resample=interp_func)
                 input_image = np.asarray(img_obj)
+                print('testing  - shape before: {}, after: {}'.format(rand_image.shape, input_image.shape))
+                print('testing  - after resizing image: {}, {}'.format(np.min(input_image), np.max(input_image)))
 
+        image_parms.update({'normalized': False})
+        input_image = input_image.copy()
         if 'normalize' in kwargs.keys():
             normalize = kwargs.pop('normalize')
             if normalize:
                 input_image -= np.min(input_image)
                 input_image = input_image / np.float32(np.max(input_image))
+                image_parms.update({'normalized': True})
 
+        image_parms.update({'image_min': np.min(input_image), 'image_max': np.max(input_image)})
+        print(image_parms)
         with h5py.File(h5_path, mode='r') as h5_f:
 
             self.__basic_file_validation(h5_f)
@@ -151,6 +176,8 @@ class TestImageTranslator(unittest.TestCase):
             h5_meas_grp = h5_f['Measurement_000']
             h5_chan_grp = h5_meas_grp['Channel_000']
             usid_main = USIDataset(h5_chan_grp['Raw_Data'])
+
+            print(hdf_utils.get_attributes(h5_meas_grp))
 
             # check the attributes under this group
             for key, expected_val in image_parms.items():
