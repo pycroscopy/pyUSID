@@ -86,10 +86,10 @@ class ImageTranslator(ArrayTranslator):
             Absolute path to where the HDF5 file should be located.
             Default is None
         bin_factor : uint or array-like of uint, optional
-            Downsampling factor for each dimension.  Default is None.
+            Down-sampling factor for each dimension.  Default is None.
             If specifying different binning for each dimension, please specify as (height binning, width binning)
         interp_func : int, optional. Default = :attr:`PIL.Image.BICUBIC`
-            How the image will be interpolated to provide the downsampled or binned image.
+            How the image will be interpolated to provide the down-sampled or binned image.
             For more information see instructions for the `resample` argument for :meth:`PIL.Image.resize`
         normalize : boolean, optional. Default = False
             Should the raw image be normalized between the values of 0 and 1
@@ -105,7 +105,6 @@ class ImageTranslator(ArrayTranslator):
         image_path, h5_path = self._parse_file_path(image_path, h5_path=h5_path)
 
         image = read_image(image_path, **image_args)
-        print('reading from image: {}, {}'.format(np.min(image), np.max(image)))
         image_parms = dict()
         usize, vsize = image.shape[:2]
 
@@ -140,11 +139,8 @@ class ImageTranslator(ArrayTranslator):
 
             # Unfortunately, we need to make a round-trip through PIL for the interpolation. Not possible with numpy
             img_obj = Image.fromarray(image)
-            print('Class passes: {}, {}'.format((vsize, usize), interp_func))
             img_obj = img_obj.resize((vsize, usize), resample=interp_func)
             image = np.asarray(img_obj)
-
-            print('after resizing image: {}, {}'.format(np.min(image), np.max(image)))
 
         # Working around occasional "cannot modify read-only array" error
         image = image.copy()
@@ -202,17 +198,21 @@ def read_image(image_path, as_grayscale=True, as_numpy_array=True, *args, **kwar
 
     Returns
     -------
-    image : :class:`numpy.ndarray` or :class:`PIL.Image`
+    image : :class:`numpy.ndarray` or :class:`PIL.Image.Image`
         if `as_numpy_array` is set to True - Array containing the image from the file `image_path`.
         If `as_numpy_array` is set to False - PIL.Image object containing the image within the file - `image_path`.
     """
-    ext = os.path.splitext(image_path)[1]
-    if ext == '.txt':
+    ext = os.path.splitext(image_path)[-1]
+    if ext in ['.txt', '.csv']:
+        if ext == '.csv' and 'delimiter' not in kwargs.keys():
+            kwargs['delimiter'] = ','
         img_data = np.loadtxt(image_path, *args, **kwargs)
         if as_numpy_array:
             return img_data
         else:
-            return Image.fromarray(img_data)
+            img_obj = Image.fromarray(img_data)
+            img_obj = img_obj.convert(mode="L")
+            return img_obj
     else:
         img_obj = Image.open(image_path)
         if as_grayscale:
