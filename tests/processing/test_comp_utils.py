@@ -62,6 +62,15 @@ class TestIOUtils(unittest.TestCase):
         ret_val = comp_utils.recommend_cpu_cores(num_jobs, requested_cores=MAX_CPU_CORES - 1, lengthy_computation=True)
         self.assertEqual(ret_val, max(1, MAX_CPU_CORES - 1))
 
+    def test_get_available_memory(self):
+        from psutil import virtual_memory
+        mem = virtual_memory().available
+
+        if sys.maxsize <= 2 ** 32:
+            mem = min([mem, sys.maxsize])
+
+        self.assertEqual(mem, comp_utils.get_available_memory())
+
 
 if __name__ == '__main__':
     unittest.main()
