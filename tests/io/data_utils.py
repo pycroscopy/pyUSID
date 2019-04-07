@@ -1,13 +1,17 @@
 from __future__ import division, print_function, unicode_literals, absolute_import
 import os
 import sys
+import socket
 import h5py
 import numpy as np
 from io import StringIO
 from contextlib import contextmanager
-import sys
+from pyUSID import __version__
+from platform import platform
+
 sys.path.append("../../pyUSID/")
 from pyUSID.io.hdf_utils import get_attr
+from pyUSID.io.io_utils import get_time_stamp
 from pyUSID.io.write_utils import INDICES_DTYPE, VALUES_DTYPE
 
 std_beps_path = 'test_hdf_utils.h5'
@@ -115,6 +119,15 @@ def validate_aux_dset_pair(test_class, h5_group, h5_inds, h5_vals, dim_names, di
                 expected = np.squeeze(ref_data[dim_ind])
             test_class.assertTrue(np.allclose(expected,
                                               np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
+
+
+def verify_book_keeping_attrs(test_class, h5_obj):
+    time_stamp = get_time_stamp()
+    in_file = h5_obj.attrs['timestamp']
+    test_class.assertEqual(time_stamp[:time_stamp.rindex('_')], in_file[:in_file.rindex('_')])
+    test_class.assertEqual(__version__, h5_obj.attrs['pyUSID_version'])
+    test_class.assertEqual(socket.getfqdn(), h5_obj.attrs['machine_id'])
+    test_class.assertEqual(platform(), h5_obj.attrs['platform'])
 
 
 def make_sparse_sampling_file():
