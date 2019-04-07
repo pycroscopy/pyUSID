@@ -39,11 +39,17 @@ class TestImageTranslator(unittest.TestCase):
     def tearDown(self):
         self.__delete_existing_file(image_path)
 
-    def test_read_image_bw_image(self):
-        pass
+    def test_read_image_color_to_bw_image(self):
+        color_image_path = './tests/io/logo_v01.png'
+        img_obj = Image.open(color_image_path).convert(mode="L")
+        pillow_obj = read_image(color_image_path, as_numpy_array=False)
+        self.assertEqual(img_obj, pillow_obj)
 
     def test_read_image_color(self):
-        pass
+        color_image_path = './tests/io/logo_v01.png'
+        img_obj = Image.open(color_image_path)
+        pillow_obj = read_image(color_image_path, as_numpy_array=False, as_grayscale=False)
+        self.assertEqual(img_obj, pillow_obj)
 
     def test_read_image_text_to_numpy_simple(self):
         img_data = rand_image.astype(np.uint8)
@@ -138,9 +144,6 @@ class TestImageTranslator(unittest.TestCase):
 
     def test_normalize_and_default_interp(self):
         self.__main_translate(normalize=True, bin_factor=2)
-
-    def test_kwargs_to_pillow(self):
-        pass
 
     def __basic_file_validation(self, h5_f):
         self.assertEqual('ImageTranslator', hdf_utils.get_attr(h5_f, 'translator'))
