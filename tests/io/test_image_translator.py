@@ -13,7 +13,8 @@ import h5py
 import numpy as np
 from .data_utils import validate_aux_dset_pair
 sys.path.append("../../pyUSID/")
-from pyUSID.io import ImageTranslator, write_utils, hdf_utils, USIDataset
+from pyUSID.io import ImageTranslator, hdf_utils, USIDataset
+from pyUSID.io.image import read_image
 
 if sys.version_info.major == 3:
     unicode = str
@@ -37,6 +38,59 @@ class TestImageTranslator(unittest.TestCase):
 
     def tearDown(self):
         self.__delete_existing_file(image_path)
+
+    def test_read_image_bw_image(self):
+        pass
+
+    def test_read_image_color(self):
+        pass
+
+    def test_read_image_text_to_numpy_simple(self):
+        img_data = rand_image.astype(np.uint8)
+        img_path = 'image_text.txt'
+        self.__delete_existing_file(img_path)
+        np.savetxt(img_path, img_data)
+        np_data = read_image(image_path, as_numpy_array=True)
+        self.assertIsInstance(np_data, np.ndarray)
+        self.assertTrue(np.allclose(np_data, img_data))
+        self.__delete_existing_file(img_path)
+
+    def test_read_image_text_to_numpy_complex(self):
+        img_data = np.uint16(np.random.randint(0, high=255, size=(4, 3)))
+        img_path = 'image_text.csv'
+        self.__delete_existing_file(img_path)
+        txt_kwargs = {'delimiter': ',',
+                      'newline': '\n',
+                      'header':  'cat, dog, cow'}
+        np.savetxt(img_path, img_data, **txt_kwargs)
+        np_data = read_image(img_path, as_numpy_array=True, delimiter=',', skiprows=1)
+        self.assertIsInstance(np_data, np.ndarray)
+        self.assertTrue(np.allclose(np_data, img_data))
+        self.__delete_existing_file(img_path)
+
+    def test_read_image_text_complex_to_pillow(self):
+        img_data = np.uint16(np.random.randint(0, high=255, size=(4, 3)))
+        img_path = 'image_text.csv'
+        self.__delete_existing_file(img_path)
+        txt_kwargs = {'delimiter': ',',
+                      'newline': '\n',
+                      'header':  'cat, dog, cow'}
+        np.savetxt(img_path, img_data, **txt_kwargs)
+        pillow_obj = read_image(img_path, as_grayscale=True, as_numpy_array=False,
+                                delimiter=',', skiprows=1)
+        self.assertIsInstance(pillow_obj, Image.Image)
+        self.assertTrue(np.allclose(np.asarray(pillow_obj), img_data))
+        self.__delete_existing_file(img_path)
+
+    def test_read_image_to_numpy(self):
+        np_data = read_image(image_path, as_numpy_array=True)
+        self.assertIsInstance(np_data, np.ndarray)
+        self.assertTrue(np.allclose(np_data, rand_image))
+
+    def test_read_image_to_pillow(self):
+        pillow_obj = read_image(image_path, as_numpy_array=False)
+        self.assertIsInstance(pillow_obj, Image.Image)
+        self.assertTrue(np.allclose(np.asarray(pillow_obj), rand_image))
 
     def test_basic_translate(self):
         self.__main_translate()
@@ -127,10 +181,8 @@ class TestImageTranslator(unittest.TestCase):
 
         input_image = rand_image.copy()
         usize, vsize = input_image.shape[:2]
-        print(np.min(input_image), np.max(input_image))
 
         translator = ImageTranslator()
-        print(kwargs)
         h5_path = translator.translate(image_path, **kwargs)
 
         image_parms = dict()
@@ -144,9 +196,6 @@ class TestImageTranslator(unittest.TestCase):
                     bin_factor = (bin_factor, bin_factor)
                 interp_func = kwargs.pop('interp_func', Image.BICUBIC)
 
-                print('Test passes: {}, {}'.format((int(vsize / bin_factor[1]), int(usize / bin_factor[0])),
-                                                   interp_func))
-
                 image_parms.update({'image_binning_size': np.array(bin_factor),
                                     'image_PIL_resample_mode': interp_func})
 
@@ -155,8 +204,6 @@ class TestImageTranslator(unittest.TestCase):
                 img_obj = img_obj.resize((int(vsize / bin_factor[1]), int(usize / bin_factor[0])),
                                          resample=interp_func)
                 input_image = np.asarray(img_obj)
-                print('testing  - shape before: {}, after: {}'.format(rand_image.shape, input_image.shape))
-                print('testing  - after resizing image: {}, {}'.format(np.min(input_image), np.max(input_image)))
 
         image_parms.update({'normalized': False})
         input_image = input_image.copy()
@@ -168,7 +215,6 @@ class TestImageTranslator(unittest.TestCase):
                 image_parms.update({'normalized': True})
 
         image_parms.update({'image_min': np.min(input_image), 'image_max': np.max(input_image)})
-        print(image_parms)
         with h5py.File(h5_path, mode='r') as h5_f:
 
             self.__basic_file_validation(h5_f)
@@ -176,8 +222,6 @@ class TestImageTranslator(unittest.TestCase):
             h5_meas_grp = h5_f['Measurement_000']
             h5_chan_grp = h5_meas_grp['Channel_000']
             usid_main = USIDataset(h5_chan_grp['Raw_Data'])
-
-            print(hdf_utils.get_attributes(h5_meas_grp))
 
             # check the attributes under this group
             for key, expected_val in image_parms.items():
