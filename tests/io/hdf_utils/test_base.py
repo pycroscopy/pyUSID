@@ -17,7 +17,7 @@ from pyUSID.io import hdf_utils, io_utils
 from pyUSID import __version__
 from platform import platform
 
-from . import data_utils
+from tests.io import data_utils
 
 
 if sys.version_info.major == 3:

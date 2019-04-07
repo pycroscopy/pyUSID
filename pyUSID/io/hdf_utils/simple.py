@@ -19,6 +19,7 @@ __all__ = ['assign_group_index', 'check_and_link_ancillary', 'check_for_matching
            'check_if_main', 'copy_attributes', 'copy_main_attributes']
 """
 
+
 def get_all_main(parent, verbose=False):
     """
     Simple function to recursively print the contents of an hdf5 group
