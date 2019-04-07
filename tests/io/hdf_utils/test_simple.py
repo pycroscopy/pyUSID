@@ -10,7 +10,6 @@ import os
 import sys
 import h5py
 import numpy as np
-import dask.array as da
 import shutil
 
 sys.path.append("../../pyUSID/")
