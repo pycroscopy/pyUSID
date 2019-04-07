@@ -16,6 +16,7 @@ from PIL import Image
 
 from .numpy_translator import ArrayTranslator
 from .write_utils import Dimension
+from .dtype_utils import contains_integers
 from .hdf_utils import write_simple_attrs
 
 if sys.version_info.major == 3:
@@ -58,7 +59,7 @@ class ImageTranslator(ArrayTranslator):
 
         if h5_path is not None:
             if not isinstance(h5_path, (str, unicode)):
-                raise ValueError("'h5_path' argument for ImageTranslator should be a str or unicode (if provided)")
+                raise TypeError("'h5_path' argument for ImageTranslator should be a str or unicode (if provided)")
             # NOT checking the extension of the file path for simplicity
         else:
             base_name, _ = os.path.splitext(image_path)
@@ -104,6 +105,7 @@ class ImageTranslator(ArrayTranslator):
         image_path, h5_path = self._parse_file_path(image_path, h5_path=h5_path)
 
         image = read_image(image_path, **image_args)
+        print('reading from image: {}, {}'.format(np.min(image), np.max(image)))
         image_parms = dict()
         usize, vsize = image.shape[:2]
 
@@ -111,13 +113,22 @@ class ImageTranslator(ArrayTranslator):
         Check if a bin_factor is given.  Set up binning objects if it is.
         '''
         if bin_factor is not None:
-            if isinstance(bin_factor, int):
+            if isinstance(bin_factor, (list, tuple)):
+                if not contains_integers(bin_factor, min_val=1):
+                    raise TypeError('bin_factor should contain positive whole integers')
+                if len(bin_factor) == 2:
+                    bin_factor = tuple(bin_factor)
+                else:
+                    raise ValueError('Input parameter `bin_factor` must be a length 2 array-like or an integer.\n' +
+                                     '{} was given.'.format(bin_factor))
+
+            elif isinstance(bin_factor, int):
                 bin_factor = (bin_factor, bin_factor)
-            elif len(bin_factor) == 2:
-                bin_factor = tuple(bin_factor)
             else:
-                raise ValueError('Input parameter `bin_factor` must be a length 2 array_like or an integer.\n' +
-                                 '{} was given.'.format(bin_factor))
+                raise TypeError('bin_factor should either be an integer or an iterable of positive integers')
+
+            if np.min(bin_factor) < 0:
+                raise ValueError('bin_factor must consist of positive factors')
 
             if interp_func not in [Image.NEAREST, Image.BILINEAR, Image.BICUBIC, Image.LANCZOS]:
                 raise ValueError("'interp_func' argument for ImageTranslator.translate must be one of "
@@ -129,13 +140,14 @@ class ImageTranslator(ArrayTranslator):
 
             # Unfortunately, we need to make a round-trip through PIL for the interpolation. Not possible with numpy
             img_obj = Image.fromarray(image)
+            print('Class passes: {}, {}'.format((vsize, usize), interp_func))
             img_obj = img_obj.resize((vsize, usize), resample=interp_func)
             image = np.asarray(img_obj)
 
+            print('after resizing image: {}, {}'.format(np.min(image), np.max(image)))
+
         # Working around occasional "cannot modify read-only array" error
         image = image.copy()
-
-        image_parms = {'normalized': normalize, 'image_min': np.min(image), 'image_max': np.max(image)}
 
         '''
         Normalize Raw Image
@@ -143,6 +155,9 @@ class ImageTranslator(ArrayTranslator):
         if normalize:
             image -= np.min(image)
             image = image / np.float32(np.max(image))
+
+        image_parms.update({'normalized': normalize,
+                            'image_min': np.min(image), 'image_max': np.max(image)})
 
         """
         Enable the line below if there is a need make the image "look" the right side up. This would be manipulation
@@ -172,7 +187,7 @@ class ImageTranslator(ArrayTranslator):
         return h5_path
 
 
-def read_image(image_path, as_grayscale=True, *args, **kwargs):
+def read_image(image_path, as_grayscale=True, as_numpy_array=True, *args, **kwargs):
     """
     Read the image file at `image_path` into a numpy array either via numpy (.txt) or via pillow (.jpg, .tif, etc.)
 
@@ -182,20 +197,28 @@ def read_image(image_path, as_grayscale=True, *args, **kwargs):
         Path to the image file
     as_grayscale : bool, optional. Default = True
         Whether or not to read the image as a grayscale image
+    as_numpy_array : bool, optional. Default = True
+        If set to True, the image is read into a numpy array. If not, it is returned as a pillow Image
 
     Returns
     -------
-    image : :class:`numpy.ndarray`
-        Array containing the image from the file `image_path`
+    image : :class:`numpy.ndarray` or :class:`PIL.Image`
+        if `as_numpy_array` is set to True - Array containing the image from the file `image_path`.
+        If `as_numpy_array` is set to False - PIL.Image object containing the image within the file - `image_path`.
     """
     ext = os.path.splitext(image_path)[1]
     if ext == '.txt':
-        return np.loadtxt(image_path, *args, **kwargs)
+        img_data = np.loadtxt(image_path, *args, **kwargs)
+        if as_numpy_array:
+            return img_data
+        else:
+            return Image.fromarray(img_data)
     else:
         img_obj = Image.open(image_path)
         if as_grayscale:
             img_obj = img_obj.convert(mode="L", **kwargs)
 
-        # Open the image as a numpy array
-        np_array = np.asarray(img_obj)
-        return np_array
+        if as_numpy_array:
+            # Open the image as a numpy array
+            return np.asarray(img_obj)
+        return img_obj
