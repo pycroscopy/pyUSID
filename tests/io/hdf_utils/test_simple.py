@@ -54,15 +54,15 @@ class TestSimple(unittest.TestCase):
 
         os.remove(file_path)
 
-    def test_check_is_main_legal_01(self):
+    def test_check_if_main_legal(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             expected_dsets = [h5_f['/Raw_Measurement/source_main'],
                               h5_f['/Raw_Measurement/source_main-Fitter_000/results_main'],
                               h5_f['/Raw_Measurement/source_main-Fitter_001/results_main']]
             for dset in expected_dsets:
-                self.assertTrue(hdf_utils.check_if_main(dset))
+                self.assertTrue(hdf_utils.check_if_main(dset, verbose=False))
 
-    def test_check_is_main_illegal_01(self):
+    def test_check_if_main_illegal_01(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             not_main_dsets = [h5_f,
                               4.123,
@@ -73,6 +73,57 @@ class TestSimple(unittest.TestCase):
                               h5_f['/Raw_Measurement/Spectroscopic_Values']]
             for dset in not_main_dsets:
                 self.assertFalse(hdf_utils.check_if_main(dset))
+
+    def test_check_if_main_anc_not_dsets(self):
+        temp_path = 'test.h5'
+        data_utils.delete_existing_file(temp_path)
+        with h5py.File(temp_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Main', data=np.random.rand(2, 3))
+            for anc_dset_name in ['Position_Indices', 'Position_Values',
+                                  'Spectroscopic_Indices', 'Spectroscopic_Values']:
+                h5_dset.attrs[anc_dset_name] = h5_f.ref
+            self.assertFalse(hdf_utils.check_if_main(h5_dset, verbose=False))
+        os.remove(temp_path)
+
+    def test_check_if_main_missing_str_attrs(self):
+        temp_path = 'test.h5'
+        data_utils.delete_existing_file(temp_path)
+        with h5py.File(temp_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Main', data=np.random.rand(2, 3))
+            for anc_dset_name in ['Position_Indices', 'Position_Values',
+                                  'Spectroscopic_Indices', 'Spectroscopic_Values']:
+                h5_dset.attrs[anc_dset_name] = h5_dset.ref
+            self.assertFalse(hdf_utils.check_if_main(h5_dset, verbose=False))
+        os.remove(temp_path)
+
+    def test_check_if_main_invalid_str_attrs(self):
+        temp_path = 'test.h5'
+        data_utils.delete_existing_file(temp_path)
+        with h5py.File(temp_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Main', data=np.random.rand(2, 3))
+            h5_dset.attrs['quantity'] = [1, 2, 3]
+            h5_dset.attrs['units'] = 4.1234
+            for anc_dset_name in ['Position_Indices', 'Position_Values',
+                                  'Spectroscopic_Indices', 'Spectroscopic_Values']:
+                h5_dset.attrs[anc_dset_name] = h5_dset.ref
+            self.assertFalse(hdf_utils.check_if_main(h5_dset, verbose=False))
+        os.remove(temp_path)
+
+    def test_check_if_main_anc_shapes_not_matching(self):
+        temp_path = 'test.h5'
+        data_utils.delete_existing_file(temp_path)
+        with h5py.File(temp_path) as h5_f:
+            h5_main = h5_f.create_dataset('Main', data=np.random.rand(2, 3))
+            h5_pos_ind = h5_f.create_dataset('Pos_Inds', data=np.random.rand(2, 1))
+            h5_spec_ind = h5_f.create_dataset('Spec_Inds', data=np.random.rand(1, 5))
+            h5_main.attrs['quantity'] = 'quant'
+            h5_main.attrs['units'] = 'unit'
+            for anc_dset_name in ['Position_Indices', 'Position_Values']:
+                h5_main.attrs[anc_dset_name] = h5_pos_ind.ref
+            for anc_dset_name in ['Spectroscopic_Indices', 'Spectroscopic_Values']:
+                h5_main.attrs[anc_dset_name] = h5_spec_ind.ref
+            self.assertFalse(hdf_utils.check_if_main(h5_main, verbose=True))
+        os.remove(temp_path)
 
     def test_get_source_dataset_legal(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
@@ -96,7 +147,6 @@ class TestSimple(unittest.TestCase):
             # self.assertEqual(set(main_dsets), set(expected_dsets))
             self.assertEqual(len(main_dsets), len(expected_dsets))
             self.assertTrue(np.all([x.name == y.name for x, y in zip(main_dsets, expected_dsets)]))
-
 
     def test_write_ind_val_dsets_legal_bare_minimum_pos(self):
         num_cols = 3
@@ -823,6 +873,17 @@ class TestSimple(unittest.TestCase):
                                        h5_source_spec_vals)
 
         os.remove(file_path)
+
+    def test_copy_attributes_not_h5_dset(self):
+        temp_path = 'copy_attributes.h5'
+        with h5py.File(temp_path) as h5_f:
+            h5_grp = h5_f.create_group('Blah')
+            with self.assertRaises(TypeError):
+                hdf_utils.copy_attributes(h5_grp, np.arange(4))
+
+            with self.assertRaises(TypeError):
+                hdf_utils.copy_attributes(np.arange(4), h5_grp)
+        os.remove(temp_path)
 
     def test_copy_attributes_file_dset(self):
         file_path = 'test.h5'
