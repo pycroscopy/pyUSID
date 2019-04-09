@@ -112,6 +112,11 @@ class TestImageTranslator(unittest.TestCase):
             translator = ImageTranslator()
             _ = translator.translate(image_path, bin_factor=(1, 2, 3))
 
+    def test_binning_neg_parms(self):
+        with self.assertRaises(ValueError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path, bin_factor=-2)
+
     def test_binning_float_parms(self):
         with self.assertRaises(TypeError):
             translator = ImageTranslator()
@@ -134,6 +139,23 @@ class TestImageTranslator(unittest.TestCase):
         with self.assertRaises(TypeError):
             translator = ImageTranslator()
             _ = translator.translate(image_path, h5_path=np.arange(4))
+
+    def test_path_not_str(self):
+        with self.assertRaises(TypeError):
+            translator = ImageTranslator()
+            _ = translator.translate(np.arange(4))
+
+    def test_path_does_not_exist(self):
+        with self.assertRaises(FileNotFoundError):
+            translator = ImageTranslator()
+            _ = translator.translate('no_such_file.png')
+
+    def test_output_h5_file_already_exists(self):
+        with h5py.File(image_path.replace('.png', '.h5')) as _:
+            pass
+        with self.assertRaises(FileExistsError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path)
 
     def test_valid_h5_path(self):
         self.__main_translate(h5_path='custom_path.h5')
