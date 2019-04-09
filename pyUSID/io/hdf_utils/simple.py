@@ -354,6 +354,13 @@ def check_if_main(h5_main, verbose=False):
             print('{} does not have the mandatory "quantity" and "units" attributes'.format(h5_main.name))
         return False
 
+    for attr_name in ['quantity', 'units']:
+        val = get_attr(h5_main, attr_name)
+        if not isinstance(val, (str, unicode)):
+            if verbose:
+                print('Attribute {} of {} found to be {}. Expected a string'.format(attr_name, h5_main.name, val))
+            return False
+
     # Blindly linking four datasets is still not sufficient. The sizes need to match:
     anc_shape_match = list()
     h5_pos_inds = h5_main.file[h5_main.attrs['Position_Indices']]
