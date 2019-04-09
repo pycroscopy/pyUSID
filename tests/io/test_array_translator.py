@@ -28,6 +28,82 @@ class TestArrayTranslator(unittest.TestCase):
         if os.path.exists(file_path):
             os.remove(file_path)
 
+    def test_not_strings(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(TypeError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 1.2345, np.random.rand(5, 3), 'quant', 'unit',
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3))
+
+        with self.assertRaises(TypeError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', np.random.rand(5, 3), {'quant': 1}, 'unit',
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3))
+
+        with self.assertRaises(TypeError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', np.random.rand(5, 3), 'quant', ['unit'],
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3))
+
+    def test_not_numpy_or_dask_array_main(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(TypeError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', {'This is not a dataset': True}, 'quant', 'unit',
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3))
+
+    def test_main_dset_1D(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(ValueError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', np.arange(4), 'quant', 'unit',
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3))
+
+        with self.assertRaises(ValueError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', da.from_array(np.arange(4), chunks=(4)), 'quant', 'unit',
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3))
+
+    def test_main_dset_2D(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(ValueError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', np.random.rand(2, 3, 4), 'quant', 'unit',
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3))
+
+        with self.assertRaises(ValueError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', da.from_array(np.random.rand(2, 3, 4), chunks=(2, 3, 4)),
+                                     'quant', 'unit',
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3))
+
+    def test_extra_dsets_not_dicts(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(TypeError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', np.random.rand(5, 3), 'quant', 'unit',
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3),
+                                     extra_dsets=np.arange(4))
+
+    def test_extra_dsets_not_str_names(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(TypeError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', np.random.rand(5, 3), 'quant', 'unit',
+                                     write_utils.Dimension('Position_Dim', 'au', 5),
+                                     write_utils.Dimension('Spec_Dim', 'au', 3),
+                                     extra_dsets={14: np.arange(4),
+                                                  'Blah_other': np.arange(15)})
+
     def test_reserved_name_for_extra_dsets(self):
         translator = ArrayTranslator()
         with self.assertRaises(KeyError):
@@ -65,6 +141,15 @@ class TestArrayTranslator(unittest.TestCase):
                                       write_utils.Dimension('Dim_2', 'au', 4)],
                                      write_utils.Dimension('Spec_Dim', 'au', 3))
 
+    def test_illegal_dimensions_position(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(ValueError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', np.random.rand(15, 3), 'quant', 'unit',
+                                     [write_utils.Dimension('Dim_1', 'au', 5),
+                                      write_utils.Dimension('Dim_2', 'au', 4)],
+                                     write_utils.Dimension('Spec_Dim', 'au', 3))
+
     def test_illegal_dimensions_spec(self):
         translator = ArrayTranslator()
         with self.assertRaises(ValueError):
@@ -73,6 +158,29 @@ class TestArrayTranslator(unittest.TestCase):
                                      write_utils.Dimension('Dim_1', 'au', 5),
                                      [write_utils.Dimension('Spec_Dim', 'au', 3),
                                       write_utils.Dimension('Dim_2', 'au', 4)])
+
+    def test_illegal_dimensions_object_single(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(TypeError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', np.random.rand(5, 13), 'quant', 'unit',
+                                     'my_string_Dimension',
+                                     [write_utils.Dimension('Spec_Dim', 'au', 3),
+                                      write_utils.Dimension('Dim_2', 'au', 4)])
+
+    def test_illegal_dimensions_objects(self):
+        translator = ArrayTranslator()
+        with self.assertRaises(TypeError):
+            self.__delete_existing_file(file_path)
+            _ = translator.translate(file_path, 'Blah', np.random.rand(5, 13), 'quant', 'unit',
+                                     write_utils.Dimension('Dim_1', 'au', 5),
+                                     ['blah',
+                                      write_utils.Dimension('Dim_2', 'au', 4)])
+
+    def test_preexisting_file_OK(self):
+        with h5py.File(file_path) as _:
+            pass
+        self.__base_translation_tester(main_dset_as_dask=False, extra_dsets_type='numpy', use_parm_dict=False)
 
     def test_quick_numpy_translation(self):
         self.__base_translation_tester(main_dset_as_dask=False, extra_dsets_type='numpy', use_parm_dict=False)
