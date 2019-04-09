@@ -51,9 +51,9 @@ class ImageTranslator(ArrayTranslator):
             absolute path to the desired output HDF5 file.
         """
         if not isinstance(image_path, (str, unicode)):
-            raise ValueError("'image_path' argument for ImageTranslator should be a str or unicode")
+            raise TypeError("'image_path' argument for ImageTranslator should be a str or unicode")
         if not os.path.exists(os.path.abspath(image_path)):
-            raise ValueError('Specified image does not exist.')
+            raise FileNotFoundError('Specified image does not exist.')
         else:
             image_path = os.path.abspath(image_path)
 
