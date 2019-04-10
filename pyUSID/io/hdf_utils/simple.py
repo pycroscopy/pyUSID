@@ -16,7 +16,7 @@ from ..dtype_utils import validate_dtype
 from ..reg_ref import write_region_references, simple_region_ref_copy, copy_reg_ref_reduced_dim, \
     create_region_reference
 from ..write_utils import clean_string_att, build_ind_val_matrices, get_aux_dset_slicing, INDICES_DTYPE, \
-    VALUES_DTYPE, Dimension, DEFAULT, DEPENDENT, INCOMPLETE
+    VALUES_DTYPE, Dimension, DimType
 from .base import get_auxiliary_datasets, link_h5_obj_as_alias, get_attr, link_h5_objects_as_attrs, \
     write_book_keeping_attrs, write_simple_attrs, is_editable_h5
 
@@ -933,10 +933,10 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
 
     sing_mode = sing_mode[0]
 
-    if sing_mode == DEFAULT:
+    if sing_mode == DimType.DEFAULT:
         indices, values = build_ind_val_matrices([dim.values for dim in dimensions],
                                                  is_spectral=is_spectral)
-    elif sing_mode == INCOMPLETE:
+    elif sing_mode == DimType.INCOMPLETE:
         lengths = np.unique([len(dim.values) for dim in dimensions])
         if len(lengths) > 1:
             raise ValueError('Values for dimensions not of same length')
