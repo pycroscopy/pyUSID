@@ -916,3 +916,39 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
 
     from ..usi_data import USIDataset
     return USIDataset(h5_main)
+
+
+def map_grid_to_cartesian(h5_main, mode='histogram', **kwargs):
+    """
+    Maps a incomplete measurement, such as a spiral scan, to a cartesian grid
+
+    Parameters
+    ----------
+    h5_main : :class:`pyUSID.USIDataset`
+        Dataset containing the sparse measurement
+    mode : str, optional. Default = 'histogram'
+        Method used for building a cartesian grid.
+        Available methods = 'histogram', 'cubic'
+        Use kwargs to pass onto each of the techniques
+
+    Note
+    ----
+    UNDER DEVELOPMENT!
+    Currently only valid for 2 position dimensions
+
+    Returns
+    -------
+    :class:`numpy.ndarray` but could be a h5py.Dataset or dask.array.core.Array object
+    """
+
+    if not check_if_main(h5_main, verbose=False):
+        raise TypeError('Provided object is not a pyUSID.USIDataset object')
+
+    if mode not in ['histogram', 'cubic']:
+        raise ValueError('mode must be a string among["histogram", "cubic"]')
+
+    if mode == 'histogram':
+        pass
+
+    if mode == 'cubic':
+        pass
