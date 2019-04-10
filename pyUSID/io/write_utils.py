@@ -14,13 +14,18 @@ from collections import Iterable
 from .dtype_utils import contains_integers
 
 __all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE',
-           'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals']
+           'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'DEFAULT', 'INCOMPLETE',
+           'DEPENDENT']
 
 if sys.version_info.major == 3:
     unicode = str
 
+# Constants:
 INDICES_DTYPE = np.uint32
 VALUES_DTYPE = np.float32
+DEFAULT = 0
+INCOMPLETE = 1
+DEPENDENT = 2
 
 
 class Dimension(object):
@@ -28,7 +33,7 @@ class Dimension(object):
     ..autoclass::Dimension
     """
 
-    def __init__(self, name, units, values):
+    def __init__(self, name, units, values, mode=DEFAULT):
         """
         Simple object that describes a dimension in a dataset by its name, units, and values
 
@@ -41,7 +46,13 @@ class Dimension(object):
         values : array-like or int
             Values over which this dimension was varied. A linearly increasing set of values will be generated if an
             integer is provided instead of an array.
-
+        mode : int, Optional. Default = 0
+            How the parameter associated with the dimension was varied.
+            DEFAULT - data was recorded for all combinations of values in this dimension against **all** other
+            dimensions. This is typically the case.
+            INCOMPLETE - Data not present for all combinations of values in this dimension and all other dimensions
+                Examples include spiral scans, sparse sampling, aborted measurements
+            DEPENDENT - Values in this dimension were varied as a function of another (independent) dimension.
         """
         if not isinstance(name, (str, unicode)):
             raise TypeError('name should be a string')
@@ -56,9 +67,16 @@ class Dimension(object):
             values = np.arange(values)
         if not isinstance(values, (np.ndarray, list, tuple)):
             raise TypeError('values should be array-like')
+
+        if not isinstance(mode, int):
+            raise TypeError('mode must be an integer. Provided object was of type: {}'.format(type(mode)))
+        if mode < DEFAULT or mode > DEPENDENT:
+            raise ValueError('mode must be an integer between 0 and 2')
+
         self.name = name
         self.units = units
         self.values = values
+        self.mode = mode
 
     def __repr__(self):
         return '{} ({}) : {}'.format(self.name, self.units, self.values)
