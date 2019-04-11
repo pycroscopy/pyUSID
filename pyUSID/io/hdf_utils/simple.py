@@ -965,7 +965,8 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
 
     for h5_dset in [h5_indices, h5_values]:
         write_region_references(h5_dset, region_slices, verbose=verbose)
-        write_simple_attrs(h5_dset, {'units': [x.units for x in dimensions], 'labels': [x.name for x in dimensions]})
+        write_simple_attrs(h5_dset, {'units': [x.units for x in dimensions], 'labels': [x.name for x in dimensions],
+                                     'type': [dim.mode.value for dim in dimensions]})
 
     return h5_indices, h5_values
 
