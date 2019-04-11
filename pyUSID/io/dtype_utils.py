@@ -8,6 +8,7 @@ Created on Tue Nov  3 21:14:25 2015
 """
 
 from __future__ import division, absolute_import, unicode_literals, print_function
+import sys
 import h5py
 import numpy as np
 from collections import Iterable
@@ -15,8 +16,11 @@ from itertools import groupby
 
 __all__ = ['flatten_complex_to_real', 'get_compound_sub_dtypes', 'flatten_compound_to_real', 'check_dtype',
            'stack_real_to_complex', 'validate_dtype', 'integers_to_slices', 'get_exponent', 'is_complex_dtype',
-           'stack_real_to_compound', 'stack_real_to_target_dtype', 'flatten_to_real', 'contains_integers']
+           'stack_real_to_compound', 'stack_real_to_target_dtype', 'flatten_to_real', 'contains_integers',
+           'validate_string_args']
 
+if sys.version_info.major == 3:
+    unicode = str
 
 def contains_integers(iter_int, min_val=None):
     """
@@ -346,6 +350,34 @@ def validate_dtype(dtype):
     else:
         raise TypeError('dtype should either be a numpy or h5py dtype')
     return True
+
+
+def validate_string_args(arg_list, arg_names):
+    """
+    This function is to be used when validating string parameters for a function. Trims the provided strings.
+    Errors in the strings will result in Exceptions
+
+    Parameters
+    ----------
+    arg_list : array-like
+        List of str objects that signify the value for a position argument in a function
+    arg_names : array-like
+        List of str objects with the names of the corresponding parameters in the function
+
+    Returns
+    -------
+    array-like
+        List of str objects that signify the value for a position argument in a function with spaces on ends removed
+    """
+    cleaned_args = []
+    for arg, arg_name in zip(arg_list, arg_names):
+        if not isinstance(arg, (str, unicode)):
+            raise TypeError(arg_name + ' should be a string')
+        arg = arg.strip()
+        if len(arg) <= 0:
+            raise ValueError(arg_name + ' should not be an empty string')
+        cleaned_args.append(arg)
+    return cleaned_args
 
 
 def is_complex_dtype(dtype):

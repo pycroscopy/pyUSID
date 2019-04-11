@@ -9,12 +9,14 @@ Created on Thu Sep  7 21:14:25 2017
 
 from __future__ import division, print_function, unicode_literals, absolute_import
 import sys
+from warnings import warn
+
 import numpy as np
 from collections import Iterable
 from .dtype_utils import contains_integers
 
 __all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE',
-           'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals']
+           'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions']
 
 if sys.version_info.major == 3:
     unicode = str
@@ -72,6 +74,37 @@ class Dimension(object):
             return all([same_name, same_unit, same_values])
 
         return False
+
+
+def validate_dimensions(dimensions, dim_type='Position'):
+    """
+    Checks if the provided object is an iterable with pyUSID.Dimension objects.
+    If it is not full of Dimension objects, Exceptions are raised.
+
+    Parameters
+    ----------
+    dimensions : iterable or pyUSID.Dimension
+        Iterable containing pyUSID.Dimension objects
+    dim_type : str, Optional. Default = "Position"
+        Type of Dimensions in the iterable. Set to "Spectroscopic" if not Position dimensions.
+        This string is only used for more descriptive Exceptions
+
+    Returns
+    -------
+    list
+        List containing pyUSID.Dimension objects
+    """
+    if isinstance(dimensions, Dimension):
+        dimensions = [dimensions]
+    if isinstance(dimensions, np.ndarray):
+        if dimensions.ndim > 1:
+            dimensions = dimensions.ravel()
+            warn(dim_type + ' dimensions should be specified by a 1D array-like. Raveled this numpy array for now')
+    if not isinstance(dimensions, (list, np.ndarray, tuple)):
+        raise TypeError(dim_type + ' dimensions should be array-like of Dimension objects')
+    if not np.all([isinstance(x, Dimension) for x in dimensions]):
+        raise TypeError(dim_type + ' dimensions should be a sequence of Dimension objects')
+    return dimensions
 
 
 def get_aux_dset_slicing(dim_names, last_ind=None, is_spectroscopic=False):

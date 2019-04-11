@@ -14,9 +14,11 @@ import sys
 import h5py
 import numpy as np
 import dask.array as da
-from .write_utils import Dimension
 from .translator import Translator, generate_dummy_main_parms
-from .hdf_utils import write_main_dataset, write_simple_attrs, create_indexed_group, write_book_keeping_attrs
+from .dtype_utils import validate_string_args
+from .hdf_utils import write_main_dataset, write_simple_attrs, create_indexed_group, write_book_keeping_attrs, \
+    validate_dims_against_main, validate_main_dset
+from pyUSID.io.write_utils import validate_dimensions
 
 if sys.version_info.major == 3:
     unicode = str
@@ -74,32 +76,17 @@ class ArrayTranslator(Translator):
             Absolute path of the written h5 file
 
         """
-        for arg, arg_name in zip([h5_path, data_name, translator_name, quantity, units],
-                                 ['h5_path', 'data_name', 'translator_name', 'quantity', 'units']):
-            if not isinstance(arg, (str, unicode)):
-                raise TypeError('{} should be of type - str; was of type - {}'.format(arg_name, type(arg)))
-            if len(arg.strip()) == 0:
-                raise KeyError('{} should not be an empty string'.format(arg_name))
 
-        if not isinstance(raw_data, (np.ndarray, da.core.Array)):
-            raise TypeError('raw_data should either be a np.ndarray or a da.core.Array')
+        h5_path, data_name, translator_name, quantity, units = validate_string_args([h5_path, data_name,
+                                                                                     translator_name, quantity, units],
+                                                                                    ['h5_path', 'data_name',
+                                                                                     'translator_name', 'quantity',
+                                                                                     'units'])
+        validate_main_dset(raw_data, False)
 
-        if raw_data.ndim != 2:
-            raise ValueError('raw_data should be a 2-dimensional matrix. Provided array was of shape: {}'
-                             '.'.format(raw_data.shape))
-
-        for ind, dimensions in enumerate([pos_dims, spec_dims]):
-            if isinstance(dimensions, Dimension):
-                dimensions = [dimensions]
-            if not isinstance(dimensions, (list, np.ndarray, tuple)):
-                raise TypeError('dimensions should be array-like ')
-            if not np.all([isinstance(x, Dimension) for x in dimensions]):
-                raise TypeError('dimensions should be a sequence of Dimension objects')
-            # Check to make sure that the product of the position and spectroscopic dimension sizes match with
-            # that of raw_data
-            if raw_data.shape[ind] != np.product([len(x.values) for x in dimensions]):
-                raise ValueError('Size of dimension[{}] of raw_data not equal to product of size of dimensions: {}'
-                                 '.'.format(raw_data.shape[ind], np.product([len(x.values) for x in dimensions])))
+        for dimensions, dim_name in zip([pos_dims, spec_dims], ['Position', 'Spectroscopic']):
+            dimensions = validate_dimensions(dimensions, dim_type=dim_name)
+            validate_dims_against_main(raw_data.shape, dimensions, dim_name == 'Spectroscopic')
 
         if extra_dsets is not None:
             if not isinstance(extra_dsets, dict):

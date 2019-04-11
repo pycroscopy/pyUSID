@@ -11,6 +11,7 @@ from warnings import warn
 import sys
 import h5py
 import numpy as np
+import dask.array as da
 
 from ..dtype_utils import validate_dtype
 from ..reg_ref import write_region_references, simple_region_ref_copy, copy_reg_ref_reduced_dim, \
@@ -291,19 +292,104 @@ def copy_attributes(source, dest, skip_refs=True):
     return dest
 
 
+def validate_main_dset(h5_main, must_be_h5):
+    """
+    Checks to make sure that the provided object is a USID main dataset
+    Errors in parameters will result in Exceptions
+
+    Parameters
+    ----------
+    h5_main : h5py.Dataset or numpy.ndarray or Dask.array.core.array
+        object that represents the USID main data
+    must_be_h5 : bool
+        Set to True if the expecting an h5py.Dataset object.
+        Set to False if expecting a numpy.ndarray or Dask.array.core.array
+
+    Returns
+    -------
+
+    """
+    # Check that h5_main is a dataset
+    if must_be_h5:
+        if not isinstance(h5_main, h5py.Dataset):
+            raise TypeError('{} is not an HDF5 Dataset object.'.format(h5_main))
+    else:
+        if not isinstance(h5_main, (np.ndarray, da.core.Array)):
+            raise TypeError('raw_data should either be a np.ndarray or a da.core.Array')
+
+    # Check dimensionality
+    if len(h5_main.shape) != 2:
+        raise ValueError('Main data is not 2D. Provided object has shape: {}'.format(h5_main.shape))
+
+
+def validate_anc_h5_dsets(h5_inds, h5_vals, main_shape, is_spectroscopic=True):
+    """
+    Checks ancillary HDF5 datasets against shape of a main dataset.
+    Errors in parameters will result in Exceptions
+
+    Parameters
+    ----------
+    h5_inds : h5py.Dataset
+        HDF5 dataset corresponding to the ancillary Indices dataset
+    h5_vals : h5py.Dataset
+        HDF5 dataset corresponding to the ancillary Values dataset
+    main_shape : array-like
+        Shape of the main dataset expressed as a tuple or similar
+    is_spectroscopic : bool, Optional. Default = True
+        set to True if ``dims`` correspond to Spectroscopic Dimensions. False otherwise.
+    """
+    if not isinstance(h5_inds, h5py.Dataset):
+        raise TypeError('h5_inds must be a h5py.Dataset object')
+    if not isinstance(h5_vals, h5py.Dataset):
+        raise TypeError('h5_vals must be a h5py.Dataset object')
+    if h5_inds.shape != h5_vals.shape:
+        raise ValueError('h5_inds: {} and h5_vals: {} should be of the same shape'.format(h5_inds.shape, h5_vals.shape))
+    if h5_inds.shape[is_spectroscopic] != main_shape[is_spectroscopic]:
+        raise ValueError('index {} in shape of h5_inds: {} and main_data: {} should be equal'
+                         '.'.format(int(is_spectroscopic), h5_inds.shape, main_shape))
+
+
+def validate_dims_against_main(main_shape, dims, is_spectroscopic=True):
+    """
+    Checks Dimension objects against a given shape for main datasets.
+    Errors in parameters will result in Exceptions
+
+    Parameters
+    ----------
+    main_shape : array-like
+        Tuple or list with the shape of the main data
+    dims : iterable
+        List of Dimension objects
+    is_spectroscopic : bool, Optional. Default = True
+        set to True if ``dims`` correspond to Spectroscopic Dimensions. False otherwise.
+    """
+    if is_spectroscopic:
+        main_dim = 1
+        dim_category = 'Spectroscopic'
+    else:
+        main_dim = 0
+        dim_category = 'Position'
+
+    # TODO: This is where the dimension type will need to be taken into account:
+    if main_shape[main_dim] != np.product([len(x.values) for x in dims]):
+        raise ValueError(dim_category + ' dimensions in main data do not match with product of values in provided '
+                                        'Dimension objects')
+
+
 def check_if_main(h5_main, verbose=False):
     """
-    Checks the input dataset to see if it has all the neccessary
+    Checks the input dataset to see if it has all the necessary
     features to be considered a Main dataset.  This means it is
-    2D and has the following attributes
-    Position_Indices
-    Position_Values
-    Spectroscopic_Indices
-    Spectroscopic_Values
+    2D and has the following attributes:
 
-    In addition the shapes of the ancillary matricies should match with that of h5_main
+    * Position_Indices
+    * Position_Values
+    * Spectroscopic_Indices
+    * Spectroscopic_Values
+    * quantity
+    * units
 
-    In addition, it should have the 'quantity' and 'units' attributes
+    In addition, the shapes of the ancillary matrices should match with that of h5_main
 
     Parameters
     ----------
@@ -318,23 +404,16 @@ def check_if_main(h5_main, verbose=False):
         True if all tests pass
 
     """
-    # Check that h5_main is a dataset
-    success = isinstance(h5_main, h5py.Dataset)
-
-    if not success:
+    try:
+        validate_main_dset(h5_main, True)
+    except Exception as exep:
         if verbose:
-            print('{} is not an HDF5 Dataset object.'.format(h5_main))
-        return success
+            print(exep)
+        return False
 
     h5_name = h5_main.name.split('/')[-1]
 
-    # Check dimensionality
-    success = np.all([success, len(h5_main.shape) == 2])
-
-    if not success:
-        if verbose:
-            print('{} is not 2D.'.format(h5_name))
-        return success
+    success = True
 
     # Check for Datasets
     dset_names = ['Position_Indices', 'Position_Values',
