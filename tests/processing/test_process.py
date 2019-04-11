@@ -16,8 +16,7 @@ import pyUSID as usid
 
 sys.path.append("./tests/io/")
 import data_utils
-sys.path.append("./examples/intermediate/supporting_docs/")
-from peak_finding import find_all_peaks
+from proc_utils import sho_slow_guess
 
 orig_file_path = './data/BELine_0004.h5'
 temp_file_path = './BELine_0004.h5'
@@ -55,23 +54,9 @@ class SuperBasicProcess(usid.Process):
     @staticmethod
     def _map_function(spectra, *args, **kwargs):
 
-        peak_inds = find_all_peaks(spectra, [20, 60], num_steps=30)
+        sho_parms = sho_slow_guess(spectra, np.arange(spectra.size))
 
-        central_ind = len(spectra) // 2
-        if len(peak_inds) == 0:
-            # too few peaks
-            # set peak to center of spectra
-            val = central_ind
-        elif len(peak_inds) > 1:
-            # too many peaks
-            # set to peak closest to center of spectra
-            dist = np.abs(peak_inds - central_ind)
-            val = peak_inds[np.argmin(dist)]
-        else:
-            # normal situation
-            val = peak_inds[0]
-        # Finally take the amplitude of the spectra at this index
-        return np.abs(spectra[val])
+        return sho_parms[0]  # just the amplitude
 
 
 class TestProcess(unittest.TestCase):
