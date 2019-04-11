@@ -468,9 +468,9 @@ def check_if_main(h5_main, verbose=False):
     return success
 
 
-def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals, anc_dsets=None):
+def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals):
     """
-    Links the object references to the four position and spectrosocpic datasets as
+    Links the object references to the four position and spectroscopic datasets as
     attributes of `h5_main`
 
     Parameters
@@ -485,36 +485,25 @@ def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals, 
         Dataset that will be linked with the name 'Spectroscopic_Indices'
     h5_spec_vals : h5py.Dataset
         Dataset that will be linked with the name 'Spectroscopic_Values'
-    anc_dsets : (Optional) list of h5py.Dataset objects
-        Datasets that will be linked with their own names
 
+    Returns
+    -------
+    pyUSID.USIDataset
+        USIDataset version of h5_main now that it is a USID Main dataset
     """
-    # TODO: Make sure that the dimensions of spec and pos match with the data!
-    for param, param_name in zip([h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals],
-                                 ['h5_main', 'h5_pos_inds', 'h5_pos_vals', 'h5_spec_inds', 'h5_spec_vals']):
-        if not isinstance(param, h5py.Dataset):
-            raise TypeError(param_name + ' should be a h5py.Dataset object')
+    if not isinstance(h5_main, h5py.Dataset):
+        raise TypeError('h5_main should be a h5py.Dataset object')
 
-    if h5_pos_vals.shape != h5_pos_inds.shape:
-        raise ValueError('h5_pos_vals: {} and h5_pos_inds: {} do not have the same shape'
-                         '.'.format(h5_pos_vals.shape, h5_pos_inds))
-    if h5_spec_vals.shape != h5_spec_inds.shape:
-        raise ValueError('h5_spec_vals: {} and h5_spec_inds: {} do not have the same shape'
-                         '.'.format(h5_spec_vals.shape, h5_spec_inds))
+    validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals, h5_main.shape, is_spectroscopic=False)
+    validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals, h5_main.shape, is_spectroscopic=True)
 
     link_h5_obj_as_alias(h5_main, h5_pos_inds, 'Position_Indices')
     link_h5_obj_as_alias(h5_main, h5_pos_vals, 'Position_Values')
     link_h5_obj_as_alias(h5_main, h5_spec_inds, 'Spectroscopic_Indices')
     link_h5_obj_as_alias(h5_main, h5_spec_vals, 'Spectroscopic_Values')
 
-    if anc_dsets is not None:
-        if not isinstance(anc_dsets, (list, tuple)):
-            raise TypeError('anc_dsets should be a list or tuple')
-        anc_dsets = list(anc_dsets)
-        np.all([isinstance(item, h5py.Dataset) for item in anc_dsets])
-
-        for dset in anc_dsets:
-            link_h5_objects_as_attrs(h5_main, dset)
+    from ..usi_data import USIDataset
+    return USIDataset(h5_main)
 
 
 def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=False):
