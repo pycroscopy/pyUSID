@@ -769,6 +769,75 @@ class TestSimple(unittest.TestCase):
             ret_val = hdf_utils.assign_group_index(h5_group, 'blah_')
             self.assertEqual(ret_val, 'blah_000')
 
+    def test_link_as_main_pos_args_not_h5_dset(self):
+        file_path = 'link_as_main.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset("Blah", data=[1, 2, 3, 4])
+            with self.assertRaises(TypeError):
+                hdf_utils.link_as_main("h5_main", 1.234, -2, False, {"h5_spec_vals": 2.432})
+
+            with self.assertRaises(TypeError):
+                hdf_utils.link_as_main(h5_dset, 1.234, -2, False, {"h5_spec_vals": 2.432})
+
+            with self.assertRaises(TypeError):
+                hdf_utils.link_as_main(h5_dset, h5_dset, -2, False, {"h5_spec_vals": 2.432})
+
+            with self.assertRaises(TypeError):
+                hdf_utils.link_as_main(h5_dset, h5_dset, h5_dset, False, {"h5_spec_vals": 2.432})
+
+            with self.assertRaises(TypeError):
+                hdf_utils.link_as_main(h5_dset, h5_dset, h5_dset, h5_dset, {"h5_spec_vals": 2.432})
+
+        data_utils.delete_existing_file(file_path)
+
+    def test_link_as_main_pos_args_not_h5_dset(self):
+        file_path = 'link_as_main.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset("Blah", data=[1, 2, 3, 4])
+            with self.assertRaises(TypeError):
+                hdf_utils.link_as_main("h5_main", 1.234, -2, False, {"h5_spec_vals": 2.432})
+
+            with self.assertRaises(TypeError):
+                hdf_utils.link_as_main(h5_dset, 1.234, -2, False, {"h5_spec_vals": 2.432})
+
+            with self.assertRaises(TypeError):
+                hdf_utils.link_as_main(h5_dset, h5_dset, -2, False, {"h5_spec_vals": 2.432})
+
+            with self.assertRaises(TypeError):
+                hdf_utils.link_as_main(h5_dset, h5_dset, h5_dset, False, {"h5_spec_vals": 2.432})
+
+            with self.assertRaises(TypeError):
+                hdf_utils.link_as_main(h5_dset, h5_dset, h5_dset, h5_dset, {"h5_spec_vals": 2.432})
+
+        data_utils.delete_existing_file(file_path)
+
+    def test_link_as_main_ind_vals_not_same_shape(self):
+        file_path = 'link_as_main.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_main = h5_f.create_dataset("Blah", data=np.zeros((3, 5), dtype=np.uint16))
+            h5_pos_inds = h5_f.create_dataset("P_I", data=np.zeros((7, 2), dtype=np.uint16))
+            h5_pos_vals = h5_f.create_dataset("P_V", data=np.zeros((3, 2), dtype=np.uint16))
+            h5_spec_inds = h5_f.create_dataset("S_I", data=np.zeros((2, 5), dtype=np.uint16))
+            h5_spec_vals = h5_f.create_dataset("S_V", data=np.zeros((2, 5), dtype=np.uint16))
+            with self.assertRaises(ValueError):
+                hdf_utils.link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals)
+
+        data_utils.delete_existing_file(file_path)
+
+        with h5py.File(file_path) as h5_f:
+            h5_main = h5_f.create_dataset("Blah", data=np.zeros((3, 5), dtype=np.uint16))
+            h5_pos_inds = h5_f.create_dataset("P_I", data=np.zeros((3, 2), dtype=np.uint16))
+            h5_pos_vals = h5_f.create_dataset("P_V", data=np.zeros((3, 2), dtype=np.uint16))
+            h5_spec_inds = h5_f.create_dataset("S_I", data=np.zeros((2, 8), dtype=np.uint16))
+            h5_spec_vals = h5_f.create_dataset("S_V", data=np.zeros((2, 5), dtype=np.uint16))
+            with self.assertRaises(ValueError):
+                hdf_utils.link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals)
+
+        data_utils.delete_existing_file(file_path)
+
     def test_link_as_main(self):
         file_path = 'link_as_main.h5'
         data_utils.delete_existing_file(file_path)
@@ -815,62 +884,12 @@ class TestSimple(unittest.TestCase):
             self.assertFalse(hdf_utils.check_if_main(h5_source_main))
 
             # Now need to link as main!
-            hdf_utils.link_as_main(h5_source_main, h5_pos_inds, h5_pos_vals, h5_source_spec_inds, h5_source_spec_vals)
+            usid_source = hdf_utils.link_as_main(h5_source_main, h5_pos_inds, h5_pos_vals, h5_source_spec_inds,
+                                                 h5_source_spec_vals)
 
             # Finally:
             self.assertTrue(hdf_utils.check_if_main(h5_source_main))
-
-        os.remove(file_path)
-
-    def test_link_as_main_size_mismatch(self):
-        file_path = 'link_as_main.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
-            h5_raw_grp = h5_f.create_group('Raw_Measurement')
-
-            num_rows = 3
-            num_cols = 5
-            num_cycles = 2
-            num_cycle_pts = 7
-
-            source_dset_name = 'source_main'
-
-            source_pos_data = np.vstack((np.tile(np.arange(num_cols), num_rows),
-                                         np.repeat(np.arange(num_rows), num_cols))).T
-            pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
-
-            h5_pos_inds = h5_raw_grp.create_dataset('Position_Indices', data=source_pos_data, dtype=np.uint16)
-            data_utils.write_aux_reg_ref(h5_pos_inds, pos_attrs['labels'], is_spec=False)
-            data_utils.write_string_list_as_attr(h5_pos_inds, pos_attrs)
-
-            h5_pos_vals = h5_raw_grp.create_dataset('Position_Values', data=source_pos_data, dtype=np.float32)
-            data_utils.write_aux_reg_ref(h5_pos_vals, pos_attrs['labels'], is_spec=False)
-            data_utils.write_string_list_as_attr(h5_pos_vals, pos_attrs)
-
-            source_spec_data = np.vstack((np.tile(np.arange(num_cycle_pts), num_cycles),
-                                          np.repeat(np.arange(num_cycles), num_cycle_pts)))
-            source_spec_attrs = {'units': ['V', ''], 'labels': ['Bias', 'Cycle']}
-
-            h5_source_spec_inds = h5_raw_grp.create_dataset('Spectroscopic_Indices', data=source_spec_data,
-                                                            dtype=np.uint16)
-            data_utils.write_aux_reg_ref(h5_source_spec_inds, source_spec_attrs['labels'], is_spec=True)
-            data_utils.write_string_list_as_attr(h5_source_spec_inds, source_spec_attrs)
-
-            h5_source_spec_vals = h5_raw_grp.create_dataset('Spectroscopic_Values', data=source_spec_data,
-                                                            dtype=np.float32)
-            data_utils.write_aux_reg_ref(h5_source_spec_vals, source_spec_attrs['labels'], is_spec=True)
-            data_utils.write_string_list_as_attr(h5_source_spec_vals, source_spec_attrs)
-
-            source_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
-            h5_source_main = h5_raw_grp.create_dataset(source_dset_name, data=source_main_data)
-            data_utils.write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
-
-            self.assertFalse(hdf_utils.check_if_main(h5_source_main))
-
-            # Swap the order of the datasets to cause a clash in the shapes
-            with self.assertRaises(ValueError):
-                hdf_utils.link_as_main(h5_source_main, h5_source_spec_inds, h5_pos_vals, h5_pos_inds,
-                                       h5_source_spec_vals)
+            self.assertIsInstance(usid_source, USIDataset)
 
         os.remove(file_path)
 
@@ -1144,6 +1163,33 @@ class TestSimple(unittest.TestCase):
     def test_check_and_link_ancillary_not_dset(self):
         with self.assertRaises(TypeError):
             hdf_utils.check_and_link_ancillary(np.arange(5), ['Spec'])
+
+    def test_check_and_link_ancillary_not_string_tuple(self):
+        file_path = 'check_and_link_ancillary.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
+            with self.assertRaises(TypeError):
+                hdf_utils.check_and_link_ancillary(h5_dset_source, 'Spec')
+        os.remove(file_path)
+
+    def test_check_and_link_ancillary_h5_main_not_dset(self):
+        file_path = 'check_and_link_ancillary.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
+            with self.assertRaises(TypeError):
+                hdf_utils.check_and_link_ancillary(h5_dset_source, ['Spec'], h5_main="not_a_dataset")
+        os.remove(file_path)
+
+    def test_check_and_link_ancillary_anc_refs_not_list_of_hdf(self):
+        file_path = 'check_and_link_ancillary.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
+            with self.assertRaises(TypeError):
+                hdf_utils.check_and_link_ancillary(h5_dset_source, ['Spec'], anc_refs=h5_dset_source)
+        os.remove(file_path)
 
 
 if __name__ == '__main__':
