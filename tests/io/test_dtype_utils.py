@@ -532,12 +532,13 @@ class TestDtypeUtils(unittest.TestCase):
         with self.assertRaises(TypeError):
             _ = dtype_utils.validate_string_args(14, ['meh'])
 
-        actual = ['ghghg']
-        [ret] = dtype_utils.validate_string_args(actual, [np.arange(3)])
-        self.assertEqual(ret, actual)
-
         with self.assertRaises(TypeError):
             _ = dtype_utils.validate_string_args({'dfdf': 14}, ['meh'])
+
+    def test_validate_string_args_name_not_string(self):
+        actual = ['ghghg']
+        ret = dtype_utils.validate_string_args(actual, [np.arange(3)])
+        self.assertEqual(ret, actual)
 
     def test_validate_string_args_unequal_lengths(self):
         expected = ['a', 'b']
