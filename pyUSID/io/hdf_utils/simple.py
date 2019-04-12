@@ -14,7 +14,7 @@ import h5py
 import numpy as np
 import dask.array as da
 
-from ..dtype_utils import validate_dtype
+from ..dtype_utils import validate_dtype, validate_single_string_arg
 from ..reg_ref import write_region_references, simple_region_ref_copy, copy_reg_ref_reduced_dim, \
     create_region_reference
 from ..write_utils import clean_string_att, build_ind_val_matrices, get_aux_dset_slicing, INDICES_DTYPE, \
@@ -94,8 +94,7 @@ def find_dataset(h5_group, dset_name):
 
     if not isinstance(h5_group, (h5py.File, h5py.Group)):
         raise TypeError('h5_group should be a h5py.File or h5py.Group object')
-    if not isinstance(dset_name, (str, unicode)):
-        raise TypeError('dset_name should be a string')
+    dset_name = validate_single_string_arg(dset_name, 'dset_name')
 
     # print 'Finding all instances of', ds_name
     datasets = []
@@ -132,8 +131,7 @@ def find_results_groups(h5_main, tool_name):
     """
     if not isinstance(h5_main, h5py.Dataset):
         raise TypeError('h5_main should be a h5py.Dataset object')
-    if not isinstance(tool_name, (str, unicode)):
-        raise TypeError('tool_name should be a string')
+    tool_name = validate_single_string_arg(tool_name, 'tool_name')
 
     dset_name = h5_main.name.split('/')[-1]
     h5_parent_group = h5_main.parent
@@ -530,20 +528,17 @@ def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=
     -------
     group : list
            List of all :class:`h5py.Group` objects with parameters matching those in `new_parms`
-
     """
     if not isinstance(h5_base, h5py.Dataset):
         raise TypeError('h5_base should be a h5py.Dataset object')
-    if not isinstance(tool_name, (str, unicode)):
-        raise TypeError('tool_name should be a string')
+    tool_name = validate_single_string_arg(tool_name, 'tool_name')
     if new_parms is None:
         new_parms = dict()
     else:
         if not isinstance(new_parms, dict):
             raise TypeError('new_parms should be a dict')
     if target_dset is not None:
-        if not isinstance(target_dset, (str, unicode)):
-            raise TypeError('target_dset should be a string')
+        target_dset = validate_single_string_arg(target_dset, 'target_dset')
 
     matching_groups = []
     groups = find_results_groups(h5_base, tool_name)
@@ -625,8 +620,7 @@ def assign_group_index(h5_parent_group, base_name, verbose=False):
     """
     if not isinstance(h5_parent_group, h5py.Group):
         raise TypeError('h5_parent_group should be a h5py.Group object')
-    if not isinstance(base_name, (str, unicode)):
-        raise TypeError('base_name should be a string')
+    base_name = validate_single_string_arg(base_name, 'base_name')
 
     if len(base_name) == 0:
         raise ValueError('base_name should not be an empty string')
@@ -670,11 +664,8 @@ def create_indexed_group(h5_parent_group, base_name):
     """
     if not isinstance(h5_parent_group, (h5py.Group, h5py.File)):
         raise TypeError('h5_parent_group should be a h5py.File or Group object')
-    if not isinstance(base_name, (str, unicode)):
-        raise TypeError('base_name should be a string')
-    base_name = base_name.strip()
-    if len(base_name) == 0:
-        raise ValueError('base_name should not be an empty string')
+    base_name = validate_single_string_arg(base_name, 'base_name')
+
     group_name = assign_group_index(h5_parent_group, base_name)
     h5_new_group = h5_parent_group.create_group(group_name)
     write_book_keeping_attrs(h5_new_group)
@@ -700,11 +691,7 @@ def create_results_group(h5_main, tool_name):
     """
     if not isinstance(h5_main, h5py.Dataset):
         raise TypeError('h5_main should be a h5py.Dataset or Pycrodataset object')
-    if not isinstance(tool_name, (str, unicode)):
-        raise TypeError('tool_name should be a string')
-    tool_name = tool_name.strip()
-    if len(tool_name) < 1:
-        raise ValueError('tool_name should not be an empty string')
+    tool_name = validate_single_string_arg(tool_name, 'tool_name')
 
     if '-' in tool_name:
         warn('tool_name should not contain the "-" character. Reformatted name from:{} to '
@@ -792,11 +779,7 @@ def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs
         if not isinstance(h5_group, (h5py.Group, h5py.File)):
             raise TypeError('h5_group should be a h5py.Group or h5py.File object')
 
-    if not isinstance(dset_name, (str, unicode)):
-        raise TypeError('dset_name should be a string')
-    dset_name = dset_name.strip()
-    if len(dset_name) == 0:
-        raise ValueError('dset_name cannot be empty!')
+    dset_name = validate_single_string_arg(dset_name, 'dset_name')
     if '-' in dset_name:
         warn('dset_name should not contain the "-" character. Reformatted name from:{} to '
              '{}'.format(dset_name, dset_name.replace('-', '_')))
@@ -980,8 +963,7 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
         raise ValueError('The provided h5 object is not valid / open')
 
     if base_name is not None:
-        if not isinstance(base_name, (str, unicode)):
-            raise TypeError('base_name should be a string')
+        base_name = validate_single_string_arg(base_name, 'base_name')
         if not base_name.endswith('_'):
             base_name += '_'
     else:
@@ -1187,8 +1169,7 @@ def write_reduced_anc_dsets(h5_parent_group, h5_inds, h5_vals, dim_name, basenam
             raise TypeError('is_spec should be a boolean. Provided object is of type: {}'.format(type(is_spec)))
 
     if basename is not None:
-        if not isinstance(basename, (str, unicode)):
-            raise TypeError('basename should be a string')
+        basename = validate_single_string_arg(basename, 'basename')
         if basename.endswith('_'):
             basename = basename[:-1]
     else:
