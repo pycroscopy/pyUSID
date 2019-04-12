@@ -10,6 +10,7 @@ Created on Tue Nov  3 21:14:25 2015
 from __future__ import division, print_function, absolute_import, unicode_literals
 import os
 import sys
+from numbers import Number
 from collections import Iterable
 from time import strftime
 from warnings import warn
@@ -213,12 +214,14 @@ def formatted_str_to_number(str_val, magnitude_names, magnitude_values, separato
         raise TypeError('str_val must be a string')
     if not isinstance(separator, (str, unicode)):
         raise TypeError('separator must be a string')
-    if not isinstance(magnitude_names, Iterable):
+    if not isinstance(magnitude_names, (list, tuple)):
         raise TypeError('magnitude_names must be an Iterable')
-    if not isinstance(magnitude_values, Iterable):
+    if not isinstance(magnitude_values, (list, tuple)):
         raise TypeError('magnitude_values must be an Iterable')
     if not np.all([isinstance(_, (str, unicode)) for _ in magnitude_names]):
         raise TypeError('magnitude_names should contain strings')
+    if not np.all([isinstance(_, Number) for _ in magnitude_values]):
+        raise TypeError('magnitude_values should contain numbers')
     if len(magnitude_names) != len(magnitude_values):
         raise ValueError('magnitude_names and magnitude_values should be of the same length')
 
