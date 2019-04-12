@@ -369,6 +369,10 @@ def validate_string_args(arg_list, arg_names):
     array-like
         List of str objects that signify the value for a position argument in a function with spaces on ends removed
     """
+    if isinstance(arg_list, (str, unicode)):
+        arg_list = [arg_list]
+    if isinstance(arg_names, (str, unicode)):
+        arg_names = [arg_names]
     cleaned_args = []
     for arg, arg_name in zip(arg_list, arg_names):
         if not isinstance(arg, (str, unicode)):
