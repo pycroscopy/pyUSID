@@ -307,10 +307,6 @@ def is_editable_h5(h5_obj):
     except RuntimeError:
         raise ValueError('Encountered a RuntimeError possibly due to a closed file')
     # file handle is actually an open hdf file
-    try:
-        _ = file_handle.mode
-    except ValueError:
-        raise ValueError('A closed h5py.File was provided')
 
     if file_handle.mode == 'r':
         return False
