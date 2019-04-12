@@ -13,7 +13,8 @@ import h5py
 import numpy as np
 from dask import array as da
 
-from ..dtype_utils import contains_integers, validate_dtype, validate_string_args
+from ..dtype_utils import contains_integers, validate_dtype, validate_single_string_arg, validate_string_args, \
+    validate_list_of_strings
 
 from .base import get_attr, write_simple_attrs, is_editable_h5, write_book_keeping_attrs
 from .simple import link_as_main, check_if_main, write_ind_val_dsets, validate_dims_against_main, validate_anc_h5_dsets
@@ -551,9 +552,7 @@ def get_unit_values(ds_inds, ds_vals, dim_names=None, all_dim_names=None, is_spe
     if all_dim_names is None:
         allowed_types = h5py.Dataset
     else:
-        if isinstance(all_dim_names, (list, tuple)):
-            if not np.all([isinstance(obj, (str, unicode)) for obj in all_dim_names]):
-                raise TypeError('all_dim_names should be a list of strings')
+        all_dim_names = validate_list_of_strings(all_dim_names, 'all_dim_names')
         all_dim_names = np.array(all_dim_names)
         allowed_types = (h5py.Dataset, np.ndarray)
 
@@ -627,10 +626,7 @@ def get_unit_values(ds_inds, ds_vals, dim_names=None, all_dim_names=None, is_spe
         if verbose:
             print('Going to return unit values for all dimensions: {}'.format(all_dim_names))
     else:
-        if isinstance(dim_names, (str, unicode)):
-            dim_names = [dim_names]
-        if not isinstance(dim_names, (list, tuple)):
-            raise TypeError('dim_names should be a list or tuple')
+        dim_names = validate_list_of_strings(dim_names, 'dim_names')
 
         if verbose:
             print('Checking to make sure that the target dimension names: {} exist in the datasets attributes: {}'
@@ -638,8 +634,6 @@ def get_unit_values(ds_inds, ds_vals, dim_names=None, all_dim_names=None, is_spe
 
         # check to make sure that the dimension names exist in the datasets:
         for dim_name in dim_names:
-            if not isinstance(dim_name, (str, unicode)):
-                raise TypeError('dim_name should be a string')
             if dim_name not in all_dim_names:
                 raise KeyError('Dimension {} does not exist in the provided ancillary datasets'.format(dim_name))
 
@@ -754,9 +748,7 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
 
     """
     def __check_anc_before_creation(aux_prefix, dim_type='pos'):
-        if not isinstance(aux_prefix, (str, unicode)):
-            raise TypeError('aux_' + dim_type + '_prefix should be a string')
-        aux_prefix = aux_prefix.strip()
+        aux_prefix = validate_single_string_arg(aux_prefix, 'aux_' + dim_type + '_prefix')
         if not aux_prefix.endswith('_'):
             aux_prefix += '_'
         if '-' in aux_prefix:

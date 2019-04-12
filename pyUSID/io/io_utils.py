@@ -16,6 +16,8 @@ from time import strftime
 from warnings import warn
 import numpy as np
 
+from .dtype_utils import validate_list_of_strings, validate_string_args
+
 if sys.version_info.major == 3:
     unicode = str
 
@@ -134,8 +136,7 @@ def format_quantity(value, unit_names, factors, decimals=2):
         raise TypeError('factors must be an Iterable')
     if len(unit_names) != len(factors):
         raise ValueError('unit_names and factors must be of the same length')
-    if not np.all([isinstance(_, (str, unicode)) for _ in unit_names]):
-        raise TypeError('unit_names must be strings')
+    unit_names = validate_list_of_strings(unit_names, 'unit_names')
     index = None
 
     for index, val in enumerate(factors):
@@ -210,16 +211,13 @@ def formatted_str_to_number(str_val, magnitude_names, magnitude_values, separato
     number
         Numeric value of the string
     """
-    if not isinstance(str_val, (str, unicode)):
-        raise TypeError('str_val must be a string')
+    [str_val] = validate_string_args(str_val, 'str_val')
+    magnitude_names = validate_list_of_strings(magnitude_names, 'magnitude_names')
+
     if not isinstance(separator, (str, unicode)):
         raise TypeError('separator must be a string')
-    if not isinstance(magnitude_names, (list, tuple)):
-        raise TypeError('magnitude_names must be an Iterable')
     if not isinstance(magnitude_values, (list, tuple)):
         raise TypeError('magnitude_values must be an Iterable')
-    if not np.all([isinstance(_, (str, unicode)) for _ in magnitude_names]):
-        raise TypeError('magnitude_names should contain strings')
     if not np.all([isinstance(_, Number) for _ in magnitude_values]):
         raise TypeError('magnitude_values should contain numbers')
     if len(magnitude_names) != len(magnitude_values):

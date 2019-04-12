@@ -22,8 +22,6 @@ class TestIOUtils(unittest.TestCase):
         with self.assertRaises(TypeError):
             _ = io_utils.formatted_str_to_number({'dfdfd': 123}, ["MHz"], [1E+6])
         with self.assertRaises(TypeError):
-            _ = io_utils.formatted_str_to_number("fdfdfd", "MHz", [1E+6])
-        with self.assertRaises(TypeError):
             _ = io_utils.formatted_str_to_number("dfdfdf", ["MHz"], 1E+6)
         with self.assertRaises(TypeError):
             _ = io_utils.formatted_str_to_number("jkjk", ["MHz", 1234], [1E+6, 1E+4])

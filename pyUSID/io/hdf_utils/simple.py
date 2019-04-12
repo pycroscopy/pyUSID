@@ -14,7 +14,7 @@ import h5py
 import numpy as np
 import dask.array as da
 
-from ..dtype_utils import validate_dtype, validate_single_string_arg
+from ..dtype_utils import validate_dtype, validate_single_string_arg, validate_list_of_strings
 from ..reg_ref import write_region_references, simple_region_ref_copy, copy_reg_ref_reduced_dim, \
     create_region_reference
 from ..write_utils import clean_string_att, build_ind_val_matrices, get_aux_dset_slicing, INDICES_DTYPE, \
@@ -1140,13 +1140,7 @@ def write_reduced_anc_dsets(h5_parent_group, h5_inds, h5_vals, dim_name, basenam
         if not isinstance(param, h5py.Dataset):
             raise TypeError(param_name + ' should be a h5py.Dataset object')
     if dim_name is not None:
-        if isinstance(dim_name, (str, unicode)):
-            dim_name = [dim_name]
-
-        if not isinstance(dim_name, (list, tuple)):
-            raise TypeError('dim_name should either be a string or a list of strings')
-        if not np.all([isinstance(item, (str, unicode)) for item in dim_name]):
-            raise TypeError('dim_name should either be a string or a list of strings')
+        dim_name = validate_list_of_strings(dim_name, 'dim_name')
 
     all_dim_names = list(get_attr(h5_inds, 'labels'))
     for item in dim_name:

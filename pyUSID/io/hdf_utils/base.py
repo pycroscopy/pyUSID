@@ -17,6 +17,7 @@ import numpy as np
 from ...__version__ import version as py_usid_version
 from ..io_utils import get_time_stamp
 from ..write_utils import clean_string_att
+from ..dtype_utils import validate_single_string_arg, validate_list_of_strings
 
 if sys.version_info.major == 3:
     unicode = str
@@ -85,12 +86,7 @@ def get_auxiliary_datasets(h5_object, aux_dset_name=None):
     if aux_dset_name is None:
         aux_dset_name = h5_object.attrs.keys()
     else:
-        if isinstance(aux_dset_name, (str, unicode)):
-            aux_dset_name = [aux_dset_name]
-        if not isinstance(aux_dset_name, (list, tuple)):
-            raise TypeError('aux_dset_name should be a string or list / tuple of strings')
-        if not np.all([isinstance(x, (str, unicode)) for x in aux_dset_name]):
-            raise TypeError('aux_dset_name should be a string or list / tuple of strings')
+        aux_dset_name = validate_list_of_strings(aux_dset_name, 'aux_dset_name')
 
     data_list = list()
     curr_name = None
@@ -127,8 +123,7 @@ def get_attr(h5_object, attr_name):
     if not isinstance(h5_object, (h5py.Dataset, h5py.Group, h5py.File)):
         raise TypeError('h5_object should be a h5py.Dataset, h5py.Group or h5py.File object')
 
-    if not isinstance(attr_name, (str, unicode)):
-        raise TypeError('attr_name should be a string')
+    attr_name = validate_single_string_arg(attr_name, 'attr_name')
 
     if attr_name not in h5_object.attrs.keys():
         raise KeyError("'{}' is not an attribute in '{}'".format(attr_name, h5_object.name))
@@ -168,12 +163,7 @@ def get_attributes(h5_object, attr_names=None):
     if attr_names is None:
         attr_names = h5_object.attrs.keys()
     else:
-        if isinstance(attr_names, (str, unicode)):
-            attr_names = [attr_names]
-        if not isinstance(attr_names, (list, tuple)):
-            raise TypeError('attr_names should be a string or list / tuple of strings')
-        if not np.all([isinstance(x, (str, unicode)) for x in attr_names]):
-            raise TypeError('attr_names should be a string or list / tuple of strings')
+        attr_names = validate_list_of_strings(attr_names, 'attr_names')
 
     att_dict = {}
 
@@ -206,12 +196,7 @@ def get_h5_obj_refs(obj_names, h5_refs):
     """
     from ..usi_data import USIDataset
 
-    if isinstance(obj_names, (str, unicode)):
-        obj_names = [obj_names]
-    if not isinstance(obj_names, (list, tuple)):
-        raise TypeError('obj_names should be a string or list of strings')
-    if not np.all([isinstance(x, (str, unicode)) for x in obj_names]):
-        raise TypeError('obj_names should be a string or list / tuple of strings')
+    obj_names = validate_list_of_strings(obj_names, 'attr_names')
 
     if isinstance(h5_refs, (h5py.File, h5py.Group, h5py.Dataset)):
         h5_refs = [h5_refs]
@@ -279,9 +264,8 @@ def link_h5_obj_as_alias(h5_main, h5_ancillary, alias_name):
         raise TypeError('h5_main should either be a h5py Dataset, File, or Group')
     if not isinstance(h5_ancillary, (h5py.Dataset, h5py.Group)):
         raise TypeError('h5_ancillary should be a h5py. Dataset or Group object')
-    if not isinstance(alias_name, (str, unicode)):
-        raise TypeError('alias_name should be a string')
-    alias_name = alias_name.strip()
+    alias_name = validate_single_string_arg(alias_name, 'alias_name')
+
     h5_main.attrs[alias_name] = h5_ancillary.ref
 
 

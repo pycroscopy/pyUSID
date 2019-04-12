@@ -92,10 +92,7 @@ class ArrayTranslator(Translator):
             if not isinstance(extra_dsets, dict):
                 raise TypeError('extra_dsets should be specified as dictionaries')
             for key, val in extra_dsets.items():
-                if not isinstance(key, (str, unicode)):
-                    raise TypeError('keys for extra_dsets should be strings')
-                if len(key.strip()) == 0:
-                    raise ValueError('keys for extra_dsets should not be empty')
+                [key] = validate_string_args(key, 'keys for extra_dsets')
                 if np.any([key in x for x in ['Spectroscopic_Indices', 'Spectroscopic_Values', 'Position_Indices',
                                               'Position_Values', 'Raw_Data']]):
                     raise KeyError('keys for extra_dsets cannot match reserved names for existing datasets')

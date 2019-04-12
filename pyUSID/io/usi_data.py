@@ -19,7 +19,8 @@ import matplotlib.pyplot as plt
 from .hdf_utils import check_if_main, get_attr, create_results_group, write_reduced_anc_dsets, link_as_main, \
     get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset, reshape_from_n_dims, \
     copy_attributes
-from .dtype_utils import flatten_to_real, contains_integers, get_exponent, is_complex_dtype
+from .dtype_utils import flatten_to_real, contains_integers, get_exponent, is_complex_dtype, \
+    validate_single_string_arg, validate_list_of_strings
 from .write_utils import Dimension
 from ..viz.jupyter_utils import simple_ndim_visualizer
 from ..viz.plot_utils import plot_map, get_plot_grid_size
@@ -219,8 +220,7 @@ class USIDataset(h5py.Dataset):
             Array containing the unit values of the dimension `dim_name`
 
         """
-        if not isinstance(dim_name, (str, unicode)):
-            raise TypeError('dim_name should be a string / unocode value')
+        dim_name = validate_single_string_arg(dim_name, 'dim_name')
         return get_unit_values(self.h5_pos_inds, self.h5_pos_vals)[dim_name]
 
     def get_spec_values(self, dim_name):
@@ -238,8 +238,7 @@ class USIDataset(h5py.Dataset):
             Array containing the unit values of the dimension `dim_name`
 
         """
-        if not isinstance(dim_name, (str, unicode)):
-            raise TypeError('dim_name should be a string / unocode value')
+        dim_name = validate_single_string_arg(dim_name, 'dim_name')
         return get_unit_values(self.h5_spec_inds, self.h5_spec_vals)[dim_name]
 
     def get_current_sorting(self):
@@ -649,8 +648,7 @@ class USIDataset(h5py.Dataset):
         if dset_name is None:
             dset_name = self.name.split('/')[-1]
         else:
-            if not isinstance(dset_name, (str, unicode)):
-                raise TypeError('dset_name must be of type string / unicode')
+            dset_name = validate_single_string_arg(dset_name, 'dset_name')
 
         if verbose:
             print('Decided / provided name of new sliced HDF5 dataset to be: {}'.format(dset_name))
@@ -944,13 +942,9 @@ class USIDataset(h5py.Dataset):
         h5_main_red : USIDataset
             USIDataset reference if to_hdf5 was set to True. Otherwise - None.
         """
-        if isinstance(dims, (str, unicode)):
-            dims = [dims]
-        if not isinstance(dims, (list, tuple)):
-            raise TypeError('dims should either be a string or a list of strings')
+        dims = validate_list_of_strings(dims, 'dims')
+
         for curr_dim in self.n_dim_labels:
-            if not isinstance(curr_dim, (str, unicode)):
-                raise TypeError('dims should either be a string or a list of strings')
             if curr_dim not in self.n_dim_labels:
                 raise KeyError('{} not a dimension in this dataset'.format(curr_dim))
 
@@ -974,8 +968,7 @@ class USIDataset(h5py.Dataset):
         if dset_name is None:
             dset_name = self.name.split('/')[-1]
         else:
-            if not isinstance(dset_name, (str, unicode)):
-                raise TypeError('dset_name must be of type string / unicode')
+            dset_name = validate_single_string_arg(dset_name, 'dset_name')
 
         # Create the group to hold the results:
 

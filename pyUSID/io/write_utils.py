@@ -13,7 +13,7 @@ from warnings import warn
 
 import numpy as np
 from collections import Iterable
-from .dtype_utils import contains_integers
+from .dtype_utils import contains_integers, validate_list_of_strings, validate_single_string_arg
 
 __all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE',
            'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions']
@@ -45,13 +45,12 @@ class Dimension(object):
             integer is provided instead of an array.
 
         """
-        if not isinstance(name, (str, unicode)):
-            raise TypeError('name should be a string')
-        name = name.strip()
-        if len(name) < 1:
-            raise ValueError('name should not be an empty string')
+        name = validate_single_string_arg(name, 'name')
+
         if not isinstance(units, (str, unicode)):
             raise TypeError('units should be a string')
+        units = units.strip()
+
         if isinstance(values, int):
             if values < 1:
                 raise ValueError('values should at least be specified as a positive integer')
@@ -128,12 +127,9 @@ def get_aux_dset_slicing(dim_names, last_ind=None, is_spectroscopic=False):
         Dictionary of tuples containing slice objects corresponding to
         each position axis.
     """
-    if not isinstance(dim_names, Iterable):
-        raise TypeError('dim_names should be and Iterable')
-    if not len(dim_names) > 0:
-        raise ValueError('dim_names should not be empty')
-    if not np.all([isinstance(x, (str, unicode)) for x in dim_names]):
-        raise TypeError('dim_names should contain strings')
+    dim_names = validate_list_of_strings(dim_names, 'dim_names')
+    if len(dim_names) == 0:
+        raise ValueError('No valid dim_names provided')
 
     slice_dict = dict()
     for spat_ind, curr_dim_name in enumerate(dim_names):
