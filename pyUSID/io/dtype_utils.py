@@ -374,6 +374,10 @@ def validate_string_args(arg_list, arg_names):
     if isinstance(arg_names, (str, unicode)):
         arg_names = [arg_names]
     cleaned_args = []
+    if not isinstance(arg_list, (tuple, list)):
+        raise TypeError('arg_list should be a tuple or a list or a string')
+    if not isinstance(arg_names, (tuple, list)):
+        raise TypeError('arg_names should be a tuple or a list or a string')
     for arg, arg_name in zip(arg_list, arg_names):
         if not isinstance(arg, (str, unicode)):
             raise TypeError(arg_name + ' should be a string')
