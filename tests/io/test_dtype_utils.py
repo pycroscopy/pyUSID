@@ -505,6 +505,46 @@ class TestDtypeUtils(unittest.TestCase):
             _ = dtype_utils.get_exponent('hello')
             _ = dtype_utils.get_exponent([1, 2, 3])
 
+    def test_validate_string_args_empty(self):
+        with self.assertRaises(ValueError):
+            _ = dtype_utils.validate_string_args(['      '], ['meh'])
+
+    def test_validate_string_args_spaces(self):
+        expected = 'fd'
+        [ret] = dtype_utils.validate_string_args(['  ' + expected + '    '], ['meh'])
+        self.assertEqual(expected, ret)
+
+    def test_validate_string_args_single(self):
+        expected = 'fd'
+        [ret] = dtype_utils.validate_string_args(expected , 'meh')
+        self.assertEqual(expected, ret)
+
+    def test_validate_string_args_multi(self):
+        expected = ['abc', 'def']
+        returned = dtype_utils.validate_string_args(['   ' + expected[0], expected[1] + '    '], ['meh', 'foo'])
+        for exp, ret in zip(expected, returned):
+            self.assertEqual(exp, ret)
+
+    def test_validate_string_args_not_string_lists(self):
+        with self.assertRaises(TypeError):
+            _ = dtype_utils.validate_string_args([14], ['meh'])
+
+        with self.assertRaises(TypeError):
+            _ = dtype_utils.validate_string_args(14, ['meh'])
+
+        actual = ['ghghg']
+        [ret] = dtype_utils.validate_string_args(actual, [np.arange(3)])
+        self.assertEqual(ret, actual)
+
+        with self.assertRaises(TypeError):
+            _ = dtype_utils.validate_string_args({'dfdf': 14}, ['meh'])
+
+    def test_validate_string_args_unequal_lengths(self):
+        expected = ['a', 'b']
+        actual = dtype_utils.validate_string_args(expected + ['c'], ['a', 'b'])
+        for exp, ret in zip(expected, actual):
+            self.assertEqual(exp, ret)
+
 
 if __name__ == '__main__':
     unittest.main()
