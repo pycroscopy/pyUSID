@@ -18,6 +18,9 @@ from pyUSID.io.image import read_image
 
 if sys.version_info.major == 3:
     unicode = str
+else:
+    FileExistsError = ValueError
+    FileNotFoundError = ValueError
 
 image_path = 'random_image.png'
 rand_image = np.uint16(np.random.randint(0, high=255, size=(128, 256)))

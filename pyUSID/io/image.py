@@ -21,6 +21,9 @@ from .hdf_utils import write_simple_attrs
 
 if sys.version_info.major == 3:
     unicode = str
+else:
+    FileExistsError = ValueError
+    FileNotFoundError = ValueError
 
 
 class ImageTranslator(ArrayTranslator):
