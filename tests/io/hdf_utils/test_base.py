@@ -289,6 +289,33 @@ class TestHDFUtilsBase(unittest.TestCase):
 
         os.remove(file_path)
 
+    def test_write_simple_atts_np_array(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+
+            attrs = {'att_1': np.random.rand(4)}
+
+            hdf_utils.write_simple_attrs(h5_f, attrs)
+
+            for key, expected_val in attrs.items():
+                self.assertTrue(np.all(hdf_utils.get_attr(h5_f, key) == expected_val))
+
+        os.remove(file_path)
+
+    def test_write_simple_atts_none_ignored(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+
+            attrs = {'att_1': None}
+
+            hdf_utils.write_simple_attrs(h5_f, attrs)
+
+            self.assertTrue('att_1' not in h5_f.attrs.keys())
+
+        os.remove(file_path)
+
     def test_write_simple_atts_to_dset(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
@@ -390,6 +417,9 @@ class TestHDFUtilsBase(unittest.TestCase):
             # H5 reference but not the object
             with self.assertRaises(TypeError):
                 hdf_utils.link_h5_obj_as_alias('not_a_dset', h5_group, 'Center')
+
+            with self.assertRaises(TypeError):
+                hdf_utils.link_h5_obj_as_alias(h5_group, h5_group, 1.234)
 
         os.remove(file_path)
 
