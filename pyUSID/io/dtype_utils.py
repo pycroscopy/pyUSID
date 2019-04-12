@@ -17,7 +17,7 @@ from itertools import groupby
 __all__ = ['flatten_complex_to_real', 'get_compound_sub_dtypes', 'flatten_compound_to_real', 'check_dtype',
            'stack_real_to_complex', 'validate_dtype', 'integers_to_slices', 'get_exponent', 'is_complex_dtype',
            'stack_real_to_compound', 'stack_real_to_target_dtype', 'flatten_to_real', 'contains_integers',
-           'validate_single_string_arg', 'validate_string_args']
+           'validate_single_string_arg', 'validate_string_args', 'validate_list_of_strings']
 
 if sys.version_info.major == 3:
     unicode = str
@@ -376,6 +376,33 @@ def validate_single_string_arg(value, name):
     if len(value) <= 0:
         raise ValueError(name + ' should not be an empty string')
     return value
+
+
+def validate_list_of_strings(str_list, parm_name='parameter'):
+    """
+    This function is to be used when validating and cleaning a list of strings. Trims the provided strings
+    Errors in the strings will result in Exceptions
+
+    Parameters
+    ----------
+    str_list : array-like
+        list or tuple of strings
+    parm_name : str, Optional. Default = 'parameter'
+        Name of the parameter corresponding to this string list that will be reported in the raised Errors
+
+    Returns
+    -------
+    array-like
+        List of trimmed and validated strings when ALL objects within the list are found to be valid strings
+    """
+
+    if isinstance(str_list, (str, unicode)):
+        return [validate_single_string_arg(str_list, parm_name)]
+
+    if not isinstance(str_list, (list, tuple)):
+        raise TypeError(parm_name + ' should be a string or list / tuple of strings')
+
+    return [validate_single_string_arg(x, parm_name) for x in str_list]
 
 
 def validate_string_args(arg_list, arg_names):
