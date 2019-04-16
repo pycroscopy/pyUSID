@@ -10,6 +10,7 @@ from warnings import warn
 import sys
 import h5py
 import numpy as np
+import scipy
 from dask import array as da
 
 from ..dtype_utils import contains_integers, validate_dtype
@@ -191,7 +192,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
 
     """
     Now we reshape the dataset based on those dimensions
-    numpy reshapes correctly when the dimensions are arranged from slowest to fastest. 
+    numpy reshapes correctly when the dimensions are arranged from slowest to fastest.
     Since the sort orders we have are from fastest to slowest, we need to reverse the orders
     for both the position and spectroscopic dimensions
     """
@@ -918,14 +919,16 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
     return USIDataset(h5_main)
 
 
-def map_grid_to_cartesian(h5_main, mode='histogram', **kwargs):
+def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
     """
-    Maps a incomplete measurement, such as a spiral scan, to a cartesian grid
+    Map an incomplete measurement, such as a spiral scan, to a cartesian grid.
 
     Parameters
     ----------
     h5_main : :class:`pyUSID.USIDataset`
         Dataset containing the sparse measurement
+    grid_shape : int or [int, int]
+        Shape of the output :class:`numpy.ndarray`.
     mode : str, optional. Default = 'histogram'
         Method used for building a cartesian grid.
         Available methods = 'histogram', 'cubic'
@@ -939,16 +942,55 @@ def map_grid_to_cartesian(h5_main, mode='histogram', **kwargs):
     Returns
     -------
     :class:`numpy.ndarray` but could be a h5py.Dataset or dask.array.core.Array object
-    """
 
+    """
     if not check_if_main(h5_main, verbose=False):
         raise TypeError('Provided object is not a pyUSID.USIDataset object')
 
     if mode not in ['histogram', 'cubic']:
         raise ValueError('mode must be a string among["histogram", "cubic"]')
 
-    if mode == 'histogram':
-        pass
+    ds_main = h5_main[()].squeeze()
+    ds_pos_vals = h5_main.h5_pos_vals[()]
 
-    if mode == 'cubic':
-        pass
+    if ds_pos_vals.shape[1] != 2:
+        raise TypeError("Only working for 2 position dimensions.")
+
+    # Transform to row, col image format
+    rotation = np.array([[0, 1], [-1, 0]])
+    ds_pos_vals = (rotation.T @ ds_pos_vals.T).T
+
+    try:
+        N = len(grid_shape)
+    except TypeError:
+        N = 1
+
+    if N != 1 and N != 2:
+        raise ValueError("grid_shape must be of type int or [int, int].")
+
+    if N == 1:
+        grid_shape = 2 * [grid_shape]
+
+    if mode == "histogram":
+        histogram_weighted, _, _ = np.histogram2d(
+            *ds_pos_vals.T,
+            bins=grid_shape,
+            weights=ds_main,
+        )
+        histogram, _, _ = np.histogram2d(
+            *ds_pos_vals.T,
+            bins=grid_shape,
+        )
+        ds_Nd = np.divide(histogram_weighted, histogram)
+
+    if mode == "cubic":
+        grid_shape = list(map((1j).__mul__, grid_shape))
+        grid_x, grid_y = np.mgrid[
+            np.amin(ds_pos_vals[:, 0]):np.amax(ds_pos_vals[:, 0]):grid_shape[0],
+            np.amin(ds_pos_vals[:, 1]):np.amax(ds_pos_vals[:, 1]):grid_shape[1]
+        ]
+        ds_Nd = scipy.interpolate.griddata(
+            ds_pos_vals, ds_main, (grid_x, grid_y), method="cubic"
+        )
+
+    return ds_Nd
