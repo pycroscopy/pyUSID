@@ -931,7 +931,7 @@ def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
         Shape of the output :class:`numpy.ndarray`.
     mode : str, optional. Default = 'histogram'
         Method used for building a cartesian grid.
-        Available methods = 'histogram', 'cubic'
+        Available methods = 'histogram', 'linear', 'nearest', 'cubic'
         Use kwargs to pass onto each of the techniques
 
     Note
@@ -947,7 +947,7 @@ def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
     if not check_if_main(h5_main, verbose=False):
         raise TypeError('Provided object is not a pyUSID.USIDataset object')
 
-    if mode not in ['histogram', 'cubic']:
+    if mode not in ['histogram', 'linear', 'nearest', 'cubic']:
         raise ValueError('mode must be a string among["histogram", "cubic"]')
 
     ds_main = h5_main[()].squeeze()
@@ -983,14 +983,25 @@ def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
         )
         ds_Nd = np.divide(histogram_weighted, histogram)
 
-    if mode == "cubic":
+    def interpolate(points, values, grid_shape, method):
         grid_shape = list(map((1j).__mul__, grid_shape))
         grid_x, grid_y = np.mgrid[
-            np.amin(ds_pos_vals[:, 0]):np.amax(ds_pos_vals[:, 0]):grid_shape[0],
-            np.amin(ds_pos_vals[:, 1]):np.amax(ds_pos_vals[:, 1]):grid_shape[1]
+            np.amin(points[:, 0]):np.amax(points[:, 0]):grid_shape[0],
+            np.amin(points[:, 1]):np.amax(points[:, 1]):grid_shape[1]
         ]
         ds_Nd = scipy.interpolate.griddata(
-            ds_pos_vals, ds_main, (grid_x, grid_y), method="cubic"
+            points, values, (grid_x, grid_y), method=method
         )
+
+        return ds_Nd
+
+    if mode == "linear":
+        ds_Nd = interpolate(ds_pos_vals, ds_main, grid_shape, method="linear")
+
+    if mode == "nearest":
+        ds_Nd = interpolate(ds_pos_vals, ds_main, grid_shape, method="nearest")
+
+    if mode == "cubic":
+        ds_Nd = interpolate(ds_pos_vals, ds_main, grid_shape, method="cubic")
 
     return ds_Nd
