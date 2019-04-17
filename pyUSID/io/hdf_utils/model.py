@@ -958,7 +958,7 @@ def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
 
     # Transform to row, col image format
     rotation = np.array([[0, 1], [-1, 0]])
-    ds_pos_vals = (rotation.T @ ds_pos_vals.T).T
+    ds_pos_vals = ds_pos_vals @ rotation
 
     try:
         N = len(grid_shape)
