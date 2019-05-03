@@ -11,18 +11,43 @@ from __future__ import division, print_function, unicode_literals, absolute_impo
 import sys
 from warnings import warn
 
+from enum import Enum
 import numpy as np
 from collections import Iterable
 from .dtype_utils import contains_integers, validate_list_of_strings, validate_single_string_arg
 
 __all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE',
-           'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions']
+           'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions', 'DimType']
 
 if sys.version_info.major == 3:
     unicode = str
 
+# Constants:
 INDICES_DTYPE = np.uint32
 VALUES_DTYPE = np.float32
+
+
+class DimType(Enum):
+    DEFAULT = 0
+    INCOMPLETE = 1
+    DEPENDENT = 2
+
+    @staticmethod
+    def __check_other_type(other):
+        if not isinstance(other, DimType):
+            raise TypeError('Provided object not of type DimType')
+
+    def __lt__(self, other):
+        self.__check_other_type(other)
+        return self.value < other.value
+
+    def __gt__(self, other):
+        self.__check_other_type(other)
+        return self.value > other.value
+
+    def __eq__(self, other):
+        self.__check_other_type(other)
+        return self.value == other.value
 
 
 class Dimension(object):
@@ -30,7 +55,7 @@ class Dimension(object):
     ..autoclass::Dimension
     """
 
-    def __init__(self, name, units, values):
+    def __init__(self, name, units, values, mode=DimType.DEFAULT):
         """
         Simple object that describes a dimension in a dataset by its name, units, and values
 
@@ -43,7 +68,13 @@ class Dimension(object):
         values : array-like or int
             Values over which this dimension was varied. A linearly increasing set of values will be generated if an
             integer is provided instead of an array.
-
+        mode : Enum, Optional. Default = DimType.DEFAULT
+            How the parameter associated with the dimension was varied.
+            DimType.DEFAULT - data was recorded for all combinations of values in this dimension against **all** other
+            dimensions. This is typically the case.
+            DimType.INCOMPLETE - Data not present for all combinations of values in this dimension and all other
+                dimensions. Examples include spiral scans, sparse sampling, aborted measurements
+            DimType.DEPENDENT - Values in this dimension were varied as a function of another (independent) dimension.
         """
         name = validate_single_string_arg(name, 'name')
 
@@ -57,12 +88,17 @@ class Dimension(object):
             values = np.arange(values)
         if not isinstance(values, (np.ndarray, list, tuple)):
             raise TypeError('values should be array-like')
+
+        if not isinstance(mode, DimType):
+            raise TypeError('mode must be of type pyUSID.DimType. Provided object was of type: {}'.format(type(mode)))
+
         self.name = name
         self.units = units
         self.values = values
+        self.mode = mode
 
     def __repr__(self):
-        return '{} ({}) : {}'.format(self.name, self.units, self.values)
+        return '{} ({}) mode:{} : {}'.format(self.name, self.units, self.mode, self.values)
 
     def __eq__(self, other):
         if isinstance(other, Dimension):

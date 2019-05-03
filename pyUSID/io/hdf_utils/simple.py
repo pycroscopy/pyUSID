@@ -18,7 +18,7 @@ from ..dtype_utils import validate_dtype, validate_single_string_arg, validate_l
 from ..reg_ref import write_region_references, simple_region_ref_copy, copy_reg_ref_reduced_dim, \
     create_region_reference
 from ..write_utils import clean_string_att, build_ind_val_matrices, get_aux_dset_slicing, INDICES_DTYPE, \
-    VALUES_DTYPE, Dimension
+    VALUES_DTYPE, Dimension, DimType
 from .base import get_auxiliary_datasets, link_h5_obj_as_alias, get_attr, link_h5_objects_as_attrs, \
     write_book_keeping_attrs, write_simple_attrs, is_editable_h5
 
@@ -976,10 +976,30 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
         if base_name + sub_name in h5_parent_group.keys():
             raise KeyError('Dataset: {} already exists in provided group: {}'.format(base_name + sub_name,
                                                                                      h5_parent_group.name))
+    modes = [dim.mode for dim in dimensions]
+    sing_mode = np.unique(modes)
 
-    unit_values = [x.values for x in dimensions]
+    if sing_mode.size > 1:
+        raise NotImplementedError('Cannot yet work on combinations of modes for Dimensions. Consider doing manually')
 
-    indices, values = build_ind_val_matrices(unit_values, is_spectral=is_spectral)
+    sing_mode = sing_mode[0]
+
+    if sing_mode == DimType.DEFAULT:
+        indices, values = build_ind_val_matrices([dim.values for dim in dimensions],
+                                                 is_spectral=is_spectral)
+    elif sing_mode == DimType.INCOMPLETE:
+        lengths = np.unique([len(dim.values) for dim in dimensions])
+        if len(lengths) > 1:
+            raise ValueError('Values for dimensions not of same length')
+        single_dim = np.arange(lengths[0], dtype=INDICES_DTYPE)
+        indices = np.tile(single_dim, (2, 1)).T
+        values = np.dstack(tuple([dim.values for dim in dimensions])).squeeze()
+
+        if is_spectral:
+            indices = indices.T
+            values = values.T
+    else:
+        raise NotImplementedError('Cannot yet work on Dependent dimensions')
 
     if verbose:
         print('Indices:')
@@ -996,7 +1016,8 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
 
     for h5_dset in [h5_indices, h5_values]:
         write_region_references(h5_dset, region_slices, verbose=verbose)
-        write_simple_attrs(h5_dset, {'units': [x.units for x in dimensions], 'labels': [x.name for x in dimensions]})
+        write_simple_attrs(h5_dset, {'units': [x.units for x in dimensions], 'labels': [x.name for x in dimensions],
+                                     'type': [dim.mode.value for dim in dimensions]})
 
     return h5_indices, h5_values
 
