@@ -102,13 +102,18 @@ class Dimension(object):
 
     def __eq__(self, other):
         if isinstance(other, Dimension):
-            same_name = self.name == other.name
-            same_unit = self.units == other.units
-            same_values = self.values == other.values
+            if self.name != other.name:
+                return False
+            if self.units != other.units:
+                return False
+            if self.mode != other.mode:
+                return False
+            if len(self.values) != len(other.values):
+                return False
+            if not np.allclose(self.values, other.values):
+                return False
 
-            return all([same_name, same_unit, same_values])
-
-        return False
+        return True
 
 
 def validate_dimensions(dimensions, dim_type='Position'):
