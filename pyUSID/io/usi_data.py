@@ -490,7 +490,8 @@ class USIDataset(h5py.Dataset):
         # Build the list of position slice indices
         for pos_ind, pos_lab in enumerate(self.__pos_dim_labels):
             # n_dim_slices[pos_lab] = np.isin(self.h5_pos_inds[:, pos_ind], n_dim_slices[pos_lab])
-            n_dim_slices[pos_lab] = np.vstack([self.h5_pos_inds[:, pos_ind] == item for item in n_dim_slices[pos_lab]])
+            temp = [self.h5_pos_inds[:, pos_ind] == item for item in n_dim_slices[pos_lab]]
+            n_dim_slices[pos_lab] = np.any(np.vstack(temp), axis=0)
             if pos_ind == 0:
                 pos_slice = n_dim_slices[pos_lab]
             else:
@@ -500,7 +501,8 @@ class USIDataset(h5py.Dataset):
         # Do the same for the spectroscopic slice
         for spec_ind, spec_lab in enumerate(self.__spec_dim_labels):
             # n_dim_slices[spec_lab] = np.isin(self.h5_spec_inds[spec_ind], n_dim_slices[spec_lab])
-            n_dim_slices[spec_lab] = np.vstack([self.h5_spec_inds[spec_ind] == item for item in n_dim_slices[spec_lab]])
+            temp = [self.h5_spec_inds[spec_ind] == item for item in n_dim_slices[spec_lab]]
+            n_dim_slices[spec_lab] = np.any(np.vstack(temp), axis=0)
             if spec_ind == 0:
                 spec_slice = n_dim_slices[spec_lab]
             else:
