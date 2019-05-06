@@ -129,6 +129,41 @@ class TestWriteUtils(unittest.TestCase):
             self.assertTrue(np.all([x == y for x, y in zip(expected, actual)]))
         self.assertTrue(np.allclose(values, descriptor.values))
 
+    def test_dimension_repr(self):
+        name = 'Bias'
+        units = 'V'
+        values = np.arange(5)
+
+        descriptor = write_utils.Dimension(name, units, len(values))
+        actual = '{}'.format(descriptor)
+        expected = '{} ({}) mode:{} : {}'.format(name, units, descriptor.mode, values)
+        self.assertEqual(actual, expected)
+
+    def test_dimension_equality(self):
+        name = 'Bias'
+        units = 'V'
+
+        dim_1 = write_utils.Dimension(name, units, [0, 1, 2, 3, 4])
+        dim_2 = write_utils.Dimension(name, units, np.arange(5, dtype=np.float32))
+        self.assertEqual(dim_1, dim_2)
+
+        self.assertNotEqual(write_utils.Dimension(name, units, [0, 1, 2, 3]),
+                            write_utils.Dimension(name, units, [0, 1, 2, 4]))
+
+        self.assertNotEqual(write_utils.Dimension('fdfd', units, [0, 1, 2, 3]),
+                            write_utils.Dimension(name, units, [0, 1, 2, 3]))
+
+        self.assertNotEqual(write_utils.Dimension(name, 'fdfd', [0, 1, 2, 3]),
+                            write_utils.Dimension(name, units, [0, 1, 2, 3]))
+
+    def test_dimension_invalid_mode(self):
+        with self.assertRaises(TypeError):
+            _ = write_utils.Dimension('Name', 'units', 5, mode='Incomplete')
+
+    def test_dimension_default_mode(self):
+        dim = write_utils.Dimension('Name', 'units', 1)
+        self.assertEqual(dim.mode, write_utils.DimType.DEFAULT)
+
     def test_aux_dset_descriptor_illegal(self):
 
         with self.assertRaises(TypeError):
