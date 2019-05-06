@@ -11,7 +11,7 @@ with open(os.path.join(here, 'pyUSID/__version__.py')) as f:
     __version__ = f.read().split("'")[1]
 
 # TODO: Move requirements to requirements.txt
-requirements = ['numpy>=1.13.0',
+requirements = ['numpy>=1.11',
                 'toolz', # dask installation failing without this
                 'cytoolz', # dask installation failing without this
                 'dask',
