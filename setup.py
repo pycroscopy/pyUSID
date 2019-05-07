@@ -26,8 +26,6 @@ requirements = ['numpy>=1.10',
                 'ipywidgets>=5.2.2',
                 'ipython>=5.1.0,<6;python_version<"3.3"',  # IPython 6.0+ does not support Python 2.6, 2.7, 3.0, 3.1, or 3.2
                 'ipython>=6.0;python_version>="3.3"',  # Beginning with IPython 6.0, Python 3.3 and above is required.
-
-                'unittest2;python_version<"3.0"',
                 ]
 
 setup(
@@ -59,7 +57,7 @@ setup(
     author_email='pycroscopy@gmail.com',
     install_requires=requirements,
     setup_requires=['pytest-runner'],
-    tests_require=['pytest', 'Nose'],
+    tests_require=['unittest2;python_version<"3.0"', 'pytest', 'Nose'],
     platforms=['Linux', 'Mac OSX', 'Windows 10/8.1/8/7'],
     # package_data={'sample':['dataset_1.dat']}
     test_suite='pytest',
