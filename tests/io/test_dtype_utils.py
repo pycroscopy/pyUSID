@@ -303,7 +303,7 @@ class TestStackRealToCompoundNumpy(unittest.TestCase):
             _ = dtype_utils.stack_real_to_compound(r_vals, struc_dtype)
 
 
-class TestFlattenCompoundToRealNumpy(unittest.TestCase):
+class TestFlattenCompoundToReal(unittest.TestCase):
 
     def test_single(self):
         num_elems = 1
@@ -325,15 +325,26 @@ class TestFlattenCompoundToRealNumpy(unittest.TestCase):
         actual = dtype_utils.flatten_compound_to_real(structured_array)
         self.assertTrue(np.allclose(actual, expected))
 
-    def test_nd(self):
+    def base_nd(self, lazy):
         num_elems = (5, 7, 2, 3)
         structured_array = np.zeros(shape=num_elems, dtype=struc_dtype)
         structured_array['r'] = r_vals = np.random.random(size=num_elems)
         structured_array['g'] = g_vals = np.random.randint(0, high=1024, size=num_elems)
         structured_array['b'] = b_vals = np.random.random(size=num_elems)
+        if lazy:
+            structured_array = da.from_array(structured_array, chunks=structured_array.shape)
         expected = np.concatenate((r_vals, g_vals, b_vals), axis=len(num_elems) - 1)
         actual = dtype_utils.flatten_compound_to_real(structured_array)
+        if lazy:
+            self.assertIsInstance(actual, type(structured_array))
+            actual = actual.compute()
         self.assertTrue(np.allclose(actual, expected))
+
+    def test_numpy_nd(self):
+        self.base_nd(False)
+
+    def test_dask_nd(self):
+        self.base_nd(True)
 
     def test_illegal(self):
         num_elems = (2, 3)
@@ -347,12 +358,21 @@ class TestFlattenCompoundToRealNumpy(unittest.TestCase):
 
 class TestFlattenCompoundToRealHDF5(TestDtypeUtils):
 
-    def test_nd_h5_legal(self):
+    def base_nd_h5_legal(self, lazy):
         with h5py.File(file_path, mode='r') as h5_f:
             h5_comp = h5_f['compound']
-            actual = dtype_utils.flatten_compound_to_real(h5_comp)
+            actual = dtype_utils.flatten_compound_to_real(h5_comp, lazy=lazy)
+            if lazy:
+                self.assertIsInstance(actual, da.core.Array)
+                actual = actual.compute()
             expected = np.concatenate([h5_comp['r'], h5_comp['g'], h5_comp['b']], axis=len(h5_comp.shape) - 1)
             self.assertTrue(np.allclose(actual, expected))
+
+    def test_h5_legal_not_lazy(self):
+        self.base_nd_h5_legal(False)
+
+    def test_h5_legal_lazy(self):
+        self.base_nd_h5_legal(True)
 
     def test_nd_h5_illegal(self):
         with h5py.File(file_path, mode='r') as h5_f:

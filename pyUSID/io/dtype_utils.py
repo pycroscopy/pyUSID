@@ -97,7 +97,7 @@ def flatten_complex_to_real(dataset, lazy=False):
         return xp.concatenate([xp.real(dataset), xp.imag(dataset)], axis=axis)
 
 
-def flatten_compound_to_real(dataset):
+def flatten_compound_to_real(dataset, lazy=False):
     """
     Flattens the individual components in a structured array or compound valued hdf5 dataset along the last axis to form
     a real valued array. Thus a compound h5py.Dataset or structured numpy matrix of shape (2, 3, 5) having 3 components
@@ -109,6 +109,8 @@ def flatten_compound_to_real(dataset):
     ----------
     dataset : :class:`numpy.ndarray`, or :class:`h5py.Dataset`
         Numpy array that is a structured array or a :class:`h5py.Dataset` of compound dtype
+    lazy : bool, optional. Default = False
+        If set to true, HDF5 datasets will be read as Dask arrays instead of numpy arrays
 
     Returns
     -------
@@ -118,18 +120,25 @@ def flatten_compound_to_real(dataset):
     if isinstance(dataset, h5py.Dataset):
         if len(dataset.dtype) == 0:
             raise TypeError("Expected compound h5py dataset")
-        return np.concatenate([np.array(dataset[name]) for name in dataset.dtype.names], axis=len(dataset.shape) - 1)
-    elif isinstance(dataset, np.ndarray):
+        xp = da
+        if not lazy:
+            xp = np
+            warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
+
+        return xp.concatenate([xp.array(dataset[name]) for name in dataset.dtype.names], axis=len(dataset.shape) - 1)
+
+    elif isinstance(dataset, (np.ndarray, da.core.Array)):
+        xp = da if isinstance(dataset, da.core.Array) else np
         if len(dataset.dtype) == 0:
-            raise TypeError("Expected structured numpy array")
+            raise TypeError("Expected structured array")
         if dataset.ndim > 0:
-            return np.concatenate([dataset[name] for name in dataset.dtype.names], axis=dataset.ndim - 1)
+            return xp.concatenate([dataset[name] for name in dataset.dtype.names], axis=dataset.ndim - 1)
         else:
-            return np.hstack([dataset[name] for name in dataset.dtype.names])
+            return xp.hstack([dataset[name] for name in dataset.dtype.names])
     elif isinstance(dataset, np.void):
         return np.hstack([dataset[name] for name in dataset.dtype.names])
     else:
-        raise TypeError('Datatype {} not supported in struct_to_scalar'.format(type(dataset)))
+        raise TypeError('Datatype {} not supported'.format(type(dataset)))
 
 
 def flatten_to_real(ds_main):
