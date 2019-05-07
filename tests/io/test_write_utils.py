@@ -245,6 +245,13 @@ class TestBuildIndValMatrices(unittest.TestCase):
         self.assertTrue(np.allclose(exp_inds, inds))
         self.assertTrue(np.allclose(exp_vals, vals))
 
+    def test_invalid_inputs(self):
+        with self.assertRaises(TypeError):
+            _ = write_utils.build_ind_val_matrices("not a list of arrays")
+
+        with self.assertRaises(ValueError):
+            _ = write_utils.build_ind_val_matrices([[0, 1], np.random.randint(0, high=5, size=(3, 4))])
+
 
 class TesCreateSpecIndsFromVals(unittest.TestCase):
 
