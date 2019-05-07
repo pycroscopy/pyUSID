@@ -8,8 +8,9 @@ Created on Tue Nov  3 15:07:16 2017
 from __future__ import division, print_function, unicode_literals, absolute_import
 import unittest
 import sys
-import numpy as np
 import os
+import numpy as np
+import dask.array as da
 import h5py
 sys.path.append("../../pyUSID/")
 from pyUSID.io import dtype_utils
@@ -162,7 +163,7 @@ class TestStackRealToComplexHDF5(TestDtypeUtils):
             _ = dtype_utils.stack_real_to_complex(real_val)
 
 
-class TestFlattenComplexToRealNumpy(unittest.TestCase):
+class TestFlattenComplexToReal(unittest.TestCase):
 
     def test_1d_array(self):
         complex_array = 5 * np.random.rand(5) + 7j * np.random.rand(5)
@@ -176,9 +177,18 @@ class TestFlattenComplexToRealNumpy(unittest.TestCase):
         expected = np.hstack([np.real(complex_array), np.imag(complex_array)])
         self.assertTrue(np.allclose(actual, expected))
 
-    def test_nd_array(self):
+    def test_nd_array_numpy(self):
         complex_array = 5 * np.random.rand(2, 3, 5, 7) + 7j * np.random.rand(2, 3, 5, 7)
         actual = dtype_utils.flatten_complex_to_real(complex_array)
+        expected = np.concatenate([np.real(complex_array), np.imag(complex_array)], axis=3)
+        self.assertTrue(np.allclose(actual, expected))
+
+    def test_nd_array_dask(self):
+        complex_array = 5 * np.random.rand(2, 3, 5, 7) + 7j * np.random.rand(2, 3, 5, 7)
+        da_comp = da.from_array(complex_array, chunks=complex_array.shape)
+        actual = dtype_utils.flatten_complex_to_real(da_comp)
+        self.assertIsInstance(actual, da.core.Array)
+        actual = actual.compute()
         expected = np.concatenate([np.real(complex_array), np.imag(complex_array)], axis=3)
         self.assertTrue(np.allclose(actual, expected))
 
@@ -194,12 +204,25 @@ class TestFlattenComplexToRealNumpy(unittest.TestCase):
 
 class TestFlattenComplexToRealHDF5(TestDtypeUtils):
 
-    def test_h5_legal(self):
+    def base_h5_legal(self, lazy):
         with h5py.File(file_path, mode='r') as h5_f:
             h5_comp = h5_f['complex']
-            actual = dtype_utils.flatten_complex_to_real(h5_comp)
+            actual = dtype_utils.flatten_complex_to_real(h5_comp, lazy=lazy)
+            if lazy:
+                self.assertIsInstance(actual, da.core.Array)
+                actual = actual.compute()
             expected = np.concatenate([np.real(h5_comp[()]), np.imag(h5_comp[()])], axis=len(h5_comp.shape) - 1)
             self.assertTrue(np.allclose(actual, expected))
+
+    def test_h5_legal_not_lazy(self):
+        if sys.version_info.major == 3:
+            with self.assertWarns(UserWarning):
+                self.base_h5_legal(False)
+        else:
+            self.base_h5_legal(False)
+
+    def test_h5_legal_lazy(self):
+        self.base_h5_legal(True)
 
     def test_h5_illegal(self):
         with h5py.File(file_path, mode='r') as h5_f:

@@ -9,8 +9,10 @@ Created on Tue Nov  3 21:14:25 2015
 
 from __future__ import division, absolute_import, unicode_literals, print_function
 import sys
+from warnings import warn
 import h5py
 import numpy as np
+import dask.array as da
 from collections import Iterable
 from itertools import groupby
 
@@ -60,7 +62,7 @@ def contains_integers(iter_int, min_val=None):
         return False
 
 
-def flatten_complex_to_real(dataset):
+def flatten_complex_to_real(dataset, lazy=False):
     """
     Stacks the real values followed by the imaginary values in the last dimension of the given N dimensional matrix.
     Thus a complex matrix of shape (2, 3, 5) will turn into a matrix of shape (2, 3, 10)
@@ -69,22 +71,30 @@ def flatten_complex_to_real(dataset):
     ----------
     dataset : array-like or :class:`h5py.Dataset`
         Dataset of complex data type
+    lazy : bool, optional. Default = False
+        If set to true, HDF5 datasets will be read as Dask arrays instead of numpy arrays
 
     Returns
     -------
     retval : :class:`numpy.ndarray`
         N-dimensional numpy array
     """
-    if not isinstance(dataset, (h5py.Dataset, np.ndarray)):
-        raise TypeError('dataset should either be a h5py.Dataset or numpy array')
+    if not isinstance(dataset, (h5py.Dataset, np.ndarray, da.core.Array)):
+        raise TypeError('dataset should either be a h5py.Dataset or numpy / dask array')
     if not is_complex_dtype(dataset.dtype):
         raise TypeError("Expected a complex valued dataset")
 
-    axis = np.array(dataset).ndim - 1
+    xp = np
+    if isinstance(dataset, da.core.Array) or (isinstance(dataset, h5py.Dataset) and lazy):
+        xp = da
+    if isinstance(dataset, h5py.Dataset) and not lazy:
+        warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
+
+    axis = xp.array(dataset).ndim - 1
     if axis == -1:
-        return np.hstack([np.real(dataset), np.imag(dataset)])
+        return xp.hstack([xp.real(dataset), xp.imag(dataset)])
     else:  # along the last axis
-        return np.concatenate([np.real(dataset), np.imag(dataset)], axis=axis)
+        return xp.concatenate([xp.real(dataset), xp.imag(dataset)], axis=axis)
 
 
 def flatten_compound_to_real(dataset):
