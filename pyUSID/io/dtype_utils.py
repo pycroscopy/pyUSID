@@ -69,15 +69,15 @@ def flatten_complex_to_real(dataset, lazy=False):
 
     Parameters
     ----------
-    dataset : array-like or :class:`h5py.Dataset`
+    dataset : array-like or :class:`numpy.ndarray`, or :class:`h5py.Dataset`, or :class:`dask.array.core.Array`
         Dataset of complex data type
     lazy : bool, optional. Default = False
         If set to true, HDF5 datasets will be read as Dask arrays instead of numpy arrays
 
     Returns
     -------
-    retval : :class:`numpy.ndarray`
-        N-dimensional numpy array
+    retval : :class:`numpy.ndarray`, or :class:`dask.array.core.Array`
+        real valued dataset
     """
     if not isinstance(dataset, (h5py.Dataset, np.ndarray, da.core.Array)):
         raise TypeError('dataset should either be a h5py.Dataset or numpy / dask array')
@@ -107,14 +107,14 @@ def flatten_compound_to_real(dataset, lazy=False):
 
     Parameters
     ----------
-    dataset : :class:`numpy.ndarray`, or :class:`h5py.Dataset`
+    dataset : :class:`numpy.ndarray`, or :class:`h5py.Dataset`, or :class:`dask.array.core.Array`
         Numpy array that is a structured array or a :class:`h5py.Dataset` of compound dtype
     lazy : bool, optional. Default = False
         If set to true, HDF5 datasets will be read as Dask arrays instead of numpy arrays
 
     Returns
     -------
-    retval : n-dimensional real numpy array
+    retval : :class:`numpy.ndarray`, or :class:`dask.array.core.Array`
         real valued dataset
     """
     if isinstance(dataset, h5py.Dataset):
@@ -147,8 +147,10 @@ def flatten_to_real(ds_main):
 
     Parameters
     ----------
-    ds_main : :class:`numpy.ndarray`, or :class:`h5py.Dataset`
+    ds_main : :class:`numpy.ndarray`, or :class:`h5py.Dataset`, or :class:`dask.array.core.Array`
         Compound, complex or real valued numpy array or HDF5 dataset
+    lazy : bool, optional. Default = False
+        If set to true, HDF5 datasets will be read as Dask arrays instead of numpy arrays
 
     Returns
     ----------
