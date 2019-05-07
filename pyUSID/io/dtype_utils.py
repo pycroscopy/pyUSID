@@ -25,6 +25,11 @@ if sys.version_info.major == 3:
     unicode = str
 
 
+def _lazy_load_hdf5_dset(dataset):
+    chunks = "auto" if dataset.chunks is None else dataset.chunks
+    return da.from_array(dataset, chunks=chunks)
+
+
 def contains_integers(iter_int, min_val=None):
     """
     Checks if the provided object is iterable (list, tuple etc.) and contains integers optionally greater than equal to
@@ -87,8 +92,11 @@ def flatten_complex_to_real(dataset, lazy=False):
     xp = np
     if isinstance(dataset, da.core.Array) or (isinstance(dataset, h5py.Dataset) and lazy):
         xp = da
-    if isinstance(dataset, h5py.Dataset) and not lazy:
-        warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
+    if isinstance(dataset, h5py.Dataset):
+        if lazy:
+            dataset = _lazy_load_hdf5_dset(dataset)
+        else:
+            warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
 
     axis = xp.array(dataset).ndim - 1
     if axis == -1:
@@ -120,8 +128,11 @@ def flatten_compound_to_real(dataset, lazy=False):
     if isinstance(dataset, h5py.Dataset):
         if len(dataset.dtype) == 0:
             raise TypeError("Expected compound h5py dataset")
-        xp = da
-        if not lazy:
+
+        if lazy:
+            xp = da
+            dataset = _lazy_load_hdf5_dset(dataset)
+        else:
             xp = np
             warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
 
@@ -141,7 +152,7 @@ def flatten_compound_to_real(dataset, lazy=False):
         raise TypeError('Datatype {} not supported'.format(type(dataset)))
 
 
-def flatten_to_real(ds_main):
+def flatten_to_real(ds_main, lazy=False):
     """
     Flattens complex / compound / real valued arrays to real valued arrays
 
@@ -154,15 +165,15 @@ def flatten_to_real(ds_main):
 
     Returns
     ----------
-    ds_main : :class:`numpy.ndarray`
+    ds_main : :class:`numpy.ndarray`, or :class:`dask.array.core.Array`
         Array raveled to a float data type
     """
-    if not isinstance(ds_main, (h5py.Dataset, np.ndarray)):
+    if not isinstance(ds_main, (h5py.Dataset, np.ndarray, da.core.Array)):
         ds_main = np.array(ds_main)
     if is_complex_dtype(ds_main.dtype):
-        return flatten_complex_to_real(ds_main)
+        return flatten_complex_to_real(ds_main, lazy=lazy)
     elif len(ds_main.dtype) > 0:
-        return flatten_compound_to_real(ds_main)
+        return flatten_compound_to_real(ds_main, lazy=lazy)
     else:
         return ds_main
 
@@ -250,23 +261,25 @@ def check_dtype(h5_dset):
     return func, is_complex, is_compound, n_features, type_mult
 
 
-def stack_real_to_complex(ds_real):
+def stack_real_to_complex(ds_real, lazy=False):
     """
     Puts the real and imaginary sections of the provided matrix (in the last axis) together to make complex matrix
 
     Parameters
     ------------
-    ds_real : :class:`numpy.ndarray` or :class:`h5py.Dataset`
+    ds_real : :class:`numpy.ndarray`, :class:`dask.array.core.Array`, or :class:`h5py.Dataset`
         n dimensional real-valued numpy array or HDF5 dataset where data arranged as [instance, 2 x features],
         where the first half of the features are the real component and the
         second half contains the imaginary components
+    lazy : bool, optional. Default = False
+        If set to true, HDF5 datasets will be read as Dask arrays instead of numpy arrays
 
     Returns
     ----------
-    ds_compound : :class:`numpy.ndarray`
-        2D complex numpy array arranged as [sample, features]
+    ds_compound : :class:`numpy.ndarray` or :class:`dask.array.core.Array`
+        2D complex array arranged as [sample, features]
     """
-    if not isinstance(ds_real, (np.ndarray, h5py.Dataset)):
+    if not isinstance(ds_real, (np.ndarray, da.core.Array, h5py.Dataset)):
         if not isinstance(ds_real, Iterable):
             raise TypeError("Expected at least an iterable like a list or tuple")
         ds_real = np.array(ds_real)
@@ -278,6 +291,13 @@ def stack_real_to_complex(ds_real):
     if ds_real.shape[-1] / 2 != ds_real.shape[-1] // 2:
         raise ValueError("Last dimension must be even sized")
     half_point = ds_real.shape[-1] // 2
+
+    if isinstance(ds_real, h5py.Dataset):
+        if lazy:
+            ds_real = _lazy_load_hdf5_dset(ds_real)
+        else:
+            warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
+
     return ds_real[..., :half_point] + 1j * ds_real[..., half_point:]
 
 
@@ -287,17 +307,17 @@ def stack_real_to_compound(ds_real, compound_type):
 
     Parameters
     ------------
-    ds_real : :class:`numpy.ndarray` or :class:`h5py.Dataset`
+    ds_real : :class:`numpy.ndarray`, :class:`dask.array.core.Array`, or :class:`h5py.Dataset`
         n dimensional real-valued numpy array or HDF5 dataset where data arranged as [instance, features]
     compound_type : :class:`numpy.dtype`
         Target complex data-type
 
     Returns
     ----------
-    ds_compound : :class:`numpy.ndarray`
-        N-dimensional complex-valued numpy array arranged as [sample, features]
+    ds_compound : :class:`numpy.ndarray` or :class:`dask.array.core.Array`
+        N-dimensional complex-valued array arranged as [sample, features]
     """
-    if not isinstance(ds_real, (np.ndarray, h5py.Dataset)):
+    if not isinstance(ds_real, (np.ndarray, da.core.Array, h5py.Dataset)):
         if not isinstance(ds_real, Iterable):
             raise TypeError("Expected at least an iterable like a list or tuple")
         ds_real = np.array(ds_real)
@@ -321,7 +341,7 @@ def stack_real_to_compound(ds_real, compound_type):
         i_end = (name_ind + 1) * new_spec_length
         ds_compound[name] = ds_real[..., i_start:i_end]
 
-    return np.squeeze(ds_compound)
+    return ds_compound.squeeze()
 
 
 def stack_real_to_target_dtype(ds_real, new_dtype):

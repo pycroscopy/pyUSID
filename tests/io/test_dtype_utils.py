@@ -112,7 +112,7 @@ class TestIntegersToSlices(unittest.TestCase):
         self.assertEqual(expected, ret_val)
 
 
-class TestStackRealToComplexNumpy(unittest.TestCase):
+class TestStackRealToComplex(unittest.TestCase):
 
     def test_single(self):
         expected = 4.32 + 5.67j
@@ -132,23 +132,46 @@ class TestStackRealToComplexNumpy(unittest.TestCase):
         actual = dtype_utils.stack_real_to_complex(real_val)
         self.assertTrue(np.allclose(actual, expected))
 
-    def test_nd(self):
+    def base_nd(self, lazy):
         expected = 5 * np.random.rand(2, 3, 5, 8) + 7j * np.random.rand(2, 3, 5, 8)
         real_val = np.concatenate([np.real(expected), np.imag(expected)], axis=3)
+        if lazy:
+            real_val = da.from_array(real_val, chunks=real_val.shape)
         actual = dtype_utils.stack_real_to_complex(real_val)
+        if lazy:
+            self.assertIsInstance(actual, da.core.Array)
+            actual = actual.compute()
         self.assertTrue(np.allclose(actual, expected))
+
+    def test_nd_numpy(self):
+        self.base_nd(False)
+
+    def test_nd_dask(self):
+        self.base_nd(True)
 
 
 class TestStackRealToComplexHDF5(TestDtypeUtils):
 
-    def test_stack_real_nd_to_complex_h5_legal(self):
+    def base_h5_legal(self, lazy):
         with h5py.File(file_path, mode='r') as h5_f:
             h5_real = h5_f['real2']
             expected = h5_real[:, :, :3] + 1j * h5_real[:, :, 3:]
-            actual = dtype_utils.stack_real_to_complex(h5_real)
+            actual = dtype_utils.stack_real_to_complex(h5_real, lazy=lazy)
+            if lazy:
+                self.assertIsInstance(actual, da.core.Array)
+                actual = actual.compute()
+            else:
+                self.assertIsInstance(actual, np.ndarray)
             self.assertTrue(np.allclose(actual, expected))
 
-    def test_stack_real_nd_to_complex_h5_illegal(self):
+    def test_h5_as_numpy(self):
+        with self.assertWarns(UserWarning):
+            self.base_h5_legal(False)
+
+    def test_h5_as_dask(self):
+        self.base_h5_legal(True)
+
+    def test_h5_illegal(self):
         with h5py.File(file_path, mode='r') as h5_f:
             with self.assertRaises(TypeError):
                 _ = dtype_utils.stack_real_to_complex(h5_f['complex'])
@@ -156,7 +179,7 @@ class TestStackRealToComplexHDF5(TestDtypeUtils):
             with self.assertRaises(TypeError):
                 _ = dtype_utils.stack_real_to_complex(h5_f['compound'])
 
-    def test_stack_real_to_complex_illegal_odd_last_dim(self):
+    def test_illegal_odd_last_dim(self):
         expected = 5 * np.random.rand(2, 3, 5, 7) + 7j * np.random.rand(2, 3, 5, 7)
         real_val = np.concatenate([np.real(expected), np.imag(expected)[..., :-1]], axis=3)
         with self.assertRaises(ValueError):
