@@ -147,6 +147,10 @@ class TestWriteUtils(unittest.TestCase):
         dim_2 = write_utils.Dimension(name, units, np.arange(5, dtype=np.float32))
         self.assertEqual(dim_1, dim_2)
 
+    def test_dimension_inequality(self):
+        name = 'Bias'
+        units = 'V'
+
         self.assertNotEqual(write_utils.Dimension(name, units, [0, 1, 2, 3]),
                             write_utils.Dimension(name, units, [0, 1, 2, 4]))
 
@@ -154,6 +158,14 @@ class TestWriteUtils(unittest.TestCase):
                             write_utils.Dimension(name, units, [0, 1, 2, 3]))
 
         self.assertNotEqual(write_utils.Dimension(name, 'fdfd', [0, 1, 2, 3]),
+                            write_utils.Dimension(name, units, [0, 1, 2, 3]))
+
+        self.assertNotEqual(write_utils.Dimension(name, units, [0, 1, 2, 3],
+                                                  mode=write_utils.DimType.DEPENDENT),
+                            write_utils.Dimension(name, units, [0, 1, 2, 3],
+                                                  mode=write_utils.DimType.INCOMPLETE))
+
+        self.assertNotEqual(write_utils.Dimension(name, units, [0, 1, 2]),
                             write_utils.Dimension(name, units, [0, 1, 2, 3]))
 
     def test_dimension_invalid_mode(self):
@@ -177,6 +189,14 @@ class TestWriteUtils(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             _ = write_utils.Dimension('Name', 'unit', 'invalid')
+
+    def test_dim_type_invalid_comparison(self):
+        with self.assertRaises(TypeError):
+            write_utils.DimType.INCOMPLETE == "Default"
+
+    def test_dim_type_valid_comparison(self):
+        self.assertTrue(write_utils.DimType.DEFAULT < write_utils.DimType.INCOMPLETE)
+        self.assertTrue(write_utils.DimType.INCOMPLETE < write_utils.DimType.DEPENDENT)
 
     def test_build_ind_val_matrices_empty(self):
         inds, vals = write_utils.build_ind_val_matrices([[0]], is_spectral=True)
