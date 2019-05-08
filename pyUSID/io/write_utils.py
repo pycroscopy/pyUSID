@@ -9,18 +9,46 @@ Created on Thu Sep  7 21:14:25 2017
 
 from __future__ import division, print_function, unicode_literals, absolute_import
 import sys
+from warnings import warn
+from enum import Enum
+from itertools import groupby
 import numpy as np
 from collections import Iterable
-from .dtype_utils import contains_integers
+from .dtype_utils import contains_integers, validate_list_of_strings, validate_single_string_arg
 
-__all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE',
-           'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals']
+__all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE', 'get_slope',
+           'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions', 'DimType',
+           'to_ranges']
 
 if sys.version_info.major == 3:
     unicode = str
 
+# Constants:
 INDICES_DTYPE = np.uint32
 VALUES_DTYPE = np.float32
+
+
+class DimType(Enum):
+    DEFAULT = 0
+    INCOMPLETE = 1
+    DEPENDENT = 2
+
+    @staticmethod
+    def __check_other_type(other):
+        if not isinstance(other, DimType):
+            raise TypeError('Provided object not of type DimType')
+
+    def __lt__(self, other):
+        self.__check_other_type(other)
+        return self.value < other.value
+
+    def __gt__(self, other):
+        self.__check_other_type(other)
+        return self.value > other.value
+
+    def __eq__(self, other):
+        self.__check_other_type(other)
+        return self.value == other.value
 
 
 class Dimension(object):
@@ -28,7 +56,7 @@ class Dimension(object):
     ..autoclass::Dimension
     """
 
-    def __init__(self, name, units, values):
+    def __init__(self, name, units, values, mode=DimType.DEFAULT):
         """
         Simple object that describes a dimension in a dataset by its name, units, and values
 
@@ -41,37 +69,83 @@ class Dimension(object):
         values : array-like or int
             Values over which this dimension was varied. A linearly increasing set of values will be generated if an
             integer is provided instead of an array.
-
+        mode : Enum, Optional. Default = DimType.DEFAULT
+            How the parameter associated with the dimension was varied.
+            DimType.DEFAULT - data was recorded for all combinations of values in this dimension against **all** other
+            dimensions. This is typically the case.
+            DimType.INCOMPLETE - Data not present for all combinations of values in this dimension and all other
+                dimensions. Examples include spiral scans, sparse sampling, aborted measurements
+            DimType.DEPENDENT - Values in this dimension were varied as a function of another (independent) dimension.
         """
-        if not isinstance(name, (str, unicode)):
-            raise TypeError('name should be a string')
-        name = name.strip()
-        if len(name) < 1:
-            raise ValueError('name should not be an empty string')
+        name = validate_single_string_arg(name, 'name')
+
         if not isinstance(units, (str, unicode)):
             raise TypeError('units should be a string')
+        units = units.strip()
+
         if isinstance(values, int):
             if values < 1:
                 raise ValueError('values should at least be specified as a positive integer')
             values = np.arange(values)
         if not isinstance(values, (np.ndarray, list, tuple)):
             raise TypeError('values should be array-like')
+
+        if not isinstance(mode, DimType):
+            raise TypeError('mode must be of type pyUSID.DimType. Provided object was of type: {}'.format(type(mode)))
+
         self.name = name
         self.units = units
         self.values = values
+        self.mode = mode
 
     def __repr__(self):
-        return '{} ({}) : {}'.format(self.name, self.units, self.values)
+        return '{} ({}) mode:{} : {}'.format(self.name, self.units, self.mode, self.values)
 
     def __eq__(self, other):
         if isinstance(other, Dimension):
-            same_name = self.name == other.name
-            same_unit = self.units == other.units
-            same_values = self.values == other.values
+            if self.name != other.name:
+                return False
+            if self.units != other.units:
+                return False
+            if self.mode != other.mode:
+                return False
+            if len(self.values) != len(other.values):
+                return False
+            if not np.allclose(self.values, other.values):
+                return False
 
-            return all([same_name, same_unit, same_values])
+        return True
 
-        return False
+
+def validate_dimensions(dimensions, dim_type='Position'):
+    """
+    Checks if the provided object is an iterable with pyUSID.Dimension objects.
+    If it is not full of Dimension objects, Exceptions are raised.
+
+    Parameters
+    ----------
+    dimensions : iterable or pyUSID.Dimension
+        Iterable containing pyUSID.Dimension objects
+    dim_type : str, Optional. Default = "Position"
+        Type of Dimensions in the iterable. Set to "Spectroscopic" if not Position dimensions.
+        This string is only used for more descriptive Exceptions
+
+    Returns
+    -------
+    list
+        List containing pyUSID.Dimension objects
+    """
+    if isinstance(dimensions, Dimension):
+        dimensions = [dimensions]
+    if isinstance(dimensions, np.ndarray):
+        if dimensions.ndim > 1:
+            dimensions = dimensions.ravel()
+            warn(dim_type + ' dimensions should be specified by a 1D array-like. Raveled this numpy array for now')
+    if not isinstance(dimensions, (list, np.ndarray, tuple)):
+        raise TypeError(dim_type + ' dimensions should be array-like of Dimension objects')
+    if not np.all([isinstance(x, Dimension) for x in dimensions]):
+        raise TypeError(dim_type + ' dimensions should be a sequence of Dimension objects')
+    return dimensions
 
 
 def get_aux_dset_slicing(dim_names, last_ind=None, is_spectroscopic=False):
@@ -95,12 +169,9 @@ def get_aux_dset_slicing(dim_names, last_ind=None, is_spectroscopic=False):
         Dictionary of tuples containing slice objects corresponding to
         each position axis.
     """
-    if not isinstance(dim_names, Iterable):
-        raise TypeError('dim_names should be and Iterable')
-    if not len(dim_names) > 0:
-        raise ValueError('dim_names should not be empty')
-    if not np.all([isinstance(x, (str, unicode)) for x in dim_names]):
-        raise TypeError('dim_names should contain strings')
+    dim_names = validate_list_of_strings(dim_names, 'dim_names')
+    if len(dim_names) == 0:
+        raise ValueError('No valid dim_names provided')
 
     slice_dict = dict()
     for spat_ind, curr_dim_name in enumerate(dim_names):
@@ -376,3 +447,64 @@ def calc_chunks(dimensions, dtype_byte_size, unit_chunks=None, max_chunk_mem=102
     chunking = tuple(unit_chunks)
 
     return chunking
+
+
+def get_slope(values, tol=1E-3):
+    """
+    Attempts to get the slope of the provided values. This function will be handy
+    for checking if a dimension has been varied linearly or not.
+    If the values vary non-linearly, a ValueError will be raised
+
+    Parameters
+    ----------
+    values : array-like
+        List of numbers
+    tol : float, optional. Default = 1E-3
+        Tolerance in the variation of the slopes.
+    Returns
+    -------
+    float
+        Slope of the line
+    """
+    if not isinstance(tol, float):
+        raise TypeError('tol should be a float << 1')
+    step_size = np.unique(np.diff(values))
+    if len(step_size) > 1:
+        # often we end up here. In most cases,
+        step_avg = step_size.max()
+        step_size -= step_avg
+        var = np.mean(np.abs(step_size))
+        if var / step_avg < tol:
+            step_size = [step_avg]
+        else:
+            # Non-linear dimension! - see notes above
+            raise ValueError('Provided values cannot be expressed as a linear trend')
+    return step_size[0]
+
+
+def to_ranges(iterable):
+    """
+    Converts a sequence of iterables to range tuples
+
+    From https://stackoverflow.com/questions/4628333/converting-a-list-of-integers-into-range-in-python
+
+    Credits: @juanchopanza and @luca
+
+    Parameters
+    ----------
+    iterable : collections.Iterable object
+        iterable object like a list
+
+    Returns
+    -------
+    iterable : generator object
+        Cast to list or similar to use
+    """
+    iterable = sorted(set(iterable))
+    for key, group in groupby(enumerate(iterable), lambda t: t[1] - t[0]):
+        group = list(group)
+        if sys.version_info.major == 3:
+            yield range(group[0][1], group[-1][1]+1)
+        else:
+            yield xrange(group[0][1], group[-1][1]+1)
+

@@ -11,13 +11,17 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 
 import os
 import sys
+from warnings import warn
 import h5py
 import numpy as np
+import dask.array as da
 import matplotlib.pyplot as plt
 
-from .hdf_utils import check_if_main, get_attr, create_results_group, \
-    get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset
-from .dtype_utils import flatten_to_real, contains_integers, get_exponent, is_complex_dtype
+from .hdf_utils import check_if_main, get_attr, create_results_group, write_reduced_anc_dsets, link_as_main, \
+    get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset, reshape_from_n_dims, \
+    copy_attributes
+from .dtype_utils import flatten_to_real, contains_integers, get_exponent, is_complex_dtype, \
+    validate_single_string_arg, validate_list_of_strings
 from .write_utils import Dimension
 from ..viz.jupyter_utils import simple_ndim_visualizer
 from ..viz.plot_utils import plot_map, get_plot_grid_size
@@ -120,6 +124,11 @@ class USIDataset(h5py.Dataset):
 
         self.__set_labels_and_sizes()
 
+        try:
+            self.__n_dim_data = self.get_n_dim_form()
+        except ValueError:
+            warn('This dataset does not have an N-dimensional form')
+
     def __eq__(self, other):
         if isinstance(other, h5py.Dataset):
             return super(USIDataset, self).__eq__(other)
@@ -217,8 +226,7 @@ class USIDataset(h5py.Dataset):
             Array containing the unit values of the dimension `dim_name`
 
         """
-        if not isinstance(dim_name, (str, unicode)):
-            raise TypeError('dim_name should be a string / unocode value')
+        dim_name = validate_single_string_arg(dim_name, 'dim_name')
         return get_unit_values(self.h5_pos_inds, self.h5_pos_vals)[dim_name]
 
     def get_spec_values(self, dim_name):
@@ -236,8 +244,7 @@ class USIDataset(h5py.Dataset):
             Array containing the unit values of the dimension `dim_name`
 
         """
-        if not isinstance(dim_name, (str, unicode)):
-            raise TypeError('dim_name should be a string / unocode value')
+        dim_name = validate_single_string_arg(dim_name, 'dim_name')
         return get_unit_values(self.h5_spec_inds, self.h5_spec_vals)[dim_name]
 
     def get_current_sorting(self):
@@ -269,19 +276,29 @@ class USIDataset(h5py.Dataset):
 
         self.__set_labels_and_sizes()
 
-    def get_n_dim_form(self, as_scalar=False):
+    def get_n_dim_form(self, as_scalar=False, lazy=False):
         """
         Reshapes the dataset to an N-dimensional array
 
+        Parameters
+        ----------
+        as_scalar : bool, optional. Default = False
+            If False, the data is returned in its original (complex, compound) dtype
+            Else, the data is flattened to a real-valued dataset
+        lazy : bool, optional. Default = False
+            If set to false, n_dim_data will be a :class:`numpy.ndarray`
+            Else returned object is :class:`dask.array.core.Array`
+
         Returns
         -------
-        n_dim_data : :class:`numpy.ndarray`
+        n_dim_data : :class:`numpy.ndarray` or :class:`dask.core.Array`
             N-dimensional form of the dataset
 
         """
 
         if self.__n_dim_data is None:
-            self.__n_dim_data, success = reshape_to_n_dims(self, sort_dims=self.__sort_dims)
+            self.__n_dim_data, success = reshape_to_n_dims(self, sort_dims=self.__sort_dims,
+                                                           lazy=lazy)
 
             if success is not True:
                 raise ValueError('Unable to reshape data to N-dimensional form.')
@@ -316,7 +333,7 @@ class USIDataset(h5py.Dataset):
                 raise TypeError('The slices must be array-likes or slice objects.')
         return True
 
-    def slice(self, slice_dict, ndim_form=True, as_scalar=False, verbose=False):
+    def slice(self, slice_dict, ndim_form=True, as_scalar=False, verbose=False, lazy=False):
         """
         Slice the dataset based on an input dictionary of 'str': slice pairs.
         Each string should correspond to a dimension label.  The slices can be
@@ -332,10 +349,13 @@ class USIDataset(h5py.Dataset):
             Should the data be returned as scalar values only.
         verbose : bool, optional
             Whether or not to print debugging statements
+        lazy : bool, optional. Default = False
+            If set to false, data_slice will be a :class:`numpy.ndarray`
+            Else returned object is :class:`dask.array.core.Array`
 
         Returns
         -------
-        data_slice : numpy.ndarray
+        data_slice : :class:`numpy.ndarray`, or :class:`dask.array.core.Array`
             Slice of the dataset.  Dataset has been reshaped to N-dimensions if `success` is True, only
             by Position dimensions if `success` is 'Positions', or not reshape at all if `success`
             is False.
@@ -417,7 +437,7 @@ class USIDataset(h5py.Dataset):
 
         if ndim_form:
             # TODO: if data is already loaded into memory, try to avoid I/O and slice in memory!!!!
-            data_slice, success = reshape_to_n_dims(data_slice, h5_pos=pos_inds, h5_spec=spec_inds, verbose=verbose)
+            data_slice, success = reshape_to_n_dims(data_slice, h5_pos=pos_inds, h5_spec=spec_inds, verbose=verbose, lazy=lazy)
             data_slice = np.squeeze(data_slice)
 
         if as_scalar:
@@ -487,7 +507,9 @@ class USIDataset(h5py.Dataset):
 
         # Build the list of position slice indices
         for pos_ind, pos_lab in enumerate(self.__pos_dim_labels):
-            n_dim_slices[pos_lab] = np.isin(self.h5_pos_inds[:, pos_ind], n_dim_slices[pos_lab])
+            # n_dim_slices[pos_lab] = np.isin(self.h5_pos_inds[:, pos_ind], n_dim_slices[pos_lab])
+            temp = [self.h5_pos_inds[:, pos_ind] == item for item in n_dim_slices[pos_lab]]
+            n_dim_slices[pos_lab] = np.any(np.vstack(temp), axis=0)
             if pos_ind == 0:
                 pos_slice = n_dim_slices[pos_lab]
             else:
@@ -496,7 +518,9 @@ class USIDataset(h5py.Dataset):
 
         # Do the same for the spectroscopic slice
         for spec_ind, spec_lab in enumerate(self.__spec_dim_labels):
-            n_dim_slices[spec_lab] = np.isin(self.h5_spec_inds[spec_ind], n_dim_slices[spec_lab])
+            # n_dim_slices[spec_lab] = np.isin(self.h5_spec_inds[spec_ind], n_dim_slices[spec_lab])
+            temp = [self.h5_spec_inds[spec_ind] == item for item in n_dim_slices[spec_lab]]
+            n_dim_slices[spec_lab] = np.any(np.vstack(temp), axis=0)
             if spec_ind == 0:
                 spec_slice = n_dim_slices[spec_lab]
             else:
@@ -646,8 +670,7 @@ class USIDataset(h5py.Dataset):
         if dset_name is None:
             dset_name = self.name.split('/')[-1]
         else:
-            if not isinstance(dset_name, (str, unicode)):
-                raise TypeError('dset_name must be of type string / unicode')
+            dset_name = validate_single_string_arg(dset_name, 'dset_name')
 
         if verbose:
             print('Decided / provided name of new sliced HDF5 dataset to be: {}'.format(dset_name))
@@ -758,7 +781,7 @@ class USIDataset(h5py.Dataset):
                                  '. Try slicing again'.format(len(pos_dims), len(spec_dims)))
 
             # now should be safe to slice:
-            data_slice, success = self.slice(slice_dict, ndim_form=True)
+            data_slice, success = self.slice(slice_dict, ndim_form=True, lazy=False)
             if not success:
                 raise ValueError('Something went wrong when slicing the dataset. slice message: {}'.format(success))
             # don't forget to remove singular dimensions via a squeeze
@@ -915,6 +938,156 @@ class USIDataset(h5py.Dataset):
 
         # If data has at least one dimension with 2 values in pos. AND spec., it can be visualized interactively:
         return simple_ndim_visualizer(data_slice, pos_dims, spec_dims, verbose=verbose, **kwargs)
+
+    def reduce(self, dims, ufunc=da.mean, to_hdf5=False, dset_name=None, verbose=False):
+        """
+
+        Parameters
+        ----------
+        dims : str or list of str
+            Names of the position and/or spectroscopic dimensions that need to be reduced
+        ufunc : callable, optional. Default = dask.array.mean
+            Reduction function such as dask.array.mean available in dask.array
+        to_hdf5 : bool, optional. Default = False
+            Whether or not to write the reduced data back to a new dataset
+        dset_name : str (optional)
+            Name of the new USID Main datset in the HDF5 file that will contain the sliced data.
+            Default - the sliced dataset takes the same name as this source dataset
+        verbose : bool, optional. Default = False
+            Whether or not to print any debugging statements to stdout
+
+        Returns
+        -------
+        reduced_nd : dask.array object
+            Dask array object containing the reduced data.
+            Call compute() on this object to get the equivalent numpy array
+        h5_main_red : USIDataset
+            USIDataset reference if to_hdf5 was set to True. Otherwise - None.
+        """
+        dims = validate_list_of_strings(dims, 'dims')
+
+        for curr_dim in self.n_dim_labels:
+            if curr_dim not in self.n_dim_labels:
+                raise KeyError('{} not a dimension in this dataset'.format(curr_dim))
+
+        if ufunc not in [da.all, da.any, da.max, da.mean, da.min, da.moment, da.prod, da.std, da.sum, da.var,
+                         da.nanmax, da.nanmean, da.nanmin, da.nanprod, da.nanstd, da.nansum, da.nanvar]:
+            raise NotImplementedError('ufunc must be a valid reduction function such as dask.array.mean')
+
+        # At this point, dims are valid
+        da_nd, status, labels = reshape_to_n_dims(self, get_labels=True, verbose=verbose, sort_dims=False,
+                                                  lazy=True)
+
+        # Translate the names of the dimensions to the indices:
+        dim_inds = [np.where(labels == curr_dim)[0][0] for curr_dim in dims]
+
+        # Now apply the reduction:
+        reduced_nd = ufunc(da_nd, axis=dim_inds)
+
+        if not to_hdf5:
+            return reduced_nd, None
+
+        if dset_name is None:
+            dset_name = self.name.split('/')[-1]
+        else:
+            dset_name = validate_single_string_arg(dset_name, 'dset_name')
+
+        # Create the group to hold the results:
+
+        h5_group = create_results_group(self, 'Reduce')
+
+        # check if a pos dimension was sliced:
+        pos_sliced = False
+        for dim_name in dims:
+            if dim_name in self.pos_dim_labels:
+                pos_sliced = True
+                if verbose:
+                    print('Position dimension: {} was reduced. Breaking...'.format(dim_name))
+                break
+        if not pos_sliced:
+            h5_pos_inds = self.h5_pos_inds
+            h5_pos_vals = self.h5_pos_vals
+            if verbose:
+                print('Reusing this main datasets position datasets')
+        else:
+            if verbose:
+                print('Creating new Position dimensions:\n------------------------------------------')
+            # First figure out the names of the position dimensions
+            pos_dim_names = []
+            for cur_dim in dims:
+                if cur_dim in self.pos_dim_labels:
+                    pos_dim_names.append(cur_dim)
+            if verbose:
+                print('Position dimensions reduced: {}'.format(pos_dim_names))
+
+            # Now create the reduced position datasets
+            h5_pos_inds, h5_pos_vals = write_reduced_anc_dsets(h5_group, self.h5_pos_inds, self.h5_pos_vals,
+                                                               pos_dim_names, is_spec=False, verbose=verbose)
+
+            if verbose:
+                print('Position dataset created: {}. Labels: {}'.format(h5_pos_inds, get_attr(h5_pos_inds, 'labels')))
+
+        spec_sliced = False
+        for dim_name in dims:
+            if dim_name in self.spec_dim_labels:
+                spec_sliced = True
+                if verbose:
+                    print('Spectroscopic dimension: {} was reduced. Breaking...'.format(dim_name))
+                break
+        if not spec_sliced:
+            h5_spec_inds = self.h5_spec_inds
+            h5_spec_vals = self.h5_spec_vals
+            if verbose:
+                print('Reusing this main datasets spectroscopic datasets')
+        else:
+            if verbose:
+                print('Creating new spectroscopic dimensions:\n------------------------------------------')
+
+            # First figure out the names of the position dimensions
+            spec_dim_names = []
+            for cur_dim in dims:
+                if cur_dim in self.spec_dim_labels:
+                    spec_dim_names.append(cur_dim)
+            if verbose:
+                print('Spectroscopic dimensions reduced: {}'.format(spec_dim_names))
+
+            # Now create the reduced position datasets
+            h5_spec_inds, h5_spec_vals = write_reduced_anc_dsets(h5_group, self.h5_spec_inds, self.h5_spec_vals,
+                                                                 spec_dim_names, is_spec=True, verbose=verbose)
+
+            if verbose:
+                print('Spectroscopic dataset created: {}. Labels: {}'.format(h5_spec_inds,
+                                                                             get_attr(h5_spec_inds, 'labels')))
+
+                # Now put the reduced N dimensional Dask array back to 2D form:
+        reduced_2d, status = reshape_from_n_dims(reduced_nd, h5_pos=h5_pos_inds, h5_spec=h5_spec_inds, verbose=verbose)
+        if status != True and verbose:
+            print('Status from reshape_from_n_dims: {}'.format(status))
+        if verbose:
+            print('2D reduced dataset: {}'.format(reduced_2d))
+
+        # Create a HDF5 dataset to hold this flattened 2D data:
+        h5_red_main = h5_group.create_dataset(dset_name, shape=reduced_2d.shape,
+                                              dtype=reduced_2d.dtype)  # , compression=self.compression)
+        if verbose:
+            print('Created an empty dataset to hold flattened dataset: {}. Chunks: {}'.format(h5_red_main,
+                                                                                              h5_red_main.chunks))
+
+        # Copy the mandatory attributes:
+        copy_attributes(self, h5_red_main)
+
+        # Now make this dataset a main dataset:
+        link_as_main(h5_red_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals)
+        if verbose:
+            print('{} is a main dataset?: {}'.format(h5_red_main, check_if_main(h5_red_main, verbose=verbose)))
+
+        # Now write this data to the HDF5 dataset:
+        if verbose:
+            print('About to write dask array to this dataset at path: {}, in file: {}'.format(h5_red_main.name,
+                                                                                              self.file.filename))
+        reduced_2d.to_hdf5(self.file.filename, h5_red_main.name)
+
+        return reduced_nd, USIDataset(h5_red_main)
 
     def to_csv(self, output_path=None, force=False):
         """

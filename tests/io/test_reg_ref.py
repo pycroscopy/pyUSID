@@ -11,11 +11,11 @@ import sys
 import h5py
 import numpy as np
 
+from . import data_utils
 sys.path.append("../../pyUSID/")
-from pyUSID.io import hdf_utils, reg_ref
+from pyUSID.io.hdf_utils import get_attr
+from pyUSID.io import reg_ref
 
-
-test_h5_file_path = 'test_reg_ref.h5'
 
 if sys.version_info.major == 3:
     unicode = str
@@ -54,138 +54,277 @@ class TestRegRef(unittest.TestCase):
         TestRegRef.__write_string_list_as_attr(h5_dset, {'labels': list(attrs.keys())})
 
     def setUp(self):
-        if os.path.exists(test_h5_file_path):
-            os.remove(test_h5_file_path)
-
-        with h5py.File(test_h5_file_path) as h5_f:
-
-            h5_raw_grp = h5_f.create_group('Raw_Measurement')
-            TestRegRef.__write_safe_attrs(h5_raw_grp, {'att_1': 'string_val', 'att_2': 1.2345, 'att_3': [1, 2, 3, 4]})
-            TestRegRef.__write_string_list_as_attr(h5_raw_grp, {'att_4': ['str_1', 'str_2', 'str_3']})
-
-            _ = h5_raw_grp.create_group('Misc')
-
-            num_rows = 3
-            num_cols = 5
-            num_cycles = 2
-            num_cycle_pts = 7
-
-            source_dset_name = 'source_main'
-            tool_name = 'Fitter'
-
-            source_pos_data = np.vstack((np.tile(np.arange(num_cols), num_rows),
-                                         np.repeat(np.arange(num_rows), num_cols))).T
-            pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
-
-            h5_pos_inds = h5_raw_grp.create_dataset('Position_Indices', data=source_pos_data, dtype=np.uint16)
-            TestRegRef.__write_aux_reg_ref(h5_pos_inds, pos_attrs['labels'], is_spec=False)
-            TestRegRef.__write_string_list_as_attr(h5_pos_inds, pos_attrs)
-
-            # make the values more interesting:
-            source_pos_data = np.vstack((source_pos_data[:, 0] * 50, source_pos_data[:, 1] * 1.25)).T
-
-            h5_pos_vals = h5_raw_grp.create_dataset('Position_Values', data=source_pos_data, dtype=np.float32)
-            TestRegRef.__write_aux_reg_ref(h5_pos_vals, pos_attrs['labels'], is_spec=False)
-            TestRegRef.__write_string_list_as_attr(h5_pos_vals, pos_attrs)
-
-            source_spec_data = np.vstack((np.tile(np.arange(num_cycle_pts), num_cycles),
-                                          np.repeat(np.arange(num_cycles), num_cycle_pts)))
-            source_spec_attrs = {'units': ['V', ''], 'labels': ['Bias', 'Cycle']}
-
-            h5_source_spec_inds = h5_raw_grp.create_dataset('Spectroscopic_Indices', data=source_spec_data,
-                                                            dtype=np.uint16)
-            TestRegRef.__write_aux_reg_ref(h5_source_spec_inds, source_spec_attrs['labels'], is_spec=True)
-            TestRegRef.__write_string_list_as_attr(h5_source_spec_inds, source_spec_attrs)
-
-            # make spectroscopic axis interesting as well
-            source_spec_data = np.vstack(
-                (np.tile(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False)),
-                         num_cycles),
-                 np.repeat(np.arange(num_cycles), num_cycle_pts)))
-
-            h5_source_spec_vals = h5_raw_grp.create_dataset('Spectroscopic_Values', data=source_spec_data,
-                                                            dtype=np.float32)
-            TestRegRef.__write_aux_reg_ref(h5_source_spec_vals, source_spec_attrs['labels'], is_spec=True)
-            TestRegRef.__write_string_list_as_attr(h5_source_spec_vals, source_spec_attrs)
-
-            source_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
-            h5_source_main = h5_raw_grp.create_dataset(source_dset_name, data=source_main_data)
-            TestRegRef.__write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
-            TestRegRef.__write_main_reg_refs(h5_source_main, {'even_rows': (slice(0, None, 2), slice(None)),
-                                                   'odd_rows': (slice(1, None, 2), slice(None))})
-
-            # Now need to link as main!
-            for dset in [h5_pos_inds, h5_pos_vals, h5_source_spec_inds, h5_source_spec_vals]:
-                h5_source_main.attrs[dset.name.split('/')[-1]] = dset.ref
-
-            _ = h5_raw_grp.create_dataset('Ancillary', data=np.arange(5))
-
-            # Now add a few results:
-
-            h5_results_grp_1 = h5_raw_grp.create_group(source_dset_name + '-' + tool_name + '_000')
-            TestRegRef.__write_safe_attrs(h5_results_grp_1, {'att_1': 'string_val', 'att_2': 1.2345, 'att_3': [1, 2, 3, 4]})
-            TestRegRef.__write_string_list_as_attr(h5_results_grp_1, {'att_4': ['str_1', 'str_2', 'str_3']})
-
-            num_cycles = 1
-            num_cycle_pts = 7
-
-            results_spec_inds = np.expand_dims(np.arange(num_cycle_pts), 0)
-            results_spec_attrs = {'units': ['V'], 'labels': ['Bias']}
-
-            h5_results_1_spec_inds = h5_results_grp_1.create_dataset('Spectroscopic_Indices',
-                                                                     data=results_spec_inds, dtype=np.uint16)
-            TestRegRef.__write_aux_reg_ref(h5_results_1_spec_inds, results_spec_attrs['labels'], is_spec=True)
-            TestRegRef.__write_string_list_as_attr(h5_results_1_spec_inds, results_spec_attrs)
-
-            results_spec_vals = np.expand_dims(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False)), 0)
-
-            h5_results_1_spec_vals = h5_results_grp_1.create_dataset('Spectroscopic_Values', data=results_spec_vals,
-                                                                     dtype=np.float32)
-            TestRegRef.__write_aux_reg_ref(h5_results_1_spec_vals, results_spec_attrs['labels'], is_spec=True)
-            TestRegRef.__write_string_list_as_attr(h5_results_1_spec_vals, results_spec_attrs)
-
-            results_1_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
-            h5_results_1_main = h5_results_grp_1.create_dataset('results_main', data=results_1_main_data)
-            TestRegRef.__write_safe_attrs(h5_results_1_main, {'units': 'pF', 'quantity': 'Capacitance'})
-
-            # Now need to link as main!
-            for dset in [h5_pos_inds, h5_pos_vals, h5_results_1_spec_inds, h5_results_1_spec_vals]:
-                h5_results_1_main.attrs[dset.name.split('/')[-1]] = dset.ref
-
-            # add another result with different parameters
-
-            h5_results_grp_2 = h5_raw_grp.create_group(source_dset_name + '-' + tool_name + '_001')
-            TestRegRef.__write_safe_attrs(h5_results_grp_2, {'att_1': 'other_string_val', 'att_2': 5.4321, 'att_3': [4, 1, 3]})
-            TestRegRef.__write_string_list_as_attr(h5_results_grp_2, {'att_4': ['s', 'str_2', 'str_3']})
-
-            results_2_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
-            h5_results_2_main = h5_results_grp_2.create_dataset('results_main', data=results_2_main_data)
-            TestRegRef.__write_safe_attrs(h5_results_2_main, {'units': 'pF', 'quantity': 'Capacitance'})
-
-            h5_results_2_spec_inds = h5_results_grp_2.create_dataset('Spectroscopic_Indices',
-                                                                     data=results_spec_inds, dtype=np.uint16)
-            TestRegRef.__write_aux_reg_ref(h5_results_2_spec_inds, results_spec_attrs['labels'], is_spec=True)
-            TestRegRef.__write_string_list_as_attr(h5_results_2_spec_inds, results_spec_attrs)
-
-            h5_results_2_spec_vals = h5_results_grp_2.create_dataset('Spectroscopic_Values', data=results_spec_vals,
-                                                                     dtype=np.float32)
-            TestRegRef.__write_aux_reg_ref(h5_results_2_spec_vals, results_spec_attrs['labels'], is_spec=True)
-            TestRegRef.__write_string_list_as_attr(h5_results_2_spec_vals, results_spec_attrs)
-
-            # Now need to link as main!
-            for dset in [h5_pos_inds, h5_pos_vals, h5_results_2_spec_inds, h5_results_2_spec_vals]:
-                h5_results_2_main.attrs[dset.name.split('/')[-1]] = dset.ref
+        data_utils.make_beps_file()
 
     def tearDown(self):
-        os.remove(test_h5_file_path)
+        data_utils.delete_existing_file(data_utils.std_beps_path)
+        
+    def test_get_indices_for_region_ref_corners(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_main = h5_f['/Raw_Measurement/source_main']
+            ref_in = get_attr(h5_main, 'even_rows')
+            ret_val = reg_ref.get_indices_for_region_ref(h5_main, ref_in, 'corners')
+            expected_pos = np.repeat(np.arange(h5_main.shape[0])[::2], 2)
+            expected_spec = np.tile(np.array([0, h5_main.shape[1] - 1]), expected_pos.size // 2)
+            expected_corners = np.vstack((expected_pos, expected_spec)).T
+            self.assertTrue(np.allclose(ret_val, expected_corners))
+
+    def test_get_indices_for_region_ref_slices(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_main = h5_f['/Raw_Measurement/source_main']
+            ref_in = get_attr(h5_main, 'even_rows')
+            ret_val = reg_ref.get_indices_for_region_ref(h5_main, ref_in, 'slices')
+            spec_slice = slice(0, h5_main.shape[1] - 1, None)
+            expected_slices = np.array([[slice(x, x, None), spec_slice] for x in np.arange(h5_main.shape[0])[::2]])
+            self.assertTrue(np.all(ret_val == expected_slices))
+
+    def test_copy_reg_ref_reduced_dim(self):
+        # TODO: Fill this test in at earliest convenience. Overriden temporarily
+        assert True
+
+    def test_write_reg_ref_main_one_dim(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        data = np.random.rand(7)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Main', data=data)
+            reg_refs = {'even_rows': (slice(0, None, 2)),
+                        'odd_rows': (slice(1, None, 2))}
+            reg_ref.write_region_references(h5_dset, reg_refs, add_labels_attr=True)
+            self.assertEqual(len(h5_dset.attrs), 1 + len(reg_refs))
+            actual = get_attr(h5_dset, 'labels')
+            self.assertTrue(np.all([x == y for x, y in zip(actual, ['even_rows', 'odd_rows'])]))
+
+            expected_data = [data[0:None:2], data[1:None:2]]
+            written_data = [h5_dset[h5_dset.attrs['even_rows']], h5_dset[h5_dset.attrs['odd_rows']]]
+
+            for exp, act in zip(expected_data, written_data):
+                self.assertTrue(np.allclose(exp, act))
+
+        os.remove(file_path)
+
+    def test_write_reg_ref_main_1st_dim(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        data = np.random.rand(5, 7)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Main', data=data)
+            reg_refs = {'even_rows': (slice(0, None, 2), slice(None)),
+                        'odd_rows': (slice(1, None, 2), slice(None))}
+            reg_ref.write_region_references(h5_dset, reg_refs, add_labels_attr=True)
+            self.assertEqual(len(h5_dset.attrs), 1 + len(reg_refs))
+            actual = get_attr(h5_dset, 'labels')
+            self.assertTrue(np.all([x == y for x, y in zip(actual, ['even_rows', 'odd_rows'])]))
+
+            expected_data = [data[0:None:2], data[1:None:2]]
+            written_data = [h5_dset[h5_dset.attrs['even_rows']], h5_dset[h5_dset.attrs['odd_rows']]]
+
+            for exp, act in zip(expected_data, written_data):
+                self.assertTrue(np.allclose(exp, act))
+
+        os.remove(file_path)
+
+    def test_write_reg_ref_main_2nd_dim(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        data = np.random.rand(5, 7)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Main', data=data)
+            reg_refs = {'even_rows': (slice(None), slice(0, None, 2)),
+                        'odd_rows': (slice(None), slice(1, None, 2))}
+            reg_ref.write_region_references(h5_dset, reg_refs, add_labels_attr=False)
+            self.assertEqual(len(h5_dset.attrs), len(reg_refs))
+            self.assertTrue('labels' not in h5_dset.attrs.keys())
+
+            expected_data = [data[:, 0:None:2], data[:, 1:None:2]]
+            written_data = [h5_dset[h5_dset.attrs['even_rows']], h5_dset[h5_dset.attrs['odd_rows']]]
+
+            for exp, act in zip(expected_data, written_data):
+                self.assertTrue(np.allclose(exp, act))
+
+        os.remove(file_path)
+
+    def test_simple_region_ref_copy(self):
+        # based on test_hdf_writer.test_write_legal_reg_ref_multi_dim_data()
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            data = np.random.rand(5, 7)
+            h5_orig_dset = h5_f.create_dataset('test', data=data)
+            self.assertIsInstance(h5_orig_dset, h5py.Dataset)
+
+            attrs = {'labels': {'even_rows': (slice(0, None, 2), slice(None)),
+                                'odd_rows': (slice(1, None, 2), slice(None))}}
+
+            data_utils.write_main_reg_refs(h5_orig_dset, attrs['labels'])
+            h5_f.flush()
+
+            # two atts point to region references. one for labels
+            self.assertEqual(len(h5_orig_dset.attrs), 1 + len(attrs['labels']))
+
+            # check if the labels attribute was written:
+
+            self.assertTrue(np.all([x in list(attrs['labels'].keys()) for x in get_attr(h5_orig_dset,
+                                                                                                  'labels')]))
+
+            expected_data = [data[:None:2], data[1:None:2]]
+            written_data = [h5_orig_dset[h5_orig_dset.attrs['even_rows']], h5_orig_dset[h5_orig_dset.attrs['odd_rows']]]
+
+            for exp, act in zip(expected_data, written_data):
+                self.assertTrue(np.allclose(exp, act))
+
+            # Now write a new dataset without the region reference:
+            h5_new_dset = h5_f.create_dataset('other', data=data)
+            self.assertIsInstance(h5_orig_dset, h5py.Dataset)
+            h5_f.flush()
+
+            for key in attrs['labels'].keys():
+                reg_ref.simple_region_ref_copy(h5_orig_dset, h5_new_dset, key)
+
+            # now check to make sure that this dataset also has the same region references:
+            written_data = [h5_new_dset[h5_new_dset.attrs['even_rows']], h5_new_dset[h5_new_dset.attrs['odd_rows']]]
+
+            for exp, act in zip(expected_data, written_data):
+                self.assertTrue(np.allclose(exp, act))
+
+        os.remove(file_path)
+
+    def test_create_region_ref(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        data = np.random.rand(5, 7)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Source', data=data)
+            pos_inds = np.arange(0, h5_dset.shape[0], 2)
+            ref_inds = [((pos_start, 0), (pos_start, h5_dset.shape[1]-1)) for pos_start in pos_inds]
+            ref_inds = np.array(ref_inds)
+            this_reg_ref = reg_ref.create_region_reference(h5_dset, ref_inds)
+            ref_slices = list()
+            for start, stop in ref_inds:
+                ref_slices.append([slice(start[0], stop[0]+1), slice(start[1], None)])
+
+            h5_reg = h5_dset[this_reg_ref]
+
+            h5_slice = np.vstack([h5_dset[pos_slice, spec_slice] for (pos_slice, spec_slice) in ref_slices])
+
+            self.assertTrue(np.allclose(h5_reg, h5_slice))
+
+        os.remove(file_path)
 
     def test_get_region_illegal_01(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             with self.assertRaises(KeyError):
                 reg_ref.get_region(h5_f['/Raw_Measurement/source_main'], 'non_existent')
 
     def test_get_region_legal_01(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_source = h5_f['/Raw_Measurement/source_main']
             returned = reg_ref.get_region(h5_source, 'even_rows')
             self.assertTrue(np.all(returned == h5_source[range(0, h5_source.shape[0], 2)]))
+            
+    def test_clean_reg_refs_1d(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7))
+            ref_in = (slice(0, None, 2))
+            cleaned = reg_ref.clean_reg_ref(h5_dset, ref_in)
+            self.assertEqual(ref_in, cleaned[0])
+        os.remove(file_path)
+
+    def test_clean_reg_refs_2d(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7, 5))
+            ref_in = (slice(0, None, 2), slice(None))
+            cleaned = reg_ref.clean_reg_ref(h5_dset, ref_in)
+            self.assertTrue(np.all([x == y for x, y in zip(ref_in, cleaned)]))
+        os.remove(file_path)
+
+    def test_clean_reg_refs_illegal_too_many_slices(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7, 5))
+            ref_in = (slice(0, None, 2), slice(None), slice(1, None, 2))
+            with self.assertRaises(ValueError):
+                _ = reg_ref.clean_reg_ref(h5_dset, ref_in)
+
+        os.remove(file_path)
+
+    def test_clean_reg_refs_illegal_too_few_slices(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7, 5))
+            ref_in = (slice(0, None, 2))
+            with self.assertRaises(ValueError):
+                _ = reg_ref.clean_reg_ref(h5_dset, ref_in)
+
+        os.remove(file_path)
+
+    def test_clean_reg_refs_out_of_bounds(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7, 5))
+            ref_in = (slice(0, 13, 2), slice(None))
+            expected = (slice(0, 7, 2), slice(None))
+            cleaned = reg_ref.clean_reg_ref(h5_dset, ref_in, verbose=False)
+            self.assertTrue(np.all([x == y for x, y in zip(expected, cleaned)]))
+        os.remove(file_path)
+
+    def test_attempt_reg_ref_build_spec(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Indices', data=np.random.rand(2, 5))
+            dim_names = ['Bias', 'Cycle']
+            expected = {'Bias': (slice(0, 1), slice(None)),
+                        'Cycle': (slice(1, 2), slice(None))}
+            if sys.version_info.major == 3:
+                with self.assertWarns(UserWarning):
+                    cleaned = reg_ref.attempt_reg_ref_build(h5_dset, dim_names)
+            else:
+                cleaned = reg_ref.attempt_reg_ref_build(h5_dset, dim_names)
+            for key, value in expected.items():
+                self.assertEqual(value, cleaned[key])
+        os.remove(file_path)
+
+    def test_attempt_reg_ref_build_pos(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Indices', data=np.random.rand(5, 2))
+            dim_names = ['Bias', 'Cycle']
+            expected = {'Bias': (slice(None), slice(0, 1)),
+                        'Cycle': (slice(None), slice(1, 2))}
+            if sys.version_info.major == 3:
+                with self.assertWarns(UserWarning):
+                    cleaned = reg_ref.attempt_reg_ref_build(h5_dset, dim_names)
+            else:
+                cleaned = reg_ref.attempt_reg_ref_build(h5_dset, dim_names)
+            for key, value in expected.items():
+                self.assertEqual(value, cleaned[key])
+        os.remove(file_path)
+
+    def test_attempt_reg_ref_build_pos_too_many_dims(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Indices', data=np.random.rand(5, 2))
+            dim_names = ['Bias', 'Cycle', 'Blah']
+            ret_val = reg_ref.attempt_reg_ref_build(h5_dset, dim_names)
+            self.assertEqual(ret_val, dict())
+        os.remove(file_path)
+
+    def test_attempt_reg_ref_build_pos_too_few_dims(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path) as h5_f:
+            h5_dset = h5_f.create_dataset('Indices', data=np.random.rand(5, 2))
+            dim_names = ['Bias']
+            ret_val = reg_ref.attempt_reg_ref_build(h5_dset, dim_names)
+            self.assertEqual(ret_val, dict())
+        os.remove(file_path)

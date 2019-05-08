@@ -14,15 +14,19 @@ import h5py
 import numpy as np
 from PIL import Image
 
-from .numpy_translator import NumpyTranslator
+from .numpy_translator import ArrayTranslator
 from .write_utils import Dimension
+from .dtype_utils import contains_integers
 from .hdf_utils import write_simple_attrs
 
 if sys.version_info.major == 3:
     unicode = str
+else:
+    FileExistsError = ValueError
+    FileNotFoundError = ValueError
 
 
-class ImageTranslator(NumpyTranslator):
+class ImageTranslator(ArrayTranslator):
     """
     Translates data from an image file to an HDF5 file
     """
@@ -50,15 +54,15 @@ class ImageTranslator(NumpyTranslator):
             absolute path to the desired output HDF5 file.
         """
         if not isinstance(image_path, (str, unicode)):
-            raise ValueError("'image_path' argument for ImageTranslator should be a str or unicode")
+            raise TypeError("'image_path' argument for ImageTranslator should be a str or unicode")
         if not os.path.exists(os.path.abspath(image_path)):
-            raise ValueError('Specified image does not exist.')
+            raise FileNotFoundError('Specified image does not exist.')
         else:
             image_path = os.path.abspath(image_path)
 
         if h5_path is not None:
             if not isinstance(h5_path, (str, unicode)):
-                raise ValueError("'h5_path' argument for ImageTranslator should be a str or unicode (if provided)")
+                raise TypeError("'h5_path' argument for ImageTranslator should be a str or unicode (if provided)")
             # NOT checking the extension of the file path for simplicity
         else:
             base_name, _ = os.path.splitext(image_path)
@@ -85,10 +89,10 @@ class ImageTranslator(NumpyTranslator):
             Absolute path to where the HDF5 file should be located.
             Default is None
         bin_factor : uint or array-like of uint, optional
-            Downsampling factor for each dimension.  Default is None.
+            Down-sampling factor for each dimension.  Default is None.
             If specifying different binning for each dimension, please specify as (height binning, width binning)
         interp_func : int, optional. Default = :attr:`PIL.Image.BICUBIC`
-            How the image will be interpolated to provide the downsampled or binned image.
+            How the image will be interpolated to provide the down-sampled or binned image.
             For more information see instructions for the `resample` argument for :meth:`PIL.Image.resize`
         normalize : boolean, optional. Default = False
             Should the raw image be normalized between the values of 0 and 1
@@ -111,13 +115,22 @@ class ImageTranslator(NumpyTranslator):
         Check if a bin_factor is given.  Set up binning objects if it is.
         '''
         if bin_factor is not None:
-            if isinstance(bin_factor, int):
+            if isinstance(bin_factor, (list, tuple)):
+                if not contains_integers(bin_factor, min_val=1):
+                    raise TypeError('bin_factor should contain positive whole integers')
+                if len(bin_factor) == 2:
+                    bin_factor = tuple(bin_factor)
+                else:
+                    raise ValueError('Input parameter `bin_factor` must be a length 2 array-like or an integer.\n' +
+                                     '{} was given.'.format(bin_factor))
+
+            elif isinstance(bin_factor, int):
                 bin_factor = (bin_factor, bin_factor)
-            elif len(bin_factor) == 2:
-                bin_factor = tuple(bin_factor)
             else:
-                raise ValueError('Input parameter `bin_factor` must be a length 2 array_like or an integer.\n' +
-                                 '{} was given.'.format(bin_factor))
+                raise TypeError('bin_factor should either be an integer or an iterable of positive integers')
+
+            if np.min(bin_factor) < 0:
+                raise ValueError('bin_factor must consist of positive factors')
 
             if interp_func not in [Image.NEAREST, Image.BILINEAR, Image.BICUBIC, Image.LANCZOS]:
                 raise ValueError("'interp_func' argument for ImageTranslator.translate must be one of "
@@ -135,14 +148,15 @@ class ImageTranslator(NumpyTranslator):
         # Working around occasional "cannot modify read-only array" error
         image = image.copy()
 
-        image_parms = {'normalized': normalize, 'image_min': np.min(image), 'image_max': np.max(image)}
-
         '''
         Normalize Raw Image
         '''
         if normalize:
             image -= np.min(image)
             image = image / np.float32(np.max(image))
+
+        image_parms.update({'normalized': normalize,
+                            'image_min': np.min(image), 'image_max': np.max(image)})
 
         """
         Enable the line below if there is a need make the image "look" the right side up. This would be manipulation
@@ -155,14 +169,14 @@ class ImageTranslator(NumpyTranslator):
         '''
 
         pos_dims = [Dimension('Y', 'a.u.', np.arange(usize)), Dimension('X', 'a.u.', np.arange(vsize))]
-        spec_dims = Dimension('arb', 'a.u.', [1])
+        spec_dims = Dimension('arb', 'a.u.', 1)
 
         # Need to transpose to for correct reshaping
         image = image.transpose()
 
         h5_path = super(ImageTranslator, self).translate(h5_path, 'Raw_Data', image.reshape((-1, 1)),
                                                          'Intensity', 'a.u.', pos_dims, spec_dims,
-                                                         translator_name='Image', parm_dict=image_parms)
+                                                         translator_name='ImageTranslator', parm_dict=image_parms)
 
         with h5py.File(h5_path, mode='r+') as h5_f:
 
@@ -172,7 +186,7 @@ class ImageTranslator(NumpyTranslator):
         return h5_path
 
 
-def read_image(image_path, as_grayscale=True, *args, **kwargs):
+def read_image(image_path, as_grayscale=True, as_numpy_array=True, *args, **kwargs):
     """
     Read the image file at `image_path` into a numpy array either via numpy (.txt) or via pillow (.jpg, .tif, etc.)
 
@@ -182,20 +196,32 @@ def read_image(image_path, as_grayscale=True, *args, **kwargs):
         Path to the image file
     as_grayscale : bool, optional. Default = True
         Whether or not to read the image as a grayscale image
+    as_numpy_array : bool, optional. Default = True
+        If set to True, the image is read into a numpy array. If not, it is returned as a pillow Image
 
     Returns
     -------
-    image : :class:`numpy.ndarray`
-        Array containing the image from the file `image_path`
+    image : :class:`numpy.ndarray` or :class:`PIL.Image.Image`
+        if `as_numpy_array` is set to True - Array containing the image from the file `image_path`.
+        If `as_numpy_array` is set to False - PIL.Image object containing the image within the file - `image_path`.
     """
-    ext = os.path.splitext(image_path)[1]
-    if ext == '.txt':
-        return np.loadtxt(image_path, *args, **kwargs)
+    ext = os.path.splitext(image_path)[-1]
+    if ext in ['.txt', '.csv']:
+        if ext == '.csv' and 'delimiter' not in kwargs.keys():
+            kwargs['delimiter'] = ','
+        img_data = np.loadtxt(image_path, *args, **kwargs)
+        if as_numpy_array:
+            return img_data
+        else:
+            img_obj = Image.fromarray(img_data)
+            img_obj = img_obj.convert(mode="L")
+            return img_obj
     else:
         img_obj = Image.open(image_path)
         if as_grayscale:
             img_obj = img_obj.convert(mode="L", **kwargs)
 
-        # Open the image as a numpy array
-        np_array = np.asarray(img_obj)
-        return np_array
+        if as_numpy_array:
+            # Open the image as a numpy array
+            return np.asarray(img_obj)
+        return img_obj

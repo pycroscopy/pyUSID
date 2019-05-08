@@ -28,9 +28,9 @@ from . import write_utils
 
 from .usi_data import USIDataset
 from .translator import Translator, generate_dummy_main_parms
-from .numpy_translator import NumpyTranslator
+from .numpy_translator import NumpyTranslator, ArrayTranslator
 from .image import ImageTranslator
-from .write_utils import Dimension
+from .write_utils import Dimension, DimType
 
 __all__ = ['USIDataset', 'hdf_utils', 'io_utils', 'dtype_utils', 'NumpyTranslator', 'write_utils',
-           'ImageTranslator', 'Dimension']
+           'ImageTranslator', 'Dimension', 'DimType', 'ArrayTranslator']
