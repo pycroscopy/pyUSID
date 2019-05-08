@@ -364,5 +364,14 @@ class TestGetSlope(unittest.TestCase):
              _ = write_utils.get_slope("hello")
 
 
+class TestToRanges(unittest.TestCase):
+
+    def test_valid(self):
+        expected = [range(0, 4), range(7, 11)]
+        actual = write_utils.to_ranges([0, 1, 2, 3, 7, 8, 9, 10])
+        actual = list(actual)
+        self.assertTrue(all(x == y for x, y in zip(expected, actual)))
+
+
 if __name__ == '__main__':
     unittest.main()

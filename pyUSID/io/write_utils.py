@@ -10,14 +10,15 @@ Created on Thu Sep  7 21:14:25 2017
 from __future__ import division, print_function, unicode_literals, absolute_import
 import sys
 from warnings import warn
-
 from enum import Enum
+from itertools import groupby
 import numpy as np
 from collections import Iterable
 from .dtype_utils import contains_integers, validate_list_of_strings, validate_single_string_arg
 
 __all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE', 'get_slope',
-           'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions', 'DimType']
+           'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions', 'DimType',
+           'to_ranges']
 
 if sys.version_info.major == 3:
     unicode = str
@@ -479,4 +480,31 @@ def get_slope(values, tol=1E-3):
             # Non-linear dimension! - see notes above
             raise ValueError('Provided values cannot be expressed as a linear trend')
     return step_size[0]
+
+
+def to_ranges(iterable):
+    """
+    Converts a sequence of iterables to range tuples
+
+    From https://stackoverflow.com/questions/4628333/converting-a-list-of-integers-into-range-in-python
+
+    Credits: @juanchopanza and @luca
+
+    Parameters
+    ----------
+    iterable : collections.Iterable object
+        iterable object like a list
+
+    Returns
+    -------
+    iterable : generator object
+        Cast to list or similar to use
+    """
+    iterable = sorted(set(iterable))
+    for key, group in groupby(enumerate(iterable), lambda t: t[1] - t[0]):
+        group = list(group)
+        if sys.version_info.major == 3:
+            yield range(group[0][1], group[-1][1]+1)
+        else:
+            yield xrange(group[0][1], group[-1][1]+1)
 
