@@ -39,19 +39,19 @@ class TestImage(unittest.TestCase):
 
 class TestReadImage(TestImage):
 
-    def test_read_image_color_to_bw_image(self):
+    def test_color_to_bw_image(self):
         color_image_path = './tests/io/logo_v01.png'
         img_obj = Image.open(color_image_path).convert(mode="L")
         pillow_obj = read_image(color_image_path, as_numpy_array=False)
         self.assertEqual(img_obj, pillow_obj)
 
-    def test_read_image_color(self):
+    def test_color(self):
         color_image_path = './tests/io/logo_v01.png'
         img_obj = Image.open(color_image_path)
         pillow_obj = read_image(color_image_path, as_numpy_array=False, as_grayscale=False)
         self.assertEqual(img_obj, pillow_obj)
 
-    def test_read_image_text_to_numpy_simple(self):
+    def test_text_to_numpy_simple(self):
         img_data = rand_image.astype(np.uint8)
         img_path = 'image_text.txt'
         delete_existing_file(img_path)
@@ -61,7 +61,7 @@ class TestReadImage(TestImage):
         self.assertTrue(np.allclose(np_data, img_data))
         delete_existing_file(img_path)
 
-    def test_read_image_text_to_numpy_complex(self):
+    def test_text_to_numpy_complex(self):
         img_data = np.uint16(np.random.randint(0, high=255, size=(4, 3)))
         img_path = 'image_text.csv'
         delete_existing_file(img_path)
@@ -74,7 +74,7 @@ class TestReadImage(TestImage):
         self.assertTrue(np.allclose(np_data, img_data))
         delete_existing_file(img_path)
 
-    def test_read_image_text_complex_to_pillow(self):
+    def test_text_complex_to_pillow(self):
         img_data = np.uint16(np.random.randint(0, high=255, size=(4, 3)))
         img_path = 'image_text.csv'
         delete_existing_file(img_path)
@@ -88,12 +88,12 @@ class TestReadImage(TestImage):
         self.assertTrue(np.allclose(np.asarray(pillow_obj), img_data))
         delete_existing_file(img_path)
 
-    def test_read_image_to_numpy(self):
+    def test_to_numpy(self):
         np_data = read_image(image_path, as_numpy_array=True)
         self.assertIsInstance(np_data, np.ndarray)
         self.assertTrue(np.allclose(np_data, rand_image))
 
-    def test_read_image_to_pillow(self):
+    def test_to_pillow(self):
         pillow_obj = read_image(image_path, as_numpy_array=False)
         self.assertIsInstance(pillow_obj, Image.Image)
         self.assertTrue(np.allclose(np.asarray(pillow_obj), rand_image))
@@ -204,36 +204,36 @@ class TestImageTranslator(TestImage):
 
 class TestBinning(TestImageTranslator):
 
-    def test_binning_single_default_interp(self):
+    def test_single_default_interp(self):
         self.main_translate(bin_factor=2)
 
-    def test_binning_tuple_default_interp(self):
+    def test_tuple_default_interp(self):
         self.main_translate(bin_factor=(1, 2))
 
-    def test_binning_too_many_dims(self):
+    def test_too_many_dims(self):
         with self.assertRaises(ValueError):
             translator = ImageTranslator()
             _ = translator.translate(image_path, bin_factor=(1, 2, 3))
 
-    def test_binning_neg_parms(self):
+    def test_neg_parms(self):
         with self.assertRaises(ValueError):
             translator = ImageTranslator()
             _ = translator.translate(image_path, bin_factor=-2)
 
-    def test_binning_float_parms(self):
+    def test_float_parms(self):
         with self.assertRaises(TypeError):
             translator = ImageTranslator()
             _ = translator.translate(image_path, bin_factor=1.34)
 
-    def test_binning_invalid_dtype(self):
+    def test_invalid_dtype(self):
         with self.assertRaises(TypeError):
             translator = ImageTranslator()
             _ = translator.translate(image_path, bin_factor=['dfrdd', True])
 
-    def test_binning_custom_interp(self):
+    def test_custom_interp(self):
         self.main_translate(bin_factor=2, interp_func=Image.NEAREST)
 
-    def test_binning_invalid_interp(self):
+    def test_invalid_interp(self):
         with self.assertRaises(ValueError):
             translator = ImageTranslator()
             _ = translator.translate(image_path, bin_factor=2, interp_func='dsdsdsd')
