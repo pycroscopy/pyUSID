@@ -289,7 +289,7 @@ def stack_real_to_complex(ds_real, lazy=False):
         2D complex array arranged as [sample, features]
     """
     if not isinstance(ds_real, (np.ndarray, da.core.Array, h5py.Dataset)):
-        if not isinstance(ds_real, Iterable):
+        if not isinstance(ds_real, (tuple, list)):
             raise TypeError("Expected at least an iterable like a list or tuple")
         ds_real = np.array(ds_real)
     if len(ds_real.dtype) > 0:
@@ -331,7 +331,7 @@ def stack_real_to_compound(ds_real, compound_type, lazy=False):
     if lazy or isinstance(ds_real, da.core.Array):
         raise NotImplementedError('Lazy operation not available due to absence of Dask support')
     if not isinstance(ds_real, (np.ndarray, h5py.Dataset)):
-        if not isinstance(ds_real, Iterable):
+        if not isinstance(ds_real, (list, tuple)):
             raise TypeError("Expected at least an iterable like a list or tuple")
         ds_real = np.array(ds_real)
     if len(ds_real.dtype) > 0:
