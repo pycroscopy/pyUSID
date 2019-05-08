@@ -38,11 +38,14 @@ class TestModel(unittest.TestCase):
                           data_utils.relaxation_path]:
             data_utils.delete_existing_file(file_path)
 
-    def test_get_dimensionality_legal_no_sort(self):
-        self.__helper_get_dimensionality_no_sort(hdf_dsets=True)
-        self.__helper_get_dimensionality_no_sort(hdf_dsets=False)
 
-    def __helper_get_dimensionality_no_sort(self, hdf_dsets=True):
+class TestGetDimensionality(TestModel):
+
+    def test_legal_no_sort(self):
+        self.__helper_no_sort(hdf_dsets=True)
+        self.__helper_no_sort(hdf_dsets=False)
+
+    def __helper_no_sort(self, hdf_dsets=True):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_dsets = [h5_f['/Raw_Measurement/Spectroscopic_Indices'],
                         h5_f['/Raw_Measurement/source_main-Fitter_000/Spectroscopic_Indices'],
@@ -55,7 +58,7 @@ class TestModel(unittest.TestCase):
                     h5_dset = h5_dset[()]
                 self.assertTrue(np.all(exp_shape == hdf_utils.get_dimensionality(h5_dset)))
 
-    def test_get_dimensionality_legal_w_sort(self):
+    def test_legal_w_sort(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_dsets = [h5_f['/Raw_Measurement/Spectroscopic_Indices'],
                         h5_f['/Raw_Measurement/source_main-Fitter_000/Spectroscopic_Indices'],
@@ -69,25 +72,28 @@ class TestModel(unittest.TestCase):
             for h5_dset, s_oder, exp_shape in zip(h5_dsets, sort_orders, expected_shapes):
                 self.assertTrue(np.all(exp_shape == hdf_utils.get_dimensionality(h5_dset, index_sort=s_oder)))
 
-    def test_get_dimensionality_not_hdf_dset(self):
+    def test_not_hdf_dset(self):
         for obj in [15, 'srds']:
             with self.assertRaises(TypeError):
                 _ = hdf_utils.get_dimensionality(obj)
 
-    def test_get_dimensionality_invalid_sort(self):
+    def test_invalid_sort(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_dset = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             with self.assertRaises(ValueError):
                 _ = hdf_utils.get_dimensionality(h5_dset, index_sort=[3, 4])
                 _ = hdf_utils.get_dimensionality(h5_dset, index_sort=['a', np.arange(5)])
 
-    def test_get_sort_order_invalid_types(self):
+
+class TestGetSortOrder(TestModel):
+
+    def test_invalid_types(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             for obj in ['fdfdfd', h5_f]:
                 with self.assertRaises(TypeError):
                     _ = hdf_utils.get_sort_order(obj)
 
-    def test_get_sort_order_simple(self):
+    def test_simple(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_dsets = [h5_f['/Raw_Measurement/Spectroscopic_Indices'],
                         h5_f['/Raw_Measurement/source_main-Fitter_000/Spectroscopic_Indices'],
@@ -96,7 +102,7 @@ class TestModel(unittest.TestCase):
             for h5_dset, exp_order in zip(h5_dsets, expected_order):
                 self.assertTrue(np.all(exp_order == hdf_utils.get_sort_order(h5_dset)))
 
-    def test_get_sort_order_reversed(self):
+    def test_reversed(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_dsets = [np.flipud(h5_f['/Raw_Measurement/Spectroscopic_Indices']),
                         h5_f['/Raw_Measurement/source_main-Fitter_000/Spectroscopic_Indices'],
@@ -105,7 +111,10 @@ class TestModel(unittest.TestCase):
             for h5_dset, exp_order in zip(h5_dsets, expected_order):
                 self.assertTrue(np.all(exp_order == hdf_utils.get_sort_order(h5_dset)))
 
-    def test_get_unit_values_source_spec_all(self):
+
+class TestGetUnitValues(TestModel):
+
+    def test_source_spec_all(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Spectroscopic_Values']
@@ -117,7 +126,7 @@ class TestModel(unittest.TestCase):
             for key, exp in expected.items():
                 self.assertTrue(np.allclose(exp, ret_val[key]))
 
-    def test_get_unit_values_source_spec_all_explicit(self):
+    def test_source_spec_all_explicit(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Spectroscopic_Values']
@@ -129,21 +138,21 @@ class TestModel(unittest.TestCase):
             for key, exp in expected.items():
                 self.assertTrue(np.allclose(exp, ret_val[key]))
 
-    def test_get_unit_values_illegal_key(self):
+    def test_illegal_key(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Spectroscopic_Values']
             with self.assertRaises(KeyError):
                 _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Cycle', 'Does not exist'])
 
-    def test_get_unit_values_illegal_dset(self):
+    def test_illegal_dset(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Ancillary']
             with self.assertRaises(ValueError):
                 _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Cycle', 'Bias'])
 
-    def test_get_unit_values_source_spec_single(self):
+    def test_source_spec_single(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Spectroscopic_Values']
@@ -154,7 +163,7 @@ class TestModel(unittest.TestCase):
             for key, exp in expected.items():
                 self.assertTrue(np.allclose(exp, ret_val[key]))
 
-    def test_get_unit_values_source_pos_all(self):
+    def test_source_pos_all(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Position_Indices']
             h5_vals = h5_f['/Raw_Measurement/Position_Values']
@@ -167,7 +176,7 @@ class TestModel(unittest.TestCase):
             for key, exp in expected.items():
                 self.assertTrue(np.allclose(exp, ret_val[key]))
 
-    def test_get_unit_values_source_pos_single(self):
+    def test_source_pos_single(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Position_Indices']
             h5_vals = h5_f['/Raw_Measurement/Position_Values']
@@ -178,7 +187,7 @@ class TestModel(unittest.TestCase):
             for key, exp in expected.items():
                 self.assertTrue(np.allclose(exp, ret_val[key]))
 
-    def test_get_unit_values_all_dim_names_not_provided(self):
+    def test_all_dim_names_not_provided(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Position_Indices'][()]
             h5_vals = h5_f['/Raw_Measurement/Position_Values'][()]
@@ -186,7 +195,7 @@ class TestModel(unittest.TestCase):
             with self.assertRaises(TypeError):
                 _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Y'])
 
-    def test_get_unit_values_dependent_dim(self):
+    def test_dependent_dim(self):
         with h5py.File(data_utils.relaxation_path, mode='r') as h5_f:
             h5_inds = h5_f['/Measurement_000/Channel_000/Spectroscopic_Indices']
             h5_vals = h5_f['/Measurement_000/Channel_000/Spectroscopic_Values']
@@ -197,7 +206,7 @@ class TestModel(unittest.TestCase):
                 act_val = ret_dict[dim_name]
                 self.assertTrue(np.allclose(exp_val, act_val))
 
-    def test_get_unit_values_sparse_samp_no_attr(self):
+    def test_sparse_samp_no_attr(self):
         # What should the user expect this function to do? throw an error.
         # Without the attribute, this function will have no idea that it is looking at a sparse sampling case
         # it will return the first and second columns of vals blindly
@@ -211,7 +220,7 @@ class TestModel(unittest.TestCase):
                 act_val = ret_dict[dim_name]
                 self.assertTrue(np.allclose(exp_val, act_val))
 
-    def test_get_unit_values_sparse_samp_w_attr(self):
+    def test_sparse_samp_w_attr(self):
         # What should the user expect this function to do? throw an error.
         with h5py.File(data_utils.sparse_sampling_path, mode='r') as h5_f:
             h5_inds = h5_f['/Measurement_000/Channel_001/Position_Indices']
@@ -220,7 +229,7 @@ class TestModel(unittest.TestCase):
             with self.assertRaises(ValueError):
                 _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Y'])
 
-    def test_get_unit_values_incomp_dim_no_attr(self):
+    def test_incomp_dim_no_attr(self):
         # What should the user expect this function to do? throw an error.
         # Given that the unit values for each tile are different, it should throw a ValueError for X.
         # Even though we know Y is incomplete, it won't know since it wasn't looking at X.
@@ -238,7 +247,10 @@ class TestModel(unittest.TestCase):
             with self.assertRaises(ValueError):
                 _ = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Y'])
 
-    def test_reshape_to_n_dims_h5_no_sort_reqd(self):
+
+class TestReshapeToNDims(TestModel):
+
+    def test_h5_no_sort_reqd(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             num_rows = 3
@@ -260,7 +272,7 @@ class TestModel(unittest.TestCase):
             expected_n_dim = np.transpose(expected_n_dim, (1, 0, 3, 2))
             self.assertTrue(np.allclose(expected_n_dim, n_dim))
 
-    def test_reshape_to_n_dims_h5_not_main_dset(self):
+    def test_h5_not_main_dset(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/Ancillary']
             h5_pos = h5_f['/Raw_Measurement/Position_Indices']
@@ -279,7 +291,7 @@ class TestModel(unittest.TestCase):
             with self.assertRaises(ValueError):
                 _ = hdf_utils.reshape_to_n_dims(h5_main, h5_pos=h5_pos, h5_spec=h5_spec)
 
-    def test_reshape_to_n_dim_numpy(self):
+    def test_numpy(self):
         num_rows = 3
         num_cols = 5
         num_cycles = 2
@@ -304,7 +316,7 @@ class TestModel(unittest.TestCase):
         expected_n_dim = np.reshape(source_main_data, (num_rows, num_cols, num_cycles, num_cycle_pts))
         self.assertTrue(np.allclose(expected_n_dim, n_dim))
 
-    def test_reshape_to_n_dim_sort_required(self):
+    def test_sort_required(self):
         file_path = 'reshape_to_n_dim_sort_required.h5'
         data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
@@ -370,7 +382,10 @@ class TestModel(unittest.TestCase):
 
         os.remove(file_path)
 
-    def test_reshape_from_n_dims_pos_and_spec_provided(self):
+
+class TestReshapeFromNDims(TestModel):
+
+    def test_pos_and_spec_provided(self):
         num_rows = 3
         num_cols = 5
         num_cycles = 2
@@ -434,7 +449,7 @@ class TestModel(unittest.TestCase):
         self.assertTrue(success)
         self.assertTrue(np.allclose(ret_2d, expected_2d))
 
-    def test_reshape_from_n_dims_pos_and_spec_may_may_not_be_provided(self):
+    def test_pos_and_spec_may_may_not_be_provided(self):
         num_rows = 3
         num_cols = 5
         num_cycles = 2
@@ -471,7 +486,10 @@ class TestModel(unittest.TestCase):
         with self.assertRaises(ValueError):
             _ = hdf_utils.reshape_from_n_dims(source_nd)
 
-    def test_write_main_dset_small(self):
+
+class TestWriteMainDataset(TestModel):
+
+    def test_small(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         main_data = np.random.rand(15, 14)
@@ -513,7 +531,7 @@ class TestModel(unittest.TestCase):
                                           spec_data, h5_main=usid_main, is_spectral=True)
         os.remove(file_path)
 
-    def test_write_main_dset_dask(self):
+    def test_dask(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         main_data = np.random.rand(15, 14)
@@ -556,7 +574,7 @@ class TestModel(unittest.TestCase):
                                           spec_data, h5_main=usid_main, is_spectral=True)
         os.remove(file_path)
 
-    def test_write_main_dset_empty(self):
+    def test_empty(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         main_data = (15, 14)
@@ -638,7 +656,7 @@ class TestModel(unittest.TestCase):
 
         os.remove(file_path)
 
-    def test_write_main_existing_both_aux(self):
+    def test_existing_both_aux(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         main_data = np.random.rand(15, 14)
@@ -680,7 +698,7 @@ class TestModel(unittest.TestCase):
                                           spec_data, h5_main=usid_main, is_spectral=True)
         os.remove(file_path)
 
-    def test_write_main_dset_prod_sizes_mismatch(self):
+    def test_prod_sizes_mismatch(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         main_data = np.random.rand(15, 14)
