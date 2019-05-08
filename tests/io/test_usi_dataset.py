@@ -20,7 +20,7 @@ from . import data_utils
 if sys.version_info.major == 3:
     unicode = str
 
-test_h5_file_path = 'test_pycro_dataset.h5'
+test_h5_file_path = 'test_usi_dataset.h5'
 
 
 class TestUSIDataset(unittest.TestCase):
@@ -157,8 +157,8 @@ class TestUSIDataset(unittest.TestCase):
     def test_string_representation(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
-            pycro_dset = USIDataset(h5_main)
-            actual = pycro_dset.__repr__()
+            usi_dset = USIDataset(h5_main)
+            actual = usi_dset.__repr__()
             actual = [line.strip() for line in actual.split("\n")]
             actual = [actual[line_ind] for line_ind in [0, 2, 4, 7, 8, 10, 11]]
 
@@ -166,7 +166,7 @@ class TestUSIDataset(unittest.TestCase):
             expected.append(h5_main.__repr__())
             expected.append(h5_main.name)
             expected.append(hdf_utils.get_attr(h5_main, "quantity") + " (" + hdf_utils.get_attr(h5_main, "units") + ")")
-            for h5_inds in [pycro_dset.h5_pos_inds, pycro_dset.h5_spec_inds]:
+            for h5_inds in [usi_dset.h5_pos_inds, usi_dset.h5_spec_inds]:
                 for dim_name, dim_size in zip(hdf_utils.get_attr(h5_inds, "labels"),
                                               hdf_utils.get_dimensionality(h5_inds)):
                     expected.append(dim_name + ' - size: ' + str(dim_size))
@@ -216,58 +216,58 @@ class TestGetNDimFormExists(TestUSIDataset):
             h5_main = h5_f['/Raw_Measurement/source_main']
             expected = np.reshape(h5_main, (3, 5, 7, 2))
             expected = np.transpose(expected, (1, 0, 2, 3))
-            pycro_dset = USIDataset(h5_main)
-            self.assertTrue(np.allclose(expected, pycro_dset.get_n_dim_form()))
+            usi_dset = USIDataset(h5_main)
+            self.assertTrue(np.allclose(expected, usi_dset.get_n_dim_form(lazy=False)))
 
     def test_sorted(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             expected = np.reshape(h5_main, (3, 5, 7, 2))
             expected = np.transpose(expected, (1, 0, 3, 2))
-            pycro_dset = USIDataset(h5_main)
-            pycro_dset.toggle_sorting()
-            self.assertTrue(np.allclose(expected, pycro_dset.get_n_dim_form()))
+            usi_dset = USIDataset(h5_main)
+            usi_dset.toggle_sorting()
+            self.assertTrue(np.allclose(expected, usi_dset.get_n_dim_form(lazy=False)))
 
 
 class TestPosSpecSlices(TestUSIDataset):
 
     def test_empty_dict(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual_pos, actual_spec = pycro_main._get_pos_spec_slices({})
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual_pos, actual_spec = usi_main._get_pos_spec_slices({})
             self.assertTrue(np.allclose(np.expand_dims(np.arange(14), axis=1), actual_spec))
             self.assertTrue(np.allclose(np.expand_dims(np.arange(15), axis=1), actual_pos))
 
     def test_non_existent_dim(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             with self.assertRaises(KeyError):
-                _ = pycro_main._get_pos_spec_slices({'blah': 4, 'X': 3, 'Y': 1})
+                _ = usi_main._get_pos_spec_slices({'blah': 4, 'X': 3, 'Y': 1})
 
     def test_incorrect_type(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             with self.assertRaises(TypeError):
-                _ = pycro_main._get_pos_spec_slices({'X': 'fdfd', 'Y': 1})
+                _ = usi_main._get_pos_spec_slices({'X': 'fdfd', 'Y': 1})
 
     def test_negative_index(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             with self.assertRaises(ValueError):
-                _ = pycro_main._get_pos_spec_slices({'X': -4, 'Y': 1})
+                _ = usi_main._get_pos_spec_slices({'X': -4, 'Y': 1})
 
     def test_out_of_bounds(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             with self.assertRaises(ValueError):
-                _ = pycro_main._get_pos_spec_slices({'X': 15, 'Y': 1})
+                _ = usi_main._get_pos_spec_slices({'X': 15, 'Y': 1})
 
     def test_one_pos_dim_removed(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             # orig_pos = np.vstack([np.tile(np.arange(5), 3), np.repeat(np.arange(3), 5)]).T
             # orig_spec = np.vstack([np.tile(np.arange(7), 2), np.repeat(np.arange(2), 7)])
-            actual_pos, actual_spec = pycro_main._get_pos_spec_slices({'X': 3})
+            actual_pos, actual_spec = usi_main._get_pos_spec_slices({'X': 3})
             # we want every fifth position starting from 3
             expected_pos = np.expand_dims(np.arange(3, 15, 5), axis=1)
             expected_spec = np.expand_dims(np.arange(14), axis=1)
@@ -276,8 +276,8 @@ class TestPosSpecSlices(TestUSIDataset):
 
     def test_one_pos_dim_sliced(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual_pos, actual_spec = pycro_main._get_pos_spec_slices({'X': slice(1, 5, 2)})
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual_pos, actual_spec = usi_main._get_pos_spec_slices({'X': slice(1, 5, 2)})
             # we want every fifth position starting from 3
             positions = []
             for row_ind in range(3):
@@ -290,8 +290,8 @@ class TestPosSpecSlices(TestUSIDataset):
 
     def test_two_pos_dim_sliced(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual_pos, actual_spec = pycro_main._get_pos_spec_slices({'X': slice(1, 5, 2), 'Y': 1})
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual_pos, actual_spec = usi_main._get_pos_spec_slices({'X': slice(1, 5, 2), 'Y': 1})
             # we want every fifth position starting from 3
             positions = []
             for row_ind in range(1, 2):
@@ -304,8 +304,8 @@ class TestPosSpecSlices(TestUSIDataset):
 
     def test_two_pos_dim_sliced_list(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual_pos, actual_spec = pycro_main._get_pos_spec_slices({'X': [1, 2, 4], 'Y': 1})
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual_pos, actual_spec = usi_main._get_pos_spec_slices({'X': [1, 2, 4], 'Y': 1})
             # we want every fifth position starting from 3
             positions = []
             for row_ind in range(1, 2):
@@ -318,8 +318,8 @@ class TestPosSpecSlices(TestUSIDataset):
 
     def test_both_pos_removed(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual_pos, actual_spec = pycro_main._get_pos_spec_slices({'X': 3, 'Y': 1})
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual_pos, actual_spec = usi_main._get_pos_spec_slices({'X': 3, 'Y': 1})
             # we want every fifth position starting from 3
             expected_pos = np.expand_dims([1 * 5 + 3], axis=1)
             expected_spec = np.expand_dims(np.arange(14), axis=1)
@@ -328,10 +328,10 @@ class TestPosSpecSlices(TestUSIDataset):
 
     def test_pos_and_spec_sliced_list(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            h5_pos_inds = pycro_main.h5_pos_inds
-            h5_spec_inds = pycro_main.h5_spec_inds
-            actual_pos, actual_spec = pycro_main._get_pos_spec_slices({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)})
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            h5_pos_inds = usi_main.h5_pos_inds
+            h5_spec_inds = usi_main.h5_spec_inds
+            actual_pos, actual_spec = usi_main._get_pos_spec_slices({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)})
             # we want every fifth position starting from 3
             positions = []
             for col_ind in [1, 2, 4]:
@@ -351,133 +351,134 @@ class TestGetUnitValues(TestUSIDataset):
 
     def test_get_pos_values(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            expected = pycro_main.h5_pos_vals[:5, 0]
-            actual = pycro_main.get_pos_values('X')
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            expected = usi_main.h5_pos_vals[:5, 0]
+            actual = usi_main.get_pos_values('X')
             self.assertTrue(np.allclose(expected, actual))
-            expected = pycro_main.h5_pos_vals[0:None:5, 1]
-            actual = pycro_main.get_pos_values('Y')
+            expected = usi_main.h5_pos_vals[0:None:5, 1]
+            actual = usi_main.get_pos_values('Y')
             self.assertTrue(np.allclose(expected, actual))
 
     def test_get_pos_values_illegal(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             with self.assertRaises(KeyError):
-                _ = pycro_main.get_pos_values('blah')
+                _ = usi_main.get_pos_values('blah')
             with self.assertRaises(TypeError):
-                _ = pycro_main.get_pos_values(np.array(5))
+                _ = usi_main.get_pos_values(np.array(5))
 
     def test_get_spec_values(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            expected = pycro_main.h5_spec_vals[0, ::2]
-            actual = pycro_main.get_spec_values('Bias')
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            expected = usi_main.h5_spec_vals[0, ::2]
+            actual = usi_main.get_spec_values('Bias')
             self.assertTrue(np.allclose(expected, actual))
-            expected = pycro_main.h5_spec_vals[1, 0:None:7]
-            actual = pycro_main.get_spec_values('Cycle')
+            expected = usi_main.h5_spec_vals[1, 0:None:7]
+            actual = usi_main.get_spec_values('Cycle')
             self.assertTrue(np.allclose(expected, actual))
 
     def test_get_spec_values_illegal(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             with self.assertRaises(KeyError):
-                _ = pycro_main.get_spec_values('blah')
+                _ = usi_main.get_spec_values('blah')
             with self.assertRaises(TypeError):
-                _ = pycro_main.get_spec_values(np.array(5))
+                _ = usi_main.get_spec_values(np.array(5))
 
 
 class TestSlice(TestUSIDataset):
 
     def test_empty(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = pycro_main.slice(None)
-            expected = np.transpose(np.reshape(pycro_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual, success = usi_main.slice(None, lazy=False)
+            expected = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
             self.assertTrue(np.allclose(expected, actual))
 
     def test_non_existent_dim(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             with self.assertRaises(KeyError):
-                _ = pycro_main.slice({'blah': 4, 'X': 3, 'Y': 1})
+                _ = usi_main.slice({'blah': 4, 'X': 3, 'Y': 1})
 
     def test_incorrect_type(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             with self.assertRaises(TypeError):
-                _ = pycro_main.slice({'X': 'fdfd', 'Y': 1})
+                _ = usi_main.slice({'X': 'fdfd', 'Y': 1})
 
     def test_negative_index(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             with self.assertRaises(ValueError):
-                _ = pycro_main.slice({'X': -4, 'Y': 1})
+                _ = usi_main.slice({'X': -4, 'Y': 1})
 
     def test_out_of_bounds(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             with self.assertRaises(ValueError):
-                _ = pycro_main.slice({'X': 15, 'Y': 1})
+                _ = usi_main.slice({'X': 15, 'Y': 1})
 
     def test_one_pos_dim_removed(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = pycro_main.slice(slice_dict={'X': 3})
-            n_dim_form = np.transpose(np.reshape(pycro_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual, success = usi_main.slice(slice_dict={'X': 3}, lazy=False)
+            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
             expected = n_dim_form[3, :, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
     def test_one_pos_dim_sliced(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = pycro_main.slice({'X': slice(1, 5, 2)})
-            n_dim_form = np.transpose(np.reshape(pycro_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual, success = usi_main.slice({'X': slice(1, 5, 2)}, lazy=False)
+            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
             expected = n_dim_form[slice(1, 5, 2), :, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
     def test_two_pos_dim_sliced(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = pycro_main.slice({'X': slice(1, 5, 2), 'Y': 1})
-            n_dim_form = np.transpose(np.reshape(pycro_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual, success = usi_main.slice({'X': slice(1, 5, 2), 'Y': 1}, lazy=False)
+            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
             expected = n_dim_form[slice(1, 5, 2), 1, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
     def test_two_pos_dim_sliced_list(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = pycro_main.slice({'X': [1, 2, 4], 'Y': 1})
-            n_dim_form = np.transpose(np.reshape(pycro_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual, success = usi_main.slice({'X': [1, 2, 4], 'Y': 1}, lazy=False)
+            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
             expected = n_dim_form[[1, 2, 4], 1, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
     def test_both_pos_removed(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = pycro_main.slice({'X': 3, 'Y': 1})
-            n_dim_form = np.transpose(np.reshape(pycro_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual, success = usi_main.slice({'X': 3, 'Y': 1}, lazy=False)
+            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
             expected = n_dim_form[3, 1, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
     def test_pos_and_spec_sliced_list(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = pycro_main.slice({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)})
-            n_dim_form = np.transpose(np.reshape(pycro_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual, success = usi_main.slice({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)}, lazy=False)
+            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
             expected = n_dim_form[[1, 2, 4], :, slice(1, 7, 3), :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
     def test_all_dims_sliced_list(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = pycro_main.slice({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1})
-            n_dim_form = np.transpose(np.reshape(pycro_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            actual, success = usi_main.slice({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
+                                               lazy=False)
+            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
             expected = n_dim_form[[1, 2, 4], 2, slice(1, 7, 3), 1]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
@@ -488,30 +489,30 @@ class TestSorting(TestUSIDataset):
     def test_toggle_sorting(self):
         # Need to change data file so that sorting actually does something
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
 
-            self.assertTrue(pycro_main.n_dim_labels == ['X', 'Y', 'Bias', 'Cycle'])
+            self.assertTrue(usi_main.n_dim_labels == ['X', 'Y', 'Bias', 'Cycle'])
 
-            pycro_main.toggle_sorting()
+            usi_main.toggle_sorting()
 
-            self.assertTrue(pycro_main.n_dim_labels==['X', 'Y', 'Cycle', 'Bias'])
+            self.assertTrue(usi_main.n_dim_labels==['X', 'Y', 'Cycle', 'Bias'])
 
     def test_get_current_sorting(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            pycro_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             unsorted_str = 'Data dimensions are in the order they occur in the file.\n'
             sorted_str = 'Data dimensions are sorted in order from fastest changing dimension to slowest.\n'
             # Initial state should be unsorted
-            self.assertFalse(pycro_main._USIDataset__sort_dims)
+            self.assertFalse(usi_main._USIDataset__sort_dims)
             with data_utils.capture_stdout() as get_value:
-                pycro_main.get_current_sorting()
+                usi_main.get_current_sorting()
                 test_str = get_value()
             self.assertTrue(test_str == unsorted_str)
             # Toggle sorting.  Sorting should now be true.
-            pycro_main.toggle_sorting()
-            self.assertTrue(pycro_main._USIDataset__sort_dims)
+            usi_main.toggle_sorting()
+            self.assertTrue(usi_main._USIDataset__sort_dims)
             with data_utils.capture_stdout() as get_value:
-                pycro_main.get_current_sorting()
+                usi_main.get_current_sorting()
                 test_str = get_value()
             self.assertTrue(test_str == sorted_str)
 
