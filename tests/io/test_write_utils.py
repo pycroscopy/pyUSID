@@ -367,10 +367,15 @@ class TestGetSlope(unittest.TestCase):
 class TestToRanges(unittest.TestCase):
 
     def test_valid(self):
-        expected = [range(0, 4), range(7, 11)]
         actual = write_utils.to_ranges([0, 1, 2, 3, 7, 8, 9, 10])
         actual = list(actual)
-        self.assertTrue(all(x == y for x, y in zip(expected, actual)))
+        if sys.version_info.major == 3:
+            expected = [range(0, 4), range(7, 11)]
+            self.assertTrue(all([x == y for x, y in zip(expected, actual)]))
+        else:
+            expected = [xrange(0, 4), xrange(7, 11)]
+            for in_x, out_x in zip(expected, actual):
+                self.assertTrue(all([x == y for x, y in zip(list(in_x), list(out_x))]))
 
 
 if __name__ == '__main__':
