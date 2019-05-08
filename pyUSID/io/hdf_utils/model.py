@@ -954,15 +954,8 @@ def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
         return ndim_data
 
     if mode == "histogram":
-        histogram_weighted, _, _ = np.histogram2d(
-            *ds_pos_vals.T,
-            bins=grid_shape,
-            weights=ds_main,
-        )
-        histogram, _, _ = np.histogram2d(
-            *ds_pos_vals.T,
-            bins=grid_shape,
-        )
+        histogram_weighted, _, _ = np.histogram2d(*ds_pos_vals.T, bins=grid_shape, weights=ds_main)
+        histogram, _, _ = np.histogram2d(*ds_pos_vals.T, bins=grid_shape)
         cart_data = np.divide(histogram_weighted, histogram)
     else:
         cart_data = interpolate(ds_pos_vals, ds_main, grid_shape, method=mode)
