@@ -259,14 +259,14 @@ class TestReshapeToNDims(TestModel):
             num_cycle_pts = 7
 
             n_dim, success, labels = hdf_utils.reshape_to_n_dims(h5_main, get_labels=True, sort_dims=False,
-                                                                 as_dask_array=False)
+                                                                 lazy=False)
             self.assertTrue(np.all([x == y for x, y in zip(labels, ['X', 'Y', 'Bias', 'Cycle'])]))
             expected_n_dim = np.reshape(h5_main[()], (num_rows, num_cols, num_cycles, num_cycle_pts))
             expected_n_dim = np.transpose(expected_n_dim, (1, 0, 3, 2))
             self.assertTrue(np.allclose(expected_n_dim, n_dim))
 
             n_dim, success, labels = hdf_utils.reshape_to_n_dims(h5_main, get_labels=True, sort_dims=True,
-                                                                 as_dask_array=False)
+                                                                 lazy=False)
             self.assertTrue(np.all([x == y for x, y in zip(labels, ['X', 'Y', 'Bias', 'Cycle'])]))
             expected_n_dim = np.reshape(h5_main[()], (num_rows, num_cols, num_cycles, num_cycle_pts))
             expected_n_dim = np.transpose(expected_n_dim, (1, 0, 3, 2))
@@ -312,7 +312,7 @@ class TestReshapeToNDims(TestModel):
         source_spec_data = np.vstack((np.repeat(np.arange(num_cycles), num_cycle_pts),
                                       np.tile(np.arange(num_cycle_pts), num_cycles)))
         n_dim, success = hdf_utils.reshape_to_n_dims(source_main_data, h5_pos=source_pos_data,
-                                                     h5_spec=source_spec_data, get_labels=False, as_dask_array=False)
+                                                     h5_spec=source_spec_data, get_labels=False, lazy=False)
         expected_n_dim = np.reshape(source_main_data, (num_rows, num_cols, num_cycles, num_cycle_pts))
         self.assertTrue(np.allclose(expected_n_dim, n_dim))
 
@@ -374,7 +374,7 @@ class TestReshapeToNDims(TestModel):
                 h5_source_main.attrs[dset.name.split('/')[-1]] = dset.ref
 
             n_dim, success, labels = hdf_utils.reshape_to_n_dims(h5_source_main, get_labels=True, sort_dims=True,
-                                                                 as_dask_array=False)
+                                                                 lazy=False)
             self.assertTrue(np.all([x == y for x, y in zip(labels, ['Y', 'X', 'Bias', 'Cycle'])]))
             expected_n_dim = np.reshape(source_main_data, (num_rows, num_cols, num_cycles, num_cycle_pts))
             expected_n_dim = np.transpose(expected_n_dim, [1, 0, 3, 2])

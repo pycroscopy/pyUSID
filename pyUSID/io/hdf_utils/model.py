@@ -26,7 +26,7 @@ if sys.version_info.major == 3:
 
 
 def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verbose=False, sort_dims=False,
-                      as_dask_array=False):
+                      lazy=False):
     """
     Reshape the input 2D matrix to be N-dimensions based on the
     position and spectroscopic datasets.
@@ -47,7 +47,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         If True, the data is sorted so that the dimensions are in order from fastest to slowest
         If False, the data is kept in the original order
         If `get_labels` is also True, the labels are sorted as well.
-    as_dask_array : bool, optional. Default = False
+    lazy : bool, optional. Default = False
         If False, ds_Nd will be a numpy.ndarray object - this is suitable if the HDF5 dataset fits into memory
         If True, ds_Nd will be a dask.array object - This is suitable if the HDF5 dataset is too large to fit into
         memory. Note that this will bea lazy computation meaning that the returned object just contains the instructions
@@ -74,7 +74,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
     generate dummy values for them.
 
     """
-    # TODO: automatically switch on as_dask_array if the data is larger than memory
+    # TODO: automatically switch on lazy if the data is larger than memory
     # TODO: sort_dims does not appear to do much. Functions as though it was always True
 
     if h5_pos is None and h5_spec is None:
@@ -187,7 +187,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         print('Spectroscopic dimensions (sort applied):', spec_labs[spec_sort])
         print('Spectroscopic dimensionality (sort applied):', spec_dims)
 
-    if as_dask_array:
+    if lazy:
         ds_main = da.from_array(h5_main, chunks=h5_main.chunks)
     else:
         ds_main = h5_main[()]
@@ -913,8 +913,6 @@ def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
         griddata = None
         warn('map_grid_to_cartesian() requires scipy')
         raise expn
-    if not (sys.version_info.major == 3 and sys.version_info.minor > 4):
-        raise ModuleNotFoundError('map_grid_to_cartesian() requires python 3.5 or newer')
 
     from ..usi_data import USIDataset
 
@@ -932,18 +930,28 @@ def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
 
     # Transform to row, col image format
     rotation = np.array([[0, 1], [-1, 0]])
-    ds_pos_vals = ds_pos_vals @ rotation
+    ds_pos_vals = np.dot(ds_pos_vals, rotation)
 
     try:
-        N = len(grid_shape)
+        grid_n = len(grid_shape)
     except TypeError:
-        N = 1
+        grid_n = 1
 
-    if N != 1 and N != 2:
+    if grid_n != 1 and grid_n != 2:
         raise ValueError("grid_shape must be of type int or [int, int].")
 
-    if N == 1:
+    if grid_n == 1:
         grid_shape = 2 * [grid_shape]
+
+    def interpolate(points, values, grid_shape, method):
+        grid_shape = list(map((1j).__mul__, grid_shape))
+        grid_x, grid_y = np.mgrid[
+            np.amin(points[:, 0]):np.amax(points[:, 0]):grid_shape[0],
+            np.amin(points[:, 1]):np.amax(points[:, 1]):grid_shape[1]
+        ]
+        ndim_data = griddata(points, values, (grid_x, grid_y), method=method)
+
+        return ndim_data
 
     if mode == "histogram":
         histogram_weighted, _, _ = np.histogram2d(
@@ -955,25 +963,8 @@ def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
             *ds_pos_vals.T,
             bins=grid_shape,
         )
-        ds_Nd = np.divide(histogram_weighted, histogram)
+        cart_data = np.divide(histogram_weighted, histogram)
+    else:
+        cart_data = interpolate(ds_pos_vals, ds_main, grid_shape, method=mode)
 
-    def interpolate(points, values, grid_shape, method):
-        grid_shape = list(map((1j).__mul__, grid_shape))
-        grid_x, grid_y = np.mgrid[
-            np.amin(points[:, 0]):np.amax(points[:, 0]):grid_shape[0],
-            np.amin(points[:, 1]):np.amax(points[:, 1]):grid_shape[1]
-        ]
-        ds_Nd = griddata(points, values, (grid_x, grid_y), method=method)
-
-        return ds_Nd
-
-    if mode == "linear":
-        ds_Nd = interpolate(ds_pos_vals, ds_main, grid_shape, method="linear")
-
-    if mode == "nearest":
-        ds_Nd = interpolate(ds_pos_vals, ds_main, grid_shape, method="nearest")
-
-    if mode == "cubic":
-        ds_Nd = interpolate(ds_pos_vals, ds_main, grid_shape, method="cubic")
-
-    return ds_Nd
+    return cart_data
