@@ -11,6 +11,7 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 
 import os
 import sys
+from warnings import warn
 import h5py
 import numpy as np
 import dask.array as da
@@ -122,6 +123,11 @@ class USIDataset(h5py.Dataset):
         self.__sort_dims = sort_dims
 
         self.__set_labels_and_sizes()
+
+        try:
+            self.__n_dim_data = self.get_n_dim_form()
+        except ValueError:
+            warn('This dataset does not have an N-dimensional form')
 
     def __eq__(self, other):
         if isinstance(other, h5py.Dataset):
@@ -270,20 +276,29 @@ class USIDataset(h5py.Dataset):
 
         self.__set_labels_and_sizes()
 
-    def get_n_dim_form(self, as_scalar=False, as_dask_array=False):
+    def get_n_dim_form(self, as_scalar=False, lazy=False):
         """
         Reshapes the dataset to an N-dimensional array
 
+        Parameters
+        ----------
+        as_scalar : bool, optional. Default = False
+            If False, the data is returned in its original (complex, compound) dtype
+            Else, the data is flattened to a real-valued dataset
+        lazy : bool, optional. Default = False
+            If set to false, n_dim_data will be a :class:`numpy.ndarray`
+            Else returned object is :class:`dask.array.core.Array`
+
         Returns
         -------
-        n_dim_data : :class:`numpy.ndarray`
+        n_dim_data : :class:`numpy.ndarray` or :class:`dask.core.Array`
             N-dimensional form of the dataset
 
         """
 
         if self.__n_dim_data is None:
             self.__n_dim_data, success = reshape_to_n_dims(self, sort_dims=self.__sort_dims,
-                                                           as_dask_array=as_dask_array)
+                                                           lazy=lazy)
 
             if success is not True:
                 raise ValueError('Unable to reshape data to N-dimensional form.')
@@ -318,7 +333,7 @@ class USIDataset(h5py.Dataset):
                 raise TypeError('The slices must be array-likes or slice objects.')
         return True
 
-    def slice(self, slice_dict, ndim_form=True, as_scalar=False, verbose=False, as_dask_array=False):
+    def slice(self, slice_dict, ndim_form=True, as_scalar=False, verbose=False, lazy=False):
         """
         Slice the dataset based on an input dictionary of 'str': slice pairs.
         Each string should correspond to a dimension label.  The slices can be
@@ -334,10 +349,13 @@ class USIDataset(h5py.Dataset):
             Should the data be returned as scalar values only.
         verbose : bool, optional
             Whether or not to print debugging statements
+        lazy : bool, optional. Default = False
+            If set to false, data_slice will be a :class:`numpy.ndarray`
+            Else returned object is :class:`dask.array.core.Array`
 
         Returns
         -------
-        data_slice : numpy.ndarray
+        data_slice : :class:`numpy.ndarray`, or :class:`dask.array.core.Array`
             Slice of the dataset.  Dataset has been reshaped to N-dimensions if `success` is True, only
             by Position dimensions if `success` is 'Positions', or not reshape at all if `success`
             is False.
@@ -419,7 +437,7 @@ class USIDataset(h5py.Dataset):
 
         if ndim_form:
             # TODO: if data is already loaded into memory, try to avoid I/O and slice in memory!!!!
-            data_slice, success = reshape_to_n_dims(data_slice, h5_pos=pos_inds, h5_spec=spec_inds, verbose=verbose)
+            data_slice, success = reshape_to_n_dims(data_slice, h5_pos=pos_inds, h5_spec=spec_inds, verbose=verbose, lazy=lazy)
             data_slice = np.squeeze(data_slice)
 
         if as_scalar:
@@ -763,7 +781,7 @@ class USIDataset(h5py.Dataset):
                                  '. Try slicing again'.format(len(pos_dims), len(spec_dims)))
 
             # now should be safe to slice:
-            data_slice, success = self.slice(slice_dict, ndim_form=True)
+            data_slice, success = self.slice(slice_dict, ndim_form=True, lazy=False)
             if not success:
                 raise ValueError('Something went wrong when slicing the dataset. slice message: {}'.format(success))
             # don't forget to remove singular dimensions via a squeeze
@@ -958,7 +976,7 @@ class USIDataset(h5py.Dataset):
 
         # At this point, dims are valid
         da_nd, status, labels = reshape_to_n_dims(self, get_labels=True, verbose=verbose, sort_dims=False,
-                                                  as_dask_array=True)
+                                                  lazy=True)
 
         # Translate the names of the dimensions to the indices:
         dim_inds = [np.where(labels == curr_dim)[0][0] for curr_dim in dims]
