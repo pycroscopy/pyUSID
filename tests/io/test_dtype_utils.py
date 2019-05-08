@@ -327,7 +327,7 @@ class TestStackRealToCompound(unittest.TestCase):
         structured_array['b'] = b_vals = np.random.random(size=num_elems)
         real_val = np.concatenate((r_vals, g_vals, b_vals), axis=len(num_elems) - 1)
         if in_lazy:
-            real_val = da.from_array(real_val, chunks='auto')
+            real_val = da.from_array(real_val, chunks=real_val.shape)
         actual = dtype_utils.stack_real_to_compound(real_val, struc_dtype, lazy=out_lazy)
         if out_lazy:
             self.assertIsInstance(actual, da.core.Array)
