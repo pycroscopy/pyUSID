@@ -132,22 +132,25 @@ class TestStackRealToComplex(unittest.TestCase):
         actual = dtype_utils.stack_real_to_complex(real_val)
         self.assertTrue(np.allclose(actual, expected))
 
-    def base_nd(self, lazy):
+    def base_nd(self, lazy_in, lazy):
         expected = 5 * np.random.rand(2, 3, 5, 8) + 7j * np.random.rand(2, 3, 5, 8)
         real_val = np.concatenate([np.real(expected), np.imag(expected)], axis=3)
-        if lazy:
+        if lazy_in:
             real_val = da.from_array(real_val, chunks=real_val.shape)
-        actual = dtype_utils.stack_real_to_complex(real_val)
+        actual = dtype_utils.stack_real_to_complex(real_val, lazy=lazy)
         if lazy:
             self.assertIsInstance(actual, da.core.Array)
             actual = actual.compute()
         self.assertTrue(np.allclose(actual, expected))
 
-    def test_nd_numpy(self):
-        self.base_nd(False)
+    def test_nd_numpy_not_lazy(self):
+        self.base_nd(False, False)
+
+    def test_nd_numpy_lazy(self):
+        self.base_nd(False, True)
 
     def test_nd_dask(self):
-        self.base_nd(True)
+        self.base_nd(True, True)
 
 
 class TestStackRealToComplexHDF5(TestDtypeUtils):
@@ -165,8 +168,7 @@ class TestStackRealToComplexHDF5(TestDtypeUtils):
             self.assertTrue(np.allclose(actual, expected))
 
     def test_h5_as_numpy(self):
-        with self.assertWarns(UserWarning):
-            self.base_h5_legal(False)
+        self.base_h5_legal(False)
 
     def test_h5_as_dask(self):
         self.base_h5_legal(True)
@@ -238,11 +240,7 @@ class TestFlattenComplexToRealHDF5(TestDtypeUtils):
             self.assertTrue(np.allclose(actual, expected))
 
     def test_h5_legal_not_lazy(self):
-        if sys.version_info.major == 3:
-            with self.assertWarns(UserWarning):
-                self.base_h5_legal(False)
-        else:
-            self.base_h5_legal(False)
+        self.base_h5_legal(False)
 
     def test_h5_legal_lazy(self):
         self.base_h5_legal(True)
@@ -273,7 +271,7 @@ class TestGetCompoundSubTypes(unittest.TestCase):
             _ = dtype_utils.get_compound_sub_dtypes(np.arange(4))
 
 
-class TestStackRealToCompoundNumpy(unittest.TestCase):
+class TestStackRealToCompound(unittest.TestCase):
 
     def test_single(self):
         num_elems = 1
@@ -305,15 +303,31 @@ class TestStackRealToCompoundNumpy(unittest.TestCase):
         actual = dtype_utils.stack_real_to_compound(list(real_val), struc_dtype)
         self.assertTrue(compare_structured_arrays(actual, structured_array))
 
-    def test_nd(self):
+    def base_nd(self, in_lazy, out_lazy):
         num_elems = (2, 3, 5, 7)
         structured_array = np.zeros(shape=num_elems, dtype=struc_dtype)
         structured_array['r'] = r_vals = np.random.random(size=num_elems)
         structured_array['g'] = g_vals = np.random.randint(0, high=1024, size=num_elems)
         structured_array['b'] = b_vals = np.random.random(size=num_elems)
         real_val = np.concatenate((r_vals, g_vals, b_vals), axis=len(num_elems) - 1)
-        actual = dtype_utils.stack_real_to_compound(real_val, struc_dtype)
+        if in_lazy:
+            real_val = da.from_array(real_val, chunks='auto')
+        actual = dtype_utils.stack_real_to_compound(real_val, struc_dtype, lazy=out_lazy)
+        if out_lazy:
+            self.assertIsInstance(actual, da.core.Array)
+            actual = actual.compute()
         self.assertTrue(compare_structured_arrays(actual, structured_array))
+
+    def test_nd_dask_in(self):
+        with self.assertRaises(NotImplementedError):
+            self.base_nd(True, True)
+
+    def test_nd_numpy_in_not_lazy(self):
+        self.base_nd(False, False)
+
+    def test_nd_numpy_in_lazy(self):
+        with self.assertRaises(NotImplementedError):
+            self.base_nd(False, True)
 
     def test_illegal(self):
         num_elems = (3, 5)
@@ -348,26 +362,29 @@ class TestFlattenCompoundToReal(unittest.TestCase):
         actual = dtype_utils.flatten_compound_to_real(structured_array)
         self.assertTrue(np.allclose(actual, expected))
 
-    def base_nd(self, lazy):
+    def base_nd(self, lazy_in, lazy):
         num_elems = (5, 7, 2, 3)
         structured_array = np.zeros(shape=num_elems, dtype=struc_dtype)
         structured_array['r'] = r_vals = np.random.random(size=num_elems)
         structured_array['g'] = g_vals = np.random.randint(0, high=1024, size=num_elems)
         structured_array['b'] = b_vals = np.random.random(size=num_elems)
-        if lazy:
+        if lazy_in:
             structured_array = da.from_array(structured_array, chunks=structured_array.shape)
         expected = np.concatenate((r_vals, g_vals, b_vals), axis=len(num_elems) - 1)
-        actual = dtype_utils.flatten_compound_to_real(structured_array)
+        actual = dtype_utils.flatten_compound_to_real(structured_array, lazy=lazy)
         if lazy:
-            self.assertIsInstance(actual, type(structured_array))
+            self.assertIsInstance(actual, da.core.Array)
             actual = actual.compute()
         self.assertTrue(np.allclose(actual, expected))
 
-    def test_numpy_nd(self):
-        self.base_nd(False)
+    def test_numpy_nd_not_lazy(self):
+        self.base_nd(False, False)
+
+    def test_numpy_nd_lazy(self):
+        self.base_nd(False, True)
 
     def test_dask_nd(self):
-        self.base_nd(True)
+        self.base_nd(True, True)
 
     def test_illegal(self):
         num_elems = (2, 3)
@@ -406,9 +423,9 @@ class TestFlattenCompoundToRealHDF5(TestDtypeUtils):
                 _ = dtype_utils.flatten_compound_to_real(h5_f['complex'])
 
 
-class TestStackRealToTargetDtypeHDF5(TestDtypeUtils):
+class TestStackRealToCompoundHDF5(TestDtypeUtils):
 
-    def test_nd_h5_legal(self):
+    def base_nd_h5_legal(self, lazy):
         with h5py.File(file_path, mode='r') as h5_f:
             h5_real = h5_f['real2']
             structured_array = np.zeros(shape=list(h5_real.shape)[:-1] + [h5_real.shape[-1] // len(struc_dtype.names)],
@@ -417,8 +434,18 @@ class TestStackRealToTargetDtypeHDF5(TestDtypeUtils):
                 i_start = name_ind * structured_array.shape[-1]
                 i_end = (name_ind + 1) * structured_array.shape[-1]
                 structured_array[name] = h5_real[..., i_start:i_end]
-            actual = dtype_utils.stack_real_to_compound(h5_real, struc_dtype)
+            actual = dtype_utils.stack_real_to_compound(h5_real, struc_dtype, lazy=lazy)
+            if lazy:
+                self.assertIsInstance(actual, da.core.Array)
+                actual = actual.compute()
             self.assertTrue(compare_structured_arrays(actual, structured_array))
+
+    def test_nd_h5(self):
+        self.base_nd_h5_legal(False)
+
+    def test_nd_h5_lazy(self):
+        with self.assertRaises(NotImplementedError):
+            self.base_nd_h5_legal(True)
 
     def test_nd_h5_illegal(self):
         with h5py.File(file_path, mode='r') as h5_f:

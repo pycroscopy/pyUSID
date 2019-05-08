@@ -2,6 +2,9 @@
 """
 Utilities for transforming and validating data types
 
+Given that many of the data transformations involve copying the data, they should
+ideally happen in a lazy manner to avoid memory issues.
+
 Created on Tue Nov  3 21:14:25 2015
 
 @author: Suhas Somnath, Chris Smith
@@ -77,7 +80,7 @@ def flatten_complex_to_real(dataset, lazy=False):
     dataset : array-like or :class:`numpy.ndarray`, or :class:`h5py.Dataset`, or :class:`dask.array.core.Array`
         Dataset of complex data type
     lazy : bool, optional. Default = False
-        If set to true, HDF5 datasets will be read as Dask arrays instead of numpy arrays
+        If set to True, will use lazy Dask arrays instead of in-memory numpy arrays
 
     Returns
     -------
@@ -89,14 +92,13 @@ def flatten_complex_to_real(dataset, lazy=False):
     if not is_complex_dtype(dataset.dtype):
         raise TypeError("Expected a complex valued dataset")
 
+    if isinstance(dataset, da.core.Array):
+        lazy = True
+
     xp = np
-    if isinstance(dataset, da.core.Array) or (isinstance(dataset, h5py.Dataset) and lazy):
+    if lazy:
+        dataset = da.from_array(dataset, chunks='auto')
         xp = da
-    if isinstance(dataset, h5py.Dataset):
-        if lazy:
-            dataset = _lazy_load_hdf5_dset(dataset)
-        else:
-            warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
 
     axis = xp.array(dataset).ndim - 1
     if axis == -1:
@@ -118,7 +120,7 @@ def flatten_compound_to_real(dataset, lazy=False):
     dataset : :class:`numpy.ndarray`, or :class:`h5py.Dataset`, or :class:`dask.array.core.Array`
         Numpy array that is a structured array or a :class:`h5py.Dataset` of compound dtype
     lazy : bool, optional. Default = False
-        If set to true, HDF5 datasets will be read as Dask arrays instead of numpy arrays
+        If set to True, will use lazy Dask arrays instead of in-memory numpy arrays
 
     Returns
     -------
@@ -139,7 +141,14 @@ def flatten_compound_to_real(dataset, lazy=False):
         return xp.concatenate([xp.array(dataset[name]) for name in dataset.dtype.names], axis=len(dataset.shape) - 1)
 
     elif isinstance(dataset, (np.ndarray, da.core.Array)):
-        xp = da if isinstance(dataset, da.core.Array) else np
+        if isinstance(dataset, da.core.Array):
+            lazy = True
+
+        xp = np
+        if lazy:
+            dataset = da.from_array(dataset, chunks='auto')
+            xp = da
+
         if len(dataset.dtype) == 0:
             raise TypeError("Expected structured array")
         if dataset.ndim > 0:
@@ -161,7 +170,7 @@ def flatten_to_real(ds_main, lazy=False):
     ds_main : :class:`numpy.ndarray`, or :class:`h5py.Dataset`, or :class:`dask.array.core.Array`
         Compound, complex or real valued numpy array or HDF5 dataset
     lazy : bool, optional. Default = False
-        If set to true, HDF5 datasets will be read as Dask arrays instead of numpy arrays
+        If set to True, will use lazy Dask arrays instead of in-memory numpy arrays
 
     Returns
     ----------
@@ -272,7 +281,7 @@ def stack_real_to_complex(ds_real, lazy=False):
         where the first half of the features are the real component and the
         second half contains the imaginary components
     lazy : bool, optional. Default = False
-        If set to true, HDF5 datasets will be read as Dask arrays instead of numpy arrays
+        If set to True, will use lazy Dask arrays instead of in-memory numpy arrays
 
     Returns
     ----------
@@ -292,16 +301,16 @@ def stack_real_to_complex(ds_real, lazy=False):
         raise ValueError("Last dimension must be even sized")
     half_point = ds_real.shape[-1] // 2
 
-    if isinstance(ds_real, h5py.Dataset):
-        if lazy:
-            ds_real = _lazy_load_hdf5_dset(ds_real)
-        else:
-            warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
+    if isinstance(ds_real, da.core.Array):
+        lazy = True
+
+    if lazy and not isinstance(ds_real, da.core.Array):
+        ds_real = da.from_array(ds_real, chunks='auto')
 
     return ds_real[..., :half_point] + 1j * ds_real[..., half_point:]
 
 
-def stack_real_to_compound(ds_real, compound_type):
+def stack_real_to_compound(ds_real, compound_type, lazy=False):
     """
     Converts a real-valued dataset to a compound dataset (along the last axis) of the provided compound d-type
 
@@ -311,13 +320,17 @@ def stack_real_to_compound(ds_real, compound_type):
         n dimensional real-valued numpy array or HDF5 dataset where data arranged as [instance, features]
     compound_type : :class:`numpy.dtype`
         Target complex data-type
+    lazy : bool, optional. Default = False
+        If set to True, will use lazy Dask arrays instead of in-memory numpy arrays
 
     Returns
     ----------
     ds_compound : :class:`numpy.ndarray` or :class:`dask.array.core.Array`
         N-dimensional complex-valued array arranged as [sample, features]
     """
-    if not isinstance(ds_real, (np.ndarray, da.core.Array, h5py.Dataset)):
+    if lazy or isinstance(ds_real, da.core.Array):
+        raise NotImplementedError('Lazy operation not available due to absence of Dask support')
+    if not isinstance(ds_real, (np.ndarray, h5py.Dataset)):
         if not isinstance(ds_real, Iterable):
             raise TypeError("Expected at least an iterable like a list or tuple")
         ds_real = np.array(ds_real)
@@ -335,7 +348,21 @@ def stack_real_to_compound(ds_real, compound_type):
     new_spec_length = int(new_spec_length)
     new_shape = list(ds_real.shape)  # Make mutable
     new_shape[-1] = new_spec_length
-    ds_compound = np.empty(new_shape, dtype=compound_type)
+
+    xp = np
+    kwargs = {}
+    """
+    if isinstance(ds_real, h5py.Dataset) and not lazy:
+        warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
+    if isinstance(ds_real, da.core.Array):
+        lazy = True    
+    if lazy:
+        xp = da
+        ds_real = da.from_array(ds_real, chunks='auto')
+        kwargs = {'chunks': 'auto'}
+    """
+
+    ds_compound = xp.empty(new_shape, dtype=compound_type, **kwargs)
     for name_ind, name in enumerate(compound_type.names):
         i_start = name_ind * new_spec_length
         i_end = (name_ind + 1) * new_spec_length
@@ -344,27 +371,27 @@ def stack_real_to_compound(ds_real, compound_type):
     return ds_compound.squeeze()
 
 
-def stack_real_to_target_dtype(ds_real, new_dtype):
+def stack_real_to_target_dtype(ds_real, new_dtype, lazy=False):
     """
     Transforms real data into the target dtype
 
     Parameters
     ----------
-    ds_real : :class:`numpy.ndarray` or :class:`h5py.Dataset`
+    ds_real : :class:`numpy.ndarray`, :class:`dask.array.core.Array` or :class:`h5py.Dataset`
         n dimensional real-valued numpy array or HDF5 dataset
     new_dtype : :class:`numpy.dtype`
         Target data-type
 
     Returns
     ----------
-    ret_val :  :class:`numpy.ndarray`
+    ret_val :  :class:`numpy.ndarray` or :class:`dask.array.core.Array`
         N-dimensional array of the target data-type
     """
     if is_complex_dtype(new_dtype):
-        return stack_real_to_complex(ds_real)
+        return stack_real_to_complex(ds_real, lazy=lazy)
     try:
         if len(new_dtype) > 0:
-            return stack_real_to_compound(ds_real, new_dtype)
+            return stack_real_to_compound(ds_real, new_dtype, lazy=lazy)
     except TypeError:
         return new_dtype(ds_real)
 
