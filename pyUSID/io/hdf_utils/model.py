@@ -913,6 +913,8 @@ def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
         griddata = None
         warn('map_grid_to_cartesian() requires scipy')
         raise expn
+    if not (sys.version_info.major == 3 and sys.version_info.minor > 4):
+        raise ModuleNotFoundError('map_grid_to_cartesian() requires python 3.5 or newer')
 
     from ..usi_data import USIDataset
 
