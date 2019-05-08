@@ -18,9 +18,16 @@ Near-term Goals
     A reference to the HDF5 datasets would still be maintained
   * Alternatively, ``USIDataset.data`` could be the N-dimensional form in Dask.
     However, note that this array can be manipulated. Will the changes be reflected into the HDF5 dataset?
-* Extend USIDataset to a scientific data type such as an ``PFMDataset`` and add domain specific capabilities.
+* Extend USIDataset to a scientific data type such as an ``PFMDataset`` and add domain specific:
+
+  * data access (e.g. - in field in BEPS)
+  * metadata access
+  * visualization that replaces / builds on the base interactive / static visualization
+  * operations (e.g. - functional fitting)
+  * relationships / links to other source / child datasets
 * ``USIDataset`` - Do slicing on ND dataset if available by flattening to 2D and then slicing.
 * Consider Dask based backend for ``Process``
+* Add instructions on pbs script and python script information from distUSID
 * Fix problems with Travis CI
 * Extend ``Process`` class to work with multiple GPUs using `cupy <https://cupy.chainer.org>`_
 * Relax restrictions with regards to expecting region references
