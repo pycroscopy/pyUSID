@@ -881,3 +881,97 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
 
     from ..usi_data import USIDataset
     return USIDataset(h5_main)
+
+
+def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
+    """
+    Map an incomplete measurement, such as a spiral scan, to a cartesian grid.
+    Parameters
+    ----------
+    h5_main : :class:`pyUSID.USIDataset`
+        Dataset containing the sparse measurement
+    grid_shape : int or [int, int]
+        Shape of the output :class:`numpy.ndarray`.
+    mode : str, optional. Default = 'histogram'
+        Method used for building a cartesian grid.
+        Available methods = 'histogram', 'linear', 'nearest', 'cubic'
+        Use kwargs to pass onto each of the techniques
+    Note
+    ----
+    UNDER DEVELOPMENT!
+    Currently only valid for 2 position dimensions
+
+    @author: Patrik Marschalik
+
+    Returns
+    -------
+    :class:`numpy.ndarray` but could be a h5py.Dataset or dask.array.core.Array object
+    """
+    try:
+        from scipy.interpolate import griddata
+    except ImportError as expn:
+        griddata = None
+        warn('map_grid_to_cartesian() requires scipy')
+        raise expn
+
+    from ..usi_data import USIDataset
+
+    if not isinstance(h5_main, USIDataset):
+        raise TypeError('Provided object is not a pyUSID.USIDataset object')
+
+    if mode not in ['histogram', 'linear', 'nearest', 'cubic']:
+        raise ValueError('mode must be a string among["histogram", "cubic"]')
+
+    ds_main = h5_main[()].squeeze()
+    ds_pos_vals = h5_main.h5_pos_vals[()]
+
+    if ds_pos_vals.shape[1] != 2:
+        raise TypeError("Only working for 2 position dimensions.")
+
+    # Transform to row, col image format
+    rotation = np.array([[0, 1], [-1, 0]])
+    ds_pos_vals = ds_pos_vals @ rotation
+
+    try:
+        N = len(grid_shape)
+    except TypeError:
+        N = 1
+
+    if N != 1 and N != 2:
+        raise ValueError("grid_shape must be of type int or [int, int].")
+
+    if N == 1:
+        grid_shape = 2 * [grid_shape]
+
+    if mode == "histogram":
+        histogram_weighted, _, _ = np.histogram2d(
+            *ds_pos_vals.T,
+            bins=grid_shape,
+            weights=ds_main,
+        )
+        histogram, _, _ = np.histogram2d(
+            *ds_pos_vals.T,
+            bins=grid_shape,
+        )
+        ds_Nd = np.divide(histogram_weighted, histogram)
+
+    def interpolate(points, values, grid_shape, method):
+        grid_shape = list(map((1j).__mul__, grid_shape))
+        grid_x, grid_y = np.mgrid[
+            np.amin(points[:, 0]):np.amax(points[:, 0]):grid_shape[0],
+            np.amin(points[:, 1]):np.amax(points[:, 1]):grid_shape[1]
+        ]
+        ds_Nd = griddata(points, values, (grid_x, grid_y), method=method)
+
+        return ds_Nd
+
+    if mode == "linear":
+        ds_Nd = interpolate(ds_pos_vals, ds_main, grid_shape, method="linear")
+
+    if mode == "nearest":
+        ds_Nd = interpolate(ds_pos_vals, ds_main, grid_shape, method="nearest")
+
+    if mode == "cubic":
+        ds_Nd = interpolate(ds_pos_vals, ds_main, grid_shape, method="cubic")
+
+    return ds_Nd
