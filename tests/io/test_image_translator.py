@@ -6,12 +6,11 @@ Created on Thu Apr 4 15:07:16 2017
 """
 from __future__ import division, print_function, unicode_literals, absolute_import
 import unittest
-import os
 import sys
 from PIL import Image
 import h5py
 import numpy as np
-from .data_utils import validate_aux_dset_pair
+from .data_utils import validate_aux_dset_pair, delete_existing_file
 sys.path.append("../../pyUSID/")
 from pyUSID.io import ImageTranslator, hdf_utils, USIDataset
 from pyUSID.io.image import read_image
@@ -26,21 +25,19 @@ image_path = 'random_image.png'
 rand_image = np.uint16(np.random.randint(0, high=255, size=(128, 256)))
 
 
-class TestImageTranslator(unittest.TestCase):
-
-    @staticmethod
-    def __delete_existing_file(file_path):
-        if os.path.exists(file_path):
-            os.remove(file_path)
+class TestImage(unittest.TestCase):
 
     def setUp(self):
         result = Image.fromarray(rand_image.astype(np.uint8))
         for file_path in [image_path, image_path.replace('.png', '.h5')]:
-            self.__delete_existing_file(file_path)
+            delete_existing_file(file_path)
         result.save(image_path)
 
     def tearDown(self):
-        self.__delete_existing_file(image_path)
+        delete_existing_file(image_path)
+
+
+class TestReadImage(TestImage):
 
     def test_read_image_color_to_bw_image(self):
         color_image_path = './tests/io/logo_v01.png'
@@ -57,17 +54,17 @@ class TestImageTranslator(unittest.TestCase):
     def test_read_image_text_to_numpy_simple(self):
         img_data = rand_image.astype(np.uint8)
         img_path = 'image_text.txt'
-        self.__delete_existing_file(img_path)
+        delete_existing_file(img_path)
         np.savetxt(img_path, img_data)
         np_data = read_image(image_path, as_numpy_array=True)
         self.assertIsInstance(np_data, np.ndarray)
         self.assertTrue(np.allclose(np_data, img_data))
-        self.__delete_existing_file(img_path)
+        delete_existing_file(img_path)
 
     def test_read_image_text_to_numpy_complex(self):
         img_data = np.uint16(np.random.randint(0, high=255, size=(4, 3)))
         img_path = 'image_text.csv'
-        self.__delete_existing_file(img_path)
+        delete_existing_file(img_path)
         txt_kwargs = {'delimiter': ',',
                       'newline': '\n',
                       'header':  'cat, dog, cow'}
@@ -75,12 +72,12 @@ class TestImageTranslator(unittest.TestCase):
         np_data = read_image(img_path, as_numpy_array=True, delimiter=',', skiprows=1)
         self.assertIsInstance(np_data, np.ndarray)
         self.assertTrue(np.allclose(np_data, img_data))
-        self.__delete_existing_file(img_path)
+        delete_existing_file(img_path)
 
     def test_read_image_text_complex_to_pillow(self):
         img_data = np.uint16(np.random.randint(0, high=255, size=(4, 3)))
         img_path = 'image_text.csv'
-        self.__delete_existing_file(img_path)
+        delete_existing_file(img_path)
         txt_kwargs = {'delimiter': ',',
                       'newline': '\n',
                       'header':  'cat, dog, cow'}
@@ -89,7 +86,7 @@ class TestImageTranslator(unittest.TestCase):
                                 delimiter=',', skiprows=1)
         self.assertIsInstance(pillow_obj, Image.Image)
         self.assertTrue(np.allclose(np.asarray(pillow_obj), img_data))
-        self.__delete_existing_file(img_path)
+        delete_existing_file(img_path)
 
     def test_read_image_to_numpy(self):
         np_data = read_image(image_path, as_numpy_array=True)
@@ -101,76 +98,10 @@ class TestImageTranslator(unittest.TestCase):
         self.assertIsInstance(pillow_obj, Image.Image)
         self.assertTrue(np.allclose(np.asarray(pillow_obj), rand_image))
 
-    def test_basic_translate(self):
-        self.__main_translate()
 
-    def test_binning_single_default_interp(self):
-        self.__main_translate(bin_factor=2)
+class TestImageTranslator(TestImage):
 
-    def test_binning_tuple_default_interp(self):
-        self.__main_translate(bin_factor=(1, 2))
-
-    def test_binning_too_many_dims(self):
-        with self.assertRaises(ValueError):
-            translator = ImageTranslator()
-            _ = translator.translate(image_path, bin_factor=(1, 2, 3))
-
-    def test_binning_neg_parms(self):
-        with self.assertRaises(ValueError):
-            translator = ImageTranslator()
-            _ = translator.translate(image_path, bin_factor=-2)
-
-    def test_binning_float_parms(self):
-        with self.assertRaises(TypeError):
-            translator = ImageTranslator()
-            _ = translator.translate(image_path, bin_factor=1.34)
-
-    def test_binning_invalid_dtype(self):
-        with self.assertRaises(TypeError):
-            translator = ImageTranslator()
-            _ = translator.translate(image_path, bin_factor=['dfrdd', True])
-
-    def test_binning_custom_interp(self):
-        self.__main_translate(bin_factor=2, interp_func=Image.NEAREST)
-
-    def test_binning_invalid_interp(self):
-        with self.assertRaises(ValueError):
-            translator = ImageTranslator()
-            _ = translator.translate(image_path, bin_factor=2, interp_func='dsdsdsd')
-
-    def test_invalid_h5_path(self):
-        with self.assertRaises(TypeError):
-            translator = ImageTranslator()
-            _ = translator.translate(image_path, h5_path=np.arange(4))
-
-    def test_path_not_str(self):
-        with self.assertRaises(TypeError):
-            translator = ImageTranslator()
-            _ = translator.translate(np.arange(4))
-
-    def test_path_does_not_exist(self):
-        with self.assertRaises(FileNotFoundError):
-            translator = ImageTranslator()
-            _ = translator.translate('no_such_file.png')
-
-    def test_output_h5_file_already_exists(self):
-        with h5py.File(image_path.replace('.png', '.h5')) as _:
-            pass
-        with self.assertRaises(FileExistsError):
-            translator = ImageTranslator()
-            _ = translator.translate(image_path)
-
-    def test_valid_h5_path(self):
-        self.__main_translate(h5_path='custom_path.h5')
-        self.__main_translate(h5_path='custom_path.txt')
-
-    def test_normalize_only(self):
-        self.__main_translate(normalize=True)
-
-    def test_normalize_and_default_interp(self):
-        self.__main_translate(normalize=True, bin_factor=2)
-
-    def __basic_file_validation(self, h5_f):
+    def basic_file_validation(self, h5_f):
         self.assertEqual('ImageTranslator', hdf_utils.get_attr(h5_f, 'translator'))
 
         # First level should have absolutely nothing besides one group
@@ -202,10 +133,10 @@ class TestImageTranslator(unittest.TestCase):
         validate_aux_dset_pair(self, h5_chan_grp, usid_main.h5_spec_inds, usid_main.h5_spec_vals, ['arb'],
                                ['a.u.'], np.atleast_2d([0]), h5_main=usid_main, is_spectral=True)
 
-    def __main_translate(self, **kwargs):
+    def main_translate(self, **kwargs):
 
         h5_path = kwargs.pop('h5_path', image_path.replace('.png', '.h5'))
-        self.__delete_existing_file(h5_path)
+        delete_existing_file(h5_path)
 
         input_image = rand_image.copy()
         usize, vsize = input_image.shape[:2]
@@ -245,7 +176,7 @@ class TestImageTranslator(unittest.TestCase):
         image_parms.update({'image_min': np.min(input_image), 'image_max': np.max(input_image)})
         with h5py.File(h5_path, mode='r') as h5_f:
 
-            self.__basic_file_validation(h5_f)
+            self.basic_file_validation(h5_f)
 
             h5_meas_grp = h5_f['Measurement_000']
             h5_chan_grp = h5_meas_grp['Channel_000']
@@ -265,7 +196,85 @@ class TestImageTranslator(unittest.TestCase):
             validate_aux_dset_pair(self, h5_chan_grp, usid_main.h5_pos_inds, usid_main.h5_pos_vals, ['Y', 'X'],
                                    ['a.u.', 'a.u.'], pos_data, h5_main=usid_main, is_spectral=False)
 
-        self.__delete_existing_file(h5_path)
+        delete_existing_file(h5_path)
+
+    def test_basic_translate(self):
+        self.main_translate()
+
+
+class TestBinning(TestImageTranslator):
+
+    def test_binning_single_default_interp(self):
+        self.main_translate(bin_factor=2)
+
+    def test_binning_tuple_default_interp(self):
+        self.main_translate(bin_factor=(1, 2))
+
+    def test_binning_too_many_dims(self):
+        with self.assertRaises(ValueError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path, bin_factor=(1, 2, 3))
+
+    def test_binning_neg_parms(self):
+        with self.assertRaises(ValueError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path, bin_factor=-2)
+
+    def test_binning_float_parms(self):
+        with self.assertRaises(TypeError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path, bin_factor=1.34)
+
+    def test_binning_invalid_dtype(self):
+        with self.assertRaises(TypeError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path, bin_factor=['dfrdd', True])
+
+    def test_binning_custom_interp(self):
+        self.main_translate(bin_factor=2, interp_func=Image.NEAREST)
+
+    def test_binning_invalid_interp(self):
+        with self.assertRaises(ValueError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path, bin_factor=2, interp_func='dsdsdsd')
+
+
+class TestNormalization(TestImageTranslator):
+
+    def test_normalize_only(self):
+        self.main_translate(normalize=True)
+
+    def test_normalize_and_default_interp(self):
+        self.main_translate(normalize=True, bin_factor=2)
+
+
+class TestFile(TestImageTranslator):
+
+    def test_invalid_h5_path(self):
+        with self.assertRaises(TypeError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path, h5_path=np.arange(4))
+
+    def test_path_not_str(self):
+        with self.assertRaises(TypeError):
+            translator = ImageTranslator()
+            _ = translator.translate(np.arange(4))
+
+    def test_path_does_not_exist(self):
+        with self.assertRaises(FileNotFoundError):
+            translator = ImageTranslator()
+            _ = translator.translate('no_such_file.png')
+
+    def test_output_h5_file_already_exists(self):
+        with h5py.File(image_path.replace('.png', '.h5')) as _:
+            pass
+        with self.assertRaises(FileExistsError):
+            translator = ImageTranslator()
+            _ = translator.translate(image_path)
+
+    def test_valid_h5_path(self):
+        self.main_translate(h5_path='custom_path.h5')
+        self.main_translate(h5_path='custom_path.txt')
 
 
 if __name__ == '__main__':
