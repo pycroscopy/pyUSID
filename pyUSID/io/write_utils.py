@@ -16,7 +16,7 @@ import numpy as np
 from collections import Iterable
 from .dtype_utils import contains_integers, validate_list_of_strings, validate_single_string_arg
 
-__all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE',
+__all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE', 'get_slope',
            'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions', 'DimType']
 
 if sys.version_info.major == 3:
@@ -446,3 +446,37 @@ def calc_chunks(dimensions, dtype_byte_size, unit_chunks=None, max_chunk_mem=102
     chunking = tuple(unit_chunks)
 
     return chunking
+
+
+def get_slope(values, tol=1E-3):
+    """
+    Attempts to get the slope of the provided values. This function will be handy
+    for checking if a dimension has been varied linearly or not.
+    If the values vary non-linearly, a ValueError will be raised
+
+    Parameters
+    ----------
+    values : array-like
+        List of numbers
+    tol : float, optional. Default = 1E-3
+        Tolerance in the variation of the slopes.
+    Returns
+    -------
+    float
+        Slope of the line
+    """
+    if not isinstance(tol, float):
+        raise TypeError('tol should be a float << 1')
+    step_size = np.unique(np.diff(values))
+    if len(step_size) > 1:
+        # often we end up here. In most cases,
+        step_avg = step_size.max()
+        step_size -= step_avg
+        var = np.mean(np.abs(step_size))
+        if var / step_avg < tol:
+            step_size = [step_avg]
+        else:
+            # Non-linear dimension! - see notes above
+            raise ValueError('Provided values cannot be expressed as a linear trend')
+    return step_size[0]
+

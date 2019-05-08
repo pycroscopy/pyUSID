@@ -335,5 +335,34 @@ class TestCalcChunks(unittest.TestCase):
             _ = write_utils.calc_chunks((16384, 16384 * 4), 2.124)
 
 
+class TestGetSlope(unittest.TestCase):
+
+    def test_linear(self):
+        expected = 0.25
+        actual = write_utils.get_slope(np.arange(-1, 1, expected))
+        self.assertEqual(expected, actual)
+
+    def test_linear_dirty(self):
+        # When reading from HDF5, rounding errors can result in minor variations in the diff
+        expected = 0.25E-9
+        vector = np.arange(-1E-9, 1E-9, expected)
+        round_error = np.random.rand(vector.size) * 1E-14
+        vector += round_error
+        actual = write_utils.get_slope(vector, tol=1E-3)
+        self.assertAlmostEquals(expected , actual)
+
+    def test_invalid_tolerance(self):
+        with self.assertRaises(TypeError):
+            _ = write_utils.get_slope(np.sin(np.arange(4)), tol="hello")
+
+    def test_non_linear(self):
+        with self.assertRaises(ValueError):
+            _ = write_utils.get_slope(np.sin(np.arange(4)))
+
+    def test_invalid_inputs(self):
+        with self.assertRaises(BaseException):
+             _ = write_utils.get_slope("hello")
+
+
 if __name__ == '__main__':
     unittest.main()
