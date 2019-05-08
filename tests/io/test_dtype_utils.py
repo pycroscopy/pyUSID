@@ -152,6 +152,13 @@ class TestStackRealToComplex(unittest.TestCase):
     def test_nd_dask(self):
         self.base_nd(True, True)
 
+    def test_invalid_inputs(self):
+        with self.assertRaises(TypeError):
+            _ = dtype_utils.stack_real_to_complex("Hello")
+
+        with self.assertRaises(TypeError):
+            _ = dtype_utils.stack_real_to_complex([1, {'a': 1}, 'a', True])
+
 
 class TestStackRealToComplexHDF5(TestDtypeUtils):
 
@@ -217,6 +224,10 @@ class TestFlattenComplexToReal(unittest.TestCase):
         expected = np.concatenate([np.real(complex_array), np.imag(complex_array)], axis=3)
         self.assertTrue(np.allclose(actual, expected))
 
+    def test_real_in(self):
+        with self.assertRaises(TypeError):
+            _ = dtype_utils.flatten_complex_to_real(np.arange(4))
+
     def test_compound_illegal(self):
         num_elems = 5
         structured_array = np.zeros(shape=num_elems, dtype=struc_dtype)
@@ -246,6 +257,11 @@ class TestFlattenComplexToRealHDF5(TestDtypeUtils):
         self.base_h5_legal(True)
 
     def test_h5_illegal(self):
+        with h5py.File(file_path, mode='r') as h5_f:
+            with self.assertRaises(TypeError):
+                _ = dtype_utils.flatten_complex_to_real(h5_f)
+
+    def test_h5_illegal_dtype(self):
         with h5py.File(file_path, mode='r') as h5_f:
             with self.assertRaises(TypeError):
                 _ = dtype_utils.flatten_complex_to_real(h5_f['real'])
@@ -338,6 +354,9 @@ class TestStackRealToCompound(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             _ = dtype_utils.stack_real_to_compound(r_vals, struc_dtype)
+
+        with self.assertRaises(ValueError):
+            _ = dtype_utils.stack_real_to_compound([1, 'a', {'a': 1}, False], struc_dtype)
 
 
 class TestFlattenCompoundToReal(unittest.TestCase):
@@ -705,6 +724,10 @@ class TestValidateStringArgs(unittest.TestCase):
         actual = dtype_utils.validate_string_args(expected + ['c'], ['a', 'b'])
         for exp, ret in zip(expected, actual):
             self.assertEqual(exp, ret)
+
+    def test_names_not_list_of_strings(self):
+        with self.assertRaises(TypeError):
+            _ = dtype_utils.validate_string_args(['a', 'v'], {'a': 1, 'v': 43})
 
 
 if __name__ == '__main__':
