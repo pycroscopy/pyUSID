@@ -28,8 +28,23 @@ if sys.version_info.major == 3:
     unicode = str
 
 
-def _lazy_load_hdf5_dset(dataset):
-    chunks = "auto" if dataset.chunks is None else dataset.chunks
+def _lazy_load_array(dataset):
+    """
+    Loads the provided object as a dask array (h5py.Dataset or numpy.ndarray
+    Parameters
+    ----------
+    dataset : :class:`numpy.ndarray`, or :class:`h5py.Dataset`, or :class:`dask.array.core.Array`
+        Array to laod as dask array
+
+    Returns
+    -------
+    :class:`dask.array.core.Array`
+        Dask array with appropriate chunks
+    """
+    # Cannot pass 'auto' for chunks for python 2!
+    chunks = "auto" if sys.version_info.major == 3 else dataset.shape
+    if isinstance(dataset, h5py.Dataset):
+        chunks = chunks if dataset.chunks is None else dataset.chunks
     return da.from_array(dataset, chunks=chunks)
 
 
@@ -97,7 +112,7 @@ def flatten_complex_to_real(dataset, lazy=False):
 
     xp = np
     if lazy:
-        dataset = da.from_array(dataset, chunks='auto')
+        dataset = _lazy_load_array(dataset)
         xp = da
 
     axis = xp.array(dataset).ndim - 1
@@ -133,7 +148,7 @@ def flatten_compound_to_real(dataset, lazy=False):
 
         if lazy:
             xp = da
-            dataset = _lazy_load_hdf5_dset(dataset)
+            dataset = _lazy_load_array(dataset)
         else:
             xp = np
             warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
@@ -146,7 +161,7 @@ def flatten_compound_to_real(dataset, lazy=False):
 
         xp = np
         if lazy:
-            dataset = da.from_array(dataset, chunks='auto')
+            dataset = _lazy_load_array(dataset)
             xp = da
 
         if len(dataset.dtype) == 0:
@@ -305,7 +320,7 @@ def stack_real_to_complex(ds_real, lazy=False):
         lazy = True
 
     if lazy and not isinstance(ds_real, da.core.Array):
-        ds_real = da.from_array(ds_real, chunks='auto')
+        ds_real = _lazy_load_array(ds_real)
 
     return ds_real[..., :half_point] + 1j * ds_real[..., half_point:]
 
@@ -358,7 +373,7 @@ def stack_real_to_compound(ds_real, compound_type, lazy=False):
         lazy = True    
     if lazy:
         xp = da
-        ds_real = da.from_array(ds_real, chunks='auto')
+        ds_real = _lazy_load_array(ds_real)
         kwargs = {'chunks': 'auto'}
     """
 
