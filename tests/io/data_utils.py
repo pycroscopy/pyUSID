@@ -382,7 +382,15 @@ def make_beps_file(rev_spec=False):
         write_string_list_as_attr(h5_pos_inds, pos_attrs)
 
         # make the values more interesting:
-        source_pos_data = np.vstack((source_pos_data[:, 0] * 50, source_pos_data[:, 1] * 1.25)).T
+        cols_offset = -750
+        cols_step = 50
+        rows_offset = 2
+        rows_step = 1.25
+        source_pos_data = np.vstack((cols_offset + source_pos_data[:, 0] * cols_step,
+                                     rows_offset + source_pos_data[:, 1] * rows_step)).T
+
+        _ = h5_raw_grp.create_dataset('X', data=cols_offset + cols_step * np.arange(num_cols))
+        _ = h5_raw_grp.create_dataset('Y', data=rows_offset + rows_step * np.arange(num_rows))
 
         h5_pos_vals = h5_raw_grp.create_dataset('Position_Values', data=source_pos_data, dtype=np.float32)
         write_aux_reg_ref(h5_pos_vals, pos_attrs['labels'], is_spec=False)
@@ -404,11 +412,18 @@ def make_beps_file(rev_spec=False):
         write_string_list_as_attr(h5_source_spec_inds, source_spec_attrs)
 
         # make spectroscopic axis interesting as well
+        bias_amp = 2.5
+        bias_period = np.pi
+        bias_vec = bias_amp * np.sin(np.linspace(0, bias_period, num_cycle_pts, endpoint=False))
+
+        _ = h5_raw_grp.create_dataset('Bias', data=bias_vec)
+        _ = h5_raw_grp.create_dataset('Cycle', data=np.arange(num_cycles))
+
         if rev_spec:
             source_spec_data = np.vstack((np.repeat(np.arange(num_cycles), num_cycle_pts),
-                                          np.tile(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False)), num_cycles)))
+                                          np.tile(bias_vec, num_cycles)))
         else:
-            source_spec_data = np.vstack((np.tile(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False)), num_cycles),
+            source_spec_data = np.vstack((np.tile(bias_vec, num_cycles),
                                           np.repeat(np.arange(num_cycles), num_cycle_pts)))
 
         h5_source_spec_vals = h5_raw_grp.create_dataset('Spectroscopic_Values', data=source_spec_data,
@@ -416,7 +431,16 @@ def make_beps_file(rev_spec=False):
         write_aux_reg_ref(h5_source_spec_vals, source_spec_attrs['labels'], is_spec=True)
         write_string_list_as_attr(h5_source_spec_vals, source_spec_attrs)
 
-        source_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
+        main_nd = np.random.rand(num_rows, num_cols, num_cycles, num_cycle_pts)
+        h5_nd_main = h5_raw_grp.create_dataset('n_dim_form', data=main_nd)
+        write_string_list_as_attr(h5_nd_main, {'dims': ['Y', 'X', 'Cycle', 'Bias']})
+
+        if rev_spec:
+            # This simulates things like BEPS where Field should actually be varied slower but is varied faster during acquisition
+            main_nd = main_nd.transpose(0, 1, 3, 2)
+
+        source_main_data = main_nd.reshape(num_rows * num_cols, num_cycle_pts * num_cycles)
+        # source_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
         h5_source_main = h5_raw_grp.create_dataset(source_dset_name, data=source_main_data)
         write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
         write_main_reg_refs(h5_source_main, {'even_rows': (slice(0, None, 2), slice(None)),
