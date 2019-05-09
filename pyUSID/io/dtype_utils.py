@@ -22,15 +22,17 @@ from itertools import groupby
 __all__ = ['flatten_complex_to_real', 'get_compound_sub_dtypes', 'flatten_compound_to_real', 'check_dtype',
            'stack_real_to_complex', 'validate_dtype', 'integers_to_slices', 'get_exponent', 'is_complex_dtype',
            'stack_real_to_compound', 'stack_real_to_target_dtype', 'flatten_to_real', 'contains_integers',
-           'validate_single_string_arg', 'validate_string_args', 'validate_list_of_strings']
+           'validate_single_string_arg', 'validate_string_args', 'validate_list_of_strings',
+           'lazy_load_array']
 
 if sys.version_info.major == 3:
     unicode = str
 
 
-def _lazy_load_array(dataset):
+def lazy_load_array(dataset):
     """
     Loads the provided object as a dask array (h5py.Dataset or numpy.ndarray
+
     Parameters
     ----------
     dataset : :class:`numpy.ndarray`, or :class:`h5py.Dataset`, or :class:`dask.array.core.Array`
@@ -41,6 +43,11 @@ def _lazy_load_array(dataset):
     :class:`dask.array.core.Array`
         Dask array with appropriate chunks
     """
+    if isinstance(dataset, da.core.Array):
+        return dataset
+    elif not isinstance(dataset, (h5py.Dataset, np.ndarray)):
+        raise TypeError('Expected one of h5py.Dataset, dask.array.core.Array, or numpy.ndarray'
+                        'objects. Provided object was of type: {}'.format(type(dataset)))
     # Cannot pass 'auto' for chunks for python 2!
     chunks = "auto" if sys.version_info.major == 3 else dataset.shape
     if isinstance(dataset, h5py.Dataset):
@@ -112,7 +119,7 @@ def flatten_complex_to_real(dataset, lazy=False):
 
     xp = np
     if lazy:
-        dataset = _lazy_load_array(dataset)
+        dataset = lazy_load_array(dataset)
         xp = da
 
     axis = xp.array(dataset).ndim - 1
@@ -148,7 +155,7 @@ def flatten_compound_to_real(dataset, lazy=False):
 
         if lazy:
             xp = da
-            dataset = _lazy_load_array(dataset)
+            dataset = lazy_load_array(dataset)
         else:
             xp = np
             warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
@@ -161,7 +168,7 @@ def flatten_compound_to_real(dataset, lazy=False):
 
         xp = np
         if lazy:
-            dataset = _lazy_load_array(dataset)
+            dataset = lazy_load_array(dataset)
             xp = da
 
         if len(dataset.dtype) == 0:
@@ -320,7 +327,7 @@ def stack_real_to_complex(ds_real, lazy=False):
         lazy = True
 
     if lazy and not isinstance(ds_real, da.core.Array):
-        ds_real = _lazy_load_array(ds_real)
+        ds_real = lazy_load_array(ds_real)
 
     return ds_real[..., :half_point] + 1j * ds_real[..., half_point:]
 
@@ -373,7 +380,7 @@ def stack_real_to_compound(ds_real, compound_type, lazy=False):
         lazy = True    
     if lazy:
         xp = da
-        ds_real = _lazy_load_array(ds_real)
+        ds_real = lazy_load_array(ds_real)
         kwargs = {'chunks': 'auto'}
     """
 

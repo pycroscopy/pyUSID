@@ -353,7 +353,7 @@ def make_relaxation_file():
                 h5_main.attrs[dset.name.split('/')[-1]] = dset.ref
 
 
-def make_beps_file():
+def make_beps_file(rev_spec=False):
     if os.path.exists(std_beps_path):
         os.remove(std_beps_path)
 
@@ -388,9 +388,15 @@ def make_beps_file():
         write_aux_reg_ref(h5_pos_vals, pos_attrs['labels'], is_spec=False)
         write_string_list_as_attr(h5_pos_vals, pos_attrs)
 
-        source_spec_data = np.vstack((np.tile(np.arange(num_cycle_pts), num_cycles),
-                                      np.repeat(np.arange(num_cycles), num_cycle_pts)))
-        source_spec_attrs = {'units': ['V', ''], 'labels': ['Bias', 'Cycle']}
+        if rev_spec:
+            source_spec_data = np.vstack((np.repeat(np.arange(num_cycles), num_cycle_pts),
+                                          np.tile(np.arange(num_cycle_pts), num_cycles)))
+            source_spec_attrs = {'units': ['', 'V'],
+                                 'labels': ['Cycle', 'Bias']}
+        else:
+            source_spec_data = np.vstack((np.tile(np.arange(num_cycle_pts), num_cycles),
+                                          np.repeat(np.arange(num_cycles), num_cycle_pts)))
+            source_spec_attrs = {'units': ['V', ''], 'labels': ['Bias', 'Cycle']}
 
         h5_source_spec_inds = h5_raw_grp.create_dataset('Spectroscopic_Indices', data=source_spec_data,
                                                         dtype=np.uint16)
@@ -398,10 +404,12 @@ def make_beps_file():
         write_string_list_as_attr(h5_source_spec_inds, source_spec_attrs)
 
         # make spectroscopic axis interesting as well
-        source_spec_data = np.vstack(
-            (np.tile(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False)),
-                     num_cycles),
-             np.repeat(np.arange(num_cycles), num_cycle_pts)))
+        if rev_spec:
+            source_spec_data = np.vstack((np.repeat(np.arange(num_cycles), num_cycle_pts),
+                                          np.tile(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False)), num_cycles)))
+        else:
+            source_spec_data = np.vstack((np.tile(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False)), num_cycles),
+                                          np.repeat(np.arange(num_cycles), num_cycle_pts)))
 
         h5_source_spec_vals = h5_raw_grp.create_dataset('Spectroscopic_Values', data=source_spec_data,
                                                         dtype=np.float32)
