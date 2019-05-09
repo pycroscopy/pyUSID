@@ -14,7 +14,7 @@ import numpy as np
 from dask import array as da
 
 from ..dtype_utils import contains_integers, validate_dtype, validate_single_string_arg, validate_string_args, \
-    validate_list_of_strings
+    validate_list_of_strings, lazy_load_array
 
 from .base import get_attr, write_simple_attrs, is_editable_h5, write_book_keeping_attrs
 from .simple import link_as_main, check_if_main, write_ind_val_dsets, validate_dims_against_main, validate_anc_h5_dsets
@@ -188,7 +188,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         print('Spectroscopic dimensionality (sort applied):', spec_dims)
 
     if lazy:
-        ds_main = da.from_array(h5_main, chunks=h5_main.chunks)
+        ds_main = lazy_load_array(h5_main)
     else:
         ds_main = h5_main[()]
 
