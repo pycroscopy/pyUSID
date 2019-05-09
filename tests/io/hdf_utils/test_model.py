@@ -118,9 +118,9 @@ class TestGetUnitValues(TestModel):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Spectroscopic_Values']
-            num_cycle_pts = 7
-            expected = {'Bias': np.float32(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False))),
-                        'Cycle': [0., 1.]}
+            expected = {}
+            for dim_name in ['Bias', 'Cycle']:
+                expected[dim_name] = h5_f['/Raw_Measurement/' + dim_name][()]
             ret_val = hdf_utils.get_unit_values(h5_inds, h5_vals)
             self.assertEqual(len(expected), len(ret_val))
             for key, exp in expected.items():
@@ -130,9 +130,9 @@ class TestGetUnitValues(TestModel):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Spectroscopic_Values']
-            num_cycle_pts = 7
-            expected = {'Bias': np.float32(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False))),
-                        'Cycle': [0., 1.]}
+            expected = {}
+            for dim_name in ['Bias', 'Cycle']:
+                expected[dim_name] = h5_f['/Raw_Measurement/' + dim_name][()]
             ret_val = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names=['Cycle', 'Bias'])
             self.assertEqual(len(expected), len(ret_val))
             for key, exp in expected.items():
@@ -156,8 +156,7 @@ class TestGetUnitValues(TestModel):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
             h5_vals = h5_f['/Raw_Measurement/Spectroscopic_Values']
-            num_cycle_pts = 7
-            expected = {'Bias': np.float32(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False)))}
+            expected = {'Bias': h5_f['/Raw_Measurement/Bias'][()]}
             ret_val = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names='Bias')
             self.assertEqual(len(expected), len(ret_val))
             for key, exp in expected.items():
@@ -167,10 +166,9 @@ class TestGetUnitValues(TestModel):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Position_Indices']
             h5_vals = h5_f['/Raw_Measurement/Position_Values']
-            num_rows = 3
-            num_cols = 5
-            expected = {'X': np.float32(np.arange(num_cols) * 50),
-                        'Y': np.float32(np.arange(num_rows) * 1.25)}
+            expected = {}
+            for dim_name in ['X', 'Y']:
+                expected[dim_name] = h5_f['/Raw_Measurement/' + dim_name][()]
             ret_val = hdf_utils.get_unit_values(h5_inds, h5_vals)
             self.assertEqual(len(expected), len(ret_val))
             for key, exp in expected.items():
@@ -180,8 +178,7 @@ class TestGetUnitValues(TestModel):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_inds = h5_f['/Raw_Measurement/Position_Indices']
             h5_vals = h5_f['/Raw_Measurement/Position_Values']
-            num_rows = 3
-            expected = {'Y': np.float16(np.arange(num_rows) * 1.25)}
+            expected = {'Y': h5_f['/Raw_Measurement/Y'][()]}
             ret_val = hdf_utils.get_unit_values(h5_inds, h5_vals, dim_names='Y')
             self.assertEqual(len(expected), len(ret_val))
             for key, exp in expected.items():
@@ -253,23 +250,16 @@ class TestReshapeToNDims(TestModel):
     def test_h5_no_sort_reqd(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
-            num_rows = 3
-            num_cols = 5
-            num_cycles = 2
-            num_cycle_pts = 7
-
             n_dim, success, labels = hdf_utils.reshape_to_n_dims(h5_main, get_labels=True, sort_dims=False,
                                                                  lazy=False)
             self.assertTrue(np.all([x == y for x, y in zip(labels, ['X', 'Y', 'Bias', 'Cycle'])]))
-            expected_n_dim = np.reshape(h5_main[()], (num_rows, num_cols, num_cycles, num_cycle_pts))
-            expected_n_dim = np.transpose(expected_n_dim, (1, 0, 3, 2))
+            expected_n_dim = h5_f['/Raw_Measurement/n_dim_form'][()]
+            expected_n_dim = expected_n_dim.transpose(1, 0, 3, 2)
             self.assertTrue(np.allclose(expected_n_dim, n_dim))
 
             n_dim, success, labels = hdf_utils.reshape_to_n_dims(h5_main, get_labels=True, sort_dims=True,
                                                                  lazy=False)
             self.assertTrue(np.all([x == y for x, y in zip(labels, ['X', 'Y', 'Bias', 'Cycle'])]))
-            expected_n_dim = np.reshape(h5_main[()], (num_rows, num_cols, num_cycles, num_cycle_pts))
-            expected_n_dim = np.transpose(expected_n_dim, (1, 0, 3, 2))
             self.assertTrue(np.allclose(expected_n_dim, n_dim))
 
     def test_h5_not_main_dset(self):
