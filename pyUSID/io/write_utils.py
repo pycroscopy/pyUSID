@@ -267,6 +267,7 @@ def clean_string_att(att_val):
 def build_ind_val_matrices(unit_values, is_spectral=True):
     """
     Builds indices and values matrices using given unit values for each dimension.
+    Unit values must be arranged from fastest varying to slowest varying
 
     Parameters
     ----------
