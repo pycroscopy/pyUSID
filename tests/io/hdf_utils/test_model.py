@@ -630,7 +630,7 @@ class TestReshapeFromNDims(TestModel):
 
 class TestWriteMainDataset(TestModel):
 
-    def base_small(self, lazy_main):
+    def base_write(self, lazy_main=False, empty_main=False, pre_pos=False, pre_spec=False):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         main_data = np.random.rand(15, 14)
@@ -666,16 +666,36 @@ class TestWriteMainDataset(TestModel):
         spec_units = spec_units[::-1]
 
         input_data = main_data
+        kwargs = {}
         if lazy_main:
             input_data = da.from_array(main_data, chunks=main_data.shape)
+        if empty_main:
+            input_data = main_data.shape
+            kwargs.update({'dtype': np.float16})
 
         with h5py.File(file_path) as h5_f:
+            if pre_spec:
+                h5_spec_inds, h5_spec_vals = hdf_utils.write_ind_val_dsets(
+                    h5_f, spec_dims, is_spectral=True)
+                spec_dims = None
+                kwargs.update({'h5_spec_inds': h5_spec_inds,
+                               'h5_spec_vals': h5_spec_vals})
+
+            if pre_pos:
+                h5_pos_inds, h5_pos_vals = hdf_utils.write_ind_val_dsets(h5_f,
+                                                                         pos_dims,
+                                                                         is_spectral=False)
+                pos_dims = None
+                kwargs.update({'h5_pos_inds': h5_pos_inds,
+                               'h5_pos_vals': h5_pos_vals})
+
             usid_main = hdf_utils.write_main_dataset(h5_f, input_data, main_data_name, quantity, dset_units, pos_dims,
-                                                      spec_dims, main_dset_attrs=None)
+                                                     spec_dims, main_dset_attrs=None, slow_to_fast=False, **kwargs)
             self.assertIsInstance(usid_main, USIDataset)
             self.assertEqual(usid_main.name.split('/')[-1], main_data_name)
             self.assertEqual(usid_main.parent, h5_f)
-            self.assertTrue(np.allclose(main_data, usid_main[()]))
+            if not empty_main:
+                self.assertTrue(np.allclose(main_data, usid_main[()]))
 
             data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
                                           pos_data, h5_main=usid_main, is_spectral=False)
@@ -685,134 +705,22 @@ class TestWriteMainDataset(TestModel):
         os.remove(file_path)
 
     def test_numpy_small(self):
-        self.base_small(False)
+        self.base_write()
 
     def test_dask_small(self):
-        self.base_small(True)
+        self.base_write(lazy_main=True)
 
-    def test_empty(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        main_data = (15, 14)
-        main_data_name = 'Test_Main'
-        quantity = 'Current'
-        dset_units = 'nA'
+    def test_empty_main(self):
+        self.base_write(empty_main=True)
 
-        pos_sizes = [5, 3]
-        pos_names = ['X', 'Y']
-        pos_units = ['nm', 'um']
-
-        pos_dims = []
-        for length, name, units in zip(pos_sizes, pos_names, pos_units):
-            pos_dims.append(write_utils.Dimension(name, units, np.arange(length)))
-        pos_data = np.vstack((np.tile(np.arange(5), 3),
-                              np.repeat(np.arange(3), 5))).T
-
-        spec_sizes = [7, 2]
-        spec_names = ['Bias', 'Cycle']
-        spec_units = ['V', '']
-        spec_dims = []
-        for length, name, units in zip(spec_sizes, spec_names, spec_units):
-            spec_dims.append(write_utils.Dimension(name, units, np.arange(length)))
-        spec_data = np.vstack((np.tile(np.arange(7), 2),
-                              np.repeat(np.arange(2), 7)))
-
-        with h5py.File(file_path) as h5_f:
-            usid_main = hdf_utils.write_main_dataset(h5_f, main_data, main_data_name, quantity, dset_units, pos_dims,
-                                                      spec_dims, dtype=np.float16, main_dset_attrs=None)
-            self.assertIsInstance(usid_main, USIDataset)
-            self.assertEqual(usid_main.name.split('/')[-1], main_data_name)
-            self.assertEqual(usid_main.parent, h5_f)
-            self.assertEqual(main_data, usid_main.shape)
-
-            data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
-                                          pos_data, h5_main=usid_main, is_spectral=False)
-
-            data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names, spec_units,
-                                          spec_data, h5_main=usid_main, is_spectral=True)
-        os.remove(file_path)
+    def test_write_main_existing_pos_aux(self):
+        self.base_write(pre_pos=True, pre_spec=False)
 
     def test_write_main_existing_spec_aux(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        main_data = np.random.rand(15, 14)
-        main_data_name = 'Test_Main'
-        quantity = 'Current'
-        dset_units = 'nA'
+        self.base_write(pre_pos=False, pre_spec=True)
 
-        pos_sizes = [5, 3]
-        pos_names = ['X', 'Y']
-        pos_units = ['nm', 'um']
-        pos_dims = []
-        for length, name, units in zip(pos_sizes, pos_names, pos_units):
-            pos_dims.append(write_utils.Dimension(name, units, np.arange(length)))
-        pos_data = np.vstack((np.tile(np.arange(5), 3),
-                              np.repeat(np.arange(3), 5))).T
-
-        spec_sizes = [7, 2]
-        spec_names = ['Bias', 'Cycle']
-        spec_units = ['V', '']
-        spec_dims = []
-        for length, name, units in zip(spec_sizes, spec_names, spec_units):
-            spec_dims.append(write_utils.Dimension(name, units, np.arange(length)))
-        spec_data = np.vstack((np.tile(np.arange(7), 2),
-                               np.repeat(np.arange(2), 7)))
-
-        with h5py.File(file_path) as h5_f:
-            h5_spec_inds, h5_spec_vals = hdf_utils.write_ind_val_dsets(h5_f, spec_dims, is_spectral=True)
-            data_utils.validate_aux_dset_pair(self,h5_f, h5_spec_inds, h5_spec_vals, spec_names, spec_units, spec_data,
-                                          is_spectral=True)
-
-            usid_main = hdf_utils.write_main_dataset(h5_f, main_data, main_data_name, quantity, dset_units, pos_dims,
-                                                      None, h5_spec_inds=h5_spec_inds, h5_spec_vals=h5_spec_vals,
-                                                      main_dset_attrs=None)
-
-            data_utils.validate_aux_dset_pair(self,h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
-                                          pos_data, h5_main=usid_main, is_spectral=False)
-
-        os.remove(file_path)
-
-    def test_existing_both_aux(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        main_data = np.random.rand(15, 14)
-        main_data_name = 'Test_Main'
-        quantity = 'Current'
-        dset_units = 'nA'
-
-        pos_sizes = [5, 3]
-        pos_names = ['X', 'Y']
-        pos_units = ['nm', 'um']
-        pos_dims = []
-        for length, name, units in zip(pos_sizes, pos_names, pos_units):
-            pos_dims.append(write_utils.Dimension(name, units, np.arange(length)))
-        pos_data = np.vstack((np.tile(np.arange(5), 3),
-                              np.repeat(np.arange(3), 5))).T
-
-        spec_sizes = [7, 2]
-        spec_names = ['Bias', 'Cycle']
-        spec_units = ['V', '']
-        spec_dims = []
-        for length, name, units in zip(spec_sizes, spec_names, spec_units):
-            spec_dims.append(write_utils.Dimension(name, units, np.arange(length)))
-        spec_data = np.vstack((np.tile(np.arange(7), 2),
-                               np.repeat(np.arange(2), 7)))
-
-        with h5py.File(file_path) as h5_f:
-            h5_spec_inds, h5_spec_vals = hdf_utils.write_ind_val_dsets(h5_f, spec_dims, is_spectral=True)
-            h5_pos_inds, h5_pos_vals = hdf_utils.write_ind_val_dsets(h5_f, pos_dims, is_spectral=False)
-
-            usid_main = hdf_utils.write_main_dataset(h5_f, main_data, main_data_name, quantity, dset_units, None,
-                                                      None, h5_spec_inds=h5_spec_inds, h5_spec_vals=h5_spec_vals,
-                                                      h5_pos_vals=h5_pos_vals, h5_pos_inds=h5_pos_inds,
-                                                      main_dset_attrs=None)
-
-            data_utils.validate_aux_dset_pair(self,h5_f, h5_pos_inds, h5_pos_vals, pos_names, pos_units,
-                                          pos_data, h5_main=usid_main, is_spectral=False)
-
-            data_utils.validate_aux_dset_pair(self,h5_f, h5_spec_inds, h5_spec_vals, spec_names,spec_units,
-                                          spec_data, h5_main=usid_main, is_spectral=True)
-        os.remove(file_path)
+    def test_write_main_both_existing_aux(self):
+        self.base_write(pre_pos=True, pre_spec=True)
 
     def test_prod_sizes_mismatch(self):
         file_path = 'test.h5'
