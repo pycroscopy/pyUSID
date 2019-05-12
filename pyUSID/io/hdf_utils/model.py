@@ -44,7 +44,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
     verbose : bool, optional
         Whether or not to print debugging statements
     sort_dims : bool
-        If True, the data is sorted so that the dimensions are in order from fastest to slowest
+        If True, the data is sorted so that the dimensions are in order from slowest to fastest
         If False, the data is kept in the original order
         If `get_labels` is also True, the labels are sorted as well.
     lazy : bool, optional. Default = False
@@ -198,6 +198,9 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
     Since the sort orders we have are from fastest to slowest, we need to reverse the orders
     for both the position and spectroscopic dimensions
     """
+    if verbose:
+        print('Will attempt to reshape main dataset from:\n{} to {}'.format(ds_main.shape, pos_dims[::-1] + spec_dims[::-1]))
+
     try:
         ds_Nd = ds_main.reshape(pos_dims[::-1] + spec_dims[::-1])
 
@@ -224,30 +227,32 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
                             spec_labs[spec_sort][::-1]))
 
     if verbose:
-        print('\nAfter first reshape, labels are', all_labels)
+        print('\nAfter reshaping, labels are', all_labels)
         print('Data shape is', ds_Nd.shape)
 
     """
-    Now we transpose the axes for both the position and spectroscopic dimensions
-    so that they are in the same order as in the index array
+    At this point, the data is arranged from slowest to fastest dimension in both pos and spec
     """
+    if sort_dims:
+        results = [ds_Nd, True]
+        if get_labels:
+            results.append(all_labels)
+        return results
+
+    if verbose:
+        print('\nGoing to put dimensions back in the same order as in the file:')
 
     swap_axes = list()
-    if sort_dims:
-        for lab in pos_labs[pos_sort]:
-            swap_axes.append(np.argwhere(all_labels == lab).squeeze())
-        for lab in spec_labs[spec_sort]:
-            swap_axes.append(np.argwhere(all_labels == lab).squeeze())
-    else:
-        for lab in pos_labs:
-            swap_axes.append(np.argwhere(all_labels == lab).squeeze())
-        for lab in spec_labs:
-            swap_axes.append(np.argwhere(all_labels == lab).squeeze())
+    # Compare the original order of the pos / spec labels with where these dimensions occur in the sorted labels
+    for lab in pos_labs:
+        swap_axes.append(np.argwhere(all_labels == lab).squeeze())
+    for lab in spec_labs:
+        swap_axes.append(np.argwhere(all_labels == lab).squeeze())
 
     swap_axes = np.array(swap_axes)
 
     if verbose:
-        print('\nAxes will permuted in this order:', swap_axes)
+        print('Axes will permuted in this order:', swap_axes)
         print('New labels ordering:', all_labels[swap_axes])
 
     ds_Nd = ds_Nd.transpose(tuple(swap_axes))
@@ -693,7 +698,8 @@ def get_unit_values(ds_inds, ds_vals, dim_names=None, all_dim_names=None, is_spe
 
 def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, units, pos_dims, spec_dims,
                        main_dset_attrs=None, h5_pos_inds=None, h5_pos_vals=None, h5_spec_inds=None, h5_spec_vals=None,
-                       aux_spec_prefix='Spectroscopic_', aux_pos_prefix='Position_', verbose=False, **kwargs):
+                       aux_spec_prefix='Spectroscopic_', aux_pos_prefix='Position_', verbose=False,
+                       slow_to_fast=False, **kwargs):
     """
     Writes the provided data as a 'Main' dataset with all appropriate linking.
     By default, the instructions for generating the ancillary datasets should be specified using the pos_dims and
@@ -738,6 +744,9 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
         Default prefix for Position datasets. Default = "Position"
     verbose : bool, Optional, default=False
         If set to true - prints debugging logs
+    slow_to_fast : bool, Optional. Default=False
+        Set to True if the dimensions are arranged from slowest varying to fastest varying.
+        Set to False otherwise.
     kwargs will be passed onto the creation of the dataset. Please pass chunking, compression, dtype, and other
         arguments this way
 
@@ -813,7 +822,7 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
         if verbose:
             print('Passed all pre-tests for creating position datasets')
         h5_pos_inds, h5_pos_vals = write_ind_val_dsets(h5_parent_group, pos_dims, is_spectral=False, verbose=verbose,
-                                                       base_name=aux_pos_prefix)
+                                                       slow_to_fast=slow_to_fast, base_name=aux_pos_prefix)
         if verbose:
             print('Created position datasets!')
 
@@ -829,7 +838,7 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
         if verbose:
             print('Passed all pre-tests for creating spectroscopic datasets')
         h5_spec_inds, h5_spec_vals = write_ind_val_dsets(h5_parent_group, spec_dims, is_spectral=True, verbose=verbose,
-                                                         base_name=aux_spec_prefix)
+                                                         slow_to_fast=slow_to_fast, base_name=aux_spec_prefix)
         if verbose:
             print('Created Spectroscopic datasets')
 
