@@ -373,6 +373,7 @@ def make_beps_file(rev_spec=False):
         source_dset_name = 'source_main'
         tool_name = 'Fitter'
 
+        # Per USID, dimensions are arranged from fastest to slowest
         source_pos_data = np.vstack((np.tile(np.arange(num_cols), num_rows),
                                      np.repeat(np.arange(num_rows), num_cols))).T
         pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
