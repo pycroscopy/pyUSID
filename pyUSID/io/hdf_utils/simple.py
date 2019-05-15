@@ -370,9 +370,11 @@ def validate_dims_against_main(main_shape, dims, is_spectroscopic=True):
         dim_category = 'Position'
 
     # TODO: This is where the dimension type will need to be taken into account:
-    if main_shape[main_dim] != np.product([len(x.values) for x in dims]):
-        raise ValueError(dim_category + ' dimensions in main data do not match with product of values in provided '
-                                        'Dimension objects')
+    lhs = main_shape[main_dim]
+    rhs = np.product([len(x.values) for x in dims])
+    if lhs != rhs:
+        raise ValueError(dim_category + ' dimensions in main data of size: {} do not match with product of values in provided '
+                                        'Dimension objects: {}'.format(lhs, rhs))
 
 
 def check_if_main(h5_main, verbose=False):
