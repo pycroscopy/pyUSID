@@ -657,14 +657,6 @@ class TestWriteMainDataset(TestModel):
         spec_data = np.vstack((np.tile(np.arange(7), 2),
                               np.repeat(np.arange(2), 7)))
 
-        # Sending in Fast to Slow but what comes out is slow to fast
-        spec_data = np.flipud(spec_data)
-        pos_data = np.fliplr(pos_data)
-        pos_names = pos_names[::-1]
-        pos_units = pos_units[::-1]
-        spec_names = spec_names[::-1]
-        spec_units = spec_units[::-1]
-
         input_data = main_data
         kwargs = {}
         if lazy_main:
@@ -698,10 +690,10 @@ class TestWriteMainDataset(TestModel):
                 self.assertTrue(np.allclose(main_data, usid_main[()]))
 
             data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
-                                          pos_data, h5_main=usid_main, is_spectral=False)
+                                          pos_data, h5_main=usid_main, is_spectral=False, slow_to_fast=False)
 
             data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names, spec_units,
-                                          spec_data, h5_main=usid_main, is_spectral=True)
+                                          spec_data, h5_main=usid_main, is_spectral=True, slow_to_fast=False)
         os.remove(file_path)
 
     def test_numpy_small(self):
