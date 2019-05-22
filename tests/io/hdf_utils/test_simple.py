@@ -171,82 +171,54 @@ class TestGetAllMain(TestSimple):
 
 class TestWriteIndValDsets(TestSimple):
 
-    def base_bare_minimum_pos(self, slow_to_fast):
+    def base_bare_minimum_inputs(self, slow_to_fast, is_spectral):
         num_cols = 3
         num_rows = 2
         sizes = [num_cols, num_rows]
         dim_names = ['X', 'Y']
         dim_units = ['nm', 'um']
 
+        if slow_to_fast:
+            dim_names = dim_names[::-1]
+            dim_units = dim_units[::-1]
+            sizes = sizes[::-1]
+
         descriptor = []
         for length, name, units in zip(sizes, dim_names, dim_units):
             descriptor.append(write_utils.Dimension(name, units, np.arange(length)))
 
+        inds_data = np.vstack((np.tile(np.arange(num_cols), num_rows),
+                              np.repeat(np.arange(num_rows), num_cols)))\
+
+        if not is_spectral:
+            inds_data = inds_data.T
+
         if slow_to_fast:
-            # X is the slower dimension
-            pos_data = np.vstack((np.repeat(np.arange(num_cols), num_rows),
-                                  np.tile(np.arange(num_rows), num_cols))).T
-        else:
-            pos_data = np.vstack((np.repeat(np.arange(num_rows), num_cols),
-                                  np.tile(np.arange(num_cols), num_rows))).T
-            # Sending in to Fast to Slow but what comes out is slow to fast
-            dim_names = dim_names[::-1]
-            dim_units = dim_units[::-1]
+            func = np.flipud if is_spectral else np.fliplr
+            inds_data = func(inds_data)
 
         file_path = 'test_write_ind_val_dsets.h5'
         data_utils.delete_existing_file(file_path)
         with h5py.File(file_path, mode='w') as h5_f:
-            h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_f, descriptor, is_spectral=False,
+            h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_f, descriptor, is_spectral=is_spectral,
                                                              slow_to_fast=slow_to_fast)
 
-            data_utils.validate_aux_dset_pair(self, h5_f, h5_inds, h5_vals, dim_names, dim_units, pos_data,
-                                              is_spectral=False)
+            data_utils.validate_aux_dset_pair(self, h5_f, h5_inds, h5_vals, dim_names, dim_units, inds_data,
+                                              is_spectral=is_spectral, slow_to_fast=slow_to_fast)
 
         os.remove(file_path)
 
     def test_legal_bare_minimum_pos_f2s(self):
-        self.base_bare_minimum_pos(False)
+        self.base_bare_minimum_inputs(False, False)
 
     def test_legal_bare_minimum_pos_s2f(self):
-        self.base_bare_minimum_pos(True)
-
-    def base_bare_minimum_spec(self, slow_to_fast):
-        num_cols = 3
-        num_rows = 2
-        sizes = [num_cols, num_rows]
-        dim_names = ['X', 'Y']
-        dim_units = ['nm', 'um']
-
-        descriptor = []
-        for length, name, units in zip(sizes, dim_names, dim_units):
-            descriptor.append(write_utils.Dimension(name, units, np.arange(length)))
-
-        if slow_to_fast:
-            spec_data = np.vstack((np.repeat(np.arange(num_cols), num_rows),
-                                   np.tile(np.arange(num_rows), num_cols)))
-        else:
-            spec_data = np.vstack((np.repeat(np.arange(num_rows), num_cols),
-                                   np.tile(np.arange(num_cols), num_rows)))
-            # Sending in to Fast to Slow but what comes out is slow to fast
-            dim_names = dim_names[::-1]
-            dim_units = dim_units[::-1]
-
-        file_path = 'test_write_ind_val_dsets.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path, mode='w') as h5_f:
-            h5_group = h5_f.create_group("Blah")
-            h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_group, descriptor, is_spectral=True,
-                                                             slow_to_fast=slow_to_fast)
-
-            data_utils.validate_aux_dset_pair(self, h5_group, h5_inds, h5_vals, dim_names, dim_units, spec_data,
-                                          is_spectral=True)
-        os.remove(file_path)
+        self.base_bare_minimum_inputs(True, False)
 
     def test_legal_bare_minimum_spec_f2s(self):
-        self.base_bare_minimum_spec(False)
+        self.base_bare_minimum_inputs(False, True)
 
     def test_legal_bare_minimum_spec_s2f(self):
-        self.base_bare_minimum_spec(True)
+        self.base_bare_minimum_inputs(True, True)
 
     def test_legal_override_steps_offsets_base_name(self):
         num_cols = 2
@@ -264,16 +236,11 @@ class TestWriteIndValDsets(TestSimple):
             descriptor.append(write_utils.Dimension(name, units, initial + step * np.arange(length)))
 
         new_base_name = 'Overriden'
+        # Sending in Fast to Slow but what comes out is slow to fast
         spec_inds = np.vstack((np.tile(np.arange(num_cols), num_rows),
                               np.repeat(np.arange(num_rows), num_cols)))
         spec_vals = np.vstack((np.tile(np.arange(num_cols), num_rows) * col_step + col_initial,
                               np.repeat(np.arange(num_rows), num_cols) * row_step + row_initial))
-
-        # Sending in Fast to Slow but what comes out is slow to fast
-        spec_inds = np.flipud(spec_inds)
-        spec_vals = np.flipud(spec_vals)
-        dim_names = dim_names[::-1]
-        dim_units = dim_units[::-1]
 
         file_path = 'test_write_ind_val_dsets.h5'
         data_utils.delete_existing_file(file_path)
@@ -282,7 +249,7 @@ class TestWriteIndValDsets(TestSimple):
             h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_group, descriptor, is_spectral=True,
                                                              base_name=new_base_name, slow_to_fast=False)
             data_utils.validate_aux_dset_pair(self, h5_group, h5_inds, h5_vals, dim_names, dim_units, spec_inds,
-                                          vals_matrix=spec_vals, base_name=new_base_name, is_spectral=True)
+                                          vals_matrix=spec_vals, base_name=new_base_name, is_spectral=True, slow_to_fast=False)
         os.remove(file_path)
 
     def test_illegal(self):
