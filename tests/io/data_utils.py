@@ -87,7 +87,8 @@ def capture_stdout():
 
 
 def validate_aux_dset_pair(test_class, h5_group, h5_inds, h5_vals, dim_names, dim_units, inds_matrix,
-                           vals_matrix=None, base_name=None, h5_main=None, is_spectral=True):
+                           vals_matrix=None, base_name=None, h5_main=None, is_spectral=True,
+                           slow_to_fast=False):
     if vals_matrix is None:
         vals_matrix = inds_matrix
     if base_name is None:
@@ -97,6 +98,18 @@ def validate_aux_dset_pair(test_class, h5_group, h5_inds, h5_vals, dim_names, di
             base_name = 'Position'
     else:
         test_class.assertIsInstance(base_name, (str, unicode))
+
+    if not slow_to_fast:
+        # Sending in to Fast to Slow but what comes out is slow to fast
+        func = np.flipud if is_spectral else np.fliplr
+
+        print(inds_matrix)
+
+        vals_matrix = func(vals_matrix)
+        inds_matrix = func(inds_matrix)
+
+        dim_names = dim_names[::-1]
+        dim_units = dim_units[::-1]
 
     for h5_dset, exp_dtype, exp_name, ref_data in zip([h5_inds, h5_vals],
                                                       [INDICES_DTYPE, VALUES_DTYPE],
