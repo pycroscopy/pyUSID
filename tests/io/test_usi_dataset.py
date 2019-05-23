@@ -26,11 +26,18 @@ test_h5_file_path = data_utils.std_beps_path
 class TestUSIDataset(unittest.TestCase):
 
     def setUp(self):
-        self.rev_spec = True
+        self.rev_spec = False
         data_utils.make_beps_file(rev_spec=self.rev_spec)
 
     def tearDown(self):
         os.remove(test_h5_file_path)
+
+    def get_expected_n_dim(self, h5_f):
+        nd_slow_to_fast = h5_f['/Raw_Measurement/n_dim_form'][()]
+        nd_fast_to_slow = nd_slow_to_fast.transpose(1, 0, 3, 2)
+        if self.rev_spec:
+            nd_fast_to_slow = nd_fast_to_slow.transpose(0, 1, 3, 2)
+        return nd_slow_to_fast, nd_fast_to_slow
 
     def test_string_representation(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -89,22 +96,19 @@ class TestEquality(TestUSIDataset):
 
 class TestGetNDimFormExists(TestUSIDataset):
 
-    def test_unsorted(self):
+    def test_blah(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            expected = h5_f['/Raw_Measurement/n_dim_form'][()]
-            expected = expected.transpose(1, 0, 3, 2)
-            usi_dset = USIDataset(h5_main)
-            self.assertTrue(np.allclose(expected, usi_dset.get_n_dim_form(lazy=False)))
+            usi_dset = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            nd_slow_to_fast, nd_fast_to_slow = self.get_expected_n_dim(h5_f)
+            actual_f2s = usi_dset.get_n_dim_form(lazy=False)
+            self.assertTrue(np.allclose(nd_fast_to_slow, actual_f2s))
 
-    def test_sorted(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            expected = np.reshape(h5_main, (3, 5, 7, 2))
-            expected = np.transpose(expected, (1, 0, 3, 2))
-            usi_dset = USIDataset(h5_main)
+            nd_form, success = hdf_utils.reshape_to_n_dims(usi_dset, sort_dims=True)
+            print(nd_form.shape)
+
             usi_dset.toggle_sorting()
-            self.assertTrue(np.allclose(expected, usi_dset.get_n_dim_form(lazy=False)))
+            actual_s2f = usi_dset.get_n_dim_form(lazy=False)
+            self.assertTrue(np.allclose(nd_slow_to_fast, actual_s2f))
 
 
 class TestPosSpecSlices(TestUSIDataset):
@@ -266,9 +270,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice(None, lazy=False)
-            expected = h5_f['/Raw_Measurement/n_dim_form'][()]
-            expected = expected.transpose(1, 0, 3, 2)
-            self.assertTrue(np.allclose(expected, actual))
+            nd_slow_to_fast, nd_fast_to_slow = self.get_expected_n_dim(h5_f)
+            self.assertTrue(np.allclose(nd_fast_to_slow, actual))
 
     def test_non_existent_dim(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -298,8 +301,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice(slice_dict={'X': 3}, lazy=False)
-            n_dim_form = h5_f['/Raw_Measurement/n_dim_form'][()]
-            expected = n_dim_form[3, :, :, :]
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[3, :, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -307,8 +310,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice({'X': slice(1, 5, 2)}, lazy=False)
-            n_dim_form = h5_f['/Raw_Measurement/n_dim_form'][()]
-            expected = n_dim_form[slice(1, 5, 2), :, :, :]
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[slice(1, 5, 2), :, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -316,8 +319,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice({'X': slice(1, 5, 2), 'Y': 1}, lazy=False)
-            n_dim_form = h5_f['/Raw_Measurement/n_dim_form'][()]
-            expected = n_dim_form[slice(1, 5, 2), 1, :, :]
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[slice(1, 5, 2), 1, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -325,8 +328,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice({'X': [1, 2, 4], 'Y': 1}, lazy=False)
-            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
-            expected = n_dim_form[[1, 2, 4], 1, :, :]
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[[1, 2, 4], 1, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -334,8 +337,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice({'X': 3, 'Y': 1}, lazy=False)
-            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
-            expected = n_dim_form[3, 1, :, :]
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[3, 1, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -343,8 +346,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)}, lazy=False)
-            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
-            expected = n_dim_form[[1, 2, 4], :, slice(1, 7, 3), :]
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[[1, 2, 4], :, slice(1, 7, 3), :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -352,9 +355,9 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
-                                               lazy=False)
-            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
-            expected = n_dim_form[[1, 2, 4], 2, slice(1, 7, 3), 1]
+                                              lazy=False)
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[[1, 2, 4], 2, slice(1, 7, 3), 1]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -370,7 +373,11 @@ class TestSorting(TestUSIDataset):
 
             usi_main.toggle_sorting()
 
-            self.assertTrue(usi_main.n_dim_labels==['X', 'Y', 'Cycle', 'Bias'])
+            self.assertEqual(usi_main.n_dim_labels, ['Y', 'X', 'Cycle', 'Bias'])
+
+            usi_main.toggle_sorting()
+
+            self.assertTrue(usi_main.n_dim_labels == ['X', 'Y', 'Bias', 'Cycle'])
 
     def test_get_current_sorting(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
