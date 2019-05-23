@@ -28,6 +28,7 @@ class TestUSIDataset(unittest.TestCase):
     def setUp(self):
         self.rev_spec = False
         data_utils.make_beps_file(rev_spec=self.rev_spec)
+        self.orig_labels_order = ['X', 'Y', 'Cycle', 'Bias'] if self.rev_spec else ['X', 'Y', 'Bias', 'Cycle']
 
     def tearDown(self):
         os.remove(test_h5_file_path)
@@ -141,7 +142,7 @@ class TestPosSpecSlices(TestUSIDataset):
     def test_out_of_bounds(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            with self.assertRaises(ValueError):
+            with self.assertRaises(IndexError):
                 _ = usi_main._get_pos_spec_slices({'X': 15, 'Y': 1})
 
     def test_one_pos_dim_removed(self):
@@ -288,13 +289,16 @@ class TestSlice(TestUSIDataset):
     def test_negative_index(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            with self.assertRaises(ValueError):
-                _ = usi_main.slice({'X': -4, 'Y': 1})
+            actual, success = usi_main.slice({'X': -2, 'Y': 1}, lazy=False)
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[-2, 1, :, :]
+            self.assertTrue(np.allclose(expected, actual))
+            self.assertTrue(success)
 
     def test_out_of_bounds(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            with self.assertRaises(ValueError):
+            with self.assertRaises(IndexError):
                 _ = usi_main.slice({'X': 15, 'Y': 1})
 
     def test_one_pos_dim_removed(self):
@@ -369,7 +373,7 @@ class TestSorting(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
 
-            self.assertTrue(usi_main.n_dim_labels == ['X', 'Y', 'Bias', 'Cycle'])
+            self.assertEqual(usi_main.n_dim_labels, self.orig_labels_order)
 
             usi_main.toggle_sorting()
 
@@ -377,7 +381,7 @@ class TestSorting(TestUSIDataset):
 
             usi_main.toggle_sorting()
 
-            self.assertTrue(usi_main.n_dim_labels == ['X', 'Y', 'Bias', 'Cycle'])
+            self.assertEqual(usi_main.n_dim_labels, self.orig_labels_order)
 
     def test_get_current_sorting(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:

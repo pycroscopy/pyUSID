@@ -125,6 +125,7 @@ class USIDataset(h5py.Dataset):
         self.__n_dim_data_orig = None
         self.__n_dim_data_s2f = None
         self.__curr_ndim_form = None
+        self.__n_dim_form_avail = False
 
         # Should the dimensions be sorted from slowest to fastest
         self.__sort_dims = sort_dims
@@ -141,6 +142,7 @@ class USIDataset(h5py.Dataset):
 
         try:
             self.__n_dim_data_orig = self.get_n_dim_form(lazy=True)
+            self.__n_dim_form_avail = True
             self.__n_dim_data_s2f = self.__n_dim_data_orig.transpose(self.__n_dim_sort_order_orig_s2f)
         except ValueError:
             warn('This dataset does not have an N-dimensional form')
@@ -352,6 +354,45 @@ class USIDataset(h5py.Dataset):
                 raise TypeError('The slices must be array-likes or slice objects.')
         return True
 
+    def __slice_n_dim_form(self, slice_dict, verbose=False, lazy=False):
+        """
+        Slices the N-dimensional form of the dataset based on the slice dictionary.
+        Assumes that an N-dimensional form exists and is what was requested
+
+        Parameters
+        ----------
+        slice_dict : dict
+            Dictionary of array-likes. for any dimension one needs to slice
+        verbose : bool, optional
+            Whether or not to print debugging statements
+        lazy : bool, optional. Default = False
+            If set to false, data_slice will be a :class:`numpy.ndarray`
+            Else returned object is :class:`dask.array.core.Array`
+
+        Returns
+        -------
+        data_slice : :class:`numpy.ndarray`, or :class:`dask.array.core.Array`
+            Slice of the dataset.
+        success : bool
+            Always True
+        """
+        nd_slice = []
+
+        for dim_name in self.n_dim_labels:
+            nd_slice.append(slice_dict.get(dim_name, slice(None)))
+
+        # Dask multidimensional slicing does not work if list is passed:
+        nd_slice = tuple(nd_slice)
+        if verbose:
+            print(self.n_dim_labels)
+            print(nd_slice)
+
+        sliced_dset = self.__curr_ndim_form[nd_slice]
+        if not lazy:
+            sliced_dset = sliced_dset.compute()
+
+        return sliced_dset, True
+
     def slice(self, slice_dict, ndim_form=True, as_scalar=False, verbose=False, lazy=False):
         """
         Slice the dataset based on an input dictionary of 'str': slice pairs.
@@ -392,6 +433,9 @@ class USIDataset(h5py.Dataset):
             raise TypeError('as_scalar should be a bool')
         if not isinstance(verbose, bool):
             raise TypeError('verbose should be a bool')
+
+        if self.__n_dim_form_avail and ndim_form:
+            return self.__slice_n_dim_form(slice_dict, verbose=verbose, lazy=lazy)
 
         # Convert the slice dictionary into lists of indices for each dimension
         pos_slice, spec_slice = self._get_pos_spec_slices(slice_dict)
@@ -518,7 +562,7 @@ class USIDataset(h5py.Dataset):
             dim_ind = np.squeeze(np.argwhere(self.__orig_n_dim_labs == key))
             cur_dim_size = self.__orig_n_dim_sizes[dim_ind]
             if np.max(val) >= cur_dim_size:
-                raise ValueError('slicing argument for dimension: {} was beyond {}'.format(key, cur_dim_size))
+                raise IndexError('slicing argument for dimension: {} was beyond {}'.format(key, cur_dim_size))
 
             n_dim_slices[key] = val
 
