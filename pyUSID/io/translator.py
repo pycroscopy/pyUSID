@@ -9,9 +9,16 @@ Created on Tue Nov  3 15:07:16 2015
 
 from __future__ import division, print_function, absolute_import, unicode_literals
 import abc
+import sys
+import os
+from warnings import warn
 import time as tm
 from .io_utils import get_time_stamp
+from .dtype_utils import validate_list_of_strings
 from ..processing.comp_utils import get_available_memory
+
+if sys.version_info.major == 3:
+    unicode = str
 
 
 class Translator(object):
@@ -43,6 +50,38 @@ class Translator(object):
         """
         raise NotImplementedError('The translate method needs to be implemented by the child class')
 
+    @staticmethod
+    def is_valid_file(file_path, *args, **kwargs):
+        """
+        Checks whether the provided file can be read by this translator.
+
+        This basic function compares the file extension against the "extension" keyword argument
+        If the extension matches, this function returns True
+
+        Parameters
+        ----------
+        file_path : str
+            Path to raw data file
+
+        Returns
+        -------
+        bool : Whether or not this translator can read this file
+        """
+        targ_ext = kwargs.get('extension', None)
+        if not targ_ext:
+            raise NotImplementedError('Either is_valid_file() has not been implemented by this translator '
+                                      'or the "extension" keyword argument was missing')
+        if isinstance(targ_ext, (str, unicode)):
+            targ_ext = [targ_ext]
+        targ_ext = validate_list_of_strings(targ_ext, parm_name='(keyword argument) "extension"')
+
+        file_path = os.path.abspath(file_path)
+        extension = os.path.splitext(file_path)[1][1:]
+        if extension in targ_ext:
+            return True
+        else:
+            return False
+
 
 def generate_dummy_main_parms():
     """
@@ -53,6 +92,9 @@ def generate_dummy_main_parms():
     main_parms : dictionary
         Dictionary containing basic descriptors that describe a dataset
     """
+    warn('generate_dummy_main_parms() only serves as an example for metadata that should be included with the data.\n'
+        'Please consider populating appropriate metadata manually instead of using this function', DeprecationWarning)
+
     main_parms = dict()
     main_parms['translate_time'] = get_time_stamp()
     main_parms['instrument'] = 'cypher_west'
