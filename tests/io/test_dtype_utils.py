@@ -550,7 +550,6 @@ class TestStackRealToTargetDtypeNumpy(unittest.TestCase):
         actual = dtype_utils.stack_real_to_target_dtype(real_val, struc_dtype)
         self.assertTrue(compare_structured_arrays(actual, structured_array))
 
-
     def test_compound_nd(self):
         num_elems = (2, 3, 5, 7)
         structured_array = np.zeros(shape=num_elems, dtype=struc_dtype)
@@ -563,11 +562,17 @@ class TestStackRealToTargetDtypeNumpy(unittest.TestCase):
         actual = dtype_utils.stack_real_to_target_dtype(real_val, struc_dtype)
         self.assertTrue(compare_structured_arrays(actual, structured_array))
 
-    def test_cast(self):
+    def test_cast_std_type(self):
         uint_array = np.random.randint(0, high=15, size=(3, 4, 5),
                                        dtype=np.uint16)
         actual = dtype_utils.stack_real_to_target_dtype(uint_array, np.float32)
-        self.assertTrue(np.allclose(actual, uint_array))
+        self.assertTrue(np.allclose(actual, np.float32(uint_array)))
+
+    def test_cast_str_type(self):
+        uint_array = np.random.randint(0, high=15, size=(3, 4, 5),
+                                       dtype=np.uint16)
+        actual = dtype_utils.stack_real_to_target_dtype(uint_array, np.dtype('<f4'))
+        self.assertTrue(np.allclose(actual, np.float32(uint_array)))
 
 
 class TestStackRealToTargetDtypeHDF5(TestDtypeUtils):

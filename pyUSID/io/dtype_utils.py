@@ -417,6 +417,9 @@ def stack_real_to_target_dtype(ds_real, new_dtype, lazy=False):
     except TypeError:
         return new_dtype(ds_real)
 
+    # catching all other cases, such as np.dtype('<f4')
+    return new_dtype.type(ds_real)
+
 
 def validate_dtype(dtype):
     """
