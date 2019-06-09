@@ -75,8 +75,16 @@ class Translator(object):
             targ_ext = [targ_ext]
         targ_ext = validate_list_of_strings(targ_ext, parm_name='(keyword argument) "extension"')
 
+        # Get rid of any '.' separators that may be in the list of extensions
+        # Also turn to lower case for case insensitive comparisons
+        targ_ext = [item.replace('.', '').lower() for item in targ_ext]
+
         file_path = os.path.abspath(file_path)
         extension = os.path.splitext(file_path)[1][1:]
+
+        # Ensure extension is lower case just like targets above
+        extension = extension.lower()
+
         if extension in targ_ext:
             return True
         else:
