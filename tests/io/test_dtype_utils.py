@@ -14,7 +14,7 @@ import dask.array as da
 import h5py
 sys.path.append("../../pyUSID/")
 from pyUSID.io import dtype_utils
-from .data_utils import delete_existing_file
+from tests.processing.data_utils import delete_existing_file
 
 struc_dtype = np.dtype({'names': ['r', 'g', 'b'],
                         'formats': [np.float32, np.uint16, np.float64]})

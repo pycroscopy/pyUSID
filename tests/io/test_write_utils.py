@@ -253,7 +253,7 @@ class TestBuildIndValMatrices(unittest.TestCase):
             _ = write_utils.build_ind_val_matrices([[0, 1], np.random.randint(0, high=5, size=(3, 4))])
 
 
-class TesCreateSpecIndsFromVals(unittest.TestCase):
+class TestCreateSpecIndsFromVals(unittest.TestCase):
 
     def test_legal(self):
         max_v = 4
