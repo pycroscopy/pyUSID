@@ -24,9 +24,6 @@ h5_main1 = h5_f['Measurement_000/Channel_001/Raw_Data']
 
 print(hdf_utils.simple.check_if_main(h5_main0, verbose=True))
 #dtype_utils.check_dtype(h5_maini)
-simp = SimpleProcess(h5_main0)
-print(simp.test())
-
 
 class SimpleProcess(Process):
     def __init__(self, h5_main, **kwargs):
@@ -42,13 +39,16 @@ class SimpleProcess(Process):
         fft_data = np.fft.fftshift(np.fft.fft(self.h5_main[ran_ind]))
         return fft_data
     def _create_results_datasets(self):
-	self.h5_results_grp = hedf_utils.create_results_group(self.h5_main, self.process_name)
+        self.h5_results_grp = hdf_utils.create_results_group(self.h5_main, self.process_name)
         assert isinstance(self.h5_results_grp, h5py.Group)
+        self.results = hdf_utils.write_main_dataset(self.h5_results_grp,...)
         #...finish later
     def _write_results_chunk(self):
-	self.results = self.h5_results_grp['Simple_Data']
+        self.results = self.h5_results_grp['Simple_Data']
     def _unit_computation(self):
-        self.data = np.fft.fftshift(np.fft.fft(self.data, axis=1), axes=1))
+        self.data = np.fft.fftshift(np.fft.fft(self.data, axis=1), axes=1)
 
-
+simp = SimpleProcess(h5_main0)
+print(simp.test())
+simp.compute()
 
