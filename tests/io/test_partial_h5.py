@@ -11,7 +11,7 @@ import h5py
 from pyUSID.processing.process import Process
 import numpy as np
 import os
-
+import matplotlib.pyplot as plt
 
 # Creates incomplete h5py dataset object in current path
 h5_path = 'sparse_sampling.h5'
@@ -52,11 +52,12 @@ class SimpleProcess(Process):
     
     def plot_test(self):
         fig, axis = plt.subplots()
-        axis.plot(len(self.test_data), self.test_data)
+        axis.plot(self.test_data)
         plt.savefig('test_partial.png')
 
 if __name__ == '__main__':
     simp = SimpleProcess(h5_main0)
     print(simp.test())
     simp.test()
-    simp.plot_test
+    simp.plot_test()
+
