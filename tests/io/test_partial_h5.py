@@ -29,6 +29,7 @@ class SimpleProcess(Process):
     def __init__(self, h5_main, **kwargs):
         super(SimpleProcess, self).__init__(h5_main, **kwargs)
         self.data = None
+        self.test_data = None
         self.results = None
         self.process_name = 'Simple_Process'
 
@@ -36,8 +37,8 @@ class SimpleProcess(Process):
         if self.mpi_rank > 0:
             return
         ran_ind = np.random.randint(0, high=self.h5_main.shape[0])
-        fft_data = np.fft.fftshift(np.fft.fft(self.h5_main[ran_ind]))
-        return fft_data
+        self.test_data = np.fft.fftshift(np.fft.fft(self.h5_main[ran_ind]))
+        
     def _create_results_datasets(self):
         self.h5_results_grp = hdf_utils.create_results_group(self.h5_main, self.process_name)
         assert isinstance(self.h5_results_grp, h5py.Group)
@@ -45,10 +46,17 @@ class SimpleProcess(Process):
         #...finish later
     def _write_results_chunk(self):
         self.results = self.h5_results_grp['Simple_Data']
+    
     def _unit_computation(self):
         self.data = np.fft.fftshift(np.fft.fft(self.data, axis=1), axes=1)
+    
+    def plot_test(self):
+        fig, axis = plt.subplots()
+        axis.plot(len(self.test_data), self.test_data)
+        plt.savefig('test_partial.png')
 
-simp = SimpleProcess(h5_main0)
-print(simp.test())
-simp.compute()
-
+if __name__ == '__main__':
+    simp = SimpleProcess(h5_main0)
+    print(simp.test())
+    simp.test()
+    simp.plot_test
