@@ -7,9 +7,17 @@ Created on Thurs Jun  27 2019
 from __future__ import division, print_function, unicode_literals, absolute_import
 import unittest
 import numpy as np
-from pyUSID.viz.jupyter_utils import simple_ndim_visualizer
+import matplotlib.pyplot as plt
+from pyUSID.io.write_utils import Dimension
+from pyUSID.viz.jupyter_utils import simple_ndim_visualizer, save_fig_filebox_button
 
 class TestSimpleNdimVisualizer(unittest.TestCase):
+
+    def test_correct(self):
+        data_mat = [[1,2],[3,4]]
+        pos_dims = Dimension('X','unit',[1])
+        spec_dims = Dimension('Y','unit',[1])
+        simple_ndim_visualizer(data_mat, pos_dims, spec_dims)
 
     def test_not_iterable(self):
         arr = np.arange(100).reshape(10,10)
@@ -49,6 +57,14 @@ class TestSimpleNdimVisualizer(unittest.TestCase):
 
     def test_completed_viz_xdim_not_none(self):
         pass
+
+class TestSaveFigFileboxButton(unittest.TestCase):
+
+    def test_correct(self):
+        fig, axis = plt.subplots()
+        file_name = 'filename'
+        save_fig_filebox_button(fig,file_name)
+
 
 if __name__ == '__main__':
     unittest.main()
