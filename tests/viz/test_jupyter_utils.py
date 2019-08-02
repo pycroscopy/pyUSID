@@ -14,8 +14,9 @@ from pyUSID.viz.jupyter_utils import simple_ndim_visualizer, save_fig_filebox_bu
 class TestSimpleNdimVisualizer(unittest.TestCase):
 
     def test_correct(self):
-        data_mat = [[1,2],[3,4]]
-        pos_dims = Dimension('X','unit',[1])
+        data_mat = [[[1,2],[3,4]]
+                   [[3,4],[5,6]]]
+        pos_dims = Dimension('X','unit',[1,2])
         spec_dims = Dimension('Y','unit',[1])
         simple_ndim_visualizer(data_mat, pos_dims, spec_dims)
 
