@@ -4,12 +4,12 @@ Created on: Jul 12, 2019
 Author: Emily Costa
 """
 
-from data_utils import make_sparse_sampling_file
+from tests.io.data_utils import make_sparse_sampling_file
 import pyUSID as usid
 from pyUSID.io import dtype_utils, hdf_utils
 import h5py
 import numpy as np
-from simple_process import SimpleProcess
+from tests.io.simple_process import SimpleProcess
 import os
 
 # Creates incomplete h5py dataset object in current path
@@ -26,7 +26,7 @@ print(hdf_utils.simple.check_if_main(h5_main0, verbose=True))
 
 if __name__ == '__main__':
     simp = SimpleProcess(h5_main0)
-    print(simp.test())
-    simp.test()
-    simp.plot_test()
-
+    #print(simp.test())
+    #simp.test()
+    #simp.plot_test()
+    simp.compute()

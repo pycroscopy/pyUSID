@@ -223,6 +223,18 @@ class TestCmapFuncs(unittest.TestCase):
         with self.assertRaises(TypeError):
             plot_utils.discrete_cmap(num_bins=1, cmap='hello')
 
+    #get_cmap_object
+    def test_cmap_none(self):
+        get_cmap_object(None)
+
+    def test_get_cmap_object(self):
+        get_cmap_object(plt.get_cmap('jet'))
+
+    def test_get_cmap_wrong(self):
+        with self.assertRaises(TypeError):
+            get_cmap_object('jet')
+
+
 class TestPlotFeatures(unittest.TestCase):
 
     #rainbow_plot
@@ -384,25 +396,110 @@ class TestPlotFeatures(unittest.TestCase):
         plot_utils.plot_curves(x_vec, y_mat)
 
     #plot_complex_spectra
+    #helper func
+    def get_complex_2d_image(freq):
+        # Simple function to generate images
+        x_vec = np.linspace(0, freq * np.pi, 256)
+        y_vec_1 = np.sin(x_vec) ** 2
+        y_vec_2 = np.cos(x_vec) ** 2
+        return y_vec_2 * np.atleast_2d(y_vec_2).T + 1j * (y_vec_1 * np.atleast_2d(y_vec_1).T)
+    
     def test_plot_complex_spectra(self):
-        def get_complex_2d_image(freq):
-            # Simple function to generate images
-            x_vec = np.linspace(0, freq * np.pi, 256)
-            y_vec_1 = np.sin(x_vec) ** 2
-            y_vec_2 = np.cos(x_vec) ** 2
-            return y_vec_2 * np.atleast_2d(y_vec_2).T + 1j * (y_vec_1 * np.atleast_2d(y_vec_1).T)
-
         # The range of frequences over which the images are generated
         frequencies = 2 ** np.arange(4)
         image_stack = [get_complex_2d_image(freq) for freq in frequencies]
+        plot_utils.plot_complex_spectra(np.array(image_stack))
 
-        plot_utils.plot_complex_spectra(np.array(image_stack), figsize=(3.5, 3))
+    def test_not_map_stack(self):
+        with self.assertRaises(TypeError):
+            plot_utils.plot_complex_spectra('wrongthing')
+
+    def test_not_x_vec(self):
+        frequencies = 2 ** np.arange(4)
+        image_stack = [get_complex_2d_image(freq) for freq in frequencies]
+        with self.assertRaises(TypeError):
+            plot_utils.plot_complex_spectra(np.array(image_stack), x_vec='notvec')
+
+    def test_is_2d_x_vec(self):
+        frequencies = 2 ** np.arange(4)
+        image_stack = [get_complex_2d_image(freq) for freq in frequencies]
+        with self.assertRaises(ValueError):
+            plot_utils.plot_complex_spectra(np.array(image_stack), [[1]])
+
+    def test_is_not_dim_x_vec(self):
+        frequencies = 2 ** np.arange(4)
+        image_stack = [get_complex_2d_image(freq) for freq in frequencies]
+        with self.assertRaises(ValueError):
+            plot_utils.plot_complex_spectra(np.array(image_stack), [1])
+
+    def test_is_x_vec(self):
+        frequencies = 2 ** np.arange(4)
+        image_stack = [get_complex_2d_image(freq) for freq in frequencies]
+        ran_arr = list()
+        for x in image_stack.shape[1]:
+            ran_arr.append(1)
+        with self.assertRaises(ValueError):
+            plot_utils.plot_complex_spectra(np.array(image_stack), ran_arr)
+
+    def test_num_comps(self):
+        frequencies = 2 ** np.arange(4)
+        image_stack = [get_complex_2d_image(freq) for freq in frequencies]
+        plot_utils.plot_complex_spectra(np.array(image_stack), num_comps=None)
+
+    def test_num_comps_not_int(self):
+        frequencies = 2 ** np.arange(4)
+        image_stack = [get_complex_2d_image(freq) for freq in frequencies]
+        with self.assertRaises(TypeError):
+            plot_utils.plot_complex_spectra(np.array(image_stack), num_comps='wrong')
+
+    def test_not_str(self):
+        frequencies = 2 ** np.arange(4)
+        image_stack = [get_complex_2d_image(freq) for freq in frequencies]
+        with self.assertRaises(TypeError):
+            plot_utils.plot_complex_spectra(np.array(image_stack), title=1)
+
+    def test_not_stdevs(self):
+        frequencies = 2 ** np.arange(4)
+        image_stack = [get_complex_2d_image(freq) for freq in frequencies]
+        with self.assertRaises(TypeError):
+            plot_utils.plot_complex_spectra(np.array(image_stack), stdevs=-1)
 
     #plot_scree
     def test_plot_scree(self):
         scree = np.exp(-1 * np.arange(100))
         plot_utils.plot_scree(scree, color='r')
 
+    def test_title_wrong(self):
+        scree = np.exp(-1 * np.arange(100))
+        with self.assertRaises(TypeError):
+            plot_utils.plot_scree(scree, title=1)
+
+    def test_scree_wrong(self):
+        scree = 'string'
+        with self.assertRaises(TypeError):
+            plot_utils.plot_scree(scree)
+
+    def test_scree_list(self):
+        scree = [1,2,3,4,5]
+        plot_utils.plot_scree(scree, color='r')
+
+    #plot_map_stack
+    #helper func
+    def get_sine_2d_image(freq):
+        x_vec = np.linspace(0, freq*np.pi, 256)
+        y_vec = np.sin(x_vec)**2
+        return y_vec * np.atleast_2d(y_vec).T
+
+    def test_map_stack(self):
+        frequencies = [0.25, 0.5, 1, 2, 4 ,8, 16, 32, 64]
+        image_stack = [get_sine_2d_image(freq) for freq in frequencies]
+        image_stack = np.array(image_stack)
+        fig, axes = plot_utils.plot_map_stack(image_stack, reverse_dims=False, title_yoffset=0.95)
+
+    #export_fig_data
+    def test_export_fig_data(self):
+        fig, axis = plt.subplots()
+        plot_utils.export_fig_data(fig, 'figure')
 
 class TestCbarFuncs(unittest.TestCase):
 
@@ -429,6 +526,7 @@ class TestCbarFuncs(unittest.TestCase):
     def test_complete_func(self):
         fig, axis = plt.subplots(figsize=(4, 4))
         plot_utils.cbar_for_line_plot(axis, 2)
+    
 
 
 if __name__ == '__main__':
