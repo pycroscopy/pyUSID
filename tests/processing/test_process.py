@@ -17,8 +17,6 @@ import .data_utils
 from shutil import copyfile
 #from pycroscopy.processing.signal_filter import SignalFilter
 import tempfile
-from func_timeout import func_timeout, FunctionTimedOut
-
 sys.path.append("../../../pyUSID/")
 import pyUSID as usid
 
