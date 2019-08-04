@@ -13,7 +13,7 @@ import h5py
 import sys
 #from pycroscopy.processing.fft import LowPassFilter
 from .proc_utils import sho_slow_guess
-import .data_utils
+from .data_utils import *
 from shutil import copyfile
 #from pycroscopy.processing.signal_filter import SignalFilter
 import tempfile
@@ -67,11 +67,11 @@ class SuperBasicProcess(usid.Process):
 class TestProcess(unittest.TestCase):
 
     def setUp(self):
-        data_utils.delete_existing_file(temp_file_path)
+        delete_existing_file(temp_file_path)
         shutil.copy(orig_file_path, temp_file_path)
 
     def tearDown(self):
-        data_utils.delete_existing_file(temp_file_path)
+        delete_existing_file(temp_file_path)
 
     def test_init_not_hdf5_dataset(self):
 
