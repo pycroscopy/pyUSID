@@ -11,11 +11,11 @@ import shutil
 import numpy as np
 import h5py
 import sys
-from pycroscopy.processing.fft import LowPassFilter
-from tests.processing.proc_utils import sho_slow_guess
-import tests.processing.data_utils as data_utils
+#from pycroscopy.processing.fft import LowPassFilter
+from proc_utils import sho_slow_guess
+import data_utils as data_utils
 from shutil import copyfile
-from pycroscopy.processing.signal_filter import SignalFilter
+#from pycroscopy.processing.signal_filter import SignalFilter
 import tempfile
 from func_timeout import func_timeout, FunctionTimedOut
 

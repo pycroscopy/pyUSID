@@ -2,7 +2,7 @@
 This script creates a partial h5py file then tests the process class with it.
 Created on: Jul 12, 2019
 Author: Emily Costa
-"""
+
 
 from tests.io.data_utils import make_sparse_sampling_file
 import pyUSID as usid
@@ -30,3 +30,4 @@ if __name__ == '__main__':
     #simp.test()
     #simp.plot_test()
     simp.compute()
+"""
