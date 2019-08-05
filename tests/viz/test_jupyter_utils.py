@@ -6,6 +6,7 @@ Created on Thurs Jun  27 2019
 
 from __future__ import division, print_function, unicode_literals, absolute_import
 import unittest
+import os
 import matplotlib as mpl
 if os.environ.get('DISPLAY','') == '':
     print('no display found. Using non-interactive Agg backend')
