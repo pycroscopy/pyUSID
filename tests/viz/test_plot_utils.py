@@ -6,10 +6,12 @@ Created on Thurs Jun  27 2019
 
 from __future__ import division, print_function, unicode_literals, absolute_import
 import unittest
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 from pyUSID.viz import plot_utils
-
+'''
 class TestTools(unittest.TestCase):
 
     def test_reset_plot_params(self):
@@ -17,9 +19,10 @@ class TestTools(unittest.TestCase):
 
     def test_use_nice_plot_params(self):
         pass
+'''
 
 class TestGridDecoration(unittest.TestCase):
-
+'''
     #plot_utils.get_plot_grid_size
     def test_get_plot_grid_size(self):
         pass
@@ -47,6 +50,7 @@ class TestGridDecoration(unittest.TestCase):
 
     def test_complete(self):
         pass
+'''
 
     #plot_utils.use_scientific_ticks(axis, is_x=True, formatting='%.2e')
     def test_axis_not_axes(self):
