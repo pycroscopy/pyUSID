@@ -14,9 +14,13 @@ from pyUSID.viz.jupyter_utils import simple_ndim_visualizer, save_fig_filebox_bu
 class TestSimpleNdimVisualizer(unittest.TestCase):
 
     def test_correct(self):
-        data_mat = np.random.rand(2,2,2,2)
-        pos_dims = Dimension('X','unit',[1,2])
-        spec_dims = Dimension('Y','unit',[1,2])
+        data_mat = np.random.rand(2,3,5,7)
+        x = np.arange(2)
+        y = np.arange(3)
+        z = np.arange(5)
+        w = np.arange(7)
+        pos_dims = [Dimension('X','unit',x), Dimension('Y','unit',y)]
+        spec_dims = [Dimension('Z','unit',z), Dimension('W','unit',w)]
         simple_ndim_visualizer(data_mat, pos_dims, spec_dims)
 
     def test_not_iterable(self):
