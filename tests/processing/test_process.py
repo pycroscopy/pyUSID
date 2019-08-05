@@ -11,14 +11,12 @@ import shutil
 import numpy as np
 import h5py
 import sys
-from pycroscopy.processing.fft import LowPassFilter
-from tests.processing.proc_utils import sho_slow_guess
-import tests.processing.data_utils as data_utils
+#from pycroscopy.processing.fft import LowPassFilter
+from .proc_utils import sho_slow_guess
+from .data_utils import *
 from shutil import copyfile
-from pycroscopy.processing.signal_filter import SignalFilter
+#from pycroscopy.processing.signal_filter import SignalFilter
 import tempfile
-from func_timeout import func_timeout, FunctionTimedOut
-
 sys.path.append("../../../pyUSID/")
 import pyUSID as usid
 
@@ -69,11 +67,11 @@ class SuperBasicProcess(usid.Process):
 class TestProcess(unittest.TestCase):
 
     def setUp(self):
-        data_utils.delete_existing_file(temp_file_path)
+        delete_existing_file(temp_file_path)
         shutil.copy(orig_file_path, temp_file_path)
 
     def tearDown(self):
-        data_utils.delete_existing_file(temp_file_path)
+        delete_existing_file(temp_file_path)
 
     def test_init_not_hdf5_dataset(self):
 
