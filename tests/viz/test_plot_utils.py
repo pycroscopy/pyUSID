@@ -341,12 +341,11 @@ class TestPlotFeatures(unittest.TestCase):
     def test_plot_line_family_not_ymat(self):
         x_vec = np.linspace(0, 2 * np.pi, 256)
         freqs = range(1, 5)
-        y_mat = np.linspace(0, 2 * np.pi, 256)
+        y_mat = np.zeros_like(x_vec)
         freq_strs = [str(_) for _ in freqs]
-
         fig, axis = plt.subplots(ncols=2, figsize=(12, 4))
         with self.assertRaises(TypeError):
-            plot_utils.plot_line_family(axis[0], x_vec, y_mat,
+            plot_utils.plot_line_family(axis, x_vec, y_mat,
                                line_names=freq_strs, label_prefix='Freq = ', label_suffix='Hz',
                                  y_offset=2.5, show_cbar=True)
 
@@ -435,9 +434,7 @@ class TestPlotFeatures(unittest.TestCase):
     def test_is_x_vec(self):
         frequencies = 2 ** np.arange(4)
         image_stack = [TestPlotFeatures.get_complex_2d_image(freq) for freq in frequencies]
-        ran_arr = list()
-        for x in image_stack.shape[1]:
-            ran_arr.append(1)
+        ran_arr = np.zeros_like(image_stack)
         with self.assertRaises(ValueError):
             plot_utils.plot_complex_spectra(np.array(image_stack), ran_arr)
 
