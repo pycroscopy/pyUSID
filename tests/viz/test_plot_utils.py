@@ -22,7 +22,7 @@ class TestTools(unittest.TestCase):
 '''
 
 class TestGridDecoration(unittest.TestCase):
-'''
+    '''
     #plot_utils.get_plot_grid_size
     def test_get_plot_grid_size(self):
         pass
@@ -50,7 +50,7 @@ class TestGridDecoration(unittest.TestCase):
 
     def test_complete(self):
         pass
-'''
+    '''
 
     #plot_utils.use_scientific_ticks(axis, is_x=True, formatting='%.2e')
     def test_axis_not_axes(self):
