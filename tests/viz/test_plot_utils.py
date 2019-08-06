@@ -8,9 +8,9 @@ from __future__ import division, print_function, unicode_literals, absolute_impo
 import unittest
 import os
 import matplotlib as mpl
-if os.environ.get('DISPLAY','') == '':
+if os.environ.get('DISPLAY', '') == '':
     print('no display found. Using non-interactive Agg backend')
-    mpl.use('Agg')
+mpl.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 from pyUSID.viz import plot_utils
