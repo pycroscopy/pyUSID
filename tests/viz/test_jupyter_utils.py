@@ -33,7 +33,7 @@ class TestSimpleNdimVisualizer(unittest.TestCase):
     """
 
     def test_not_iterable(self):
-        arr = np.arange(100).reshape(10,10)
+        arr = np.arange(100).reshape(10, 10)
         num = 1
         with self.assertRaises(TypeError):
             simple_ndim_visualizer(arr, num, num)
