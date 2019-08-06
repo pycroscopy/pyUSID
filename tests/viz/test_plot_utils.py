@@ -72,6 +72,7 @@ class TestUseScientificTicks(unittest.TestCase):
         with self.assertRaises(TypeError):
             plot_utils.use_scientific_ticks(not_axis)
 
+    """
     def test_is_x_not_boolean(self):
         not_bool = 'hello'
         fig, axis = plt.subplots(figsize=(4, 4))
@@ -83,6 +84,7 @@ class TestUseScientificTicks(unittest.TestCase):
         fig, axis = plt.subplots(figsize=(4, 4))
         with self.assertRaises(TypeError):
             plot_utils.use_scientific_ticks(axis, formatting = notStr)
+    """
 
 
 class TestMakeScalarMappable(unittest.TestCase):
@@ -242,6 +244,7 @@ class TestRainbowPlot(unittest.TestCase):
                                      np.sin(t_vec) * np.linspace(0, 1, num_pts),
                                      num_steps=32)
 
+    """
     def test_xvec_not_array(self):
         num_pts = 1024
         t_vec = np.linspace(0, 10 * np.pi, num_pts)
@@ -289,7 +292,6 @@ class TestRainbowPlot(unittest.TestCase):
                                      np.sin(t_vec) * np.linspace(0, 1, num_pts),
                                      num_steps='hello')
 
-    """
     def test_base(self):
         num_pts = 1024
         t_vec = np.linspace(0, 10 * np.pi, num_pts)
@@ -327,6 +329,7 @@ class TestPlotLineFamily(unittest.TestCase):
                                line_names=freq_strs, label_prefix='Freq = ', label_suffix='Hz',
                                  y_offset=2.5, show_cbar=True)
 
+    """
     def test_plot_line_family_not_xvec(self):
         x_vec = 'hello'
         freqs = range(1, 5)
@@ -373,7 +376,7 @@ class TestPlotLineFamily(unittest.TestCase):
             plot_utils.plot_line_family(axis, x_vec, y_mat,
                                line_names=freq_strs, label_prefix= 6, label_suffix='Hz',
                                  y_offset=2.5, show_cbar=True)
-
+    """
 
 class TestPlotMap(unittest.TestCase):
 
@@ -532,6 +535,7 @@ class TestCbarForLinePlot(unittest.TestCase):
         with self.assertRaises(TypeError):
             plot_utils.cbar_for_line_plot(1, 2)
 
+    """
     def test_neg_num_steps(self):
         fig, axis = plt.subplots(figsize=(4, 4))
         with self.assertRaises(ValueError):
@@ -547,7 +551,6 @@ class TestCbarForLinePlot(unittest.TestCase):
         with self.assertRaises(AssertionError):
             plot_utils.cbar_for_line_plot(axis, 2, discrete_ticks='hello')
 
-    """
     def test_complete_func(self):
         fig, axis = plt.subplots(figsize=(4, 4))
         plot_utils.cbar_for_line_plot(axis, 2)
