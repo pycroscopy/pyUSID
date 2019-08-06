@@ -134,8 +134,6 @@ def make_sparse_sampling_file():
     if os.path.exists(sparse_sampling_path):
         os.remove(sparse_sampling_path)
 
-    h5_main = None
-
     with h5py.File(sparse_sampling_path) as h5_f:
         h5_meas_grp = h5_f.create_group('Measurement_000')
 
@@ -195,7 +193,7 @@ def make_sparse_sampling_file():
             # Link ancillary
             for dset in [h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals]:
                 h5_main.attrs[dset.name.split('/')[-1]] = dset.ref
-    return h5_meas_grp
+
 
 def make_incomplete_measurement_file():
     if os.path.exists(incomplete_measurement_path):

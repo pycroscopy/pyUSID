@@ -15,8 +15,7 @@ import shutil
 sys.path.append("../../pyUSID/")
 from pyUSID.io import hdf_utils, write_utils, USIDataset
 
-from tests.io import data_utils
-
+from tests.processing import data_utils
 
 if sys.version_info.major == 3:
     unicode = str
@@ -189,7 +188,7 @@ class TestWriteIndValDsets(TestSimple):
         with h5py.File(file_path, mode='w') as h5_f:
             h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_f, descriptor, is_spectral=False)
 
-            data_utils.validate_aux_dset_pair(self,h5_f, h5_inds, h5_vals, dim_names, dim_units, pos_data,
+            data_utils.validate_aux_dset_pair(self, h5_f, h5_inds, h5_vals, dim_names, dim_units, pos_data,
                                               is_spectral=False)
 
         os.remove(file_path)
@@ -214,7 +213,7 @@ class TestWriteIndValDsets(TestSimple):
             h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_group, descriptor, is_spectral=True)
 
             data_utils.validate_aux_dset_pair(self, h5_group, h5_inds, h5_vals, dim_names, dim_units, spec_data,
-                                          is_spectral=True)
+                                              is_spectral=True)
         os.remove(file_path)
 
     def test_legal_override_steps_offsets_base_name(self):
@@ -245,7 +244,7 @@ class TestWriteIndValDsets(TestSimple):
             h5_inds, h5_vals = hdf_utils.write_ind_val_dsets(h5_group, descriptor, is_spectral=True,
                                                              base_name=new_base_name)
             data_utils.validate_aux_dset_pair(self, h5_group, h5_inds, h5_vals, dim_names, dim_units, spec_inds,
-                                          vals_matrix=spec_vals, base_name=new_base_name, is_spectral=True)
+                                              vals_matrix=spec_vals, base_name=new_base_name, is_spectral=True)
         os.remove(file_path)
 
     def test_illegal(self):
@@ -733,13 +732,13 @@ class TestCreateIndexedGroup(TestSimple):
             self.assertIsInstance(h5_group, h5py.Group)
             self.assertEqual(h5_group.name, '/Hello_000')
             self.assertEqual(h5_group.parent, h5_f)
-            data_utils.verify_book_keeping_attrs(self,  h5_group)
+            data_utils.verify_book_keeping_attrs(self, h5_group)
 
             h5_sub_group = hdf_utils.create_indexed_group(h5_group, 'Test')
             self.assertIsInstance(h5_sub_group, h5py.Group)
             self.assertEqual(h5_sub_group.name, '/Hello_000/Test_000')
             self.assertEqual(h5_sub_group.parent, h5_group)
-            data_utils.verify_book_keeping_attrs(self,  h5_sub_group)
+            data_utils.verify_book_keeping_attrs(self, h5_sub_group)
         os.remove(file_path)
 
     def test_second(self):
@@ -750,13 +749,13 @@ class TestCreateIndexedGroup(TestSimple):
             self.assertIsInstance(h5_group_1, h5py.Group)
             self.assertEqual(h5_group_1.name, '/Hello_000')
             self.assertEqual(h5_group_1.parent, h5_f)
-            data_utils.verify_book_keeping_attrs(self,  h5_group_1)
+            data_utils.verify_book_keeping_attrs(self, h5_group_1)
 
             h5_group_2 = hdf_utils.create_indexed_group(h5_f, 'Hello')
             self.assertIsInstance(h5_group_2, h5py.Group)
             self.assertEqual(h5_group_2.name, '/Hello_001')
             self.assertEqual(h5_group_2.parent, h5_f)
-            data_utils.verify_book_keeping_attrs(self,  h5_group_2)
+            data_utils.verify_book_keeping_attrs(self, h5_group_2)
         os.remove(file_path)
 
     def test_w_suffix_(self):
@@ -767,7 +766,7 @@ class TestCreateIndexedGroup(TestSimple):
             self.assertIsInstance(h5_group, h5py.Group)
             self.assertEqual(h5_group.name, '/Hello_000')
             self.assertEqual(h5_group.parent, h5_f)
-            data_utils.verify_book_keeping_attrs(self,  h5_group)
+            data_utils.verify_book_keeping_attrs(self, h5_group)
         os.remove(file_path)
 
     def test_empty_base_name(self):
@@ -812,14 +811,14 @@ class TestCreateResultsGroup(TestSimple):
             self.assertIsInstance(h5_group, h5py.Group)
             self.assertEqual(h5_group.name, '/Main-' + tool_name + '_000')
             self.assertEqual(h5_group.parent, h5_f)
-            data_utils.verify_book_keeping_attrs(self,  h5_group)
+            data_utils.verify_book_keeping_attrs(self, h5_group)
 
             h5_dset = h5_group.create_dataset('Main_Dataset', data=[1, 2, 3])
             h5_sub_group = hdf_utils.create_results_group(h5_dset, 'SHO_Fit')
             self.assertIsInstance(h5_sub_group, h5py.Group)
             self.assertEqual(h5_sub_group.name, '/Main-' + tool_name + '_000/Main_Dataset-SHO_Fit_000')
             self.assertEqual(h5_sub_group.parent, h5_group)
-            data_utils.verify_book_keeping_attrs(self,  h5_sub_group)
+            data_utils.verify_book_keeping_attrs(self, h5_sub_group)
         os.remove(file_path)
 
     def test_second(self):
@@ -831,13 +830,13 @@ class TestCreateResultsGroup(TestSimple):
             self.assertIsInstance(h5_group, h5py.Group)
             self.assertEqual(h5_group.name, '/Main-Tool_000')
             self.assertEqual(h5_group.parent, h5_f)
-            data_utils.verify_book_keeping_attrs(self,  h5_group)
+            data_utils.verify_book_keeping_attrs(self, h5_group)
 
             h5_sub_group = hdf_utils.create_results_group(h5_dset, 'Tool')
             self.assertIsInstance(h5_sub_group, h5py.Group)
             self.assertEqual(h5_sub_group.name, '/Main-Tool_001')
             self.assertEqual(h5_sub_group.parent, h5_f)
-            data_utils.verify_book_keeping_attrs(self,  h5_sub_group)
+            data_utils.verify_book_keeping_attrs(self, h5_sub_group)
         os.remove(file_path)
 
     def test_empty_tool_name(self):

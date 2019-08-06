@@ -15,7 +15,7 @@ import numpy as np
 sys.path.append("../../pyUSID/")
 from pyUSID.io import USIDataset, hdf_utils
 
-from . import data_utils
+from tests.processing import data_utils
 
 if sys.version_info.major == 3:
     unicode = str
@@ -97,7 +97,7 @@ class TestUSIDataset(unittest.TestCase):
 
             h5_results_grp_1 = h5_raw_grp.create_group(source_dset_name + '-' + tool_name + '_000')
             data_utils.write_safe_attrs(h5_results_grp_1,
-                                                {'att_1': 'string_val', 'att_2': 1.2345, 'att_3': [1, 2, 3, 4]})
+                                        {'att_1': 'string_val', 'att_2': 1.2345, 'att_3': [1, 2, 3, 4]})
             data_utils.write_string_list_as_attr(h5_results_grp_1, {'att_4': ['str_1', 'str_2', 'str_3']})
 
             num_cycles = 1
@@ -130,7 +130,7 @@ class TestUSIDataset(unittest.TestCase):
 
             h5_results_grp_2 = h5_raw_grp.create_group(source_dset_name + '-' + tool_name + '_001')
             data_utils.write_safe_attrs(h5_results_grp_2,
-                                                {'att_1': 'other_string_val', 'att_2': 5.4321, 'att_3': [4, 1, 3]})
+                                        {'att_1': 'other_string_val', 'att_2': 5.4321, 'att_3': [4, 1, 3]})
             data_utils.write_string_list_as_attr(h5_results_grp_2, {'att_4': ['s', 'str_2', 'str_3']})
 
             results_2_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)

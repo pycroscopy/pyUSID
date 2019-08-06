@@ -11,7 +11,8 @@ import sys
 import h5py
 import numpy as np
 
-from . import data_utils
+from tests.processing import data_utils
+
 sys.path.append("../../pyUSID/")
 from pyUSID.io.hdf_utils import get_attr
 from pyUSID.io import reg_ref

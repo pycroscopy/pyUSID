@@ -14,8 +14,7 @@ import numpy as np
 sys.path.append("../../pyUSID/")
 from pyUSID.io import hdf_utils
 
-from tests.io import data_utils
-
+from tests.processing import data_utils
 
 if sys.version_info.major == 3:
     unicode = str
