@@ -14,18 +14,11 @@ if os.environ.get('DISPLAY','') == '':
 import numpy as np
 import matplotlib.pyplot as plt
 from pyUSID.viz import plot_utils
-'''
-class TestTools(unittest.TestCase):
 
-    def test_reset_plot_params(self):
-        pass
 
-    def test_use_nice_plot_params(self):
-        pass
-'''
-
+"""
 class TestGridDecoration(unittest.TestCase):
-    '''
+
     #plot_utils.get_plot_grid_size
     def test_get_plot_grid_size(self):
         pass
@@ -53,27 +46,14 @@ class TestGridDecoration(unittest.TestCase):
 
     def test_complete(self):
         pass
-    '''
 
-    #plot_utils.use_scientific_ticks(axis, is_x=True, formatting='%.2e')
-    def test_axis_not_axes(self):
-        notAxis = 1
-        with self.assertRaises(TypeError):
-            plot_utils.use_scientific_ticks(notAxis)
+    class TestPlotParams(unittest.TestCase):
 
-    def test_is_x_not_boolean(self):
-        notBoo = 'hello'
-        #plt.plot([1, 2, 3, 4], [1, 4, 9, 16], 'ro')
-        #plt.axis([0, 6, 0, 20])
-        fig, axis = plt.subplots(figsize=(4, 4))
-        with self.assertRaises(TypeError):
-            plot_utils.use_scientific_ticks(axis, is_x=notBoo)
+        def test_reset_plot_params(self):
+            pass
 
-    def test_formatting_not_string(self):
-        notStr = 55
-        fig, axis = plt.subplots(figsize=(4, 4))
-        with self.assertRaises(TypeError):
-            plot_utils.use_scientific_ticks(axis, formatting = notStr)
+        def test_use_nice_plot_params(self):
+            pass    
 
     def test_is_x_true(self):
         fig, axis = plt.subplots(figsize=(4, 4))
@@ -82,10 +62,31 @@ class TestGridDecoration(unittest.TestCase):
     def test_is_x_false(self):
         fig, axis = plt.subplots(figsize=(4, 4))
         plot_utils.use_scientific_ticks(axis, is_x=False)
+"""
 
-class TestCmapFuncs(unittest.TestCase):
 
-    #make_scalar_mappable
+class TestUseScientificTicks(unittest.TestCase):
+
+    def test_axis_not_axes(self):
+        not_axis = 1
+        with self.assertRaises(TypeError):
+            plot_utils.use_scientific_ticks(not_axis)
+
+    def test_is_x_not_boolean(self):
+        not_bool = 'hello'
+        fig, axis = plt.subplots(figsize=(4, 4))
+        with self.assertRaises(TypeError):
+            plot_utils.use_scientific_ticks(axis, is_x=not_bool)
+
+    def test_formatting_not_string(self):
+        notStr = 55
+        fig, axis = plt.subplots(figsize=(4, 4))
+        with self.assertRaises(TypeError):
+            plot_utils.use_scientific_ticks(axis, formatting = notStr)
+
+
+class TestMakeScalarMappable(unittest.TestCase):
+
     def test_vmin_not_num(self):
         notNum =  'hello'
         with self.assertRaises(AssertionError):
@@ -100,34 +101,22 @@ class TestCmapFuncs(unittest.TestCase):
         with self.assertRaises(AssertionError):
             plot_utils.make_scalar_mappable(5, 3)
 
-    def test_cmap_none(self):
-        plot_utils.make_scalar_mappable(3, 5, cmap=None)
-
     def test_cmap_not_none_wrong_input(self):
         with self.assertRaises(ValueError):
             plot_utils.make_scalar_mappable(3, 5, cmap='hello')
 
+    """
+    def test_cmap_none(self):
+        plot_utils.make_scalar_mappable(3, 5, cmap=None)
+
     def test_cmap_not_none(self):
         jet = plt.get_cmap('jet')
         plot_utils.make_scalar_mappable(3, 5, cmap=jet)
+    """
 
-    #get_cmap_object
-    def test_cmap_none(self):
-        plot_utils.get_cmap_object(cmap=None)
 
-    def test_cmap_not_cmap(self):
-        with self.assertRaises(ValueError):
-            plot_utils.get_cmap_object(cmap='hello')
+class TestCmapFromRGBA(unittest.TestCase):
 
-    def test_cmap_is_cmap(self):
-        jet = plt.get_cmap('jet')
-        plot_utils.get_cmap_object(cmap=jet)
-
-    #cmap_jet_white_center
-    def test_cmap_jet_white_center(self):
-        plot_utils.cmap_jet_white_center()
-
-    #cmap_from_rgba
     def test_name_not_string(self):
         hot_desaturated = [(255.0, (255, 76, 76, 255)),
                            (218.5, (107, 0, 0, 255)),
@@ -156,21 +145,14 @@ class TestCmapFuncs(unittest.TestCase):
         with self.assertRaises(TypeError):
             plot_utils.cmap_from_rgba('cmap', hot_desaturated, 'hi')
 
-    def test_cmap_from_rgba(self):
-        hot_desaturated = [(255.0, (255, 76, 76, 255)),
-                           (218.5, (107, 0, 0, 255)),
-                           (182.1, (255, 96, 0, 255)),
-                           (145.6, (255, 255, 0, 255)),
-                           (109.4, (0, 127, 0, 255)),
-                           (72.675, (0, 255, 255, 255)),
-                           (36.5, (0, 0, 91, 255)),
-                           (0, (71, 71, 219, 255))]
-        plot_utils.cmap_from_rgba('cmap', hot_desaturated, 255)
 
-    #make_linear_alpha_cmap
+class TestMakeLinearAlphaCmap(unittest.TestCase):
+
+    """
     def test_make_linear_alpha_cmap(self):
         solid_color = plt.cm.jet(0.8)
         plot_utils.make_linear_alpha_cmap('my_map', solid_color, 1, min_alpha=0, max_alpha=1)
+    """
 
     def test_name_not_str(self):
         solid_color = plt.cm.jet(0.8)
@@ -211,16 +193,17 @@ class TestCmapFuncs(unittest.TestCase):
         with self.assertRaises(ValueError):
             plot_utils.make_linear_alpha_cmap('cmap', solid_color, 1, min_alpha=1, max_alpha=0)
 
-    #cmap_hot_desaturated
-    def test_cmap_hot_desaturated(self):
-        plot_utils.cmap_hot_desaturated()
 
-    #discrete_cmap
+class TestDiscreteCmap(unittest.TestCase):
+
+    """
     def test_cmap_is_None(self):
         plot_utils.discrete_cmap(num_bins=5)
 
+
     def test_cmap_is_not_None(self):
         plot_utils.discrete_cmap(num_bins=5, cmap=plt.get_cmap('jet'))
+    """
 
     def test_numbins_is_not_uint(self):
         with self.assertRaises(ValueError):
@@ -230,21 +213,26 @@ class TestCmapFuncs(unittest.TestCase):
         with self.assertRaises(ValueError):
             plot_utils.discrete_cmap(num_bins=1, cmap='hello')
 
-    #get_cmap_object
-    def test_cmap_none(self):
-        plot_utils.get_cmap_object(None)
 
-    def test_get_cmap_object(self):
-        plot_utils.get_cmap_object(plt.get_cmap('jet'))
+class TestGetCMapObject(unittest.TestCase):
 
-    def test_get_cmap_wrong(self):
+    def test_cmap_not_cmap(self):
+        with self.assertRaises(ValueError):
+            plot_utils.get_cmap_object(cmap='hello')
+
+    def test_none(self):
+        self.assertEqual(plt.cm.viridis, plot_utils.get_cmap_object(None))
+
+    def test_string_name(self):
+        self.assertEqual(plt.cm.jet, plot_utils.get_cmap_object(plt.get_cmap('jet')))
+
+    def test_wrong_dtype(self):
         with self.assertRaises(TypeError):
             plot_utils.get_cmap_object(5)
 
 
-class TestPlotFeatures(unittest.TestCase):
+class TestRainbowPlot(unittest.TestCase):
 
-    #rainbow_plot
     def test_axis_not_axis(self):
         notAxis = 5
         num_pts = 1024
@@ -301,7 +289,8 @@ class TestPlotFeatures(unittest.TestCase):
                                      np.sin(t_vec) * np.linspace(0, 1, num_pts),
                                      num_steps='hello')
 
-    def test_rainbow_plot(self):
+    """
+    def test_base(self):
         num_pts = 1024
         t_vec = np.linspace(0, 10 * np.pi, num_pts)
 
@@ -309,9 +298,13 @@ class TestPlotFeatures(unittest.TestCase):
         plot_utils.rainbow_plot(axis, np.cos(t_vec) * np.linspace(0, 1, num_pts),
                                      np.sin(t_vec) * np.linspace(0, 1, num_pts),
                                      num_steps=32)
+    """
 
-    #plot_line_family
-    def test_plot_line_family(self):
+
+class TestPlotLineFamily(unittest.TestCase):
+
+    """
+    def test_base(self):
         x_vec = np.linspace(0, 2 * np.pi, 256)
         freqs = range(1, 5)
         y_mat = np.array([np.sin(freq * x_vec) for freq in freqs])
@@ -321,6 +314,7 @@ class TestPlotFeatures(unittest.TestCase):
         plot_utils.plot_line_family(axis, x_vec, y_mat,
                                line_names=freq_strs, label_prefix='Freq = ', label_suffix='Hz',
                                  y_offset=2.5, show_cbar=True)
+    """
 
     def test_plot_line_family_not_axis(self):
         x_vec = np.linspace(0, 2 * np.pi, 256)
@@ -380,7 +374,9 @@ class TestPlotFeatures(unittest.TestCase):
                                line_names=freq_strs, label_prefix= 6, label_suffix='Hz',
                                  y_offset=2.5, show_cbar=True)
 
-    #plot_map
+
+class TestPlotMap(unittest.TestCase):
+
     def test_plot_map(self):
         x_vec = np.linspace(0, 6 * np.pi, 256)
         y_vec = np.sin(x_vec) ** 2
@@ -393,16 +389,23 @@ class TestPlotFeatures(unittest.TestCase):
                             y_vec=np.linspace(0, 500, atom_intensities.shape[1]),
                             cbar_label='intensity (a. u.)', tick_font_size=16)
 
-    #plot_curves
+
+class TestPlotCurves(unittest.TestCase):
+
+    pass
+    """
     def test_plot_curves(self):
         x_vec = np.linspace(0, 2 * np.pi, 256)
         freqs = np.linspace(0.5, 5, 9)
         y_mat = np.array([np.sin(freq * x_vec) for freq in freqs])
 
         plot_utils.plot_curves(x_vec, y_mat)
+    """
 
-    #plot_complex_spectra
-    #helper func
+
+class TestPlotComplexSpectra(unittest.TestCase):
+
+    @staticmethod
     def get_complex_2d_image(freq):
         # Simple function to generate images
         x_vec = np.linspace(0, freq * np.pi, 256)
@@ -413,7 +416,7 @@ class TestPlotFeatures(unittest.TestCase):
     def test_plot_complex_spectra(self):
         # The range of frequences over which the images are generated
         frequencies = 2 ** np.arange(4)
-        image_stack = [TestPlotFeatures.get_complex_2d_image(freq) for freq in frequencies]
+        image_stack = [self.get_complex_2d_image(freq) for freq in frequencies]
         plot_utils.plot_complex_spectra(np.array(image_stack))
 
     def test_not_map_stack(self):
@@ -422,53 +425,57 @@ class TestPlotFeatures(unittest.TestCase):
 
     def test_not_x_vec(self):
         frequencies = 2 ** np.arange(4)
-        image_stack = [TestPlotFeatures.get_complex_2d_image(freq) for freq in frequencies]
+        image_stack = [self.get_complex_2d_image(freq) for freq in frequencies]
         with self.assertRaises(TypeError):
             plot_utils.plot_complex_spectra(np.array(image_stack), x_vec='notvec')
 
     def test_is_2d_x_vec(self):
         frequencies = 2 ** np.arange(4)
-        image_stack = [TestPlotFeatures.get_complex_2d_image(freq) for freq in frequencies]
+        image_stack = [self.get_complex_2d_image(freq) for freq in frequencies]
         with self.assertRaises(ValueError):
             plot_utils.plot_complex_spectra(np.array(image_stack), [[1]])
 
     def test_is_not_dim_x_vec(self):
         frequencies = 2 ** np.arange(4)
-        image_stack = [TestPlotFeatures.get_complex_2d_image(freq) for freq in frequencies]
+        image_stack = [self.get_complex_2d_image(freq) for freq in frequencies]
         with self.assertRaises(ValueError):
             plot_utils.plot_complex_spectra(np.array(image_stack), [1])
 
     def test_is_x_vec(self):
         frequencies = 2 ** np.arange(4)
-        image_stack = [TestPlotFeatures.get_complex_2d_image(freq) for freq in frequencies]
+        image_stack = [self.get_complex_2d_image(freq) for freq in frequencies]
         ran_arr = np.zeros_like(image_stack)
         with self.assertRaises(ValueError):
             plot_utils.plot_complex_spectra(np.array(image_stack), ran_arr)
 
+    """
     def test_num_comps(self):
         frequencies = 2 ** np.arange(4)
         image_stack = [TestPlotFeatures.get_complex_2d_image(freq) for freq in frequencies]
         plot_utils.plot_complex_spectra(np.array(image_stack), num_comps=None)
+    """
 
     def test_num_comps_not_int(self):
         frequencies = 2 ** np.arange(4)
-        image_stack = [TestPlotFeatures.get_complex_2d_image(freq) for freq in frequencies]
+        image_stack = [self.get_complex_2d_image(freq) for freq in frequencies]
         with self.assertRaises(TypeError):
             plot_utils.plot_complex_spectra(np.array(image_stack), num_comps='wrong')
 
     def test_not_str(self):
         frequencies = 2 ** np.arange(4)
-        image_stack = [TestPlotFeatures.get_complex_2d_image(freq) for freq in frequencies]
+        image_stack = [self.get_complex_2d_image(freq) for freq in frequencies]
         with self.assertRaises(TypeError):
             plot_utils.plot_complex_spectra(np.array(image_stack), title=1)
 
     def test_not_stdevs(self):
         frequencies = 2 ** np.arange(4)
-        image_stack = [TestPlotFeatures.get_complex_2d_image(freq) for freq in frequencies]
+        image_stack = [self.get_complex_2d_image(freq) for freq in frequencies]
         with self.assertRaises(TypeError):
             plot_utils.plot_complex_spectra(np.array(image_stack), stdevs=-1)
 
-    #plot_scree
+
+class TestPlotScree(unittest.TestCase):
+
     def test_plot_scree(self):
         scree = np.exp(-1 * np.arange(100))
         plot_utils.plot_scree(scree, color='r')
@@ -483,17 +490,22 @@ class TestPlotFeatures(unittest.TestCase):
         with self.assertRaises(TypeError):
             plot_utils.plot_scree(scree)
 
+    """
     def test_scree_list(self):
-        scree = [1,2,3,4,5]
+        scree = np.arange(5)
         plot_utils.plot_scree(scree, color='r')
 
-    #plot_map_stack
-    #helper func
     def get_sine_2d_image(freq):
         x_vec = np.linspace(0, freq*np.pi, 256)
         y_vec = np.sin(x_vec)**2
         return y_vec * np.atleast_2d(y_vec).T
+    """
 
+
+class TestMapStack(unittest.TestCase):
+
+    pass
+    """
     def test_map_stack(self):
         def get_sine_2d_image(freq):
             x_vec = np.linspace(0, freq*np.pi, 256)
@@ -503,15 +515,11 @@ class TestPlotFeatures(unittest.TestCase):
         image_stack = [get_sine_2d_image(freq) for freq in frequencies]
         image_stack = np.array(image_stack)
         fig, axes = plot_utils.plot_map_stack(image_stack, reverse_dims=False, title_yoffset=0.95)
+    """
 
-    #export_fig_data
-    def test_export_fig_data(self):
-        fig, axis = plt.subplots()
-        plot_utils.export_fig_data(fig, 'figure')
 
-class TestCbarFuncs(unittest.TestCase):
+class TestCbarForLinePlot(unittest.TestCase):
 
-    #cbar_for_line_plot
     def test_not_axis(self):
         with self.assertRaises(TypeError):
             plot_utils.cbar_for_line_plot(1, 2)
@@ -531,10 +539,11 @@ class TestCbarFuncs(unittest.TestCase):
         with self.assertRaises(AssertionError):
             plot_utils.cbar_for_line_plot(axis, 2, discrete_ticks='hello')
 
+    """
     def test_complete_func(self):
         fig, axis = plt.subplots(figsize=(4, 4))
         plot_utils.cbar_for_line_plot(axis, 2)
-    
+    """
 
 
 if __name__ == '__main__':
