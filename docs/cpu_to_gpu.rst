@@ -5,7 +5,8 @@ Enabling GPU computing, by implementing CuPy in the Bayesian Inference package o
 The following are lessons learned during the exploration of implementing CuPy for GPU computing in pyUSID functions:
 
 * **Dimensions** CuPy does not have a newaxis function, like NumPy does. Instead of using new axis to add an additional dimension, you need to use cupy.expand_dims(). Also, note that cupy does not lose a dimension during operations with vectors, like numpy, so adding another dimension is often unnecessary as there are no singular dimensions in cupy. All vectors are converted into row vectors in numpy after being operated on, which can be dealt with by adding a new axis and converting back into a column vector for further matrix operations.
-  The following is an example of how numpy's neawaxis function and how to use cupy's expand_dims in its place:
+
+The following is an example of how numpy's neawaxis function and how to use cupy's expand_dims in its place:
   
   **numpy.newaxis**
   
