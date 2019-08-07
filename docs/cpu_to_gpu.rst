@@ -8,7 +8,7 @@ The following are lessons learned during the exploration of implementing CuPy fo
 
 The following is an example of how numpy's neawaxis function and how to use cupy's expand_dims in its place:
   
-  **numpy.newaxis**
+**numpy.newaxis**
   
   # Import all necesaary modules
   
@@ -39,7 +39,7 @@ The following is an example of how numpy's neawaxis function and how to use cupy
   Out[7]: (5, 1)
   
 
-  **cupy.expand_dims**
+**cupy.expand_dims**
   
   # Import all necesaary modules
   
@@ -73,7 +73,7 @@ The following is an example of how numpy's neawaxis function and how to use cupy
 
 The following is an example of numpy's append function and how to use cupy's concatonate instead:
 
-  **numpy.append**
+**numpy.append**
   
   In [1]: x = np.array([1,2,3]) 
   
@@ -85,3 +85,14 @@ The following is an example of numpy's append function and how to use cupy's con
   
   Out[4]: array([1,2,3,4,5,6])
   
+**cupy.concatenate**
+
+  In [1]: cp_x = cp.array([1,2,3]) 
+  
+  In [2]: cp_y = cp.array([4,5,6])
+  
+  In [3]: cp_xy = cp.concatenate([cp_x,cp_y], axis=0)
+  
+  In [4]: cp_xy
+  
+  Out[4]: [1 2 3 4 5 6]
