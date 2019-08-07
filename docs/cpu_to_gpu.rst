@@ -1,5 +1,7 @@
 **GPU Computing Using CuPy**
 ========================
+:Authors: Emily Costa
+:Created on: 08/07/2019
 
 Enabling GPU computing, by implementing CuPy in the Bayesian Inference package of pycroscopy, was completed. 
 The following are lessons learned during the exploration of implementing CuPy for GPU computing in pyUSID functions:
