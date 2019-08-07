@@ -7,6 +7,7 @@ The core pyUSID team consists of:
 
 Substantial contributions from many developers including:
 
+* `@emilyjcosta5 <https://github.com/emilyjcosta5>`_ (Emily Costa)
 * `@str-eat <https://github.com/str-eat>`_ (Daniel Streater)
 * `@nmosto <https://github.com/nmosto>`_ (Nick Mostovych)
 * and many more
