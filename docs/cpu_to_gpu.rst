@@ -12,11 +12,11 @@ The following is an example of how numpy's neawaxis function and how to use cupy
   
 **numpy.newaxis**
   
-  # Import all necesaary modules
+Import all necesaary modules
   
   In [1]: import numpy as np
 
-  # 1D array
+1D array
   
   In [2]: arr = np.arange(5)
   
@@ -24,7 +24,7 @@ The following is an example of how numpy's neawaxis function and how to use cupy
   
   Out[3]: (5,)
 
-  # make the 1D array becomes a row vector when an axis is inserted along 1st dimension
+Make the 1D array becomes a row vector when an axis is inserted along 1st dimension
   
   In [4]: row_vec = arr[np.newaxis, :]
   
@@ -32,7 +32,7 @@ The following is an example of how numpy's neawaxis function and how to use cupy
   
   Out[5]: (1, 5)
 
-  # make the 1D array becomes a column vector when an axis is inserted along 1st dimension
+Make the 1D array becomes a column vector when an axis is inserted along 1st dimension
   
   In [6]: col_vec = arr[:, np.newaxis]
   
@@ -43,11 +43,11 @@ The following is an example of how numpy's neawaxis function and how to use cupy
 
 **cupy.expand_dims**
   
-  # Import all necesaary modules
+Import all necesaary modules
   
   In [1]: import cupy as cp
 
-  # 1D array
+1D array
   
   In [2]: cp_arr = cp.arange(5)
   
@@ -55,7 +55,7 @@ The following is an example of how numpy's neawaxis function and how to use cupy
   
   Out[3]: (5,)
 
-  # make the 1D array becomes a row vector when an axis is inserted along 1st dimension
+Make the 1D array becomes a row vector when an axis is inserted along 1st dimension
   
   In [4]: cp_row_vec = cp.expand_dims(cp_arr, axis=0)
   
@@ -63,7 +63,7 @@ The following is an example of how numpy's neawaxis function and how to use cupy
   
   Out[5]: (1, 5)
 
-  # make the 1D array becomes a column vector when an axis is inserted along 1st dimension
+Make the 1D array becomes a column vector when an axis is inserted along 1st dimension
   
   In [6]: cp_col_vec = cp.expand_dims(cp_arr, axis=1)
   
