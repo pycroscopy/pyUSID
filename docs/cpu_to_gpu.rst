@@ -9,8 +9,9 @@ The following are lessons learned during the exploration of using CuPy:
 The following is an example of numpy's append function:
 
 .. code:: python
-x = np.arrray([1,2,3]) 
-y = [4,5,6] 
-xy = np.append(x, y)
-[out]
-array([1,2,3,4,5,6])
+  [in]
+  x = np.arrray([1,2,3]) 
+  y = [4,5,6] 
+  xy = np.append(x, y)
+  [out]
+  array([1,2,3,4,5,6])
