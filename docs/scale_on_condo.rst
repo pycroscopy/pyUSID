@@ -171,7 +171,13 @@ The Python script that MPI will execute is the following:
 
    h5_f.close()
 
-Now, time to build the PBS
+Now, time to build the PBS script for multiple nodes. We add a few components to the execution command:
+   1. **mpiexec** 
+       to run an mpi program.
+   2. **--map-by ppr:1:node** 
+       **ppr** stands for processes per resource. 
+
+       **ppr:N:resource** assigns N processes to each resource of type resource available on the host. In the case of the Condo, the resource is 'node'.
 
 .. code:: bash
    #!/bin/bash
