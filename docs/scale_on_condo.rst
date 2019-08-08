@@ -57,7 +57,9 @@ In this example, we will use mpiexec to initialize a parallel job from within th
 
 The following is an example of a script that runs a signal filter through a USID dataset using pycroscopy, a package built on pyUSID, using a multiple node remote machine (in this case, CADES SHPC Condo).
 
-Prior to making our new MPI-aware PBS script, we will need to create a MPI version of our Python script. 
+Prior to making our new MPI-aware PBS script, we will need to create a MPI version of our Python script. There are only two things that will need to be added to the h5py file instance:
+   1. **The driver:** will map the logical HDF5 address space to a storage mechanism and we need to specify the 'mpio' file driver. This will allow mpi4py to delegate memory allocation for the HDF5 file.
+   2. **Comm:** class for communication of generic Python objects
 
 The Python script that MPI will execute is the following:
 
@@ -68,7 +70,10 @@ The Python script that MPI will execute is the following:
    from mpi_signal_filter import SignalFilter
 
    h5_path = 'giv_raw.h5'
+   ###################################################
+   # Note: this is our changed, mpi-aware code.
    h5_f = h5py.File(h5_path, mode='r+', driver='mpio', comm=MPI.COMM_WORLD)
+   ###################################################
 
    h5_grp = h5_f['Measurement_000/Channel_000']
    h5_main = h5_grp['Raw_Data']
