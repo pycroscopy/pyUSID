@@ -18,12 +18,47 @@ PBS Script for Multiple Nodes
 In this example, we will use mpiexec to initialize a parallel job from within the PBS batch. Mpiexec uses the task manager library of PBS to spawn copies of the executable on the nodes in a PBS allocation.
 
 
-.. note:: Make sure to run the following commands prior to running your python script in order to set up the proper environment, which includes mpi4py:
-   .. code:: bash
-   module load PE-intel
-   module load python/3.6.3
+.. note:: Make sure to run the following commands prior to running your python script:
+
+       module load PE-intel
+
+       module load python/3.6.3
+  
+   Now, your programming environment is setup and includes mpi4py.
 
 The following is an example of a script that runs a signal filter through a USID dataset using pycroscopy, a package built on pyUSID, using a multiple node remote machine (in this case, CADES SHPC Condo).
+
+MPI will need to  
+ 
+
+The Python script that MPI will execute is the following:
+
+.. code:: python
+   import h5py
+   from mpi4py import MPI
+   from fft import LowPassFilter
+   from mpi_signal_filter import SignalFilter
+
+   h5_path = 'giv_raw.h5'
+   h5_f = h5py.File(h5_path, mode='r+', driver='mpio', comm=MPI.COMM_WORLD)
+   # Not necessary I think but Chris used it
+   h5_f.atomic = True # This doesn't seem to make any difference
+
+   h5_grp = h5_f['Measurement_000/Channel_000']
+   h5_main = h5_grp['Raw_Data']
+
+   samp_rate = h5_grp.attrs['IO_samp_rate_[Hz]']
+   num_spectral_pts = h5_main.shape[1]
+
+   frequency_filters = [LowPassFilter(num_spectral_pts, samp_rate, 10E+3)]
+   noise_tol = 1E-6
+
+   sig_filt = SignalFilter(h5_main, frequency_filters=frequency_filters,
+                           noise_threshold=noise_tol, write_filtered=True,
+                           write_condensed=False, num_pix=1, verbose=False)
+   h5_filt_grp = sig_filt.compute()
+
+   h5_f.close()
 
 .. code:: bash
    #!/bin/bash
@@ -89,34 +124,12 @@ The following is an example of a script that runs a signal filter through a USID
 
    ### MPI run followed by the name/path of the binary.
    mpiexec --map-by ppr:1:node python -m cProfile -s cumtime filter_mpi.py
-   
-The Python script that MPI executes is the following:
 
-.. code:: python
-   import h5py
-   from mpi4py import MPI
-   from fft import LowPassFilter
-   from mpi_signal_filter import SignalFilter
+FAQs
+~~~~
 
-   h5_path = 'giv_raw.h5'
-   h5_f = h5py.File(h5_path, mode='r+', driver='mpio', comm=MPI.COMM_WORLD)
-   # Not necessary I think but Chris used it
-   h5_f.atomic = True # This doesn't seem to make any difference
+Why mpiexec instead of mpirun?
 
-   h5_grp = h5_f['Measurement_000/Channel_000']
-   h5_main = h5_grp['Raw_Data']
+Why is mpi used in both the python and pbs script?
 
-   samp_rate = h5_grp.attrs['IO_samp_rate_[Hz]']
-   num_spectral_pts = h5_main.shape[1]
-
-   frequency_filters = [LowPassFilter(num_spectral_pts, samp_rate, 10E+3)]
-   noise_tol = 1E-6
-
-   sig_filt = SignalFilter(h5_main, frequency_filters=frequency_filters,
-                           noise_threshold=noise_tol, write_filtered=True,
-                           write_condensed=False, num_pix=1, verbose=False)
-   h5_filt_grp = sig_filt.compute()
-
-   h5_f.close()
-
-The end.
+Who do I contact if I am struggling to run a job 
