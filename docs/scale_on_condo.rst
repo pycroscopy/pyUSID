@@ -10,13 +10,13 @@ Introduction
 ------------
 Certain data processing routines are very time consuming because of the sheer size of the data and/or
 the computational complexity of the data processing routine.
-As a consequence, it is not feasible to run such computations on personal computers.
 Often, such computations are ``embarrasingly parallel`` meaning that the processing of one portion (e.g. pixel)
 of data is independent from  the processing of all other portions of data.
 
 The `pyUSID.parallel_compute() <./_autosummary/pyUSID.processing.html#pyUSID.processing.parallel_compute>`_
 function can effectively distribute the computation over all available cores in a CPU and reduce the computational time.
 However, ``pyUSID.parallel_compute()`` only distribute computations within a single CPU in a single personal computer.
+As a consequence, it may not be feasible to run large / lengthy computations on personal computers.
 In such cases and when available, it is recommended that such computations be run on a university / national lab
 compute cluster for timely processing of the data.
 
@@ -105,8 +105,22 @@ and instructs the ``pycroscopy.processing.SignalFilter`` class to perform the fi
 
 Computing on an HPC
 -------------------
-Before getting into the specifics of running on the HPC, we would need to change
-the way the data file is being opened
+The fundamental change in scaling from a personal computer to an HPC is the communication
+of instructions and data between the multiple computers within an HPC so that the
+multiple python processes spawned on the individual computers on an HPC can work
+together to reduce the computational time. Most HPC code uses an inter-node
+communication paradigm called the ``message passing interface (MPI)``. ``mpi4py``
+is the python API for interacting with the MPI on the HPC. Note that in-depth
+knowledge of MPI or mpi4py is unnecessary for understanding this tutorial since
+``pyUSID.Process`` handles most of the heavy lifting behind the scenes.
+
+Below are the changes necessary to scale from a personal computer to an HPC:
+
+1. Changing the HDF5 file access mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We need to tell ``h5py`` to open the data  file in such a manner that
+multiple python processes running on multiple compute ``nodes`` (individual computers within the HPC)
+can read and write to the data file in parallel and independently:
 
 from:
 
@@ -121,13 +135,20 @@ to:
    from mpi4py import MPI
    h5_f = h5py.File(h5_path, mode='r+', driver='mpio', comm=MPI.COMM_WORLD)
 
-The above modification asks ``h5py`` to open the data  file in such a manner that
-multiple python processes running on multiple compute ``nodes`` (individual computers within the HPC)
-can read and write to the data file in parallel and independently.
+Here:
+
+1. **driver:** will map the logical HDF5 address space to a storage mechanism and
+   we need to specify the '`mpio'` file driver. This will allow mpi4py to delegate
+   memory allocation for the HDF5 file.
+2. **comm:** class for communication of generic Python objects
 
 In order to distribute the same computation on multiple nodes within a compute cluster,
 one would need to submit a computational job in addition to making minor edits to the
 python script above.
+
+2. PBS script
+~~~~~~~~~~~~~
+Now, we need to create a simple PBS file to execute the job on the SHPC Condo. The two main components of the PBS file will be (1) specifying PBS flags and (2) the main program. The following is an example PBS script, along with helpful comments:
 
 
 In this example, we will use mpiexec to initialize a parallel job from within the PBS batch. Mpiexec uses the task manager library of PBS to spawn copies of the executable on the nodes in a PBS allocation.
@@ -143,8 +164,7 @@ In this example, we will use mpiexec to initialize a parallel job from within th
 The following is an example of a script that runs a signal filter through a USID dataset using pycroscopy, a package built on pyUSID, using a multiple node remote machine (in this case, CADES SHPC Condo).
 
 Prior to making our new MPI-aware PBS script, we will need to create a MPI version of our Python script. There are only two things that will need to be added to the h5py file instance:
-   1. **The driver:** will map the logical HDF5 address space to a storage mechanism and we need to specify the 'mpio' file driver. This will allow mpi4py to delegate memory allocation for the HDF5 file.
-   2. **Comm:** class for communication of generic Python objects
+
 
 Now, time to build the PBS script for multiple nodes. We add a few components to the execution command:
    1. **mpiexec** 
@@ -155,22 +175,23 @@ Now, time to build the PBS script for multiple nodes. We add a few components to
        **ppr:N:resource** assigns N processes to each resource of type resource available on the host. In the case of the Condo, the resource is 'node'.
 
 .. code:: bash
+
    #!/bin/bash
    
    ### Set the job name. Your output files will share this name.
    #PBS -N mpiSignalFilter
    ### Enter your email address. Errors will be emailed to this address.
-   #PBS -M email@ornl.gov
-   ### Node spec, number of nodes and processors per node that you desire.
-   ### One node and 16 cores per node in this case.
+   #PBS -M your_email@ornl.gov
+   ### Number of nodes and processors per node that you desire.
+   ### Two nodes each with 36 cores per node in this case.
    #PBS -l nodes=2:ppn=36
-   ### Tell PBS the anticipated runtime for your job, where walltime=HH:MM:S.
+   ### Anticipated runtime for your job, where walltime=HH:MM:S.
    #PBS -l walltime=0:00:30:0
-   ### The LDAP group list they need; cades-birthright in this case.
-   #PBS -W group_list=cades-ccsd
-   ### Your account type. Birtright in this case.
-   #PBS -A ccsd
-   ### Quality of service set to burst.
+   ### The organization / group that you belong to
+   #PBS -W group_list=cades-birthright
+   ### Your account type
+   #PBS -A birthright
+   ### Quality of service
    #PBS -l qos=std
 
 
@@ -219,80 +240,6 @@ Now, time to build the PBS script for multiple nodes. We add a few components to
    ### MPI run followed by the name/path of the binary.
    mpiexec --map-by ppr:1:node python -m cProfile -s cumtime filter_mpi.py
 
-PBS Script for a Single Node
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-When running code on a single node, MPI4py can be used, but is not necessary. We will create a python script that opens the hdf5 file, then computes on it using the SignalFilter from pycroscopy.
-The following is the python script that we are going to scale to a single node on the Condo:
-
-
-
-Now, we need to create a simple PBS file to execute the job on the SHPC Condo. The two main components of the PBS file will be (1) specifying PBS flags and (2) the main program. The following is an example PBS script, along with helpful comments:
-
-.. code:: bash
-   #!/bin/bash
-
-   ### Set the job name. Your output files will share this name.
-   #PBS -N mpiSignalFilter
-   ### Enter your email address. Errors will be emailed to this address.
-   #PBS -M email@ornl.gov
-   ### Node spec, number of nodes and processors per node that you desire.
-   ### One node and 16 cores per node in this case.
-   #PBS -l nodes=1:ppn=36
-   ### Tell PBS the anticipated runtime for your job, where walltime=HH:MM:S.
-   #PBS -l walltime=0:00:30:0
-   ### The LDAP group list they need; cades-birthright in this case.
-   #PBS -W group_list=cades-ccsd
-   ### Your account type. Birtright in this case.
-   #PBS -A ccsd
-   ### Quality of service set to burst.
-   #PBS -l qos=std
-
-
-   ## begin main program ##
-
-   ### Remove old modules to ensure a clean state.
-   module purge
-
-   ### Load modules (your programming environment)
-   module load PE-gnu
-   ### Load custom python virtual environment
-   module load python/3.6.3
-   ###source /lustre/or-hydra/cades-ccsd/syz/python_3_6/bin/activate
-
-
-   ### Check loaded modules
-   module list
-
-   ### Switch to the working directory (path of your PBS script).
-   EGNAME=signal_filter
-   DATA_PATH=$HOME/giv/pzt_nanocap_6_just_translation_copy.h5
-   SCRIPTS_PATH=$HOME/mpi_tutorials/$EGNAME
-   WORK_PATH=/lustre/or-hydra/cades-ccsd/syz/pycroscopy_ensemble
-
-   cd $WORK_PATH
-   mkdir $EGNAME
-   cd $EGNAME
-
-   ### Show current directory.
-   pwd
-
-   ### Copy data:
-   DATA_NAME=giv_raw.h5
-   rm -rf $DATA_NAME
-   cp $DATA_PATH $DATA_NAME
-
-   ### Copy python files:
-   cp $SCRIPTS_PATH/fft.py .
-   cp $SCRIPTS_PATH/filter.py .
-   cp $SCRIPTS_PATH/gmode_utils.py .
-   cp $SCRIPTS_PATH/signal_filter.py .
-   cp $SCRIPTS_PATH/process.py .
-
-   ls -hl
-
-   ### execute code using python and add any flags you desire.
-   python -m cProfile -s cumtime filter.py
-
 Once the python and PBS scripts are set up, you can simply the following command on the SHPC Condo to submit a job:
 
 .. code:: bash
@@ -301,9 +248,6 @@ Once the python and PBS scripts are set up, you can simply the following command
 
 FAQs
 ~~~~
-
-Why use the SHPC Condo with pyUSID?
-###################################
 
 Why mpiexec instead of mpirun?
 ##############################
