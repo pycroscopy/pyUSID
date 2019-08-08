@@ -120,6 +120,7 @@ Now, we need to create a simple PBS file to execute the job on the SHPC Condo. T
 Once the python and PBS scripts are set up, you can simply the following command on the SHPC Condo to submit a job: 
 
 .. code:: bash
+
    qsub my_pbs_script.pbs
 
 PBS Script for Multiple Nodes
