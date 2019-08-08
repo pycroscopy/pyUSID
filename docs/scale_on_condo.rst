@@ -11,14 +11,17 @@ In our example, we will run a signal filter, which is built into the pycroscopy 
 
 PBS Script for a Single Node
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-When running code on a single node, MPI4py can be used, but is not necessary. 
+When running code on a single node, MPI4py can be used, but is not necessary. We will create a python script that opens the hdf5 file, then computes on it using the SignalFilter from pycroscopy.
+The following is the python script that we are going to scale to a single node on the Condo:
 
 .. code:: python
+   # filter.py
    import h5py
    from mpi4py import MPI
    from fft import LowPassFilter
    from mpi_signal_filter import SignalFilter
-
+   
+   # find the hdf5 file and open it
    h5_path = 'giv_raw.h5'
    ###################################################
    # note: this is the only line we will change for our 
@@ -26,26 +29,102 @@ When running code on a single node, MPI4py can be used, but is not necessary.
    h5_f = h5py.File(h5_path, mode='r+')
    ####################################################
 
+   # find the main dataset of the file
    h5_grp = h5_f['Measurement_000/Channel_000']
    h5_main = h5_grp['Raw_Data']
 
+   # find some needed attributes
    samp_rate = h5_grp.attrs['IO_samp_rate_[Hz]']
    num_spectral_pts = h5_main.shape[1]
-
+   
+   # create some noise
    frequency_filters = [LowPassFilter(num_spectral_pts, samp_rate, 10E+3)]
    noise_tol = 1E-6
-
+   
+   # create the object and compute
    sig_filt = SignalFilter(h5_main, frequency_filters=frequency_filters,
                            noise_threshold=noise_tol, write_filtered=True,
                            write_condensed=False, num_pix=1, verbose=False)
    h5_filt_grp = sig_filt.compute()
-
+   
+   # make sure the close the file
    h5_f.close()
+
+Now, we need to create a simple PBS file to execute the job on the SHPC Condo. The two main components of the PBS file will be (1) specifying PBS flags and (2) the main program. The following is an example PBS script, along with helpful comments:
+
+.. code:: bash
+   #!/bin/bash
+   
+   ### Set the job name. Your output files will share this name.
+   #PBS -N mpiSignalFilter
+   ### Enter your email address. Errors will be emailed to this address.
+   #PBS -M email@ornl.gov
+   ### Node spec, number of nodes and processors per node that you desire.
+   ### One node and 16 cores per node in this case.
+   #PBS -l nodes=1:ppn=36
+   ### Tell PBS the anticipated runtime for your job, where walltime=HH:MM:S.
+   #PBS -l walltime=0:00:30:0
+   ### The LDAP group list they need; cades-birthright in this case.
+   #PBS -W group_list=cades-ccsd
+   ### Your account type. Birtright in this case.
+   #PBS -A ccsd
+   ### Quality of service set to burst.
+   #PBS -l qos=std
+
+
+   ## begin main program ##
+
+   ### Remove old modules to ensure a clean state.
+   module purge
+
+   ### Load modules (your programming environment)
+   module load PE-gnu
+   ### Load custom python virtual environment
+   module load python/3.6.3
+   ###source /lustre/or-hydra/cades-ccsd/syz/python_3_6/bin/activate
+
+
+   ### Check loaded modules 
+   module list
+
+   ### Switch to the working directory (path of your PBS script).
+   EGNAME=signal_filter
+   DATA_PATH=$HOME/giv/pzt_nanocap_6_just_translation_copy.h5
+   SCRIPTS_PATH=$HOME/mpi_tutorials/$EGNAME
+   WORK_PATH=/lustre/or-hydra/cades-ccsd/syz/pycroscopy_ensemble
+
+   cd $WORK_PATH
+   mkdir $EGNAME
+   cd $EGNAME
+
+   ### Show current directory.
+   pwd
+
+   ### Copy data:
+   DATA_NAME=giv_raw.h5
+   rm -rf $DATA_NAME
+   cp $DATA_PATH $DATA_NAME
+
+   ### Copy python files:
+   cp $SCRIPTS_PATH/fft.py .
+   cp $SCRIPTS_PATH/filter.py .
+   cp $SCRIPTS_PATH/gmode_utils.py .
+   cp $SCRIPTS_PATH/signal_filter.py .
+   cp $SCRIPTS_PATH/process.py .
+
+   ls -hl
+
+   ### execute code using python and add any flags you desire.
+   python -m cProfile -s cumtime filter.py
+   
+Once the python and PBS scripts are set up, you can simply the following command on the SHPC Condo to submit a job: 
+
+.. code:: bash
+   qsub my_pbs_script.pbs
 
 PBS Script for Multiple Nodes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In this example, we will use mpiexec to initialize a parallel job from within the PBS batch. Mpiexec uses the task manager library of PBS to spawn copies of the executable on the nodes in a PBS allocation.
-
 
 .. note:: Make sure to run the following commands prior to running your python script:
 
@@ -64,6 +143,7 @@ Prior to making our new MPI-aware PBS script, we will need to create a MPI versi
 The Python script that MPI will execute is the following:
 
 .. code:: python
+   #mpi_filter.py
    import h5py
    from mpi4py import MPI
    from fft import LowPassFilter
@@ -90,6 +170,8 @@ The Python script that MPI will execute is the following:
    h5_filt_grp = sig_filt.compute()
 
    h5_f.close()
+
+Now, time to build the PBS
 
 .. code:: bash
    #!/bin/bash
