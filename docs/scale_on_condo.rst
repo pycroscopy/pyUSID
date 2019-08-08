@@ -108,7 +108,7 @@ Running a job on a Single Node
 When running code on a single node, MPI4py can be used and is preferred, but is not necessary. We will create a python script that opens the hdf5 file, then computes on it using the SignalFilter from pycroscopy.
 The following is the python script that we are going to scale to a single node on the Condo:
 
-Now, we need to create a simple PBS file to execute the job on the SHPC Condo. The two main components of the PBS file will be (1) specifying PBS flags and (2) the main program. The following is an example PBS script, along with helpful comments:
+Now, we need to create a simple PBS file to execute the job on the SHPC Condo. The two main components of the PBS file will be (**1**) specifying PBS flags and (**2**) the main program. The following is an example PBS script, along with helpful comments:
 
 .. code:: bash
 
