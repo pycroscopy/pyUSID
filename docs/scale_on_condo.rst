@@ -264,8 +264,12 @@ Reference: https://www.osc.edu/~djohnson/mpiexec/
 
 Why is MPI used in both the Python and PBS script?
 ##################################################
+**Python script** is where MPI is used for point-to-point (sends, receives), and collective (broadcasts, scatters, gathers) communications of any picklable Python object.
+
+**PBS script** is where the command is put to start the parallel job. In our case, mpiexec starts the program a specfied number of times in parallel, forming a parallel job.
 
 Who do I contact if I am struggling to run a job?
 #################################################
 Contact CADES user support team at cades-help@ornl.gov or join the CADES Slack channel at https://cades.slack.com/signup
+
 For help with pyUSID and/or pycroscopy, contact our team at `this email <pycroscopy@gmail.com>`_
