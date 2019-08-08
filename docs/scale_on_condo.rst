@@ -3,15 +3,44 @@ Scaling pyUSID on the SHPC Condo
 :Author: Emily Costa
 :Created on: 08/07/2019
 
-.. note:: If you have no prior experience in running jobs on SHPC Condo, please refer to the SHPC Condo introductory tutorials on `this GitHub repository <https://github.com/emilyjcosta5/scalable_analytics>`_.
+The purpose of this tutorial is to provide examples and advice on running jobs on the SHPC Condo that use the pyUSID package. The SHPC Condo is managed by CADES at Oak Ridge National Laboratory. 
 
-Why use the SHPC Condo with pyUSID?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-For some functions of pyUSID, parallel computing can be a helpful tool to complete a computation in a reasonable time period. As the parallel_compute() function in pyUSID does not scale up to multi-node machines, mpi4py can be used to scale computation to clusters and supercomputers for computationally heavy functions in the pyUSID and pycroscopy packages. This tutorial uses the SHPC Condo at Oak Ridge National Laboratory, but can be applied to HPC systems that use PBS files to submit and deploy jobs.
+In our example, we will run a signal filter, which is built into the pycroscopy package, through a USID dataset, manipulated by the pyUSID package. 
+
+.. note:: If you have no prior experience in running jobs on SHPC Condo, please refer to the SHPC Condo introductory tutorials on `this GitHub repository <https://github.com/emilyjcosta5/scalable_analytics>`_.
 
 PBS Script for a Single Node
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 When running code on a single node, MPI4py can be used, but is not necessary. 
+
+.. code:: python
+   import h5py
+   from mpi4py import MPI
+   from fft import LowPassFilter
+   from mpi_signal_filter import SignalFilter
+
+   h5_path = 'giv_raw.h5'
+   ###################################################
+   # note: this is the only line we will change for our 
+   # mpi version of the python script
+   h5_f = h5py.File(h5_path, mode='r+')
+   ####################################################
+
+   h5_grp = h5_f['Measurement_000/Channel_000']
+   h5_main = h5_grp['Raw_Data']
+
+   samp_rate = h5_grp.attrs['IO_samp_rate_[Hz]']
+   num_spectral_pts = h5_main.shape[1]
+
+   frequency_filters = [LowPassFilter(num_spectral_pts, samp_rate, 10E+3)]
+   noise_tol = 1E-6
+
+   sig_filt = SignalFilter(h5_main, frequency_filters=frequency_filters,
+                           noise_threshold=noise_tol, write_filtered=True,
+                           write_condensed=False, num_pix=1, verbose=False)
+   h5_filt_grp = sig_filt.compute()
+
+   h5_f.close()
 
 PBS Script for Multiple Nodes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,8 +57,7 @@ In this example, we will use mpiexec to initialize a parallel job from within th
 
 The following is an example of a script that runs a signal filter through a USID dataset using pycroscopy, a package built on pyUSID, using a multiple node remote machine (in this case, CADES SHPC Condo).
 
-MPI will need to  
- 
+Prior to making our new MPI-aware PBS script, we will need to create a MPI version of our Python script. 
 
 The Python script that MPI will execute is the following:
 
@@ -41,8 +69,6 @@ The Python script that MPI will execute is the following:
 
    h5_path = 'giv_raw.h5'
    h5_f = h5py.File(h5_path, mode='r+', driver='mpio', comm=MPI.COMM_WORLD)
-   # Not necessary I think but Chris used it
-   h5_f.atomic = True # This doesn't seem to make any difference
 
    h5_grp = h5_f['Measurement_000/Channel_000']
    h5_main = h5_grp['Raw_Data']
@@ -128,8 +154,23 @@ The Python script that MPI will execute is the following:
 FAQs
 ~~~~
 
+Why use the SHPC Condo with pyUSID?
+###################################
+For some functions of pyUSID, parallel computing can be a helpful tool to complete a computation in a reasonable time period. As the parallel_compute() function in pyUSID does not scale up to multi-node machines, mpi4py can be used to scale computation to clusters and supercomputers for computationally heavy functions in the pyUSID and pycroscopy packages. This tutorial uses the SHPC Condo at Oak Ridge National Laboratory, but can be applied to HPC systems that use PBS files to submit and deploy jobs.
+
 Why mpiexec instead of mpirun?
+##############################
+Reasons to use mpiexec rather than a script (mpirun) or an external daemon (mpd):
 
-Why is mpi used in both the python and pbs script?
+   1. Starting tasks with the TM interface is much faster than invoking a separate rsh or ssh once for each process.
+   2. Resources used by the spawned processes are accounted correctly with mpiexec, and reported in the PBS logs, because all the processes of a parallel job remain under the control of PBS, unlike when using startup scripts such as mpirun.
+   3. Tasks that exceed their assigned limits of CPU time, wallclock time, memory usage, or disk space are killed cleanly by PBS. It is quite hard for processes to escape control of the resource manager when using mpiexec.
+   4. You can use mpiexec to enforce a security policy. If all jobs are required to startup using mpiexec and the PBS execution environment, it is not necessary to enable rsh or ssh access to the compute nodes in the cluster.
 
-Who do I contact if I am struggling to run a job 
+Reference: https://www.osc.edu/~djohnson/mpiexec/ 
+
+Why is MPI used in both the Python and PBS script?
+##################################################
+
+Who do I contact if I am struggling to run a job?
+#################################################
