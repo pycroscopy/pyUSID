@@ -233,6 +233,7 @@ Now, time to build the PBS script for multiple nodes. We add a few components to
        **ppr:N:resource** assigns N processes to each resource of type resource available on the host. In the case of the Condo, the resource is 'node'.
 
 .. code:: bash
+
    #!/bin/bash
    
    ### Set the job name. Your output files will share this name.
