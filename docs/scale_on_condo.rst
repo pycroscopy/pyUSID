@@ -111,6 +111,7 @@ The following is the python script that we are going to scale to a single node o
 Now, we need to create a simple PBS file to execute the job on the SHPC Condo. The two main components of the PBS file will be (1) specifying PBS flags and (2) the main program. The following is an example PBS script, along with helpful comments:
 
 .. code:: bash
+
    #!/bin/bash
 
    ### Set the job name. Your output files will share this name.
