@@ -5,7 +5,7 @@ Scaling pyUSID on the SHPC Condo
 
 The purpose of this tutorial is to provide examples and advice on running jobs on the SHPC Condo that use the pyUSID package. The SHPC Condo is managed by CADES at Oak Ridge National Laboratory. 
 
-In our example, we will run a signal filter, which is built into the pycroscopy package, through a USID dataset, manipulated by the pyUSID package. 
+In our example, we will run a signal filter, which is built into the pycroscopy package, on a USID dataset, which is manipulated by the pyUSID package. 
 
 .. note:: If you have no prior experience in running jobs on SHPC Condo, please refer to the SHPC Condo introductory tutorials on `this GitHub repository <https://github.com/emilyjcosta5/scalable_analytics>`_.
 
@@ -267,3 +267,5 @@ Why is MPI used in both the Python and PBS script?
 
 Who do I contact if I am struggling to run a job?
 #################################################
+Contact CADES user support team at cades-help@ornl.gov or join the CADES Slack channel at https://cades.slack.com/signup
+For help with pyUSID and/or pycroscopy, contact our team at `this email <pycroscopy@gmail.com>`_
