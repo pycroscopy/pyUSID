@@ -885,7 +885,7 @@ class TestAssignGroupIndex(TestSimple):
                 _ = hdf_utils.assign_group_index(h5_group, 1.24)
 
 
-class TestLinkAdMain(TestSimple):
+class TestLinkAsMain(TestSimple):
 
     def test_pos_args_not_h5_dset(self):
         file_path = 'link_as_main.h5'
@@ -956,7 +956,7 @@ class TestLinkAdMain(TestSimple):
 
         data_utils.delete_existing_file(file_path)
 
-    def test_typical(self):
+    def helper_test(self, quant_units_specified):
         file_path = 'link_as_main.h5'
         data_utils.delete_existing_file(file_path)
         with h5py.File(file_path) as h5_f:
@@ -997,7 +997,12 @@ class TestLinkAdMain(TestSimple):
 
             source_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
             h5_source_main = h5_raw_grp.create_dataset(source_dset_name, data=source_main_data)
-            data_utils.write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
+
+            expected_type = h5py.Dataset
+
+            if quant_units_specified:
+                expected_type = USIDataset
+                data_utils.write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
 
             self.assertFalse(hdf_utils.check_if_main(h5_source_main))
 
@@ -1006,10 +1011,18 @@ class TestLinkAdMain(TestSimple):
                                                  h5_source_spec_vals)
 
             # Finally:
-            self.assertTrue(hdf_utils.check_if_main(h5_source_main))
-            self.assertIsInstance(usid_source, USIDataset)
+            if quant_units_specified:
+                self.assertTrue(hdf_utils.check_if_main(h5_source_main))
+
+            self.assertIsInstance(usid_source, expected_type)
 
         os.remove(file_path)
+
+    def test_typical_attrs_specified(self):
+        self.helper_test(True)
+
+    def test_typical_attrs_not_specified(self):
+        self.helper_test(False)
 
 
 class TestCopyAttributes(TestSimple):
