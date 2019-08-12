@@ -504,7 +504,12 @@ def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals):
     link_h5_obj_as_alias(h5_main, h5_spec_vals, 'Spectroscopic_Values')
 
     from ..usi_data import USIDataset
-    return USIDataset(h5_main)
+    try:
+        # If all other conditions are satisfied
+        return USIDataset(h5_main)
+    except TypeError:
+        # If some other conditions are yet to be satisfied
+        return h5_main
 
 
 def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=False):
