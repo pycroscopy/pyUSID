@@ -243,7 +243,7 @@ class Process(object):
             print('Checking for duplicates:')
 
         # This list will contain completed runs only
-        duplicate_h5_groups = check_for_old(self.h5_main, self.process_name, new_parms=self.parms_dict)
+        duplicate_h5_groups = check_for_old(self.h5_main, self.process_name, new_parms=self.parms_dict, verbose=self.verbose)
         partial_h5_groups = []
 
         # First figure out which ones are partially completed:
@@ -254,9 +254,9 @@ class Process(object):
                 The last_pixel attribute check may be deprecated in the future.
                 Note that legacy computations did not have this dataset. We can add to partially computed datasets
                 """
+                # Case 1: Modern book-keeping dataset available:
                 if self._status_dset_name in curr_group.keys():
 
-                    # Case 1: Modern Process results:
                     status_dset = curr_group[self._status_dset_name]
 
                     if not isinstance(status_dset, h5py.Dataset):
@@ -270,49 +270,70 @@ class Process(object):
                         if self.mpi_rank == 0:
                             print('Status dataset: {} was not of the expected shape or datatype'.format(status_dset))
 
-                    # Finally, check how far the computation was completed.
-                    if len(np.where(status_dset[()] == 0)[0]) != 0:  # If there are pixels uncompleted
+                    # ##### ACTUAL COMPLETENESS TEST HERE #########
+
+                    completed_positions = np.sum(status_dset[()])
+
+                    if self.verbose and self.mpi_rank == 0:
+                        print('{} has results that are {} % complete'
+                              '.'.format(status_dset.name,
+                                         int(100 * completed_positions / self.h5_main.shape[0])))
+
+                    # Case 1.A: Incomplete computation?
+                    if completed_positions < self.h5_main.shape[0]:
+                        # If there are pixels uncompleted
                         # remove from duplicates and move to partial
+                        if self.verbose and self.mpi_rank == 0:
+                            print('moving {} to partial'.format(curr_group.name))
                         partial_h5_groups.append(duplicate_h5_groups.pop(index))
                         # Let's write the legacy attribute for safety
                         curr_group.attrs['last_pixel'] = self.h5_main.shape[0]
                         # No further checks necessary
                         continue
-                    else:
-                        # Optionally calculate how much was completed:
-                        if self.mpi_rank == 0:
-                            if len(np.where(status_dset[()] == 0)[0]) > 0:  # if there are unfinished pixels
-                                percent_complete = int(100 * len(np.where(status_dset[()] == 0)[0]) / status_dset.shape[0])
-                                print('Group: {}: computation was {}% completed'.format(curr_group, percent_complete))
 
-                # Case 2: Legacy results group:
-                if 'last_pixel' not in curr_group.attrs.keys():
+                    # Case 1.B: Complete computation:
+                    if self.verbose and self.mpi_rank == 0:
+                        print('Leaving {} in duplicate groups'.format(curr_group.name))
+                    continue
+
+                # Case 2: Even the legacy book-keeping is absent:
+                elif 'last_pixel' not in curr_group.attrs.keys():
                     if self.mpi_rank == 0:
                         # Should not be coming here at all
                         print('Group: {} had neither the status HDF5 dataset or the legacy attribute: "last_pixel"'
                               '.'.format(curr_group))
-                    # Not sure what to do with such groups. Don't consider them in the future
+                    # Not sure what to do with such groups. Don't consider them
                     duplicate_h5_groups.pop(index)
                     continue
 
-                # Finally, do the legacy test:
-                if curr_group.attrs['last_pixel'] < self.h5_main.shape[0]:
+                # Case 3.A: Only the legacy book-keeping is available:
+                elif curr_group.attrs['last_pixel'] < self.h5_main.shape[0]:
                     # Should we create the dataset here, to make the group future-proof?
                     # remove from duplicates and move to partial
+                    if self.verbose and self.mpi_rank == 0:
+                        print('moving {} to partial since computation was {} % complete'
+                              '.'.format(curr_group.name,
+                                         int(100 * curr_group.attrs['last_pixel'] / self.h5_main.shape[0])))
                     partial_h5_groups.append(duplicate_h5_groups.pop(index))
 
+                    continue
+
+                # Case 4: legacy book-keeping shows that computation is complete:
+                if self.verbose and self.mpi_rank == 0:
+                    print('Leaving {} in duplicate groups'.format(curr_group.name))
+
         if len(duplicate_h5_groups) > 0 and self.mpi_rank == 0:
-            print('Note: ' + self.process_name + ' has already been performed with the same parameters before. '
+            print('\nNote: ' + self.process_name + ' has already been performed with the same parameters before. '
                                                  'These results will be returned by compute() by default. '
-                                                 'Set override to True to force fresh computation')
+                                                 'Set override to True to force fresh computation\n')
             print(duplicate_h5_groups)
 
         if len(partial_h5_groups) > 0 and self.mpi_rank == 0:
-            print('Note: ' + self.process_name + ' has already been performed PARTIALLY with the same parameters. '
+            print('\nNote: ' + self.process_name + ' has already been performed PARTIALLY with the same parameters. '
                                                  'compute() will resuming computation in the last group below. '
                                                  'To choose a different group call use_patial_computation()'
                                                  'Set override to True to force fresh computation or resume from a '
-                                                 'data group besides the last in the list.')
+                                                 'data group besides the last in the list.\n')
             print(partial_h5_groups)
 
         return duplicate_h5_groups, partial_h5_groups
@@ -392,7 +413,10 @@ class Process(object):
         self._max_mem_mb = min(_max_mem_mb, mem)
 
         # Remember that multiple processes (either via MPI or joblib) will share this socket
-        max_data_chunk = self._max_mem_mb / (self._cores * self.__ranks_on_socket)
+        # This makes logical sense but there's always too much free memory and the
+        # cores are starved.
+        # max_data_chunk = self._max_mem_mb / (self._cores * self.__ranks_on_socket)
+        max_data_chunk = self._max_mem_mb
 
         # Now calculate the number of positions OF RAW DATA ONLY that can be stored in memory in one go PER RANK
         mb_per_position = self.h5_main.dtype.itemsize * self.h5_main.shape[1] / 1024 ** 2
