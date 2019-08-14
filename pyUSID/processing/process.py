@@ -611,7 +611,7 @@ class Process(object):
         self.__create_compute_status_dataset()
 
         if resuming and self.mpi_rank == 0:
-            percent_complete = int(100 * len(np.where(self._h5_status_dset[()] == 0)[0]) /
+            percent_complete = int(100 * len(np.where(self._h5_status_dset[()] == 1)[0]) /
                                    self._h5_status_dset.shape[0])
             print('Resuming computation. {}% completed already'.format(percent_complete))
 
