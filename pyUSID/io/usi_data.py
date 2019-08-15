@@ -124,11 +124,6 @@ class USIDataset(h5py.Dataset):
 
         self.__set_labels_and_sizes()
 
-        try:
-            self.__n_dim_data = self.get_n_dim_form()
-        except ValueError:
-            warn('This dataset does not have an N-dimensional form')
-
     def __eq__(self, other):
         if isinstance(other, h5py.Dataset):
             return super(USIDataset, self).__eq__(other)
