@@ -29,7 +29,8 @@ class Process(object):
     only need to specify application-relevant code for processing the data.
     """
 
-    def __init__(self, h5_main, cores=None, max_mem_mb=4*1024, verbose=False):
+    def __init__(self, h5_main, cores=None, max_mem_mb=4*1024,
+                 mem_multiplier=1.0, verbose=False):
         """
         Parameters
         ----------
@@ -39,6 +40,16 @@ class Process(object):
             How many cores to use for the computation. Default: all available cores - 2 if operating outside MPI context
         max_mem_mb : uint, optional
             How much memory to use for the computation.  Default 1024 Mb
+        mem_multiplier : float, optional. Default = 1
+            mem_multiplier is the number that will be multiplied with the
+            (byte) size of a single position in the source dataset in order to
+            better estimate the number of positions that can be processed at
+            any given time (how many pixels of the source and results datasets
+            can be retained in memory). The default value of 1.0 only accounts
+            for the source dataset. A value greater than 1 would account for
+            the size of results datasets as well. For example, if the result
+            dataset is the same size and precision as the source dataset,
+            the multiplier will be 2 (1 for source, 1 for result)
         verbose : bool, Optional, default = False
             Whether or not to print debugging statements
         """
@@ -72,6 +83,9 @@ class Process(object):
                 raise TypeError('The HDF5 file should have been opened with driver="mpio". Current driver = "{}"'
                                 ''.format(h5_main.file.driver))
 
+            if verbose and self.mpi_rank == 0:
+                print('Finished getting all necessary MPI information')
+
             """
             # Not sure how to check for this correctly
             messg = None
@@ -101,14 +115,22 @@ class Process(object):
             MPI.COMM_WORLD.barrier()
         # Not sure if we need a barrier here.
 
-        # Saving these as properties of the object:
+        if verbose and self.mpi_rank == 0:
+            print('Rank {}: Upgrading from a regular h5py.Dataset to a USIDataset'.format(self.mpi_rank))
+
+        # Generation of N-dimensional form would break things for some reason.
         self.h5_main = USIDataset(h5_main)
+
+        if verbose and self.mpi_rank == 0:
+            print('Rank {}: The HDF5 dataset is now a USIDataset'.format(self.mpi_rank))
+
+        # Saving these as properties of the object:
         self.verbose = verbose
         self._cores = None
         self.__ranks_on_socket = 1
         self.__socket_master_rank = 0
         self._max_pos_per_read = None
-        self._max_mem_mb = None
+        self.__bytes_per_pos = None
 
         # Now have to be careful here since the below properties are a function of the MPI rank
         self.__start_pos = None
@@ -118,7 +140,10 @@ class Process(object):
 
         # Determining the max size of the data that can be put into memory
         # all ranks go through this and they need to have this value any
-        self._set_memory_and_cores(cores=cores, mem=max_mem_mb)
+        self._set_memory_and_cores(cores=cores, man_mem_limit=max_mem_mb,
+                                   mem_multiplier=mem_multiplier)
+        if verbose and self.mpi_rank == 0:
+            print('Finished collecting info on memory and workers')
         self.duplicate_h5_groups = []
         self.partial_h5_groups = []
         self.process_name = None  # Reset this in the extended classes
@@ -243,7 +268,9 @@ class Process(object):
             print('Checking for duplicates:')
 
         # This list will contain completed runs only
-        duplicate_h5_groups = check_for_old(self.h5_main, self.process_name, new_parms=self.parms_dict, verbose=self.verbose)
+        duplicate_h5_groups = check_for_old(self.h5_main, self.process_name,
+                                            new_parms=self.parms_dict,
+                                            verbose=self.verbose and self.mpi_rank==0)
         partial_h5_groups = []
 
         # First figure out which ones are partially completed:
@@ -361,18 +388,17 @@ class Process(object):
 
         self.h5_results_grp = h5_partial_group
 
-    def _set_memory_and_cores(self, cores=None, mem=None):
+    def __set_cores(self, cores=None):
         """
-        Checks hardware limitations such as memory, number of CPU cores and sets the recommended data chunk sizes and
-        the number of cores to be used by analysis methods. This function can work with clusters with heterogeneous
-        memory sizes (e.g. CADES SHPC Condo).
+        Checks number of CPU cores and sets the recommended number of cores to
+        be used by analysis methods.
+        This function can work with clusters with heterogeneous core counts
+        (e.g. CADES SHPC Condo).
 
         Parameters
         ----------
-        cores : uint, optional, Default = 1
-            How many cores to use for the computation.
-        mem : uint, optional, Default = 1024
-            The amount a memory in Mb to use in the computation
+        cores : uint, optional, Default = None (all or nearly all available)
+            How many CPU cores to use for the computation.
         """
         if self.mpi_comm is None:
             min_free_cores = 1 + int(psutil.cpu_count() > 4)
@@ -396,38 +422,124 @@ class Process(object):
             # how many in this socket?
             self.__ranks_on_socket = ranks_on_this_socket.size
             # Force usage of all available memory
-            mem = None
+            man_mem_limit = None
             self._cores = 1
             # Disabling the following line since mpi4py and joblib didn't play well for Bayesian Inference
             # self._cores = self.__cores_per_rank = psutil.cpu_count() // self.__ranks_on_socket
 
-        # TODO: Convert all to bytes!
-        _max_mem_mb = get_available_memory() / 1024 ** 2  # in MB
-        if mem is None:
-            mem = _max_mem_mb
-        else:
-            if not isinstance(mem, int):
-                raise TypeError('mem must be a whole number')
-            mem = abs(mem)
+    def _set_memory_and_cores(self, cores=None, man_mem_limit=None,
+                              mem_multiplier=1.0):
+        """
+        Checks hardware limitations such as memory, number of CPU cores and sets the recommended data chunk sizes and
+        the number of cores to be used by analysis methods. This function can work with clusters with heterogeneous
+        memory sizes (e.g. CADES SHPC Condo).
 
-        self._max_mem_mb = min(_max_mem_mb, mem)
+        Parameters
+        ----------
+        cores : uint, optional, Default = 1
+            How many cores to use for the computation.
+        man_mem_limit : uint, optional, Default = None (all available memory)
+            The amount a memory in Mb to use in the computation
+        mem_multiplier : float, optional. Default = 1
+            mem_multiplier is the number that will be multiplied with the
+            (byte) size of a single position in the source dataset in order to
+            better estimate the number of positions that can be processed at
+            any given time (how many pixels of the source and results datasets
+            can be retained in memory). The default value of 1.0 only accounts
+            for the source dataset. A value greater than 1 would account for
+            the size of results datasets as well. For example, if the result
+            dataset is the same size and precision as the source dataset,
+            the multiplier will be 2 (1 for source, 1 for result)
+        """
+        self.__set_cores(cores=cores)
+
+        self.__set_memory(man_mem_limit=man_mem_limit,
+                          mem_multiplier=mem_multiplier)
+
+    def __set_memory(self, man_mem_limit=None, mem_multiplier=1.0):
+        """
+        Checks memory capabilities of each node and sets the recommended data
+        chunk sizes to be used by analysis methods.
+        This function can work with clusters with heterogeneous memory sizes
+        (e.g. CADES SHPC Condo).
+
+        Parameters
+        ----------
+        man_mem_limit : uint, optional, Default = None (all available memory)
+            The amount a memory in Mb to use in the computation
+        mem_multiplier : float, optional. Default = 1
+            mem_multiplier is the number that will be multiplied with the
+            (byte) size of a single position in the source dataset in order to
+            better estimate the number of positions that can be processed at
+            any given time (how many pixels of the source and results datasets
+            can be retained in memory). The default value of 1.0 only accounts
+            for the source dataset. A value greater than 1 would account for
+            the size of results datasets as well. For example, if the result
+            dataset is the same size and precision as the source dataset,
+            the multiplier will be 2 (1 for source, 1 for result)
+        """
+        if not isinstance(mem_multiplier, float):
+            raise TypeError('mem_multiplier must be a floating point number')
+        mem_multiplier = abs(mem_multiplier)
+        if mem_multiplier < 1:
+            raise ValueError('mem_multiplier must be at least 1')
+
+        avail_mem_bytes = get_available_memory()  # in bytes
+        if self.verbose and self.mpi_rank == self.__socket_master_rank:
+            # expected to be the same for all ranks so just use this.
+            print('Rank {} - on socket with {} cores and {} avail. RAM shared '
+                  'by {} ranks each given {} cores'
+                  '.'.format(self.__socket_master_rank, psutil.cpu_count(),
+                             format_size(avail_mem_bytes),
+                             self.__ranks_on_socket, self._cores))
+
+        if man_mem_limit is None:
+            man_mem_limit = avail_mem_bytes
+        else:
+            if not isinstance(man_mem_limit, int):
+                raise TypeError('man_mem_limit must be a whole number')
+            # Note that man_mem_limit is specified in mega bytes
+            man_mem_limit = abs(man_mem_limit) * 1024 ** 2  # in bytes
+            if self.verbose and self.mpi_rank == 0:
+                print('User has requested to use no more than {} of memory'
+                      '.'.format(format_size(man_mem_limit)))
+
+        max_mem_bytes = min(avail_mem_bytes, man_mem_limit)
 
         # Remember that multiple processes (either via MPI or joblib) will share this socket
         # This makes logical sense but there's always too much free memory and the
         # cores are starved.
-        # max_data_chunk = self._max_mem_mb / (self._cores * self.__ranks_on_socket)
-        max_data_chunk = self._max_mem_mb
+        max_mem_per_worker = max_mem_bytes / (self._cores * self.__ranks_on_socket)
+        if self.verbose and self.mpi_rank == self.__socket_master_rank:
+            print('Rank {}: Each of the {} workers on this socket are allowed '
+                  'to use {} of RAM'
+                  '.'.format(self.mpi_rank,
+                             self._cores * self.__ranks_on_socket,
+                             format_size(max_mem_per_worker)))
 
-        # Now calculate the number of positions OF RAW DATA ONLY that can be stored in memory in one go PER RANK
-        mb_per_position = self.h5_main.dtype.itemsize * self.h5_main.shape[1] / 1024 ** 2
-        self._max_pos_per_read = int(np.floor(max_data_chunk / mb_per_position))
+        # Now calculate the number of positions OF RAW DATA ONLY that can be
+        # stored in memory in one go PER worker
+        self.__bytes_per_pos = self.h5_main.dtype.itemsize * self.h5_main.shape[1]
+        if self.verbose and self.mpi_rank == 0:
+            print('Each position in the SOURCE dataset is {} large'
+                  '.'.format(format_size(self.__bytes_per_pos)))
+        # Now multiply this with a factor that takes into account the expected
+        # sizes of the results (Final and intermediate) datasets.
+        self.__bytes_per_pos *= mem_multiplier
+        if self.verbose and self.mpi_rank == 0 and mem_multiplier > 1:
+            print('Each position of the source and results dataset(s) is {} '
+                  'large.'.format(format_size(self.__bytes_per_pos)))
+
+        self._max_pos_per_read = int(np.floor(max_mem_per_worker / self.__bytes_per_pos))
 
         if self.verbose and self.mpi_rank == self.__socket_master_rank:
+            title = 'SOURCE dataset only'
+            if mem_multiplier > 1:
+                title = 'source and result(s) datasets'
             # expected to be the same for all ranks so just use this.
-            print('Rank {} - on socket with {} logical cores and {} avail. RAM shared by {} ranks each given {} cores'
-                  '.'.format(self.__socket_master_rank, psutil.cpu_count(), format_size(_max_mem_mb * 1024**2, 2), 
-                             self.__ranks_on_socket, self._cores))
-            print('Allowed to read {} pixels per chunk'.format(self._max_pos_per_read))
+            print('Rank {}: Workers on this socket allowed to read {} '
+                  'positions of the {} per chunk'
+                  '.'.format(self.mpi_rank, self._max_pos_per_read, title))
 
     @staticmethod
     def _map_function(*args, **kwargs):
@@ -456,10 +568,22 @@ class Process(object):
 
             # DON'T DIRECTLY apply the start and end indices anymore to the h5 dataset. Find out what it means first
             self.__pixels_in_batch = self._compute_jobs[self.__start_pos: self.__end_pos]
-            self.data = self.h5_main[self.__pixels_in_batch, :]
-            if self.verbose:
-                print('Rank {} - Read positions: {}'.format(self.mpi_rank, self.__pixels_in_batch, self.__rank_end_pos))
 
+            if self.verbose:
+                print('Rank {} will read positions: {}'.format(self.mpi_rank, self.__pixels_in_batch))
+                bytes_this_read = self.__bytes_per_pos * len(self.__pixels_in_batch)
+                print('Rank {} will read {} of the SOURCE dataset'
+                      '.'.format(self.mpi_rank, format_size(bytes_this_read)))
+                if self.mpi_rank == self.__socket_master_rank:
+                    tot_workers = self.__ranks_on_socket * self._cores
+                    print('Rank: {} available memory: {}. '
+                          '{} workers on this socket will in total read ~ {}'
+                          '.'.format(self.mpi_rank,
+                                     format_size(get_available_memory()),
+                                     tot_workers,
+                                     bytes_this_read * tot_workers))
+
+            self.data = self.h5_main[self.__pixels_in_batch, :]
             # DON'T update the start position
 
         else:
