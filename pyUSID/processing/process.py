@@ -648,6 +648,9 @@ class Process(object):
         """
         # TODO: Try to use the functools.partials to preconfigure the map function
         # cores = number of processes / rank here
+        if self.verbose and self.mpi_rank == 0:
+            print("Rank {} at Process class' default _unit_computation() that "
+                  "will call parallel_compute()".format(self.mpi_rank))
         self._results = parallel_compute(self.data, self._map_function, cores=self._cores,
                                          lengthy_computation=False,
                                          func_args=args, func_kwargs=kwargs,
