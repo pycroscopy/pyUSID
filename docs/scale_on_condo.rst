@@ -256,7 +256,7 @@ The following is an example PBS script, configured for the ORNL CADES SHPC Condo
    mpiexec -use-hwthread-cpus python filter_script.py
 
 Wall time
-~~~~~~~~~
+^^^^^^^^^
 The scheduler will kill the computational job once the elapsed time is greater than
 the wall time requested in the job script. Besides the incompleteness of the desired
 computation, this can also result in the corruption of output files if the job was killed
@@ -275,7 +275,7 @@ regularly so that only a portion of the computation is lost.
    the user need not do anything additional to enable checkpointing in their ``Process`` class.
 
 Queues and organizations
-~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 The nodes in most HPC clusters are not homogeneous meaning that certain nodes may
 have GPUs, more memory, more CPU cores, etc. while others may not. Often, this is
 a result of upgrades / additions every few months or years with slightly different hardware
@@ -291,14 +291,14 @@ for each kind of nodes. One can specify which kinds of nodes to use using ``dire
    you are recommended to change the ``PBS -W group_list`` and ``PBS -A`` flags.
 
 Modules
-~~~~~~~
+^^^^^^^
 One is recommended to clear the modules before loading them since we do not always know what modules
 were already loaded. Modules are not always interchangeable. For example, the python module above
 may not work (at all or as well) with another programming environment. In the above example,
 all the necessary software was already available within the two modules.
 
 HPC File systems
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 Most HPC systems are connected to a slower file system (typically a network file system (NFS))
 with the user's home directory and a much faster file system (typically something like ``GPFS``
 or ``Lustre``) for scratch space where the raw and intermediate data directly interacting with
@@ -312,7 +312,7 @@ scratch space file system to take advantage of the speed.
    be permanently deleted. Check with specific documentation.
 
 Running the script
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 ``mpiexec`` was used to initialize a parallel job from within the scheduler batch.
 ``mpiexec`` uses the task manager library of PBS to spawn copies of the executable
 on the nodes in a PBS allocation.
