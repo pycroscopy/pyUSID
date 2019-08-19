@@ -1,4 +1,4 @@
-Scaling pyUSID.Process on the Compute Clusters
+Scaling to High-Performance-Computing Clusters
 ==============================================
 :Author: Suhas Somnath, Emily Costa
 :Created on: 08/20/2019
