@@ -1,7 +1,7 @@
 Scaling pyUSID.Process on the Compute Clusters
 ==============================================
-:Author: Emily Costa, Suhas Somnath
-:Created on: 08/07/2019
+:Author: Suhas Somnath, Emily Costa
+:Created on: 08/20/2019
 
 **Here we provide instructions and advice on scaling computations based on pyUSID.Process
 to multiple computers in a high-performance-computing (HPC) cluster**
@@ -43,6 +43,10 @@ can be applied to other HPC systems to submit and deploy computational jobs.
 This example will demonstrate how to perform signal filtering using the
 `pycroscopy.processing.SignalFilter <https://pycroscopy.github.io/pycroscopy/_autosummary/_autosummary/pycroscopy.processing.signal_filter.html#pycroscopy.processing.signal_filter.SignalFilter>`_
 class, on a h5USID dataset on an HPC.
+
+.. note::
+
+   The changes necessary to run on a HPC machine are far less intimidating than they appear!
 
 Computing on a Personal Computer
 --------------------------------
@@ -101,7 +105,7 @@ and instructs the ``pycroscopy.processing.SignalFilter`` class to perform the fi
    submit ``jobs`` instead.
 
    Even if a job is submitted based on the above script, the computation would only
-   run on a single (node) computer within the HPC cluster.
+   run on a **single** (node) computer within the HPC cluster.
 
 Computing on an HPC
 -------------------
@@ -142,132 +146,201 @@ Here:
    memory allocation for the HDF5 file.
 2. **comm:** class for communication of generic Python objects
 
-In order to distribute the same computation on multiple nodes within a compute cluster,
-one would need to submit a computational job in addition to making minor edits to the
-python script above.
+.. note::
 
-2. PBS script
+   It is best to have a single version of a script that works on both laptops and
+   HPC clusters. The following modification would allow the script to adapt either to
+   a personal computer or a HPC environment:
+
+   .. code:: python
+
+      """
+      This handy function in pyUSID.comp_utils returns the MPI object if both mpi4py was
+      available and if the script was called via mpirun or mpiexec. If either
+      conditions fail, it returns None (e.g. - personal computer)
+      """
+      MPI = usid.comp_utils.get_MPI()
+
+      # At a minimum, we want to read the file in an editable manner
+      h5_kwargs = {'mode': 'r+'}
+
+      # If the script is being called in the mpirun or mpiexec context:
+      if MPI is not None:
+          # Then, add the driver and communication configurations to the keyword arguments
+          h5_kwargs.update({'driver': 'mpio', 'comm': MPI.COMM_WORLD})
+
+      # Now, the file can be opened with the appropriate keyword arguments preconfigured
+      h5_f = h5py.File(input_data_path, **h5_kwargs)
+
+.. note::
+
+   We are still not yet ready to actually run the script even though it is ready.
+   See the next step.
+
+2. Job script
 ~~~~~~~~~~~~~
-Now, we need to create a simple PBS file to execute the job on the SHPC Condo. The two main components of the PBS file will be (1) specifying PBS flags and (2) the main program. The following is an example PBS script, along with helpful comments:
+The above modification to the main python script is in theory sufficient to run on
+multiple computers in a cluster. However, most HPC clusters are not operated by a single user
+and are in fact shared by multiple users unlike a personal computer.
+On an HPC, the computational jobs from multiple users are handled by a ``scheduler``
+that maintains queue(s) where users can request the scheduler to run their job.
+Users need to request the scheduler to run their computational task by submitting a
+``job script`` with appropriate information. This is the second and final part of the puzzle
+when it comes to running computations on a HPC cluster.
 
+Different HPC systems have different schedulers which expect the job script to be configured
+in a specific manner. However, the basic components remain the same:
 
-In this example, we will use mpiexec to initialize a parallel job from within the PBS batch. Mpiexec uses the task manager library of PBS to spawn copies of the executable on the nodes in a PBS allocation.
+1. Details regarding the job - number of nodes, CPU processors / GPUs within each node,
+   name of the user requesting the job, how long the nodes need to be reserved for the computation, etc.
+2. ``Modules`` - Modules can be thought of as drivers and software libraries.
+3. Setting up the script and necessary data files
+4. Running the script
 
-.. note:: Make sure to run the following commands prior to running your python script:
-
-       module load PE-intel
-
-       module load python/3.6.3
-  
-   Now, your programming environment is setup and includes mpi4py.
-
-The following is an example of a script that runs a signal filter through a USID dataset using pycroscopy, a package built on pyUSID, using a multiple node remote machine (in this case, CADES SHPC Condo).
-
-Prior to making our new MPI-aware PBS script, we will need to create a MPI version of our Python script. There are only two things that will need to be added to the h5py file instance:
-
-
-Now, time to build the PBS script for multiple nodes. We add a few components to the execution command:
-   1. **mpiexec** 
-       to run an mpi program.
-   2. **--map-by ppr:1:node** 
-       **ppr** stands for processes per resource. 
-
-       **ppr:N:resource** assigns N processes to each resource of type resource available on the host. In the case of the Condo, the resource is 'node'.
+The following is an example PBS script, configured for the ORNL CADES SHPC Condo, along with helpful comments:
 
 .. code:: bash
 
    #!/bin/bash
-   
+
+   ### 1. Job description
+
+   ### Comments in this section need to be preceded by three hash symbols
+   ### The scheduler reads text following a single hash symbol
    ### Set the job name. Your output files will share this name.
    #PBS -N mpiSignalFilter
    ### Enter your email address. Errors will be emailed to this address.
-   #PBS -M your_email@ornl.gov
+   #PBS -M your_email@institution.gov
    ### Number of nodes and processors per node that you desire.
    ### Two nodes each with 36 cores per node in this case.
    #PBS -l nodes=2:ppn=36
-   ### Anticipated runtime for your job, where walltime=HH:MM:S.
+   ### Anticipated runtime for your job specified as HH:MM:S.
+   ### See notes below on setting an appropriate wall-time
    #PBS -l walltime=0:00:30:0
    ### The organization / group that you belong to
    #PBS -W group_list=cades-birthright
    ### Your account type
    #PBS -A birthright
-   ### Quality of service
+   ### Quality of service - leave this as is
    #PBS -l qos=std
 
 
-   ## begin main program ##
+   ###  2. Set up modules ##
 
    ### Remove old modules to ensure a clean state.
    module purge
-
-   ### Load modules (your programming environment)
-   module load PE-gnu
-   ### Load custom python virtual environment
+   ### Load the programming environment
+   module load PE-intel
+   ### Load the python module with the appropriate packages
    module load python/3.6.3
-   ###source /lustre/or-hydra/cades-ccsd/syz/python_3_6/bin/activate
-
-
-   ### Check loaded modules 
+   ### Check loaded modules
    module list
 
-   ### Switch to the working directory (path of your PBS script).
-   EGNAME=signal_filter
-   DATA_PATH=$HOME/giv/pzt_nanocap_6_just_translation_copy.h5
-   SCRIPTS_PATH=$HOME/mpi_tutorials/$EGNAME
-   WORK_PATH=/lustre/or-hydra/cades-ccsd/syz/pycroscopy_ensemble
+   ### 2.5 Set any environment variables here:
+   ### Here we are using an Intel programming environment, so:
+   ### Forcing MKL to use 1 thread only:
+   export MKL_NUM_THREADS=1
+   export OPENBLAS_NUM_THREADS=1
 
-   cd $WORK_PATH
-   mkdir $EGNAME
-   cd $EGNAME
+   ### 3. Set up script and data
 
-   ### Show current directory.
-   pwd
+   # Here, we assume that the code and the data are on a fast scratch file system
+   # Lustre in this case:
+   cd /lustre/or-hydra/cades-ccsd/syz/signal_filter
+   # Sanity check - make sure all the necessary files are in the working folder:
+   ls -ahl
 
-   ### Copy data:
-   DATA_NAME=giv_raw.h5
-   rm -rf $DATA_NAME
-   cp $DATA_PATH $DATA_NAME
+   ### 4. Run the script
 
-   ### Copy python files:
-   cp $SCRIPTS_PATH/fft.py .
-   cp $SCRIPTS_PATH/filter_mpi.py .
-   cp $SCRIPTS_PATH/gmode_utils.py .
-   cp $SCRIPTS_PATH/mpi_signal_filter.py .
-   cp $SCRIPTS_PATH/mpi_process.py .
+   # More details on the flags below
+   mpiexec -use-hwthread-cpus python filter_script.py
 
-   ls -hl
+Wall time
+~~~~~~~~~
+The scheduler will kill the computational job once the elapsed time is greater than
+the wall time requested in the job script. Besides the incompleteness of the desired
+computation, this can also result in the corruption of output files if the job was killed
+while some files were being modified.
 
-   ### MPI run followed by the name/path of the binary.
-   mpiexec --map-by ppr:1:node python -m cProfile -s cumtime filter_mpi.py
+It is recommended that the ``wall time`` be comfortably larger than the expected
+computational time. Often, one may not know how long the computation takes and this can be
+a challenge. Users are recommended to ``checkpoint`` (save intermediate or partial results)
+regularly so that only a portion of the computation is lost.
 
-Once the python and PBS scripts are set up, you can simply the following command on the SHPC Condo to submit a job:
+.. note::
+
+   ``pyUSID.Process`` has built-in mechanisms to ``checkpoint`` regularly and even
+   restart from partially completed computations (either on laptops or on HPC clusters).
+   Besides loading the parameters and providing handles to the necessary HD5 datasets,
+   the user need not do anything additional to enable checkpointing in their ``Process`` class.
+
+Queues and organizations
+~~~~~~~~~~~~~~~~~~~~~~~~
+The nodes in most HPC clusters are not homogeneous meaning that certain nodes may
+have GPUs, more memory, more CPU cores, etc. while others may not. Often, this is
+a result of upgrades / additions every few months or years with slightly different hardware
+compared to the original set of nodes. Typically, the scheduler has separate queues
+for each kind of nodes. One can specify which kinds of nodes to use using ``directives``.
+
+.. note::
+
+   This is mostly relevant only to ORNL CADES SHPC users - all ORNL users with UCAMS / XCAMS
+   accounts have access to the ``CADES Birthright`` allocation. Certain divisions / groups such as
+   CCSD, BSD, CNMS have their own compute hardware and queues. If you belong to any divisions
+   listed `here <https://support.cades.ornl.gov/user-documentation/_book/condos/how-to-use/resource-queues.html>`_,
+   you are recommended to change the ``PBS -W group_list`` and ``PBS -A`` flags.
+
+Modules
+~~~~~~~
+One is recommended to clear the modules before loading them since we do not always know what modules
+were already loaded. Modules are not always interchangeable. For example, the python module above
+may not work (at all or as well) with another programming environment. In the above example,
+all the necessary software was already available within the two modules.
+
+HPC File systems
+~~~~~~~~~~~~~~~~
+Most HPC systems are connected to a slower file system (typically a network file system (NFS))
+with the user's home directory and a much faster file system (typically something like ``GPFS``
+or ``Lustre``) for scratch space where the raw and intermediate data directly interacting with
+the compute nodes reside. It is **highly** recommended that the scripts, and data reside in the
+scratch space file system to take advantage of the speed.
+
+.. note::
+
+   In most HPC systems, the file systems are ``purged`` every few weeks or months.
+   In other words, files that have not been used in the last few weeks or months will
+   be permanently deleted. Check with specific documentation.
+
+Running the script
+~~~~~~~~~~~~~~~~~~
+``mpiexec`` was used to initialize a parallel job from within the scheduler batch.
+``mpiexec`` uses the task manager library of PBS to spawn copies of the executable
+on the nodes in a PBS allocation.
+
+3. Submitting the job
+~~~~~~~~~~~~~~~~~~~~~
+Once the python script and the job script are prepared, the job can be submitted to the
+scheduler via:
 
 .. code:: bash
 
    qsub my_pbs_script.pbs
 
 FAQs
-~~~~
+----
 
 Why mpiexec instead of mpirun?
-##############################
-Reasons to use mpiexec rather than a script (mpirun) or an external daemon (mpd):
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`Reasons to use <https://www.osc.edu/~djohnson/mpiexec/>`_ ``mpiexec`` rather than a ``mpirun`` or an external daemon (``mpd``):
 
-   1. Starting tasks with the TM interface is much faster than invoking a separate rsh or ssh once for each process.
-   2. Resources used by the spawned processes are accounted correctly with mpiexec, and reported in the PBS logs, because all the processes of a parallel job remain under the control of PBS, unlike when using startup scripts such as mpirun.
-   3. Tasks that exceed their assigned limits of CPU time, wallclock time, memory usage, or disk space are killed cleanly by PBS. It is quite hard for processes to escape control of the resource manager when using mpiexec.
-   4. You can use mpiexec to enforce a security policy. If all jobs are required to startup using mpiexec and the PBS execution environment, it is not necessary to enable rsh or ssh access to the compute nodes in the cluster.
+1. Starting tasks with the TM interface is much faster than invoking a separate rsh or ssh once for each process.
+2. Resources used by the spawned processes are accounted correctly with mpiexec, and reported in the PBS logs, because all the processes of a parallel job remain under the control of PBS, unlike when using startup scripts such as mpirun.
+3. Tasks that exceed their assigned limits of CPU time, wallclock time, memory usage, or disk space are killed cleanly by PBS. It is quite hard for processes to escape control of the resource manager when using mpiexec.
+4. You can use mpiexec to enforce a security policy. If all jobs are required to startup using mpiexec and the PBS execution environment, it is not necessary to enable rsh or ssh access to the compute nodes in the cluster.
 
-Reference: https://www.osc.edu/~djohnson/mpiexec/ 
+Reference:
 
 Why is MPI used in both the Python and PBS script?
-##################################################
-**Python script** is where MPI is used for point-to-point (sends, receives), and collective (broadcasts, scatters, gathers) communications of any picklable Python object.
-
-**PBS script** is where the command is put to start the parallel job. In our case, mpiexec starts the program a specfied number of times in parallel, forming a parallel job.
-
-Who do I contact if I am struggling to run a job?
-#################################################
-Contact CADES user support team at cades-help@ornl.gov or join the CADES Slack channel at https://cades.slack.com/signup
-
-For help with pyUSID and/or pycroscopy, contact our team at `this email <pycroscopy@gmail.com>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* **Python script**: ``MPI`` is used for point-to-point (``send``, ``receive``), and collective (``broadcast``, ``scatter``, ``gather``) communications of any ``pickle``-able Python object.
+* **Job script**: ``mpiexec`` starts the parallel job - starts the program a specified number of times in parallel, forming a parallel job.
