@@ -113,7 +113,7 @@ class ArrayTranslator(Translator):
         global_parms['translator'] = translator_name
 
         # Begin writing to file:
-        with h5py.File(h5_path) as h5_f:
+        with h5py.File(h5_path, 'w') as h5_f:
 
             # Root attributes first:
             write_simple_attrs(h5_f, global_parms)
