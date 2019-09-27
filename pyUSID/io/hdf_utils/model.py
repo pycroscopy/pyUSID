@@ -250,7 +250,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         print('\nAxes will permuted in this order:', swap_axes)
         print('New labels ordering:', all_labels[swap_axes])
 
-    ds_Nd = ds_Nd.transpose(tuple(swap_axes))
+    ds_Nd = ds_Nd.transpose(tuple(swap_axes))[0]
 
     results = [ds_Nd, True]
 
