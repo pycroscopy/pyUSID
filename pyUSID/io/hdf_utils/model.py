@@ -250,7 +250,14 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         print('\nAxes will permuted in this order:', swap_axes)
         print('New labels ordering:', all_labels[swap_axes])
 
-    ds_Nd = ds_Nd.transpose(tuple(swap_axes))
+    # Get a numeric version of the numpy version for comparisons
+    np_ver = np.__version__.split('.')[:2]
+    np_ver = float(np_ver[0] + '.' + np_ver[1])
+
+    if isinstance(ds_Nd, np.ndarray) and np_ver > 1.16:
+        ds_Nd = ds_Nd.transpose(tuple(swap_axes))[0]
+    else:
+        ds_Nd = ds_Nd.transpose(tuple(swap_axes))
 
     results = [ds_Nd, True]
 
