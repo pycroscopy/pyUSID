@@ -654,6 +654,11 @@ def get_unit_values(ds_inds, ds_vals, dim_names=None, all_dim_names=None, is_spe
         inds_for_dim = inds_mat[desired_row_ind]
         # Wherever this dimension goes to 0 - start of a new tile
         starts = np.where(inds_for_dim == np.min(inds_for_dim))[0]
+        if starts[0] != 0:
+            raise ValueError('Spectroscopic Indices for dimension: "{}" not '
+                             'starting with 0. Please fix this and try again'
+                             '.'.format(dim_name))
+
         # There may be repetitions in addition to tiling. Find how the the positions increase.
         # 1 = repetition, > 1 = new tile
         step_sizes = np.hstack(([1], np.diff(starts)))
