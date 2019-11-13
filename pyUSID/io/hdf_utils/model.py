@@ -181,6 +181,19 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
     pos_dims = get_dimensionality(np.transpose(ds_pos), pos_sort)
     spec_dims = get_dimensionality(ds_spec, spec_sort)
 
+    if np.prod(pos_dims) != h5_main.shape[0]:
+        mesg = 'Product of position dimension sizes: {} = {} not matching ' \
+               'with size of first axis of main dataset: {}. One or more ' \
+               'dimensions are dependent dimensions and not marked as such' \
+               '.'.format(pos_dims, np.prod(pos_dims), h5_main.shape[0])
+        raise ValueError(mesg)
+    if np.prod(spec_dims) != h5_main.shape[1]:
+        mesg = 'Product of spectroscopic dimension sizes: {} = {} not matching ' \
+               'with size of second axis of main dataset: {}. One or more ' \
+               'dimensions are dependent dimensions and not marked as such' \
+               '.'.format(spec_dims, np.prod(spec_dims), h5_main.shape[1])
+        raise ValueError(mesg)
+
     if verbose:
         print('\nPosition dimensions (sort applied):', pos_labs[pos_sort])
         print('Position dimensionality (sort applied):', pos_dims)
