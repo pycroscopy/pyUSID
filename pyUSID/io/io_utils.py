@@ -11,7 +11,7 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 import os
 import sys
 from numbers import Number
-from collections import Iterable
+from collections.abc import Iterable
 from time import strftime
 from warnings import warn
 import numpy as np
