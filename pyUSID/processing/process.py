@@ -21,6 +21,8 @@ from ..io.usi_data import USIDataset
 from ..io.dtype_utils import integers_to_slices
 from ..io.io_utils import format_time, format_size
 
+# TODO: internalize as many attributes as possible. Expose only those that will be required by the user
+
 
 class Process(object):
     """
@@ -137,6 +139,7 @@ class Process(object):
         self.__rank_end_pos = None
         self.__end_pos = None
         self.__pixels_in_batch = None
+        self.__compute_jobs = None
 
         # Determining the max size of the data that can be put into memory
         # all ranks go through this and they need to have this value any
@@ -186,15 +189,23 @@ class Process(object):
         Sets the start and end indices for each MPI rank
         """
         # First figure out what positions need to be computed
-        self._compute_jobs = np.where(self._h5_status_dset[()] == 0)[0]
+        self.__compute_jobs = np.where(self._h5_status_dset[()] == 0)[0]
         if self.verbose and self.mpi_rank == 0:
-            print('Among the {} positions in this dataset, the following positions need to be computed: {}'
-                  '.'.format(self.h5_main.shape[0], self._compute_jobs))
+            if len(self.__compute_jobs) > 100:
+                print('Among the {} positions in this dataset, {} positions '
+                      'need to be computed'
+                      '.'.format(self.h5_main.shape[0],
+                                 len(self.__compute_jobs)))
+            else:
+                print('Among the {} positions in this dataset, the following '
+                      'positions need to be computed: {}'
+                      '.'.format(self.h5_main.shape[0], self.__compute_jobs))
 
-        pos_per_rank = self._compute_jobs.size // self.mpi_size  # integer division
+        # integer division
+        pos_per_rank = self.__compute_jobs.size // self.mpi_size
         if self.verbose and self.mpi_rank == 0:
             print('Each rank is required to work on {} of the {} (remaining) positions in this dataset'
-                  '.'.format(pos_per_rank, self._compute_jobs.size))
+                  '.'.format(pos_per_rank, self.__compute_jobs.size))
 
         # The start and end indices now correspond to the indices in the incomplete jobs rather than the h5 dataset
         self.__start_pos = self.mpi_rank * pos_per_rank
@@ -202,7 +213,7 @@ class Process(object):
         self.__end_pos = int(min(self.__rank_end_pos, self.__start_pos + self._max_pos_per_read))
         if self.mpi_rank == self.mpi_size - 1:
             # Force the last rank to go to the end of the dataset
-            self.__rank_end_pos = self._compute_jobs.size
+            self.__rank_end_pos = self.__compute_jobs.size
 
         if self.verbose:
             print('Rank {} will read positions {} to {} of {}'.format(self.mpi_rank, self.__start_pos,
@@ -567,7 +578,7 @@ class Process(object):
             self.__end_pos = int(min(self.__rank_end_pos, self.__start_pos + self._max_pos_per_read))
 
             # DON'T DIRECTLY apply the start and end indices anymore to the h5 dataset. Find out what it means first
-            self.__pixels_in_batch = self._compute_jobs[self.__start_pos: self.__end_pos]
+            self.__pixels_in_batch = self.__compute_jobs[self.__start_pos: self.__end_pos]
 
             if self.verbose:
                 print('Rank {} will read positions: {}'.format(self.mpi_rank, self.__pixels_in_batch))
