@@ -659,6 +659,7 @@ class Process(object):
                                      tot_workers,
                                      bytes_this_read * tot_workers))
 
+            # TODO: Read as Dask array to minimize memory copies when restructuring in child classes
             self.data = self.h5_main[self.__pixels_in_batch, :]
             # DON'T update the start position
 
