@@ -54,6 +54,71 @@ class Process(object):
             the multiplier will be 2 (1 for source, 1 for result)
         verbose : bool, Optional, default = False
             Whether or not to print debugging statements
+
+        Attributes
+        ----------
+        self.h5_results_grp : :class:`h5py.Group`
+            HDF5 group containing the HDF5 datasets that contain the results
+            of the computation
+        self.verbose : bool
+            Whether or not to print debugging statements
+        self.parms_dict : dict
+            Dictionary of parameters for the computation
+        self.duplicate_h5_groups : list
+            List of :class:`h5py.Group` objects containing computational
+            results that have been completely computed with the same
+            set of parameters as those in self.parms_dict
+        self.partial_h5_groups : list
+            List of :class:`h5py.Group` objects containing computational
+            results that have been partially computed with the same
+            set of parameters as those in self.parms_dict
+        self.process_name : str
+            Name of the process. This is used for checking for existing
+            completely and partially computed results as well as for naming
+            the HDF5 group that will contain the results of the computation
+        self._cores : uint
+            Number of CPU cores to use for parallel computations.
+            Ignored in the MPI context. Each rank gets 1 CPU core
+        self._max_pos_per_read : uint
+            Number of positions in the dataset to read per chunk
+        self._status_dset_name : str
+            Name of the HDF5 dataset that keeps track of the positions in the
+            source dataset thave already been computed
+        self._results : list
+            List of objects returned as the result of computation performed by
+            the self._map_function for each position in the current batch of
+            positions that were processed
+        self.__resume_implemented : bool
+            Whether or not this (child) class has implemented the
+            self._get_existing_datasets() function
+        self.__bytes_per_pos : uint
+            Number of bytes used by one position of the source dataset
+        self.mpi_comm : :class:`mpi4py.MPI.COMM_WORLD`
+            MPI communicator. None if not running in an MPI context
+        self.mpi_rank: uint
+            MPI rank. Always 0 if not running in an MPI context
+        self.mpi_size: uint
+            Number of ranks in COMM_WORLD. 1 if not running in an MPI context
+        self.__ranks_on_socket : uint
+            Number of MPI ranks on a given CPU socket
+        self.__socket_master_rank : uint
+            Master MPI rank for a given CPU chip / socket
+        self.__compute_jobs : array-like
+            List of positions in the HDF5 dataset that need to be computed.
+            This may not be a continuous list of numbers if multiple MPI
+            workers had previously started computing and were interrupted.
+        self.__start_pos : uint
+            The index within self.__compute_jobs that a particular MPI rank /
+            worker needs to start computing from.
+        self.__rank_end_pos : uint
+            The index within self.__compute_jobs that a particular MPI rank /
+            worker needs to start computing till.
+        self.__end_pos : uint
+            The index within self.__compute_jobs that a particular MPI rank /
+            worker needs to start computing till for the current batch of
+            positions.
+        self.__pixels_in_batch : array-like
+            The positions being computed on by the current compute worker
         """
 
         if h5_main.file.mode != 'r+':
