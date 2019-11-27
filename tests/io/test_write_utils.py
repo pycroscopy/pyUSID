@@ -349,7 +349,7 @@ class TestGetSlope(unittest.TestCase):
         round_error = np.random.rand(vector.size) * 1E-14
         vector += round_error
         actual = write_utils.get_slope(vector, tol=1E-3)
-        self.assertAlmostEquals(expected , actual)
+        self.assertAlmostEqual(expected, actual)
 
     def test_invalid_tolerance(self):
         with self.assertRaises(TypeError):
