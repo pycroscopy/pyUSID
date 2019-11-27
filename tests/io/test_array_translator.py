@@ -11,7 +11,7 @@ import sys
 import h5py
 import numpy as np
 import dask.array as da
-from tests.processing.data_utils import validate_aux_dset_pair, delete_existing_file
+from .data_utils import validate_aux_dset_pair, delete_existing_file
 sys.path.append("../../pyUSID/")
 from pyUSID.io import ArrayTranslator, write_utils, hdf_utils, USIDataset
 

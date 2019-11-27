@@ -16,7 +16,7 @@ import shutil
 sys.path.append("../../pyUSID/")
 from pyUSID.io import hdf_utils, write_utils, USIDataset
 
-from tests.processing import data_utils
+from .. import data_utils
 
 if sys.version_info.major == 3:
     unicode = str

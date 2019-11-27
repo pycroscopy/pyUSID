@@ -10,7 +10,7 @@ import sys
 from PIL import Image
 import h5py
 import numpy as np
-from tests.processing.data_utils import validate_aux_dset_pair, delete_existing_file
+from .data_utils import validate_aux_dset_pair, delete_existing_file
 sys.path.append("../../pyUSID/")
 from pyUSID.io import ImageTranslator, hdf_utils, USIDataset
 from pyUSID.io.image import read_image

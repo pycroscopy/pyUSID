@@ -13,7 +13,7 @@ import h5py
 import sys
 #from pycroscopy.processing.fft import LowPassFilter
 from .proc_utils import sho_slow_guess
-from .data_utils import *
+from ..io.data_utils import *
 from shutil import copyfile
 #from pycroscopy.processing.signal_filter import SignalFilter
 import tempfile
