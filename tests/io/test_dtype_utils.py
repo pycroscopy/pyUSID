@@ -43,7 +43,7 @@ class TestDtypeUtils(unittest.TestCase):
 
     def setUp(self):
         if not os.path.exists(file_path):
-            with h5py.File(file_path) as h5_f:
+            with h5py.File(file_path, mode='w') as h5_f:
                 num_elems = (5, 7)
                 structured_array = np.zeros(shape=num_elems, dtype=struc_dtype)
                 structured_array['r'] = 450 * np.random.random(size=num_elems)
@@ -754,7 +754,7 @@ class TestLazyLoadArray(unittest.TestCase):
     def test_h5_dset_no_chunks(self):
         h5_path = 'blah.h5'
         delete_existing_file(h5_path)
-        with h5py.File(h5_path) as h5_f:
+        with h5py.File(h5_path, mode='w') as h5_f:
             np_arr = np.random.rand(2, 3)
             h5_dset = h5_f.create_dataset('Test', data=np_arr)
             da_arr = da.from_array(np_arr, chunks=np_arr.shape)
@@ -764,7 +764,7 @@ class TestLazyLoadArray(unittest.TestCase):
     def test_h5_dset_w_chunks(self):
         h5_path = 'blah.h5'
         delete_existing_file(h5_path)
-        with h5py.File(h5_path) as h5_f:
+        with h5py.File(h5_path, mode='w') as h5_f:
             np_arr = np.random.rand(200, 30)
             h5_dset = h5_f.create_dataset('Test', data=np_arr, chunks=(1, 30))
             da_arr = da.from_array(np_arr, chunks=h5_dset.chunks)

@@ -136,7 +136,7 @@ def make_sparse_sampling_file():
 
     h5_main = None
 
-    with h5py.File(sparse_sampling_path) as h5_f:
+    with h5py.File(sparse_sampling_path, mode='w') as h5_f:
         h5_meas_grp = h5_f.create_group('Measurement_000')
 
         freq_pts = 3
@@ -201,7 +201,7 @@ def make_incomplete_measurement_file():
     if os.path.exists(incomplete_measurement_path):
         os.remove(incomplete_measurement_path)
 
-    with h5py.File(incomplete_measurement_path) as h5_f:
+    with h5py.File(incomplete_measurement_path, mode='w') as h5_f:
         h5_meas_grp = h5_f.create_group('Measurement_000')
 
         freq_pts = 3
@@ -274,7 +274,7 @@ def make_relaxation_file():
     if os.path.exists(relaxation_path):
         os.remove(relaxation_path)
 
-    with h5py.File(relaxation_path) as h5_f:
+    with h5py.File(relaxation_path, mode='w') as h5_f:
         h5_meas_grp = h5_f.create_group('Measurement_000')
 
         num_rows = 2
@@ -359,7 +359,7 @@ def make_beps_file(rev_spec=False):
     if os.path.exists(std_beps_path):
         os.remove(std_beps_path)
 
-    with h5py.File(std_beps_path) as h5_f:
+    with h5py.File(std_beps_path, mode='w') as h5_f:
 
         h5_raw_grp = h5_f.create_group('Raw_Measurement')
         write_safe_attrs(h5_raw_grp, {'att_1': 'string_val', 'att_2': 1.2345, 'att_3': [1, 2, 3, 4]})
