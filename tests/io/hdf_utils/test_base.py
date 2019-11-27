@@ -284,7 +284,7 @@ class TestWriteSimpleAttrs(TestHDFUtilsBase):
     def test_invalid_attrs_dict(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_group = h5_f.create_group('Blah')
             with self.assertRaises(TypeError):
                 hdf_utils.write_simple_attrs(h5_group, ['attrs', 1.234, 'should be dict', np.arange(3)])
@@ -292,7 +292,7 @@ class TestWriteSimpleAttrs(TestHDFUtilsBase):
     def test_to_grp(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
 
             h5_group = h5_f.create_group('Blah')
 
@@ -309,7 +309,7 @@ class TestWriteSimpleAttrs(TestHDFUtilsBase):
     def test_np_array(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
 
             attrs = {'att_1': np.random.rand(4)}
 
@@ -323,7 +323,7 @@ class TestWriteSimpleAttrs(TestHDFUtilsBase):
     def test_none_ignored(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
 
             attrs = {'att_1': None}
 
@@ -336,7 +336,7 @@ class TestWriteSimpleAttrs(TestHDFUtilsBase):
     def test_to_dset(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
 
             h5_dset = h5_f.create_dataset('Test', data=np.arange(3))
 
@@ -376,7 +376,7 @@ class TestIsEditableH5(TestHDFUtilsBase):
     def test_w(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Test', data=np.arange(3))
             h5_group = h5_f.create_group('blah')
             self.assertTrue(hdf_utils.is_editable_h5(h5_group))
@@ -403,7 +403,7 @@ class TestLinkH5ObjAsAlias(TestHDFUtilsBase):
     def test_legal(self):
         file_path = 'link_as_alias.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
 
             h5_main = h5_f.create_dataset('main', data=np.arange(5))
             h5_anc = h5_f.create_dataset('Ancillary', data=np.arange(3))
@@ -430,7 +430,7 @@ class TestLinkH5ObjAsAlias(TestHDFUtilsBase):
     def test_not_h5_obj(self):
         file_path = 'link_as_alias.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_group = h5_f.create_group('Results')
 
             # Non h5 object
@@ -452,7 +452,7 @@ class TestLinkH5ObjectAsAttribute(TestHDFUtilsBase):
     def test_legal(self):
         file_path = 'link_h5_objects_as_attrs.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
 
             h5_main = h5_f.create_dataset('main', data=np.arange(5))
             h5_anc = h5_f.create_dataset('Ancillary', data=np.arange(3))
@@ -476,7 +476,7 @@ class TestLinkH5ObjectAsAttribute(TestHDFUtilsBase):
     def test_wrong_type(self):
         file_path = 'link_h5_objects_as_attrs.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_main = h5_f.create_dataset('main', data=np.arange(5))
 
             with self.assertRaises(TypeError):
@@ -493,7 +493,7 @@ class TestWriteBookKeepingAttrs(TestHDFUtilsBase):
     def test_file(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             hdf_utils.write_book_keeping_attrs(h5_f)
             data_utils.verify_book_keeping_attrs (self, h5_f)
         os.remove(file_path)
@@ -501,7 +501,7 @@ class TestWriteBookKeepingAttrs(TestHDFUtilsBase):
     def test_group(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_g = h5_f.create_group('group')
             hdf_utils.write_book_keeping_attrs(h5_g)
             data_utils.verify_book_keeping_attrs (self, h5_g)
@@ -510,7 +510,7 @@ class TestWriteBookKeepingAttrs(TestHDFUtilsBase):
     def test_dset(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('dset', data=[1, 2, 3])
             hdf_utils.write_book_keeping_attrs(h5_dset)
             data_utils.verify_book_keeping_attrs (self, h5_dset)

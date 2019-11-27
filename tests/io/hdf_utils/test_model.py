@@ -318,7 +318,7 @@ class TestReshapeToNDims(TestModel):
     def test_sort_required(self):
         file_path = 'reshape_to_n_dim_sort_required.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_raw_grp = h5_f.create_group('Raw_Measurement')
 
             num_rows = 3
@@ -515,7 +515,7 @@ class TestWriteMainDataset(TestModel):
         spec_data = np.vstack((np.tile(np.arange(7), 2),
                               np.repeat(np.arange(2), 7)))
 
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             usid_main = hdf_utils.write_main_dataset(h5_f, main_data, main_data_name, quantity, dset_units, pos_dims,
                                                       spec_dims, main_dset_attrs=None)
             self.assertIsInstance(usid_main, USIDataset)
@@ -557,7 +557,7 @@ class TestWriteMainDataset(TestModel):
         spec_data = np.vstack((np.tile(np.arange(7), 2),
                               np.repeat(np.arange(2), 7)))
 
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             usid_main = hdf_utils.write_main_dataset(h5_f, da.from_array(main_data, chunks=main_data.shape),
                                                      main_data_name, quantity, dset_units, pos_dims,
                                                      spec_dims, main_dset_attrs=None)
@@ -600,7 +600,7 @@ class TestWriteMainDataset(TestModel):
         spec_data = np.vstack((np.tile(np.arange(7), 2),
                               np.repeat(np.arange(2), 7)))
 
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             usid_main = hdf_utils.write_main_dataset(h5_f, main_data, main_data_name, quantity, dset_units, pos_dims,
                                                       spec_dims, dtype=np.float16, main_dset_attrs=None)
             self.assertIsInstance(usid_main, USIDataset)
@@ -641,7 +641,7 @@ class TestWriteMainDataset(TestModel):
         spec_data = np.vstack((np.tile(np.arange(7), 2),
                                np.repeat(np.arange(2), 7)))
 
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_spec_inds, h5_spec_vals = hdf_utils.write_ind_val_dsets(h5_f, spec_dims, is_spectral=True)
             data_utils.validate_aux_dset_pair(self, h5_f, h5_spec_inds, h5_spec_vals, spec_names, spec_units, spec_data,
                                               is_spectral=True)
@@ -681,7 +681,7 @@ class TestWriteMainDataset(TestModel):
         spec_data = np.vstack((np.tile(np.arange(7), 2),
                                np.repeat(np.arange(2), 7)))
 
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_spec_inds, h5_spec_vals = hdf_utils.write_ind_val_dsets(h5_f, spec_dims, is_spectral=True)
             h5_pos_inds, h5_pos_vals = hdf_utils.write_ind_val_dsets(h5_f, pos_dims, is_spectral=False)
 
@@ -719,7 +719,7 @@ class TestWriteMainDataset(TestModel):
         for length, name, units in zip(spec_sizes, spec_names, spec_units):
             spec_dims.append(write_utils.Dimension(name, units, np.arange(length)))
 
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             with self.assertRaises(ValueError):
                 _ = hdf_utils.write_main_dataset(h5_f, main_data, main_data_name, quantity, dset_units, pos_dims,
                                                  spec_dims)

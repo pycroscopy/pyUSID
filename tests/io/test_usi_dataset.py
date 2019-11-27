@@ -29,7 +29,7 @@ class TestUSIDataset(unittest.TestCase):
 
         if os.path.exists(test_h5_file_path):
             os.remove(test_h5_file_path)
-        with h5py.File(test_h5_file_path) as h5_f:
+        with h5py.File(test_h5_file_path, mode='w') as h5_f:
 
             h5_raw_grp = h5_f.create_group('Raw_Measurement')
             data_utils.write_safe_attrs(h5_raw_grp, {'att_1': 'string_val', 'att_2': 1.2345,
