@@ -89,7 +89,7 @@ def group_ranks_by_socket(verbose=False):
 
 def parallel_compute(data, func, cores=None, lengthy_computation=False,
                      func_args=None, func_kwargs=None, verbose=False,
-                     joblib_backend=None):
+                     joblib_backend='multiprocessing'):
     """
     Computes the provided function using multiple cores using the joblib library
 
@@ -112,8 +112,9 @@ def parallel_compute(data, func, cores=None, lengthy_computation=False,
     func_kwargs : dict, optional
         keyword arguments to be passed onto function
     joblib_backend : str, optional
-        Backend to use for parallel computation with Joblib. Default is "loky"
-        The older paradigm was "multiprocessing"
+        Backend to use for parallel computation with Joblib.
+        The older paradigm - "multiprocessing" is the default in pyUSID.
+        Set to None to use the joblib default - "loky"
     verbose : bool, optional. default = False
         Whether or not to print statements that aid in debugging
 
