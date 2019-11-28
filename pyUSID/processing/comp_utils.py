@@ -87,7 +87,9 @@ def group_ranks_by_socket(verbose=False):
     return master_ranks
 
 
-def parallel_compute(data, func, cores=None, lengthy_computation=False, func_args=None, func_kwargs=None, verbose=False):
+def parallel_compute(data, func, cores=None, lengthy_computation=False,
+                     func_args=None, func_kwargs=None, verbose=False,
+                     joblib_backend=None):
     """
     Computes the provided function using multiple cores using the joblib library
 
@@ -109,8 +111,12 @@ def parallel_compute(data, func, cores=None, lengthy_computation=False, func_arg
         arguments to be passed to the function
     func_kwargs : dict, optional
         keyword arguments to be passed onto function
+    joblib_backend : str, optional
+        Backend to use for parallel computation with Joblib. Default is "loky"
+        The older paradigm was "multiprocessing"
     verbose : bool, optional. default = False
         Whether or not to print statements that aid in debugging
+
     Returns
     -------
     results : list
@@ -152,7 +158,7 @@ def parallel_compute(data, func, cores=None, lengthy_computation=False, func_arg
 
     if cores > 1:
         values = [joblib.delayed(func)(x, *func_args, **func_kwargs) for x in data]
-        results = joblib.Parallel(n_jobs=cores)(values)
+        results = joblib.Parallel(n_jobs=cores, backend=joblib_backend)(values)
 
         # Finished reading the entire data set
         print('Rank {} finished parallel computation'.format(rank))
@@ -190,7 +196,8 @@ def get_available_memory():
     return mem
 
 
-def recommend_cpu_cores(num_jobs, requested_cores=None, lengthy_computation=False, min_free_cores=None, verbose=False):
+def recommend_cpu_cores(num_jobs, requested_cores=None, min_free_cores=None,
+                        lengthy_computation=False, verbose=False):
     """
     Decides the number of cores to use for parallel computing
 
