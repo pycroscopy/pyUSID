@@ -14,7 +14,7 @@ import os
 from warnings import warn
 import time as tm
 from .io_utils import get_time_stamp
-from .dtype_utils import validate_list_of_strings
+from .dtype_utils import validate_list_of_strings, validate_single_string_arg
 from ..processing.comp_utils import get_available_memory
 
 if sys.version_info.major == 3:
@@ -67,6 +67,8 @@ class Translator(object):
         -------
         bool : Whether or not this translator can read this file
         """
+        file_path = validate_single_string_arg(file_path, 'file_name')
+
         targ_ext = kwargs.get('extension', None)
         if not targ_ext:
             raise NotImplementedError('Either is_valid_file() has not been implemented by this translator '
