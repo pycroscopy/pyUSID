@@ -19,6 +19,8 @@ from ..processing.comp_utils import get_available_memory
 
 if sys.version_info.major == 3:
     unicode = str
+else:
+    FileNotFoundError = ValueError
 
 
 class Translator(object):
@@ -65,9 +67,15 @@ class Translator(object):
 
         Returns
         -------
-        bool : Whether or not this translator can read this file
+        file_path : str
+            Path to the file that needs to be provided to translate()
+            if the provided file was indeed a valid file
+            Else, None
         """
         file_path = validate_single_string_arg(file_path, 'file_name')
+
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(file_path + ' does not exist')
 
         targ_ext = kwargs.get('extension', None)
         if not targ_ext:
@@ -88,9 +96,9 @@ class Translator(object):
         extension = extension.lower()
 
         if extension in targ_ext:
-            return True
+            return file_path
         else:
-            return False
+            return None
 
 
 def generate_dummy_main_parms():
