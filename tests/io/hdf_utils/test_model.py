@@ -355,7 +355,7 @@ class TestReshapeToNDims(TestModel):
         # In other words, sort should make no difference at all!
         file_path = 'reshape_to_n_dim_sort_required.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_raw_grp = h5_f.create_group('Raw_Measurement')
 
             main_nd, source_pos_data, source_spec_data = self.build_main_anc_4d()
@@ -422,7 +422,7 @@ class TestReshapeToNDims(TestModel):
         # In other words, sort should make no difference at all!
         file_path = 'reshape_to_n_dim_sort_required.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_raw_grp = h5_f.create_group('Raw_Measurement')
 
             num_rows = 3
@@ -665,7 +665,7 @@ class TestWriteMainDataset(TestModel):
             input_data = main_data.shape
             kwargs.update({'dtype': np.float16})
 
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             if pre_spec:
                 h5_spec_inds, h5_spec_vals = hdf_utils.write_ind_val_dsets(
                     h5_f, spec_dims, is_spectral=True)
@@ -736,7 +736,7 @@ class TestWriteMainDataset(TestModel):
         for length, name, units in zip(spec_sizes, spec_names, spec_units):
             spec_dims.append(write_utils.Dimension(name, units, np.arange(length)))
 
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             with self.assertRaises(ValueError):
                 _ = hdf_utils.write_main_dataset(h5_f, main_data, main_data_name, quantity, dset_units, pos_dims,
                                                  spec_dims)
