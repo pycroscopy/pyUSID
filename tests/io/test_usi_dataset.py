@@ -97,15 +97,7 @@ class TestEquality(TestUSIDataset):
 
 class TestGetNDimFormExists(TestUSIDataset):
 
-    def test_unsorted(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            expected = np.reshape(h5_main, (3, 5, 7, 2))
-            expected = np.transpose(expected, (1, 0, 2, 3))
-            usi_dset = USIDataset(h5_main)
-            self.assertTrue(np.allclose(expected, usi_dset.get_n_dim_form(lazy=False)))
-
-    def test_sorted(self):
+    def test_sorted_and_unsorted(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_dset = USIDataset(h5_f['/Raw_Measurement/source_main'])
             nd_slow_to_fast, nd_fast_to_slow = self.get_expected_n_dim(h5_f)
