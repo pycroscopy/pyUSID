@@ -22,6 +22,7 @@ import matplotlib.ticker as mtick
 from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.axes_grid1 import ImageGrid
 from ..io.dtype_utils import get_exponent
+import dask.array as da
 
 if sys.version_info.major == 3:
     unicode = str
@@ -346,7 +347,7 @@ def make_linear_alpha_cmap(name, solid_color, normalization_val, min_alpha=0, ma
     """
     if not isinstance(name, (str, unicode)):
         raise TypeError('name should be a string')
-    if not isinstance(solid_color, (list, tuple, np.ndarray)):
+    if not isinstance(solid_color, (list, tuple, np.ndarray, da.core.Array)):
         raise TypeError('solid_color must be a list of numbers')
     if not len(solid_color) == 4:
         raise ValueError('solid-color should have fourth values')
@@ -438,9 +439,9 @@ def rainbow_plot(axis, x_vec, y_vec, num_steps=32, **kwargs):
     """
     if not isinstance(axis, mpl.axes.Axes):
         raise TypeError('axis must be a matplotlib.axes.Axes object')
-    if not isinstance(x_vec, (list, tuple, np.ndarray)):
+    if not isinstance(x_vec, (list, tuple, np.ndarray, da.core.Array)):
         raise TypeError('x_vec must be array-like of numbers')
-    if not isinstance(x_vec, (list, tuple, np.ndarray)):
+    if not isinstance(x_vec, (list, tuple, np.ndarray, da.core.Array)):
         raise TypeError('x_vec must be array-like of numbers')
     x_vec = np.array(x_vec)
     y_vec = np.array(y_vec)
@@ -499,13 +500,13 @@ def plot_line_family(axis, x_vec, line_family, line_names=None, label_prefix='',
     """
     if not isinstance(axis, mpl.axes.Axes):
         raise TypeError('axis must be a matplotlib.axes.Axes object')
-    if not isinstance(x_vec, (list, tuple, np.ndarray)):
+    if not isinstance(x_vec, (list, tuple, np.ndarray, da.core.Array)):
         raise TypeError('x_vec must be array-like of numbers')
     x_vec = np.array(x_vec)
     assert x_vec.ndim == 1, 'x_vec must be a 1D array'
     if not isinstance(line_family, list):
         line_family = np.array(line_family)
-    if not isinstance(line_family, np.ndarray):
+    if not isinstance(line_family, (np.ndarray, da.core.Array)):
         raise TypeError('line_family must be a 2d array of numbers')
     assert line_family.ndim == 2, 'line_family must be a 2D array'
     #    assert x_vec.shape[1] == line_family.shape[1], \
@@ -596,7 +597,7 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
     """
     if not isinstance(axis, mpl.axes.Axes):
         raise TypeError('axis must be a matplotlib.axes.Axes object')
-    if not isinstance(img, np.ndarray):
+    if not isinstance(img, (np.ndarray, da.core.Array)):
         raise TypeError('img should be a numpy array')
     if not img.ndim == 2:
         raise ValueError('img should be a 2D array')
@@ -658,7 +659,7 @@ def plot_map(axis, img, show_xy_ticks=True, show_cbar=True, x_vec=None, y_vec=No
                     print(tick_labs)
                 tick_vals = np.linspace(0, tick_vals, img_size)
             else:
-                if not isinstance(tick_vals, (np.ndarray, list, tuple, range)) or len(tick_vals) != img_size:
+                if not isinstance(tick_vals, (np.ndarray, list, tuple, range, da.core.Array)) or len(tick_vals) != img_size:
                     raise ValueError(
                         '{} should be array-like with shape equal to axis {} of img'.format(tick_vals_var_name,
                                                                                             img_axis))
@@ -798,11 +799,11 @@ def plot_curves(excit_wfms, datasets, line_colors=[], dataset_names=[], evenly_s
     for var, var_name, dim_size in zip([datasets, excit_wfms], ['datasets', 'excit_wfms'], [2, 1]):
         mesg = '{} should be {}D arrays or iterables (list or tuples) of {}D arrays' \
                '.'.format(var_name, dim_size, dim_size)
-        if isinstance(var, (h5py.Dataset, np.ndarray)):
+        if isinstance(var, (h5py.Dataset, np.ndarray, da.core.Array)):
             if not len(var.shape) == dim_size:
                 raise ValueError(mesg)
         elif isinstance(var, (list, tuple)):
-            if not np.all([isinstance(dset, (h5py.Dataset, np.ndarray)) for dset in datasets]):
+            if not np.all([isinstance(dset, (h5py.Dataset, np.ndarray, da.core.Array)) for dset in datasets]):
                 raise TypeError(mesg)
         else:
             raise TypeError(mesg)
@@ -811,12 +812,12 @@ def plot_curves(excit_wfms, datasets, line_colors=[], dataset_names=[], evenly_s
     # 0 = one excitation waveform and one dataset
     # 1 = one excitation waveform but many datasets
     # 2 = one excitation waveform for each of many dataset
-    if isinstance(datasets, (h5py.Dataset, np.ndarray)):
+    if isinstance(datasets, (h5py.Dataset, np.ndarray, da.core.Array)):
         # can be numpy array or h5py.dataset
         num_pos = datasets.shape[0]
         num_points = datasets.shape[1]
         datasets = [datasets]
-        if isinstance(excit_wfms, (np.ndarray, h5py.Dataset)):
+        if isinstance(excit_wfms, (np.ndarray, h5py.Dataset, da.core.Array)):
             excit_wfms = [excit_wfms]
         elif isinstance(excit_wfms, list):
             if len(excit_wfms) == num_points:
@@ -835,7 +836,7 @@ def plot_curves(excit_wfms, datasets, line_colors=[], dataset_names=[], evenly_s
         num_points_es = list()
 
         for dataset in datasets:
-            if not isinstance(dataset, (h5py.Dataset, np.ndarray)):
+            if not isinstance(dataset, (h5py.Dataset, np.ndarray, da.core.Array)):
                 raise TypeError('datasets can be a list of 2D h5py.Dataset or numpy array objects')
             if len(dataset.shape) != 2:
                 raise ValueError('Each datset should be a 2D array')
@@ -971,11 +972,11 @@ def plot_complex_spectra(map_stack, x_vec=None, num_comps=4, title=None, x_label
     ---------
     fig, axes
     """
-    if not isinstance(map_stack, np.ndarray) or not map_stack.ndim in [2, 3]:
+    if not isinstance(map_stack, (np.ndarray, da.core.Array)) or not map_stack.ndim in [2, 3]:
         raise TypeError('map_stack should be a 2/3 dimensional array arranged as [component, row, col] or '
                         '[component, spectra')
     if x_vec is not None:
-        if not isinstance(x_vec, (list, tuple, np.ndarray)):
+        if not isinstance(x_vec, (list, tuple, np.ndarray, da.core.Array)):
             raise TypeError('x_vec should be a 1D array')
         x_vec = np.array(x_vec)
         if x_vec.ndim != 1:
@@ -1071,7 +1072,7 @@ def plot_scree(scree, title='Scree', **kwargs):
     if isinstance(scree, (list, tuple)):
         scree = np.array(scree)
 
-    if not (isinstance(scree, np.ndarray) or isinstance(scree, h5py.Dataset)):
+    if not (isinstance(scree, (np.ndarray, da.core.Array)) or isinstance(scree, h5py.Dataset)):
         raise TypeError('scree must be a 1D array or Dataset')
     if not isinstance(title, (str, unicode)):
         raise TypeError('title must be a string')
@@ -1147,7 +1148,7 @@ def plot_map_stack(map_stack, num_comps=9, stdevs=2, color_bar_mode=None, evenly
     ---------
     fig, axes
     """
-    if not isinstance(map_stack, np.ndarray) or not map_stack.ndim == 3:
+    if not isinstance(map_stack, (np.ndarray, da.core.Array)) or not map_stack.ndim == 3:
         raise TypeError('map_stack should be a 3 dimensional array arranged as [component, row, col]')
     if num_comps is None:
         num_comps = 4  # Default
@@ -1181,7 +1182,7 @@ def plot_map_stack(map_stack, num_comps=9, stdevs=2, color_bar_mode=None, evenly
         if not isinstance(var, bool):
             raise TypeError(var_name + ' should be a bool')
     for var, var_name in zip([fig_mult, pad_mult], ['fig_mult', 'pad_mult']):
-        if not isinstance(var, (list, tuple, np.ndarray)) or len(var) != 2:
+        if not isinstance(var, (list, tuple, np.ndarray, da.core.Array)) or len(var) != 2:
             raise TypeError(var_name + ' should be a tuple / list / numpy array of size 2')
         if not np.all([x > 0 and isinstance(x, Number) for x in var]):
             raise ValueError(var_name + ' should contain positive numbers')

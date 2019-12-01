@@ -266,7 +266,7 @@ class TestFile(TestImageTranslator):
             _ = translator.translate('no_such_file.png')
 
     def test_output_h5_file_already_exists(self):
-        with h5py.File(image_path.replace('.png', '.h5')) as _:
+        with h5py.File(image_path.replace('.png', '.h5'), mode='w') as _:
             pass
         with self.assertRaises(FileExistsError):
             translator = ImageTranslator()

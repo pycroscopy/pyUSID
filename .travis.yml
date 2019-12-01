@@ -1,10 +1,10 @@
 language: python
 python:
-  - '3.6'
-  - '2.7'
-  - '3.4'
-  - '3.5'
   - '3.7'
+  - '2.7'
+  - '3.6'
+  - '3.5'
+  - '3.4'
 before_install:
   - sudo apt-get update -qq
   - pip  install coveralls
@@ -16,7 +16,7 @@ install: pip install .
 script: coverage run --source pyUSID setup.py test
 stages:
   - name: after_success
-    if: env(python) = "3.6"
+    if: env(python) = "3.7"
 after_success:
   - pip list
   - pip install sphinx sphinx-gallery sphinx-rtd-theme numpydoc wget pysptools cvxopt scipy
@@ -35,7 +35,7 @@ deploy:
     local_dir: docs/_build/html
     on:
       branch: master
-      python: 3.6
+      python: 3.7
 # Github releases deployment
   - provider: releases
     skip_cleanup: true
@@ -60,4 +60,4 @@ deploy:
     on:
       tags: true
       branch: master
-      python: 3.6
+      python: 3.7

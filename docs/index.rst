@@ -29,6 +29,7 @@ Documentation Index
     credits
     whats_new
     matlab_to_python
+    scale_to_hpc
     api
 
 

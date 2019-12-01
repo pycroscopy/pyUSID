@@ -12,6 +12,7 @@ import h5py
 import numpy as np
 
 from . import data_utils
+
 sys.path.append("../../pyUSID/")
 from pyUSID.io.hdf_utils import get_attr
 from pyUSID.io import reg_ref
@@ -86,7 +87,7 @@ class TestRegRef(unittest.TestCase):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         data = np.random.rand(7)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Main', data=data)
             reg_refs = {'even_rows': (slice(0, None, 2)),
                         'odd_rows': (slice(1, None, 2))}
@@ -107,7 +108,7 @@ class TestRegRef(unittest.TestCase):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         data = np.random.rand(5, 7)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Main', data=data)
             reg_refs = {'even_rows': (slice(0, None, 2), slice(None)),
                         'odd_rows': (slice(1, None, 2), slice(None))}
@@ -128,7 +129,7 @@ class TestRegRef(unittest.TestCase):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         data = np.random.rand(5, 7)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Main', data=data)
             reg_refs = {'even_rows': (slice(None), slice(0, None, 2)),
                         'odd_rows': (slice(None), slice(1, None, 2))}
@@ -148,7 +149,7 @@ class TestRegRef(unittest.TestCase):
         # based on test_hdf_writer.test_write_legal_reg_ref_multi_dim_data()
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             data = np.random.rand(5, 7)
             h5_orig_dset = h5_f.create_dataset('test', data=data)
             self.assertIsInstance(h5_orig_dset, h5py.Dataset)
@@ -193,7 +194,7 @@ class TestRegRef(unittest.TestCase):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         data = np.random.rand(5, 7)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Source', data=data)
             pos_inds = np.arange(0, h5_dset.shape[0], 2)
             ref_inds = [((pos_start, 0), (pos_start, h5_dset.shape[1]-1)) for pos_start in pos_inds]
@@ -225,7 +226,7 @@ class TestRegRef(unittest.TestCase):
     def test_clean_reg_refs_1d(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7))
             ref_in = (slice(0, None, 2))
             cleaned = reg_ref.clean_reg_ref(h5_dset, ref_in)
@@ -235,7 +236,7 @@ class TestRegRef(unittest.TestCase):
     def test_clean_reg_refs_2d(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7, 5))
             ref_in = (slice(0, None, 2), slice(None))
             cleaned = reg_ref.clean_reg_ref(h5_dset, ref_in)
@@ -245,7 +246,7 @@ class TestRegRef(unittest.TestCase):
     def test_clean_reg_refs_illegal_too_many_slices(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7, 5))
             ref_in = (slice(0, None, 2), slice(None), slice(1, None, 2))
             with self.assertRaises(ValueError):
@@ -256,7 +257,7 @@ class TestRegRef(unittest.TestCase):
     def test_clean_reg_refs_illegal_too_few_slices(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7, 5))
             ref_in = (slice(0, None, 2))
             with self.assertRaises(ValueError):
@@ -267,7 +268,7 @@ class TestRegRef(unittest.TestCase):
     def test_clean_reg_refs_out_of_bounds(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Test', data=np.random.rand(7, 5))
             ref_in = (slice(0, 13, 2), slice(None))
             expected = (slice(0, 7, 2), slice(None))
@@ -278,7 +279,7 @@ class TestRegRef(unittest.TestCase):
     def test_attempt_reg_ref_build_spec(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Indices', data=np.random.rand(2, 5))
             dim_names = ['Bias', 'Cycle']
             expected = {'Bias': (slice(0, 1), slice(None)),
@@ -295,7 +296,7 @@ class TestRegRef(unittest.TestCase):
     def test_attempt_reg_ref_build_pos(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Indices', data=np.random.rand(5, 2))
             dim_names = ['Bias', 'Cycle']
             expected = {'Bias': (slice(None), slice(0, 1)),
@@ -312,7 +313,7 @@ class TestRegRef(unittest.TestCase):
     def test_attempt_reg_ref_build_pos_too_many_dims(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Indices', data=np.random.rand(5, 2))
             dim_names = ['Bias', 'Cycle', 'Blah']
             ret_val = reg_ref.attempt_reg_ref_build(h5_dset, dim_names)
@@ -322,7 +323,7 @@ class TestRegRef(unittest.TestCase):
     def test_attempt_reg_ref_build_pos_too_few_dims(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path) as h5_f:
+        with h5py.File(file_path, mode='w') as h5_f:
             h5_dset = h5_f.create_dataset('Indices', data=np.random.rand(5, 2))
             dim_names = ['Bias']
             ret_val = reg_ref.attempt_reg_ref_build(h5_dset, dim_names)

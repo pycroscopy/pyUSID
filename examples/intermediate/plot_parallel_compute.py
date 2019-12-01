@@ -252,7 +252,10 @@ kwargs = {'num_steps': 30}
 t_0 = time.time()
 
 # Execute the parallel computation
-parallel_results = usid.parallel_compute(raw_data, find_all_peaks, cores=cpu_cores, func_args=args, func_kwargs=kwargs)
+parallel_results = usid.parallel_compute(raw_data, find_all_peaks,
+                                         cores=cpu_cores, func_args=args,
+                                         func_kwargs=kwargs,
+                                         joblib_backend='multiprocessing')
 
 cores_vec.append(cpu_cores)
 times_vec.append(time.time()-t_0)
@@ -302,7 +305,9 @@ cpu_cores = 3
 t_0 = time.time()
 
 # Execute the parallel computation
-parallel_results = usid.parallel_compute(raw_data, find_peaks, cores=cpu_cores)
+parallel_results = usid.parallel_compute(raw_data, find_peaks,
+                                         cores=cpu_cores,
+                                         joblib_backend='multiprocessing')
 
 cores_vec.append(cpu_cores)
 times_vec.append(time.time()-t_0)

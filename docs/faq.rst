@@ -47,6 +47,21 @@ Here are some of the main reasons pyUSID is written in python:
 
 We welcome you to develop application programming interfaces (APIs) for languages besides python.
 
+Why not implement Dask as a backend to pyUSID?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We have explored ``Dask.distributed`` and ``Dask.arrays`` as backends for how pyUSID handles data and (parallel) computing.
+We encountered the following challenges that are beyond the scope of this package:
+
+* **Serialization**: Our plan was to create ``lazy`` ``Dask.Array`` objects based on the HDF5 Datasets.
+  However, Dask was unable to serialize and pickle ``h5py.Dataset`` objects.
+  Though there are potential work-arounds, further incompatibility makes it challenging to
+  reconcile for every child class built on ``pyUSID.Process``
+* **Bookkeeping**: A fundamental feature of ``pyUSID.Process`` is the ability to continue computation
+  on a dataset after interruption. Using ``Dask.distrbiuted`` to scale the computation means giving up
+  on clean and predicable checkpointing, which means being unable to continue an interrupted computation.
+
+Please see `this issue <https://github.com/dask/distributed/issues/2787>`_ on Dask's repository for more information.
+
 Why not just use the base HDF libraries or h5py instead?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 USID represents all data, regardless of dimensionality as a flattened 2D matrix.

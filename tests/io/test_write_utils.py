@@ -253,7 +253,7 @@ class TestBuildIndValMatrices(unittest.TestCase):
             _ = write_utils.build_ind_val_matrices([[0, 1], np.random.randint(0, high=5, size=(3, 4))])
 
 
-class TesCreateSpecIndsFromVals(unittest.TestCase):
+class TestCreateSpecIndsFromVals(unittest.TestCase):
 
     def test_legal(self):
         max_v = 4
@@ -349,7 +349,7 @@ class TestGetSlope(unittest.TestCase):
         round_error = np.random.rand(vector.size) * 1E-14
         vector += round_error
         actual = write_utils.get_slope(vector, tol=1E-3)
-        self.assertAlmostEquals(expected , actual)
+        self.assertAlmostEqual(expected, actual)
 
     def test_invalid_tolerance(self):
         with self.assertRaises(TypeError):

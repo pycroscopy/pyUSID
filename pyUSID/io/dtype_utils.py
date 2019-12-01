@@ -16,8 +16,11 @@ from warnings import warn
 import h5py
 import numpy as np
 import dask.array as da
-from collections import Iterable
 from itertools import groupby
+if sys.version_info.major == 3:
+    from collections.abc import Iterable
+else:
+    from collections import Iterable
 
 __all__ = ['flatten_complex_to_real', 'get_compound_sub_dtypes', 'flatten_compound_to_real', 'check_dtype',
            'stack_real_to_complex', 'validate_dtype', 'integers_to_slices', 'get_exponent', 'is_complex_dtype',

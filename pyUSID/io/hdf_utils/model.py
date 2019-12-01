@@ -181,6 +181,19 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
     pos_dims = get_dimensionality(np.transpose(ds_pos), pos_sort)
     spec_dims = get_dimensionality(ds_spec, spec_sort)
 
+    if np.prod(pos_dims) != h5_main.shape[0]:
+        mesg = 'Product of position dimension sizes: {} = {} not matching ' \
+               'with size of first axis of main dataset: {}. One or more ' \
+               'dimensions are dependent dimensions and not marked as such' \
+               '.'.format(pos_dims, np.prod(pos_dims), h5_main.shape[0])
+        raise ValueError(mesg)
+    if np.prod(spec_dims) != h5_main.shape[1]:
+        mesg = 'Product of spectroscopic dimension sizes: {} = {} not matching ' \
+               'with size of second axis of main dataset: {}. One or more ' \
+               'dimensions are dependent dimensions and not marked as such' \
+               '.'.format(spec_dims, np.prod(spec_dims), h5_main.shape[1])
+        raise ValueError(mesg)
+
     if verbose:
         print('\nPosition dimensions (sort applied):', pos_labs[pos_sort])
         print('Position dimensionality (sort applied):', pos_dims)
@@ -255,7 +268,14 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         print('Axes will permuted in this order:', swap_axes)
         print('New labels ordering:', all_labels[swap_axes])
 
-    ds_Nd = ds_Nd.transpose(tuple(swap_axes))
+    # Get a numeric version of the numpy version for comparisons
+    np_ver = np.__version__.split('.')[:2]
+    np_ver = float(np_ver[0] + '.' + np_ver[1])
+
+    if isinstance(ds_Nd, np.ndarray) and np_ver > 1.16:
+        ds_Nd = ds_Nd.transpose(tuple(swap_axes))[0]
+    else:
+        ds_Nd = ds_Nd.transpose(tuple(swap_axes))
 
     results = [ds_Nd, True]
 
@@ -652,6 +672,11 @@ def get_unit_values(ds_inds, ds_vals, dim_names=None, all_dim_names=None, is_spe
         inds_for_dim = inds_mat[desired_row_ind]
         # Wherever this dimension goes to 0 - start of a new tile
         starts = np.where(inds_for_dim == np.min(inds_for_dim))[0]
+        if starts[0] != 0:
+            raise ValueError('Spectroscopic Indices for dimension: "{}" not '
+                             'starting with 0. Please fix this and try again'
+                             '.'.format(dim_name))
+
         # There may be repetitions in addition to tiling. Find how the the positions increase.
         # 1 = repetition, > 1 = new tile
         step_sizes = np.hstack(([1], np.diff(starts)))

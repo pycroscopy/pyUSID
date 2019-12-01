@@ -11,10 +11,13 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 import os
 import sys
 from numbers import Number
-from collections import Iterable
 from time import strftime
 from warnings import warn
 import numpy as np
+if sys.version_info.major == 3:
+    from collections.abc import Iterable
+else:
+    from collections import Iterable
 
 from .dtype_utils import validate_list_of_strings, validate_string_args
 

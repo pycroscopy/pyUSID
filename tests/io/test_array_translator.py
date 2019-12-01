@@ -137,7 +137,7 @@ class TestArrayTranslator(unittest.TestCase):
 class TestBaseOperations(TestArrayTranslator):
 
     def test_preexisting_file_OK(self):
-        with h5py.File(file_path) as _:
+        with h5py.File(file_path, mode='w') as _:
             pass
         self.base_translation_tester(main_dset_as_dask=False, extra_dsets_type='numpy', use_parm_dict=False)
 

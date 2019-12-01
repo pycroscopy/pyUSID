@@ -21,6 +21,8 @@ from ..io.usi_data import USIDataset
 from ..io.dtype_utils import integers_to_slices
 from ..io.io_utils import format_time, format_size
 
+# TODO: internalize as many attributes as possible. Expose only those that will be required by the user
+
 
 class Process(object):
     """
@@ -29,7 +31,8 @@ class Process(object):
     only need to specify application-relevant code for processing the data.
     """
 
-    def __init__(self, h5_main, cores=None, max_mem_mb=4*1024, verbose=False):
+    def __init__(self, h5_main, cores=None, max_mem_mb=4*1024,
+                 mem_multiplier=1.0, verbose=False):
         """
         Parameters
         ----------
@@ -39,8 +42,83 @@ class Process(object):
             How many cores to use for the computation. Default: all available cores - 2 if operating outside MPI context
         max_mem_mb : uint, optional
             How much memory to use for the computation.  Default 1024 Mb
+        mem_multiplier : float, optional. Default = 1
+            mem_multiplier is the number that will be multiplied with the
+            (byte) size of a single position in the source dataset in order to
+            better estimate the number of positions that can be processed at
+            any given time (how many pixels of the source and results datasets
+            can be retained in memory). The default value of 1.0 only accounts
+            for the source dataset. A value greater than 1 would account for
+            the size of results datasets as well. For example, if the result
+            dataset is the same size and precision as the source dataset,
+            the multiplier will be 2 (1 for source, 1 for result)
         verbose : bool, Optional, default = False
             Whether or not to print debugging statements
+
+        Attributes
+        ----------
+        self.h5_results_grp : :class:`h5py.Group`
+            HDF5 group containing the HDF5 datasets that contain the results
+            of the computation
+        self.verbose : bool
+            Whether or not to print debugging statements
+        self.parms_dict : dict
+            Dictionary of parameters for the computation
+        self.duplicate_h5_groups : list
+            List of :class:`h5py.Group` objects containing computational
+            results that have been completely computed with the same
+            set of parameters as those in self.parms_dict
+        self.partial_h5_groups : list
+            List of :class:`h5py.Group` objects containing computational
+            results that have been partially computed with the same
+            set of parameters as those in self.parms_dict
+        self.process_name : str
+            Name of the process. This is used for checking for existing
+            completely and partially computed results as well as for naming
+            the HDF5 group that will contain the results of the computation
+        self._cores : uint
+            Number of CPU cores to use for parallel computations.
+            Ignored in the MPI context. Each rank gets 1 CPU core
+        self._max_pos_per_read : uint
+            Number of positions in the dataset to read per chunk
+        self._status_dset_name : str
+            Name of the HDF5 dataset that keeps track of the positions in the
+            source dataset thave already been computed
+        self._results : list
+            List of objects returned as the result of computation performed by
+            the self._map_function for each position in the current batch of
+            positions that were processed
+        self.__resume_implemented : bool
+            Whether or not this (child) class has implemented the
+            self._get_existing_datasets() function
+        self.__bytes_per_pos : uint
+            Number of bytes used by one position of the source dataset
+        self.mpi_comm : :class:`mpi4py.MPI.COMM_WORLD`
+            MPI communicator. None if not running in an MPI context
+        self.mpi_rank: uint
+            MPI rank. Always 0 if not running in an MPI context
+        self.mpi_size: uint
+            Number of ranks in COMM_WORLD. 1 if not running in an MPI context
+        self.__ranks_on_socket : uint
+            Number of MPI ranks on a given CPU socket
+        self.__socket_master_rank : uint
+            Master MPI rank for a given CPU chip / socket
+        self.__compute_jobs : array-like
+            List of positions in the HDF5 dataset that need to be computed.
+            This may not be a continuous list of numbers if multiple MPI
+            workers had previously started computing and were interrupted.
+        self.__start_pos : uint
+            The index within self.__compute_jobs that a particular MPI rank /
+            worker needs to start computing from.
+        self.__rank_end_pos : uint
+            The index within self.__compute_jobs that a particular MPI rank /
+            worker needs to start computing till.
+        self.__end_pos : uint
+            The index within self.__compute_jobs that a particular MPI rank /
+            worker needs to start computing till for the current batch of
+            positions.
+        self.__pixels_in_batch : array-like
+            The positions being computed on by the current compute worker
         """
 
         if h5_main.file.mode != 'r+':
@@ -72,6 +150,9 @@ class Process(object):
                 raise TypeError('The HDF5 file should have been opened with driver="mpio". Current driver = "{}"'
                                 ''.format(h5_main.file.driver))
 
+            if verbose and self.mpi_rank == 0:
+                print('Finished getting all necessary MPI information')
+
             """
             # Not sure how to check for this correctly
             messg = None
@@ -101,24 +182,36 @@ class Process(object):
             MPI.COMM_WORLD.barrier()
         # Not sure if we need a barrier here.
 
-        # Saving these as properties of the object:
+        if verbose and self.mpi_rank == 0:
+            print('Rank {}: Upgrading from a regular h5py.Dataset to a USIDataset'.format(self.mpi_rank))
+
+        # Generation of N-dimensional form would break things for some reason.
         self.h5_main = USIDataset(h5_main)
+
+        if verbose and self.mpi_rank == 0:
+            print('Rank {}: The HDF5 dataset is now a USIDataset'.format(self.mpi_rank))
+
+        # Saving these as properties of the object:
         self.verbose = verbose
         self._cores = None
         self.__ranks_on_socket = 1
         self.__socket_master_rank = 0
         self._max_pos_per_read = None
-        self._max_mem_mb = None
+        self.__bytes_per_pos = None
 
         # Now have to be careful here since the below properties are a function of the MPI rank
         self.__start_pos = None
         self.__rank_end_pos = None
         self.__end_pos = None
         self.__pixels_in_batch = None
+        self.__compute_jobs = None
 
         # Determining the max size of the data that can be put into memory
         # all ranks go through this and they need to have this value any
-        self._set_memory_and_cores(cores=cores, mem=max_mem_mb)
+        self._set_memory_and_cores(cores=cores, man_mem_limit=max_mem_mb,
+                                   mem_multiplier=mem_multiplier)
+        if verbose and self.mpi_rank == 0:
+            print('Finished collecting info on memory and workers')
         self.duplicate_h5_groups = []
         self.partial_h5_groups = []
         self.process_name = None  # Reset this in the extended classes
@@ -161,15 +254,23 @@ class Process(object):
         Sets the start and end indices for each MPI rank
         """
         # First figure out what positions need to be computed
-        self._compute_jobs = np.where(self._h5_status_dset[()] == 0)[0]
+        self.__compute_jobs = np.where(self._h5_status_dset[()] == 0)[0]
         if self.verbose and self.mpi_rank == 0:
-            print('Among the {} positions in this dataset, the following positions need to be computed: {}'
-                  '.'.format(self.h5_main.shape[0], self._compute_jobs))
+            if len(self.__compute_jobs) > 100:
+                print('Among the {} positions in this dataset, {} positions '
+                      'need to be computed'
+                      '.'.format(self.h5_main.shape[0],
+                                 len(self.__compute_jobs)))
+            else:
+                print('Among the {} positions in this dataset, the following '
+                      'positions need to be computed: {}'
+                      '.'.format(self.h5_main.shape[0], self.__compute_jobs))
 
-        pos_per_rank = self._compute_jobs.size // self.mpi_size  # integer division
+        # integer division
+        pos_per_rank = self.__compute_jobs.size // self.mpi_size
         if self.verbose and self.mpi_rank == 0:
             print('Each rank is required to work on {} of the {} (remaining) positions in this dataset'
-                  '.'.format(pos_per_rank, self._compute_jobs.size))
+                  '.'.format(pos_per_rank, self.__compute_jobs.size))
 
         # The start and end indices now correspond to the indices in the incomplete jobs rather than the h5 dataset
         self.__start_pos = self.mpi_rank * pos_per_rank
@@ -177,7 +278,7 @@ class Process(object):
         self.__end_pos = int(min(self.__rank_end_pos, self.__start_pos + self._max_pos_per_read))
         if self.mpi_rank == self.mpi_size - 1:
             # Force the last rank to go to the end of the dataset
-            self.__rank_end_pos = self._compute_jobs.size
+            self.__rank_end_pos = self.__compute_jobs.size
 
         if self.verbose:
             print('Rank {} will read positions {} to {} of {}'.format(self.mpi_rank, self.__start_pos,
@@ -243,7 +344,9 @@ class Process(object):
             print('Checking for duplicates:')
 
         # This list will contain completed runs only
-        duplicate_h5_groups = check_for_old(self.h5_main, self.process_name, new_parms=self.parms_dict)
+        duplicate_h5_groups = check_for_old(self.h5_main, self.process_name,
+                                            new_parms=self.parms_dict,
+                                            verbose=self.verbose and self.mpi_rank==0)
         partial_h5_groups = []
 
         # First figure out which ones are partially completed:
@@ -254,9 +357,9 @@ class Process(object):
                 The last_pixel attribute check may be deprecated in the future.
                 Note that legacy computations did not have this dataset. We can add to partially computed datasets
                 """
+                # Case 1: Modern book-keeping dataset available:
                 if self._status_dset_name in curr_group.keys():
 
-                    # Case 1: Modern Process results:
                     status_dset = curr_group[self._status_dset_name]
 
                     if not isinstance(status_dset, h5py.Dataset):
@@ -270,49 +373,70 @@ class Process(object):
                         if self.mpi_rank == 0:
                             print('Status dataset: {} was not of the expected shape or datatype'.format(status_dset))
 
-                    # Finally, check how far the computation was completed.
-                    if len(np.where(status_dset[()] == 0)[0]) != 0:  # If there are pixels uncompleted
+                    # ##### ACTUAL COMPLETENESS TEST HERE #########
+
+                    completed_positions = np.sum(status_dset[()])
+
+                    if self.verbose and self.mpi_rank == 0:
+                        print('{} has results that are {} % complete'
+                              '.'.format(status_dset.name,
+                                         int(100 * completed_positions / self.h5_main.shape[0])))
+
+                    # Case 1.A: Incomplete computation?
+                    if completed_positions < self.h5_main.shape[0]:
+                        # If there are pixels uncompleted
                         # remove from duplicates and move to partial
+                        if self.verbose and self.mpi_rank == 0:
+                            print('moving {} to partial'.format(curr_group.name))
                         partial_h5_groups.append(duplicate_h5_groups.pop(index))
                         # Let's write the legacy attribute for safety
                         curr_group.attrs['last_pixel'] = self.h5_main.shape[0]
                         # No further checks necessary
                         continue
-                    else:
-                        # Optionally calculate how much was completed:
-                        if self.mpi_rank == 0:
-                            if len(np.where(status_dset[()] == 0)[0]) > 0:  # if there are unfinished pixels
-                                percent_complete = int(100 * len(np.where(status_dset[()] == 0)[0]) / status_dset.shape[0])
-                                print('Group: {}: computation was {}% completed'.format(curr_group, percent_complete))
 
-                # Case 2: Legacy results group:
-                if 'last_pixel' not in curr_group.attrs.keys():
+                    # Case 1.B: Complete computation:
+                    if self.verbose and self.mpi_rank == 0:
+                        print('Leaving {} in duplicate groups'.format(curr_group.name))
+                    continue
+
+                # Case 2: Even the legacy book-keeping is absent:
+                elif 'last_pixel' not in curr_group.attrs.keys():
                     if self.mpi_rank == 0:
                         # Should not be coming here at all
                         print('Group: {} had neither the status HDF5 dataset or the legacy attribute: "last_pixel"'
                               '.'.format(curr_group))
-                    # Not sure what to do with such groups. Don't consider them in the future
+                    # Not sure what to do with such groups. Don't consider them
                     duplicate_h5_groups.pop(index)
                     continue
 
-                # Finally, do the legacy test:
-                if curr_group.attrs['last_pixel'] < self.h5_main.shape[0]:
+                # Case 3.A: Only the legacy book-keeping is available:
+                elif curr_group.attrs['last_pixel'] < self.h5_main.shape[0]:
                     # Should we create the dataset here, to make the group future-proof?
                     # remove from duplicates and move to partial
+                    if self.verbose and self.mpi_rank == 0:
+                        print('moving {} to partial since computation was {} % complete'
+                              '.'.format(curr_group.name,
+                                         int(100 * curr_group.attrs['last_pixel'] / self.h5_main.shape[0])))
                     partial_h5_groups.append(duplicate_h5_groups.pop(index))
 
+                    continue
+
+                # Case 4: legacy book-keeping shows that computation is complete:
+                if self.verbose and self.mpi_rank == 0:
+                    print('Leaving {} in duplicate groups'.format(curr_group.name))
+
         if len(duplicate_h5_groups) > 0 and self.mpi_rank == 0:
-            print('Note: ' + self.process_name + ' has already been performed with the same parameters before. '
+            print('\nNote: ' + self.process_name + ' has already been performed with the same parameters before. '
                                                  'These results will be returned by compute() by default. '
-                                                 'Set override to True to force fresh computation')
+                                                 'Set override to True to force fresh computation\n')
             print(duplicate_h5_groups)
 
         if len(partial_h5_groups) > 0 and self.mpi_rank == 0:
-            print('Note: ' + self.process_name + ' has already been performed PARTIALLY with the same parameters. '
+            print('\nNote: ' + self.process_name + ' has already been performed PARTIALLY with the same parameters. '
                                                  'compute() will resuming computation in the last group below. '
                                                  'To choose a different group call use_patial_computation()'
                                                  'Set override to True to force fresh computation or resume from a '
-                                                 'data group besides the last in the list.')
+                                                 'data group besides the last in the list.\n')
             print(partial_h5_groups)
 
         return duplicate_h5_groups, partial_h5_groups
@@ -340,18 +464,17 @@ class Process(object):
 
         self.h5_results_grp = h5_partial_group
 
-    def _set_memory_and_cores(self, cores=None, mem=None):
+    def __set_cores(self, cores=None):
         """
-        Checks hardware limitations such as memory, number of CPU cores and sets the recommended data chunk sizes and
-        the number of cores to be used by analysis methods. This function can work with clusters with heterogeneous
-        memory sizes (e.g. CADES SHPC Condo).
+        Checks number of CPU cores and sets the recommended number of cores to
+        be used by analysis methods.
+        This function can work with clusters with heterogeneous core counts
+        (e.g. CADES SHPC Condo).
 
         Parameters
         ----------
-        cores : uint, optional, Default = 1
-            How many cores to use for the computation.
-        mem : uint, optional, Default = 1024
-            The amount a memory in Mb to use in the computation
+        cores : uint, optional, Default = None (all or nearly all available)
+            How many CPU cores to use for the computation.
         """
         if self.mpi_comm is None:
             min_free_cores = 1 + int(psutil.cpu_count() > 4)
@@ -375,35 +498,124 @@ class Process(object):
             # how many in this socket?
             self.__ranks_on_socket = ranks_on_this_socket.size
             # Force usage of all available memory
-            mem = None
+            man_mem_limit = None
             self._cores = 1
             # Disabling the following line since mpi4py and joblib didn't play well for Bayesian Inference
             # self._cores = self.__cores_per_rank = psutil.cpu_count() // self.__ranks_on_socket
 
-        # TODO: Convert all to bytes!
-        _max_mem_mb = get_available_memory() / 1024 ** 2  # in MB
-        if mem is None:
-            mem = _max_mem_mb
-        else:
-            if not isinstance(mem, int):
-                raise TypeError('mem must be a whole number')
-            mem = abs(mem)
+    def _set_memory_and_cores(self, cores=None, man_mem_limit=None,
+                              mem_multiplier=1.0):
+        """
+        Checks hardware limitations such as memory, number of CPU cores and sets the recommended data chunk sizes and
+        the number of cores to be used by analysis methods. This function can work with clusters with heterogeneous
+        memory sizes (e.g. CADES SHPC Condo).
 
-        self._max_mem_mb = min(_max_mem_mb, mem)
+        Parameters
+        ----------
+        cores : uint, optional, Default = 1
+            How many cores to use for the computation.
+        man_mem_limit : uint, optional, Default = None (all available memory)
+            The amount a memory in Mb to use in the computation
+        mem_multiplier : float, optional. Default = 1
+            mem_multiplier is the number that will be multiplied with the
+            (byte) size of a single position in the source dataset in order to
+            better estimate the number of positions that can be processed at
+            any given time (how many pixels of the source and results datasets
+            can be retained in memory). The default value of 1.0 only accounts
+            for the source dataset. A value greater than 1 would account for
+            the size of results datasets as well. For example, if the result
+            dataset is the same size and precision as the source dataset,
+            the multiplier will be 2 (1 for source, 1 for result)
+        """
+        self.__set_cores(cores=cores)
 
-        # Remember that multiple processes (either via MPI or joblib) will share this socket
-        max_data_chunk = self._max_mem_mb / (self._cores * self.__ranks_on_socket)
+        self.__set_memory(man_mem_limit=man_mem_limit,
+                          mem_multiplier=mem_multiplier)
 
-        # Now calculate the number of positions OF RAW DATA ONLY that can be stored in memory in one go PER RANK
-        mb_per_position = self.h5_main.dtype.itemsize * self.h5_main.shape[1] / 1024 ** 2
-        self._max_pos_per_read = int(np.floor(max_data_chunk / mb_per_position))
+    def __set_memory(self, man_mem_limit=None, mem_multiplier=1.0):
+        """
+        Checks memory capabilities of each node and sets the recommended data
+        chunk sizes to be used by analysis methods.
+        This function can work with clusters with heterogeneous memory sizes
+        (e.g. CADES SHPC Condo).
 
+        Parameters
+        ----------
+        man_mem_limit : uint, optional, Default = None (all available memory)
+            The amount a memory in Mb to use in the computation
+        mem_multiplier : float, optional. Default = 1
+            mem_multiplier is the number that will be multiplied with the
+            (byte) size of a single position in the source dataset in order to
+            better estimate the number of positions that can be processed at
+            any given time (how many pixels of the source and results datasets
+            can be retained in memory). The default value of 1.0 only accounts
+            for the source dataset. A value greater than 1 would account for
+            the size of results datasets as well. For example, if the result
+            dataset is the same size and precision as the source dataset,
+            the multiplier will be 2 (1 for source, 1 for result)
+        """
+        if not isinstance(mem_multiplier, float):
+            raise TypeError('mem_multiplier must be a floating point number')
+        mem_multiplier = abs(mem_multiplier)
+        if mem_multiplier < 1:
+            raise ValueError('mem_multiplier must be at least 1')
+
+        avail_mem_bytes = get_available_memory()  # in bytes
         if self.verbose and self.mpi_rank == self.__socket_master_rank:
             # expected to be the same for all ranks so just use this.
-            print('Rank {} - on socket with {} logical cores and {} avail. RAM shared by {} ranks each given {} cores'
-                  '.'.format(self.__socket_master_rank, psutil.cpu_count(), format_size(_max_mem_mb * 1024**2, 2), 
+            print('Rank {} - on socket with {} cores and {} avail. RAM shared '
+                  'by {} ranks each given {} cores'
+                  '.'.format(self.__socket_master_rank, psutil.cpu_count(),
+                             format_size(avail_mem_bytes),
                              self.__ranks_on_socket, self._cores))
-            print('Allowed to read {} pixels per chunk'.format(self._max_pos_per_read))
+
+        if man_mem_limit is None:
+            man_mem_limit = avail_mem_bytes
+        else:
+            if not isinstance(man_mem_limit, int):
+                raise TypeError('man_mem_limit must be a whole number')
+            # Note that man_mem_limit is specified in mega bytes
+            man_mem_limit = abs(man_mem_limit) * 1024 ** 2  # in bytes
+            if self.verbose and self.mpi_rank == 0:
+                print('User has requested to use no more than {} of memory'
+                      '.'.format(format_size(man_mem_limit)))
+
+        max_mem_bytes = min(avail_mem_bytes, man_mem_limit)
+
+        # Remember that multiple processes (either via MPI or joblib) will share this socket
+        # This makes logical sense but there's always too much free memory and the
+        # cores are starved.
+        max_mem_per_worker = max_mem_bytes / (self._cores * self.__ranks_on_socket)
+        if self.verbose and self.mpi_rank == self.__socket_master_rank:
+            print('Rank {}: Each of the {} workers on this socket are allowed '
+                  'to use {} of RAM'
+                  '.'.format(self.mpi_rank,
+                             self._cores * self.__ranks_on_socket,
+                             format_size(max_mem_per_worker)))
+
+        # Now calculate the number of positions OF RAW DATA ONLY that can be
+        # stored in memory in one go PER worker
+        self.__bytes_per_pos = self.h5_main.dtype.itemsize * self.h5_main.shape[1]
+        if self.verbose and self.mpi_rank == 0:
+            print('Each position in the SOURCE dataset is {} large'
+                  '.'.format(format_size(self.__bytes_per_pos)))
+        # Now multiply this with a factor that takes into account the expected
+        # sizes of the results (Final and intermediate) datasets.
+        self.__bytes_per_pos *= mem_multiplier
+        if self.verbose and self.mpi_rank == 0 and mem_multiplier > 1:
+            print('Each position of the source and results dataset(s) is {} '
+                  'large.'.format(format_size(self.__bytes_per_pos)))
+
+        self._max_pos_per_read = int(np.floor(max_mem_per_worker / self.__bytes_per_pos))
+
+        if self.verbose and self.mpi_rank == self.__socket_master_rank:
+            title = 'SOURCE dataset only'
+            if mem_multiplier > 1:
+                title = 'source and result(s) datasets'
+            # expected to be the same for all ranks so just use this.
+            print('Rank {}: Workers on this socket allowed to read {} '
+                  'positions of the {} per chunk'
+                  '.'.format(self.mpi_rank, self._max_pos_per_read, title))
 
     @staticmethod
     def _map_function(*args, **kwargs):
@@ -431,11 +643,24 @@ class Process(object):
             self.__end_pos = int(min(self.__rank_end_pos, self.__start_pos + self._max_pos_per_read))
 
             # DON'T DIRECTLY apply the start and end indices anymore to the h5 dataset. Find out what it means first
-            self.__pixels_in_batch = self._compute_jobs[self.__start_pos: self.__end_pos]
-            self.data = self.h5_main[self.__pixels_in_batch, :]
-            if self.verbose:
-                print('Rank {} - Read positions: {}'.format(self.mpi_rank, self.__pixels_in_batch, self.__rank_end_pos))
+            self.__pixels_in_batch = self.__compute_jobs[self.__start_pos: self.__end_pos]
 
+            if self.verbose:
+                print('Rank {} will read positions: {}'.format(self.mpi_rank, self.__pixels_in_batch))
+                bytes_this_read = self.__bytes_per_pos * len(self.__pixels_in_batch)
+                print('Rank {} will read {} of the SOURCE dataset'
+                      '.'.format(self.mpi_rank, format_size(bytes_this_read)))
+                if self.mpi_rank == self.__socket_master_rank:
+                    tot_workers = self.__ranks_on_socket * self._cores
+                    print('Rank: {} available memory: {}. '
+                          '{} workers on this socket will in total read ~ {}'
+                          '.'.format(self.mpi_rank,
+                                     format_size(get_available_memory()),
+                                     tot_workers,
+                                     bytes_this_read * tot_workers))
+
+            # TODO: Read as Dask array to minimize memory copies when restructuring in child classes
+            self.data = self.h5_main[self.__pixels_in_batch, :]
             # DON'T update the start position
 
         else:
@@ -500,6 +725,9 @@ class Process(object):
         """
         # TODO: Try to use the functools.partials to preconfigure the map function
         # cores = number of processes / rank here
+        if self.verbose and self.mpi_rank == 0:
+            print("Rank {} at Process class' default _unit_computation() that "
+                  "will call parallel_compute()".format(self.mpi_rank))
         self._results = parallel_compute(self.data, self._map_function, cores=self._cores,
                                          lengthy_computation=False,
                                          func_args=args, func_kwargs=kwargs,
@@ -611,7 +839,7 @@ class Process(object):
         self.__create_compute_status_dataset()
 
         if resuming and self.mpi_rank == 0:
-            percent_complete = int(100 * len(np.where(self._h5_status_dset[()] == 0)[0]) /
+            percent_complete = int(100 * len(np.where(self._h5_status_dset[()] == 1)[0]) /
                                    self._h5_status_dset.shape[0])
             print('Resuming computation. {}% completed already'.format(percent_complete))
 

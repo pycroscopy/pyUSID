@@ -1,6 +1,10 @@
 Tutorials on Basics
 ====================
-Here are a list of excellent tutorials from other websites and sources that describe some of the many important topics
+For those who are new to python and data analytics, we highly encourage you to
+go through `Prof. Josh Agar's tutorials <https://github.com/jagar2/Fall_2019_Data_Analysis_and_Machine_Learning_for_Experimentalists>`_
+for a throrough primer on all the basic concepts.
+
+Here are a list of other tutorials from other websites and sources that describe some of the many important topics
 on reading, using / running and writing code:
 
 .. contents::
