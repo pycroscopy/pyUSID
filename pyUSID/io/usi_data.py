@@ -41,9 +41,10 @@ class USIDataset(h5py.Dataset):
         Parameters
         ----------
         h5_ref : :class:`h5py.Dataset`
-            The dataset which is actually a USID dataset
-        sort_dims : bool
-            Should the dimensions be sorted internally from fastest changing to slowest.
+            The dataset which is actually a USID Main dataset
+        sort_dims : bool, Optional. Default=False
+            If set to True - Dimensions will be sorted from slowest to fastest
+            Else - Dimensions will be arranged as they appear in ancillary datasets
 
         Methods
         -------
@@ -96,9 +97,9 @@ class USIDataset(h5py.Dataset):
         self.h5_pos_vals = self.file[self.attrs['Position_Values']]
         self.h5_pos_inds = self.file[self.attrs['Position_Indices']]
 
-        # The dimension labels
-        self.__pos_dim_labels = get_attr(self.h5_pos_inds, 'labels')
-        self.__spec_dim_labels = get_attr(self.h5_spec_inds, 'labels')
+        # The dimension labels as they appear in the ancillary datasets
+        self.__orig_pos_dim_labels = get_attr(self.h5_pos_inds, 'labels')
+        self.__orig_spec_dim_labels = get_attr(self.h5_spec_inds, 'labels')
 
         # Data descriptors
         self.data_descriptor = '{} ({})'.format(get_attr(self, 'quantity'), get_attr(self, 'units'))
@@ -106,23 +107,47 @@ class USIDataset(h5py.Dataset):
         self.spec_dim_descriptors = self.__get_anc_labels(self.h5_spec_inds)
 
         # The size of each dimension
-        self.__pos_dim_sizes = np.array(get_dimensionality(np.transpose(self.h5_pos_inds)))
-        self.__spec_dim_sizes = np.array(get_dimensionality(np.atleast_2d(self.h5_spec_inds)))
+        self.__orig_pos_dim_sizes = np.array(get_dimensionality(np.transpose(self.h5_pos_inds)))
+        self.__orig_spec_dim_sizes = np.array(get_dimensionality(np.atleast_2d(self.h5_spec_inds)))
 
         # Sorted dimension order
         self.__pos_sort_order = get_sort_order(np.transpose(self.h5_pos_inds))
         self.__spec_sort_order = get_sort_order(np.atleast_2d(self.h5_spec_inds))
 
         # internal book-keeping / we don't want users to mess with these?
-        self.__n_dim_sizes = np.append(self.__pos_dim_sizes, self.__spec_dim_sizes)
-        self.__n_dim_labs = np.append(self.__pos_dim_labels, self.__spec_dim_labels)
-        self.__n_dim_sort_order = np.append(self.__pos_sort_order, self.__spec_sort_order+len(self.__pos_sort_order))
-        self.__n_dim_data = None
+        self.__orig_n_dim_sizes = np.append(self.__orig_pos_dim_sizes, self.__orig_spec_dim_sizes)
+        self.__orig_n_dim_labs = np.append(self.__orig_pos_dim_labels, self.__orig_spec_dim_labels)
+        self.__n_dim_sort_order_orig_s2f = np.append(self.__pos_sort_order[::-1],
+                                                     self.__spec_sort_order[::-1] + len(self.__pos_sort_order))
+        self.__n_dim_sort_order_orig_f2s = np.append(self.__pos_sort_order,
+                                                     self.__spec_sort_order + len(self.__pos_sort_order))
 
-        # Should the dimensions be sorted from fastest to slowest
+        self.__n_dim_data_orig = None
+        self.__n_dim_data_s2f = None
+        self.__curr_ndim_form = None
+        self.__n_dim_form_avail = False
+
+        # Should the dimensions be sorted from slowest to fastest
         self.__sort_dims = sort_dims
 
+        # Declaring var names within init
+        self.pos_dim_labels = None
+        self.spec_dim_labels = None
+        self.pos_dim_sizes = None
+        self.spec_dim_sizes = None
+        self.n_dim_labels = None
+        self.n_dim_sizes = None
+
         self.__set_labels_and_sizes()
+
+        try:
+            self.__n_dim_data_orig = self.get_n_dim_form(lazy=True)
+            self.__n_dim_form_avail = True
+            self.__n_dim_data_s2f = self.__n_dim_data_orig.transpose(self.__n_dim_sort_order_orig_s2f)
+        except ValueError:
+            warn('This dataset does not have an N-dimensional form')
+
+        self.__set_n_dim_view()
 
     def __eq__(self, other):
         if isinstance(other, h5py.Dataset):
@@ -134,9 +159,9 @@ class USIDataset(h5py.Dataset):
         h5_str = super(USIDataset, self).__repr__()
 
         pos_str = ' \n'.join(['\t{} - size: {}'.format(dim_name, str(dim_size)) for dim_name, dim_size in
-                              zip(self.__pos_dim_labels, self.__pos_dim_sizes)])
+                              zip(self.__orig_pos_dim_labels, self.__orig_pos_dim_sizes)])
         spec_str = ' \n'.join(['\t{} - size: {}'.format(dim_name, str(dim_size)) for dim_name, dim_size in
-                               zip(self.__spec_dim_labels, self.__spec_dim_sizes)])
+                               zip(self.__orig_spec_dim_labels, self.__orig_spec_dim_sizes)])
 
         usid_str = ' \n'.join(['located at:',
                                 '\t' + self.name,
@@ -163,27 +188,29 @@ class USIDataset(h5py.Dataset):
         """
         Sets the labels and sizes attributes to the correct values based on
         the value of `self.__sort_dims`
-
-        Returns
-        -------
-        None
-
         """
         if self.__sort_dims:
-            self.pos_dim_labels = self.__pos_dim_labels[self.__pos_sort_order].tolist()
-            self.spec_dim_labels = self.__spec_dim_labels[self.__spec_sort_order].tolist()
-            self.pos_dim_sizes = self.__pos_dim_sizes[self.__pos_sort_order].tolist()
-            self.spec_dim_sizes = self.__spec_dim_sizes[self.__spec_sort_order].tolist()
-            self.n_dim_labels = self.__n_dim_labs[self.__n_dim_sort_order].tolist()
-            self.n_dim_sizes = self.__n_dim_sizes[self.__n_dim_sort_order].tolist()
+            self.pos_dim_labels = self.__orig_pos_dim_labels[self.__pos_sort_order].tolist()
+            self.spec_dim_labels = self.__orig_spec_dim_labels[self.__spec_sort_order].tolist()
+            self.pos_dim_sizes = self.__orig_pos_dim_sizes[self.__pos_sort_order].tolist()
+            self.spec_dim_sizes = self.__orig_spec_dim_sizes[self.__spec_sort_order].tolist()
+            self.n_dim_labels = self.__orig_n_dim_labs[self.__n_dim_sort_order_orig_s2f].tolist()
+            self.n_dim_sizes = self.__orig_n_dim_sizes[self.__n_dim_sort_order_orig_s2f].tolist()
 
         else:
-            self.pos_dim_labels = self.__pos_dim_labels.tolist()
-            self.spec_dim_labels = self.__spec_dim_labels.tolist()
-            self.pos_dim_sizes = self.__pos_dim_sizes.tolist()
-            self.spec_dim_sizes = self.__spec_dim_sizes.tolist()
-            self.n_dim_labels = self.__n_dim_labs.tolist()
-            self.n_dim_sizes = self.__n_dim_sizes.tolist()
+            self.pos_dim_labels = self.__orig_pos_dim_labels.tolist()
+            self.spec_dim_labels = self.__orig_spec_dim_labels.tolist()
+            self.pos_dim_sizes = self.__orig_pos_dim_sizes.tolist()
+            self.spec_dim_sizes = self.__orig_spec_dim_sizes.tolist()
+            self.n_dim_labels = self.__orig_n_dim_labs.tolist()
+            self.n_dim_sizes = self.__orig_n_dim_sizes.tolist()
+
+    def __set_n_dim_view(self):
+        """
+        Sets the current view of the N-dimensional form of the dataset
+        """
+
+        self.__curr_ndim_form = self.__n_dim_data_s2f if self.__sort_dims else self.__n_dim_data_orig
 
     @staticmethod
     def __get_anc_labels(h5_dset):
@@ -258,18 +285,11 @@ class USIDataset(h5py.Dataset):
         order of the labels
 
         """
-        if self.__n_dim_data is not None:
-            if self.__sort_dims:
-                nd_sort = np.append(self.__pos_sort_order[::-1],
-                                    self.__spec_sort_order[::-1] + len(self.pos_dim_sizes))
-            else:
-                nd_sort = self.__n_dim_sort_order
-
-            self.__n_dim_data = np.transpose(self.__n_dim_data, nd_sort)
-
         self.__sort_dims = not self.__sort_dims
 
         self.__set_labels_and_sizes()
+
+        self.__set_n_dim_view()
 
     def get_n_dim_form(self, as_scalar=False, lazy=False):
         """
@@ -291,16 +311,22 @@ class USIDataset(h5py.Dataset):
 
         """
 
-        if self.__n_dim_data is None:
-            self.__n_dim_data, success = reshape_to_n_dims(self, sort_dims=self.__sort_dims,
-                                                           lazy=lazy)
+        if self.__curr_ndim_form is None:
+            # To be on the safe side, always read as dask Array
+            n_dim_data, success = reshape_to_n_dims(self, sort_dims=self.__sort_dims,
+                                                    lazy=True)
 
             if success is not True:
                 raise ValueError('Unable to reshape data to N-dimensional form.')
+        else:
+            n_dim_data = self.__curr_ndim_form
 
-        n_dim_data = self.__n_dim_data
         if as_scalar:
-            n_dim_data = flatten_to_real(self.__n_dim_data)
+            n_dim_data = flatten_to_real(n_dim_data)
+
+        if not lazy:
+            assert(isinstance(n_dim_data, da.core.Array))
+            n_dim_data = n_dim_data.compute()
 
         return n_dim_data
 
@@ -327,6 +353,45 @@ class USIDataset(h5py.Dataset):
             if not isinstance(val, (slice, list, np.ndarray, tuple, int)):
                 raise TypeError('The slices must be array-likes or slice objects.')
         return True
+
+    def __slice_n_dim_form(self, slice_dict, verbose=False, lazy=False):
+        """
+        Slices the N-dimensional form of the dataset based on the slice dictionary.
+        Assumes that an N-dimensional form exists and is what was requested
+
+        Parameters
+        ----------
+        slice_dict : dict
+            Dictionary of array-likes. for any dimension one needs to slice
+        verbose : bool, optional
+            Whether or not to print debugging statements
+        lazy : bool, optional. Default = False
+            If set to false, data_slice will be a :class:`numpy.ndarray`
+            Else returned object is :class:`dask.array.core.Array`
+
+        Returns
+        -------
+        data_slice : :class:`numpy.ndarray`, or :class:`dask.array.core.Array`
+            Slice of the dataset.
+        success : bool
+            Always True
+        """
+        nd_slice = []
+
+        for dim_name in self.n_dim_labels:
+            nd_slice.append(slice_dict.get(dim_name, slice(None)))
+
+        # Dask multidimensional slicing does not work if list is passed:
+        nd_slice = tuple(nd_slice)
+        if verbose:
+            print(self.n_dim_labels)
+            print(nd_slice)
+
+        sliced_dset = self.__curr_ndim_form[nd_slice]
+        if not lazy:
+            sliced_dset = sliced_dset.compute()
+
+        return sliced_dset, True
 
     def slice(self, slice_dict, ndim_form=True, as_scalar=False, verbose=False, lazy=False):
         """
@@ -368,6 +433,9 @@ class USIDataset(h5py.Dataset):
             raise TypeError('as_scalar should be a bool')
         if not isinstance(verbose, bool):
             raise TypeError('verbose should be a bool')
+
+        if self.__n_dim_form_avail and ndim_form:
+            return self.__slice_n_dim_form(slice_dict, verbose=verbose, lazy=lazy)
 
         # Convert the slice dictionary into lists of indices for each dimension
         pos_slice, spec_slice = self._get_pos_spec_slices(slice_dict)
@@ -491,17 +559,17 @@ class USIDataset(h5py.Dataset):
                 raise ValueError('Slicing indices should be >= 0')
 
             # check to make sure that the values are not out of bounds:
-            dim_ind = np.squeeze(np.argwhere(self.__n_dim_labs == key))
-            cur_dim_size = self.__n_dim_sizes[dim_ind]
+            dim_ind = np.squeeze(np.argwhere(self.__orig_n_dim_labs == key))
+            cur_dim_size = self.__orig_n_dim_sizes[dim_ind]
             if np.max(val) >= cur_dim_size:
-                raise ValueError('slicing argument for dimension: {} was beyond {}'.format(key, cur_dim_size))
+                raise IndexError('slicing argument for dimension: {} was beyond {}'.format(key, cur_dim_size))
 
             n_dim_slices[key] = val
 
             n_dim_slices_sizes[key] = len(val)
 
         # Build the list of position slice indices
-        for pos_ind, pos_lab in enumerate(self.__pos_dim_labels):
+        for pos_ind, pos_lab in enumerate(self.__orig_pos_dim_labels):
             # n_dim_slices[pos_lab] = np.isin(self.h5_pos_inds[:, pos_ind], n_dim_slices[pos_lab])
             temp = [self.h5_pos_inds[:, pos_ind] == item for item in n_dim_slices[pos_lab]]
             n_dim_slices[pos_lab] = np.any(np.vstack(temp), axis=0)
@@ -512,7 +580,7 @@ class USIDataset(h5py.Dataset):
         pos_slice = np.argwhere(pos_slice)
 
         # Do the same for the spectroscopic slice
-        for spec_ind, spec_lab in enumerate(self.__spec_dim_labels):
+        for spec_ind, spec_lab in enumerate(self.__orig_spec_dim_labels):
             # n_dim_slices[spec_lab] = np.isin(self.h5_spec_inds[spec_ind], n_dim_slices[spec_lab])
             temp = [self.h5_spec_inds[spec_ind] == item for item in n_dim_slices[spec_lab]]
             n_dim_slices[spec_lab] = np.any(np.vstack(temp), axis=0)

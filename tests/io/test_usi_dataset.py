@@ -20,139 +20,25 @@ from . import data_utils
 if sys.version_info.major == 3:
     unicode = str
 
-test_h5_file_path = 'test_usi_dataset.h5'
+test_h5_file_path = data_utils.std_beps_path
 
 
 class TestUSIDataset(unittest.TestCase):
 
     def setUp(self):
-
-        if os.path.exists(test_h5_file_path):
-            os.remove(test_h5_file_path)
-        with h5py.File(test_h5_file_path, mode='w') as h5_f:
-
-            h5_raw_grp = h5_f.create_group('Raw_Measurement')
-            data_utils.write_safe_attrs(h5_raw_grp, {'att_1': 'string_val', 'att_2': 1.2345,
-                                                             'att_3': [1, 2, 3, 4]})
-            data_utils.write_string_list_as_attr(h5_raw_grp, {'att_4': ['str_1', 'str_2', 'str_3']})
-
-            _ = h5_raw_grp.create_group('Misc')
-
-            num_rows = 3
-            num_cols = 5
-            num_cycles = 2
-            num_cycle_pts = 7
-
-            source_dset_name = 'source_main'
-            tool_name = 'Fitter'
-
-            source_pos_data = np.vstack((np.tile(np.arange(num_cols), num_rows),
-                                         np.repeat(np.arange(num_rows), num_cols))).T
-            pos_attrs = {'units': ['nm', 'um'], 'labels': ['X', 'Y']}
-
-            h5_pos_inds = h5_raw_grp.create_dataset('Position_Indices', data=source_pos_data, dtype=np.uint16)
-            data_utils.write_aux_reg_ref(h5_pos_inds, pos_attrs['labels'], is_spec=False)
-            data_utils.write_string_list_as_attr(h5_pos_inds, pos_attrs)
-
-            # make the values more interesting:
-            source_pos_data = np.vstack((source_pos_data[:, 0] * 50, source_pos_data[:, 1] * 1.25)).T
-
-            h5_pos_vals = h5_raw_grp.create_dataset('Position_Values', data=source_pos_data, dtype=np.float32)
-            data_utils.write_aux_reg_ref(h5_pos_vals, pos_attrs['labels'], is_spec=False)
-            data_utils.write_string_list_as_attr(h5_pos_vals, pos_attrs)
-
-            source_spec_data = np.vstack((np.repeat(np.arange(num_cycle_pts), num_cycles),
-                                          np.tile(np.arange(num_cycles), num_cycle_pts)))
-            source_spec_attrs = {'units': ['V', ''], 'labels': ['Bias', 'Cycle']}
-
-            h5_source_spec_inds = h5_raw_grp.create_dataset('Spectroscopic_Indices', data=source_spec_data,
-                                                            dtype=np.uint16)
-            data_utils.write_aux_reg_ref(h5_source_spec_inds, source_spec_attrs['labels'], is_spec=True)
-            data_utils.write_string_list_as_attr(h5_source_spec_inds, source_spec_attrs)
-
-            # make spectroscopic axis interesting as well
-            source_spec_data = np.vstack(
-                (np.repeat(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False)),
-                         num_cycles),
-                 np.tile(np.arange(num_cycles), num_cycle_pts)))
-
-            h5_source_spec_vals = h5_raw_grp.create_dataset('Spectroscopic_Values', data=source_spec_data,
-                                                            dtype=np.float32)
-            data_utils.write_aux_reg_ref(h5_source_spec_vals, source_spec_attrs['labels'], is_spec=True)
-            data_utils.write_string_list_as_attr(h5_source_spec_vals, source_spec_attrs)
-
-            source_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
-            h5_source_main = h5_raw_grp.create_dataset(source_dset_name, data=source_main_data)
-            data_utils.write_safe_attrs(h5_source_main, {'units': 'A', 'quantity': 'Current'})
-            data_utils.write_main_reg_refs(h5_source_main, {'even_rows': (slice(0, None, 2), slice(None)),
-                                                                    'odd_rows': (slice(1, None, 2), slice(None))})
-
-            # Now need to link as main!
-            for dset in [h5_pos_inds, h5_pos_vals, h5_source_spec_inds, h5_source_spec_vals]:
-                h5_source_main.attrs[dset.name.split('/')[-1]] = dset.ref
-
-            _ = h5_raw_grp.create_dataset('Ancillary', data=np.arange(5))
-
-            # Now add a few results:
-
-            h5_results_grp_1 = h5_raw_grp.create_group(source_dset_name + '-' + tool_name + '_000')
-            data_utils.write_safe_attrs(h5_results_grp_1,
-                                        {'att_1': 'string_val', 'att_2': 1.2345, 'att_3': [1, 2, 3, 4]})
-            data_utils.write_string_list_as_attr(h5_results_grp_1, {'att_4': ['str_1', 'str_2', 'str_3']})
-
-            num_cycles = 1
-            num_cycle_pts = 7
-
-            results_spec_inds = np.expand_dims(np.arange(num_cycle_pts), 0)
-            results_spec_attrs = {'units': ['V'], 'labels': ['Bias']}
-
-            h5_results_1_spec_inds = h5_results_grp_1.create_dataset('Spectroscopic_Indices',
-                                                                     data=results_spec_inds, dtype=np.uint16)
-            data_utils.write_aux_reg_ref(h5_results_1_spec_inds, results_spec_attrs['labels'], is_spec=True)
-            data_utils.write_string_list_as_attr(h5_results_1_spec_inds, results_spec_attrs)
-
-            results_spec_vals = np.expand_dims(2.5 * np.sin(np.linspace(0, np.pi, num_cycle_pts, endpoint=False)), 0)
-
-            h5_results_1_spec_vals = h5_results_grp_1.create_dataset('Spectroscopic_Values', data=results_spec_vals,
-                                                                     dtype=np.float32)
-            data_utils.write_aux_reg_ref(h5_results_1_spec_vals, results_spec_attrs['labels'], is_spec=True)
-            data_utils.write_string_list_as_attr(h5_results_1_spec_vals, results_spec_attrs)
-
-            results_1_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
-            h5_results_1_main = h5_results_grp_1.create_dataset('results_main', data=results_1_main_data)
-            data_utils.write_safe_attrs(h5_results_1_main, {'units': 'pF', 'quantity': 'Capacitance'})
-
-            # Now need to link as main!
-            for dset in [h5_pos_inds, h5_pos_vals, h5_results_1_spec_inds, h5_results_1_spec_vals]:
-                h5_results_1_main.attrs[dset.name.split('/')[-1]] = dset.ref
-
-            # add another result with different parameters
-
-            h5_results_grp_2 = h5_raw_grp.create_group(source_dset_name + '-' + tool_name + '_001')
-            data_utils.write_safe_attrs(h5_results_grp_2,
-                                        {'att_1': 'other_string_val', 'att_2': 5.4321, 'att_3': [4, 1, 3]})
-            data_utils.write_string_list_as_attr(h5_results_grp_2, {'att_4': ['s', 'str_2', 'str_3']})
-
-            results_2_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
-            h5_results_2_main = h5_results_grp_2.create_dataset('results_main', data=results_2_main_data)
-            data_utils.write_safe_attrs(h5_results_2_main, {'units': 'pF', 'quantity': 'Capacitance'})
-
-            h5_results_2_spec_inds = h5_results_grp_2.create_dataset('Spectroscopic_Indices',
-                                                                     data=results_spec_inds, dtype=np.uint16)
-            data_utils.write_aux_reg_ref(h5_results_2_spec_inds, results_spec_attrs['labels'], is_spec=True)
-            data_utils.write_string_list_as_attr(h5_results_2_spec_inds, results_spec_attrs)
-
-            h5_results_2_spec_vals = h5_results_grp_2.create_dataset('Spectroscopic_Values', data=results_spec_vals,
-                                                                     dtype=np.float32)
-            data_utils.write_aux_reg_ref(h5_results_2_spec_vals, results_spec_attrs['labels'], is_spec=True)
-            data_utils.write_string_list_as_attr(h5_results_2_spec_vals, results_spec_attrs)
-
-            # Now need to link as main!
-            for dset in [h5_pos_inds, h5_pos_vals, h5_results_2_spec_inds, h5_results_2_spec_vals]:
-                h5_results_2_main.attrs[dset.name.split('/')[-1]] = dset.ref
+        self.rev_spec = False
+        data_utils.make_beps_file(rev_spec=self.rev_spec)
+        self.orig_labels_order = ['X', 'Y', 'Cycle', 'Bias'] if self.rev_spec else ['X', 'Y', 'Bias', 'Cycle']
 
     def tearDown(self):
         os.remove(test_h5_file_path)
+
+    def get_expected_n_dim(self, h5_f):
+        nd_slow_to_fast = h5_f['/Raw_Measurement/n_dim_form'][()]
+        nd_fast_to_slow = nd_slow_to_fast.transpose(1, 0, 3, 2)
+        if self.rev_spec:
+            nd_fast_to_slow = nd_fast_to_slow.transpose(0, 1, 3, 2)
+        return nd_slow_to_fast, nd_fast_to_slow
 
     def test_string_representation(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -211,22 +97,19 @@ class TestEquality(TestUSIDataset):
 
 class TestGetNDimFormExists(TestUSIDataset):
 
-    def test_unsorted(self):
+    def test_sorted_and_unsorted(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            expected = np.reshape(h5_main, (3, 5, 7, 2))
-            expected = np.transpose(expected, (1, 0, 2, 3))
-            usi_dset = USIDataset(h5_main)
-            self.assertTrue(np.allclose(expected, usi_dset.get_n_dim_form(lazy=False)))
+            usi_dset = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            nd_slow_to_fast, nd_fast_to_slow = self.get_expected_n_dim(h5_f)
+            actual_f2s = usi_dset.get_n_dim_form(lazy=False)
+            self.assertTrue(np.allclose(nd_fast_to_slow, actual_f2s))
 
-    def test_sorted(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            expected = np.reshape(h5_main, (3, 5, 7, 2))
-            expected = np.transpose(expected, (1, 0, 3, 2))
-            usi_dset = USIDataset(h5_main)
+            nd_form, success = hdf_utils.reshape_to_n_dims(usi_dset, sort_dims=True)
+            print(nd_form.shape)
+
             usi_dset.toggle_sorting()
-            self.assertTrue(np.allclose(expected, usi_dset.get_n_dim_form(lazy=False)))
+            actual_s2f = usi_dset.get_n_dim_form(lazy=False)
+            self.assertTrue(np.allclose(nd_slow_to_fast, actual_s2f))
 
 
 class TestPosSpecSlices(TestUSIDataset):
@@ -259,7 +142,7 @@ class TestPosSpecSlices(TestUSIDataset):
     def test_out_of_bounds(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            with self.assertRaises(ValueError):
+            with self.assertRaises(IndexError):
                 _ = usi_main._get_pos_spec_slices({'X': 15, 'Y': 1})
 
     def test_one_pos_dim_removed(self):
@@ -352,12 +235,10 @@ class TestGetUnitValues(TestUSIDataset):
     def test_get_pos_values(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            expected = usi_main.h5_pos_vals[:5, 0]
-            actual = usi_main.get_pos_values('X')
-            self.assertTrue(np.allclose(expected, actual))
-            expected = usi_main.h5_pos_vals[0:None:5, 1]
-            actual = usi_main.get_pos_values('Y')
-            self.assertTrue(np.allclose(expected, actual))
+            for dim_name in ['X', 'Y']:
+                expected = h5_f['/Raw_Measurement/' + dim_name][()]
+                actual = usi_main.get_pos_values(dim_name)
+                self.assertTrue(np.allclose(expected, actual))
 
     def test_get_pos_values_illegal(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -370,12 +251,10 @@ class TestGetUnitValues(TestUSIDataset):
     def test_get_spec_values(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            expected = usi_main.h5_spec_vals[0, ::2]
-            actual = usi_main.get_spec_values('Bias')
-            self.assertTrue(np.allclose(expected, actual))
-            expected = usi_main.h5_spec_vals[1, 0:None:7]
-            actual = usi_main.get_spec_values('Cycle')
-            self.assertTrue(np.allclose(expected, actual))
+            for dim_name in ['Bias', 'Cycle']:
+                expected = h5_f['/Raw_Measurement/' + dim_name][()]
+                actual = usi_main.get_spec_values(dim_name)
+                self.assertTrue(np.allclose(expected, actual))
 
     def test_get_spec_values_illegal(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -392,8 +271,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice(None, lazy=False)
-            expected = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
-            self.assertTrue(np.allclose(expected, actual))
+            nd_slow_to_fast, nd_fast_to_slow = self.get_expected_n_dim(h5_f)
+            self.assertTrue(np.allclose(nd_fast_to_slow, actual))
 
     def test_non_existent_dim(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -410,21 +289,24 @@ class TestSlice(TestUSIDataset):
     def test_negative_index(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            with self.assertRaises(ValueError):
-                _ = usi_main.slice({'X': -4, 'Y': 1})
+            actual, success = usi_main.slice({'X': -2, 'Y': 1}, lazy=False)
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[-2, 1, :, :]
+            self.assertTrue(np.allclose(expected, actual))
+            self.assertTrue(success)
 
     def test_out_of_bounds(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            with self.assertRaises(ValueError):
+            with self.assertRaises(IndexError):
                 _ = usi_main.slice({'X': 15, 'Y': 1})
 
     def test_one_pos_dim_removed(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice(slice_dict={'X': 3}, lazy=False)
-            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
-            expected = n_dim_form[3, :, :, :]
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[3, :, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -432,8 +314,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice({'X': slice(1, 5, 2)}, lazy=False)
-            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
-            expected = n_dim_form[slice(1, 5, 2), :, :, :]
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[slice(1, 5, 2), :, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -441,8 +323,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice({'X': slice(1, 5, 2), 'Y': 1}, lazy=False)
-            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
-            expected = n_dim_form[slice(1, 5, 2), 1, :, :]
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[slice(1, 5, 2), 1, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -450,8 +332,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice({'X': [1, 2, 4], 'Y': 1}, lazy=False)
-            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
-            expected = n_dim_form[[1, 2, 4], 1, :, :]
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[[1, 2, 4], 1, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -459,8 +341,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice({'X': 3, 'Y': 1}, lazy=False)
-            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
-            expected = n_dim_form[3, 1, :, :]
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[3, 1, :, :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -468,8 +350,8 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)}, lazy=False)
-            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
-            expected = n_dim_form[[1, 2, 4], :, slice(1, 7, 3), :]
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[[1, 2, 4], :, slice(1, 7, 3), :]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -477,9 +359,9 @@ class TestSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
-                                               lazy=False)
-            n_dim_form = np.transpose(np.reshape(usi_main[()], (3, 5, 7, 2)), (1, 0, 2, 3))
-            expected = n_dim_form[[1, 2, 4], 2, slice(1, 7, 3), 1]
+                                              lazy=False)
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
+            expected = n_dim_f2s[[1, 2, 4], 2, slice(1, 7, 3), 1]
             self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
 
@@ -491,11 +373,15 @@ class TestSorting(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
 
-            self.assertTrue(usi_main.n_dim_labels == ['X', 'Y', 'Bias', 'Cycle'])
+            self.assertEqual(usi_main.n_dim_labels, self.orig_labels_order)
 
             usi_main.toggle_sorting()
 
-            self.assertTrue(usi_main.n_dim_labels==['X', 'Y', 'Cycle', 'Bias'])
+            self.assertEqual(usi_main.n_dim_labels, ['Y', 'X', 'Cycle', 'Bias'])
+
+            usi_main.toggle_sorting()
+
+            self.assertEqual(usi_main.n_dim_labels, self.orig_labels_order)
 
     def test_get_current_sorting(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:

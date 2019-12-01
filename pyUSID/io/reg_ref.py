@@ -62,8 +62,8 @@ def clean_reg_ref(h5_dset, reg_ref_tuple, verbose=False):
 
     Returns
     -------
-    is_valid : bool
-        Whether or not this
+    new_reg_refs : tuple
+        Instructions for the corrected region reference
     """
     if not isinstance(reg_ref_tuple, (tuple, dict, slice)):
         raise TypeError('slices should be a tuple, list, or slice but is instead of type '

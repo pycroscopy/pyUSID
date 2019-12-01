@@ -921,7 +921,8 @@ def check_for_matching_attrs(h5_obj, new_parms=None, verbose=False):
     return all(tests)
 
 
-def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=False, base_name=None):
+def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=False, base_name=None,
+                        slow_to_fast=False):
     """
     Creates h5py.Datasets for the position OR spectroscopic indices and values of the data.
     Remember that the contents of the dataset can be changed if need be after the creation of the datasets.
@@ -941,6 +942,9 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
         Whether or not to print statements for debugging purposes
     base_name : str or unicode, optional
         Prefix for the datasets. Default: 'Position' when is_spectral is False, 'Spectroscopic' otherwise
+    slow_to_fast : bool, Optional. Default=False
+        Set to True if the dimensions are arranged from slowest varying to fastest varying.
+        Set to False otherwise.
 
     Returns
     -------
@@ -978,6 +982,9 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
         if is_spectral:
             base_name = 'Spectroscopic_'
 
+    if not slow_to_fast:
+        warn('In the future write_ind_val_dsets will default to requiring dimensions to be arranged from slowest to fastest varying')
+
     # check if the datasets already exist. If they do, there's no point in going any further
     for sub_name in ['Indices', 'Values']:
         if base_name + sub_name in h5_parent_group.keys():
@@ -992,8 +999,18 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
     sing_mode = sing_mode[0]
 
     if sing_mode == DimType.DEFAULT:
+        if slow_to_fast:
+            # Ensure that the dimensions are arranged from fast to slow instead
+            dimensions = dimensions[::-1]
         indices, values = build_ind_val_matrices([dim.values for dim in dimensions],
                                                  is_spectral=is_spectral)
+        # At this point, dimensions and unit values are arranged from fastest to slowest
+        # We want dimensions to be arranged from slowest to fastest:
+        rev_func = np.flipud if is_spectral else np.fliplr
+        dimensions = dimensions[::-1]
+        indices = rev_func(indices)
+        values = rev_func(values)
+
     elif sing_mode == DimType.INCOMPLETE:
         lengths = np.unique([len(dim.values) for dim in dimensions])
         if len(lengths) > 1:
