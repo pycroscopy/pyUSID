@@ -333,10 +333,21 @@ class TestSlice(TestUSIDataset):
     def test_empty_nd_numpy(self):
         self.base(None, [slice(None) for _ in range(4)], True, False)
 
+    def test_empty_nd_dask(self):
+        self.base(None, [slice(None) for _ in range(4)], True, True)
+
+    def test_empty_2d_dask(self):
+        self.base(None, [slice(None) for _ in range(4)], False, True)
+
     def test_negative_index_nd_numpy(self):
         self.base({'X': -2, 'Y': 1},
                   [slice(-2, -1), slice(1, 2)] + [slice(None) for _ in range(2)],
                   True, False)
+
+    def test_negative_index_nd_dask(self):
+        self.base({'X': -2, 'Y': 1},
+                  [slice(-2, -1), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  True, True)
 
     def test_negative_index_2d_numpy(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -348,70 +359,139 @@ class TestSlice(TestUSIDataset):
         self.base({'X': 3},
                   [3] + [slice(None) for _ in range(3)], True, False)
 
+    def test_one_pos_dim_removed_nd_dask(self):
+        self.base({'X': 3},
+                  [3] + [slice(None) for _ in range(3)], True, True)
+
     def test_one_pos_dim_removed_2d_numpy(self):
         self.base({'X': 3},
                   [slice(3, 4)] + [slice(None) for _ in range(3)],
                   False, False)
+
+    def test_one_pos_dim_removed_2d_dask(self):
+        self.base({'X': 3},
+                  [slice(3, 4)] + [slice(None) for _ in range(3)],
+                  False, True)
 
     def test_one_pos_dim_sliced_nd_numpy(self):
         self.base({'X': slice(1, 5, 2)},
                   [slice(1, 5, 2)] + [slice(None) for _ in range(3)],
                   True, False)
 
+    def test_one_pos_dim_sliced_nd_dask(self):
+        self.base({'X': slice(1, 5, 2)},
+                  [slice(1, 5, 2)] + [slice(None) for _ in range(3)],
+                  True, True)
+
     def test_one_pos_dim_sliced_2d_numpy(self):
         self.base({'X': slice(1, 5, 2)},
                   [slice(1, 5, 2)] + [slice(None) for _ in range(3)],
                   False, False)
+
+    def test_one_pos_dim_sliced_2d_dask(self):
+        self.base({'X': slice(1, 5, 2)},
+                  [slice(1, 5, 2)] + [slice(None) for _ in range(3)],
+                  False, True)
 
     def test_two_pos_dim_sliced_nd_numpy(self):
         self.base({'X': slice(1, 5, 2), 'Y': 1},
                   [slice(1, 5, 2), slice(1, 2)] + [slice(None) for _ in range(2)],
                   True, False)
 
+    def test_two_pos_dim_sliced_nd_dask(self):
+        self.base({'X': slice(1, 5, 2), 'Y': 1},
+                  [slice(1, 5, 2), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  True, True)
+
     def test_two_pos_dim_sliced_2d_numpy(self):
         self.base({'X': slice(1, 5, 2), 'Y': 1},
                   [slice(1, 5, 2), slice(1, 2)] + [slice(None) for _ in range(2)],
                   False, False)
+
+    def test_two_pos_dim_sliced_2d_dask(self):
+        self.base({'X': slice(1, 5, 2), 'Y': 1},
+                  [slice(1, 5, 2), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  False, True)
 
     def test_two_pos_dim_sliced_list_nd_numpy(self):
         self.base({'X': [1, 2, 4], 'Y': 1},
                   [[1, 2, 4], slice(1, 2)] + [slice(None) for _ in range(2)],
                   True, False)
 
+    def test_two_pos_dim_sliced_list_nd_dask(self):
+        self.base({'X': [1, 2, 4], 'Y': 1},
+                  [[1, 2, 4], slice(1, 2)] + [slice(None) for _ in range(2)],
+                  True, True)
+
     def test_two_pos_dim_sliced_list_2d_numpy(self):
         self.base({'X': [1, 2, 4], 'Y': 1},
                   [[1, 2, 4], slice(1, 2)] + [slice(None) for _ in range(2)],
                   False, False)
+
+    def test_two_pos_dim_sliced_list_2d_dask(self):
+        self.base({'X': [1, 2, 4], 'Y': 1},
+                  [[1, 2, 4], slice(1, 2)] + [slice(None) for _ in range(2)],
+                  False, True)
 
     def test_both_pos_removed_nd_numpy(self):
         self.base({'X': 3, 'Y': 1},
                   [slice(3, 4), slice(1, 2)] + [slice(None) for _ in range(2)],
                   True, False)
 
+    def test_both_pos_removed_nd_dask(self):
+        self.base({'X': 3, 'Y': 1},
+                  [slice(3, 4), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  True, True)
+
     def test_both_pos_removed_2d_numpy(self):
         self.base({'X': 3, 'Y': 1},
                   [slice(3, 4), slice(1, 2)] + [slice(None) for _ in range(2)],
                   False, False)
+
+    def test_both_pos_removed_2d_dask(self):
+        self.base({'X': 3, 'Y': 1},
+                  [slice(3, 4), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  False, True)
 
     def test_pos_and_spec_sliced_list_nd_numpy(self):
         self.base({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)},
                   [[1, 2, 4], slice(None), slice(1, 7, 3), slice(None)],
                   True, False)
 
+    def test_pos_and_spec_sliced_list_nd_dask(self):
+        self.base({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)},
+                  [[1, 2, 4], slice(None), slice(1, 7, 3), slice(None)],
+                  True, True)
+
     def test_pos_and_spec_sliced_list_2d_numpy(self):
         self.base({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)},
                   [[1, 2, 4], slice(None), slice(1, 7, 3), slice(None)],
                   False, False)
+
+    def test_pos_and_spec_sliced_list_2d_dask(self):
+        self.base({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)},
+                  [[1, 2, 4], slice(None), slice(1, 7, 3), slice(None)],
+                  False, True)
 
     def test_all_dims_sliced_nd_numpy(self):
         self.base({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
                   [[1, 2, 4], slice(2, 3), slice(1, 7, 3), slice(1, 2)],
                   True, False)
 
+    def test_all_dims_sliced_nd_dask(self):
+        self.base({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
+                  [[1, 2, 4], slice(2, 3), slice(1, 7, 3), slice(1, 2)],
+                  True, True)
+
     def test_all_dims_sliced_2d_numpy(self):
         self.base({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
                   [[1, 2, 4], slice(2, 3), slice(1, 7, 3), slice(1, 2)],
                   False, False)
+
+    def test_all_dims_sliced_2d_dask(self):
+        self.base({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
+                  [[1, 2, 4], slice(2, 3), slice(1, 7, 3), slice(1, 2)],
+                  False, True)
 
 
 class TestSorting(TestUSIDataset):
