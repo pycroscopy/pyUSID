@@ -21,7 +21,7 @@ from .hdf_utils import check_if_main, get_attr, create_results_group, write_redu
     get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset, reshape_from_n_dims, \
     copy_attributes
 from .dtype_utils import flatten_to_real, contains_integers, get_exponent, is_complex_dtype, \
-    validate_single_string_arg, validate_list_of_strings
+    validate_single_string_arg, validate_list_of_strings, lazy_load_array
 from .write_utils import Dimension
 from ..viz.jupyter_utils import simple_ndim_visualizer
 from ..viz.plot_utils import plot_map, get_plot_grid_size
@@ -137,6 +137,8 @@ class USIDataset(h5py.Dataset):
         self.spec_dim_sizes = None
         self.n_dim_labels = None
         self.n_dim_sizes = None
+
+        self.__lazy_2d = lazy_load_array(self)
 
         self.__set_labels_and_sizes()
 
@@ -447,19 +449,33 @@ class USIDataset(h5py.Dataset):
 
         # Now that the slices are built, we just need to apply them to the data
         # This method is slow and memory intensive but shouldn't fail if multiple lists are given.
-        if len(pos_slice) <= len(spec_slice):
-            # Fewer final positions than spectra
-            data_slice = np.atleast_2d(self[pos_slice[:, 0], :])[:, spec_slice[:, 0]]
+        if lazy:
+            raw_2d = self.__lazy_2d
         else:
-            # Fewer final spectral points compared to positions
-            data_slice = np.atleast_2d(self[:, spec_slice[:, 0]])[pos_slice[:, 0], :]
+            raw_2d = self
 
         if verbose:
-            print('data_slice of shape: {} after slicing'.format(data_slice.shape))
-        orig_shape = data_slice.shape
-        data_slice = np.atleast_2d(np.squeeze(data_slice))
-        if data_slice.shape[0] == orig_shape[1] and data_slice.shape[1] == orig_shape[0]:
-            data_slice = data_slice.T
+            print('Slicing to 2D based on dataset of shape: {} and type: {}'
+                  ''.format(raw_2d.shape, type(raw_2d)))
+
+        if lazy:
+            data_slice = raw_2d[pos_slice[:, 0], :][:, spec_slice[:, 0]]
+        else:
+            if len(pos_slice) <= len(spec_slice):
+                # Fewer final positions than spectra
+                data_slice = np.atleast_2d(raw_2d[pos_slice[:, 0], :])[:, spec_slice[:, 0]]
+            else:
+                # Fewer final spectral points compared to positions
+                data_slice = np.atleast_2d(raw_2d[:, spec_slice[:, 0]])[pos_slice[:, 0], :]
+
+        if verbose:
+            print('data_slice of shape: {} and type: {} after slicing'
+                  ''.format(data_slice.shape, type(data_slice)))
+        if not lazy:
+            orig_shape = data_slice.shape
+            data_slice = np.atleast_2d(np.squeeze(data_slice))
+            if data_slice.shape[0] == orig_shape[1] and data_slice.shape[1] == orig_shape[0]:
+                data_slice = data_slice.T
         if verbose:
             print('data_slice of shape: {} after squeezing'.format(data_slice.shape))
 
@@ -501,7 +517,7 @@ class USIDataset(h5py.Dataset):
         if ndim_form:
             # TODO: if data is already loaded into memory, try to avoid I/O and slice in memory!!!!
             data_slice, success = reshape_to_n_dims(data_slice, h5_pos=pos_inds, h5_spec=spec_inds, verbose=verbose, lazy=lazy)
-            data_slice = np.squeeze(data_slice)
+            data_slice = data_slice.squeeze()
 
         if as_scalar:
             return flatten_to_real(data_slice), success
