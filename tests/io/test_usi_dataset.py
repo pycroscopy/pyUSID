@@ -318,7 +318,8 @@ class TestSlice(TestUSIDataset):
                 expected = expected.reshape(np.prod(expected.shape[:2]),
                                             np.prod(expected.shape[2:]))
                 if verbose:
-                    print('Expected after flattening of shape: {}'.format(expected.shape))
+                    print('Expected after flattening of shape: {}'
+                          ''.format(expected.shape))
 
             if lazy_result:
                 self.assertIsInstance(actual, da.core.Array)
@@ -338,9 +339,10 @@ class TestSlice(TestUSIDataset):
                   True, False)
 
     def test_negative_index_2d_numpy(self):
-        self.base({'X': -2, 'Y': 1},
-                  [slice(-2, -1), slice(1, 2)] + [slice(None) for _ in range(2)],
-                  False, False, verbose=True)
+        with h5py.File(test_h5_file_path, mode='r') as h5_f:
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            with self.assertRaises(ValueError):
+                _ = usi_main.slice({'X': -2, 'Y': 1}, ndim_form=False)
 
     def test_one_pos_dim_removed_nd_numpy(self):
         self.base({'X': 3},

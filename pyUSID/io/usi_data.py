@@ -556,6 +556,7 @@ class USIDataset(h5py.Dataset):
                 raise TypeError('The slices must be array-likes or slice objects.')
 
             if not contains_integers(val, min_val=0):
+                # TODO: Is there a more elegant way of handling this?
                 raise ValueError('Slicing indices should be >= 0')
 
             # check to make sure that the values are not out of bounds:
