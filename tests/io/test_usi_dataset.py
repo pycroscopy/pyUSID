@@ -15,6 +15,7 @@ import dask.array as da
 
 sys.path.append("../../pyUSID/")
 from pyUSID.io import USIDataset, hdf_utils
+from pyUSID.io.write_utils import Dimension, DimType
 
 from . import data_utils
 
@@ -40,6 +41,8 @@ class TestUSIDataset(unittest.TestCase):
         if self.rev_spec:
             nd_fast_to_slow = nd_fast_to_slow.transpose(0, 1, 3, 2)
         return nd_slow_to_fast, nd_fast_to_slow
+
+class TestStringRepr(TestUSIDataset):
 
     def test_string_representation(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -570,6 +573,113 @@ class TestSorting(TestUSIDataset):
                 test_str = get_value()
             self.assertTrue(test_str == sorted_str)
 
+
+class TestGetDimsForSlice(TestUSIDataset):
+
+    @staticmethod
+    def get_all_dimensions():
+        pos_dims = []
+        spec_dims = []
+        with h5py.File(test_h5_file_path, mode='r') as h5_f:
+            h5_raw_grp = h5_f['Raw_Measurement']
+            usi_main = USIDataset(h5_raw_grp['source_main'])
+            for dim_name, dim_units in zip(usi_main.pos_dim_labels,
+                                           hdf_utils.get_attr(usi_main.h5_pos_inds, 'units')):
+                pos_dims.append(Dimension(dim_name, dim_units, h5_raw_grp[dim_name][()]))
+
+            for dim_name, dim_units in zip(usi_main.spec_dim_labels,
+                                           hdf_utils.get_attr(
+                                               usi_main.h5_spec_inds, 'units')):
+                spec_dims.append(Dimension(dim_name, dim_units, h5_raw_grp[dim_name][()]))
+
+        return pos_dims, spec_dims
+
+    def setUp(self):
+        super(TestGetDimsForSlice, self).setUp()
+        self.pos_dims, self.spec_dims = self.get_all_dimensions()
+        self.default_dimension = Dimension('arb.', 'a. u.', [1])
+        self.pos_dict = dict()
+        self.spec_dict = dict()
+        for item in self.pos_dims:
+            self.pos_dict[item.name] = item
+        for item in self.spec_dims:
+            self.spec_dict[item.name] = item
+
+    def __validate_dim_list(self, expected, actual):
+        self.assertIsInstance(expected, list)
+        self.assertIsInstance(expected, list)
+        self.assertEqual(len(expected), len(actual))
+        for left, right in zip(expected, actual):
+            self.assertEqual(left, right)
+
+    def base(self, slice_dict, pos_exp, spec_exp, verbose=True):
+        with h5py.File(test_h5_file_path, mode='r') as h5_f:
+            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
+            pos_act, spec_act = usi_main._get_dims_for_slice(slice_dict=slice_dict,
+                                                  verbose=False)
+        if verbose:
+            print(pos_act)
+            print(spec_act)
+
+        self.__validate_dim_list(pos_act, pos_exp)
+        self.__validate_dim_list(spec_act, spec_exp)
+
+    def test_empty(self):
+        self.base(None, self.pos_dims, self.spec_dims)
+
+    def test_single_pos_dim_sliced(self):
+        self.base({'X': 2}, [self.pos_dict['Y']], self.spec_dims)
+
+    def test_both_pos_dim_sliced(self):
+        self.base({'X': 2, 'Y': 0}, [self.default_dimension], self.spec_dims)
+
+    """
+    def test_one_pos_dim_removed(self):
+        self.base({'X': 3},
+                  [3] + [slice(None) for _ in range(3)], True, False)
+
+    def test_one_pos_dim_sliced(self):
+        self.base({'X': slice(1, 5, 2)},
+                  [slice(1, 5, 2)] + [slice(None) for _ in range(3)],
+                  True, False)
+
+    def test_two_pos_dim_sliced(self):
+        self.base({'X': slice(1, 5, 2), 'Y': 1},
+                  [slice(1, 5, 2), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  True, False)
+
+    def test_two_pos_dim_sliced_list(self):
+        self.base({'X': [1, 2, 4], 'Y': 1},
+                  [[1, 2, 4], slice(1, 2)] + [slice(None) for _ in range(2)],
+                  True, False)
+
+    def test_both_pos_removed(self):
+        self.base({'X': 3, 'Y': 1},
+                  [slice(3, 4), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  True, False)
+
+    def test_pos_and_spec_sliced_list(self):
+        self.base({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)},
+                  [[1, 2, 4], slice(None), slice(1, 7, 3), slice(None)],
+                  True, False)
+
+    def test_all_dims_sliced(self):
+        self.base({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
+                  [[1, 2, 4], slice(2, 3), slice(1, 7, 3), slice(1, 2)],
+                  True, False)
+
+    def test_all_but_one_dims_sliced(self):
+        self.base({'X': 1, 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
+                  [slice(1, 2), slice(2, 3), slice(1, 7, 3), slice(1, 2)],
+                  True, False)
+
+
+    def test_all_dims_sliced(self):
+        self.base({'X': 1, 'Y': 2, 'Bias': 4, 'Cycle': 1},
+                  [slice(1, 2), slice(2, 3), slice(4, 5), slice(1, 2)],
+                  True, False)
+
+    """
 
 if __name__ == '__main__':
     unittest.main()
