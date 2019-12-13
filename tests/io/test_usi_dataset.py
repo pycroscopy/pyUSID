@@ -493,6 +493,46 @@ class TestSlice(TestUSIDataset):
                   [[1, 2, 4], slice(2, 3), slice(1, 7, 3), slice(1, 2)],
                   False, True)
 
+    def test_all_but_one_dims_sliced_nd_numpy(self):
+        self.base({'X': 1, 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
+                  [slice(1, 2), slice(2, 3), slice(1, 7, 3), slice(1, 2)],
+                  True, False)
+
+    def test_all_but_one_dims_sliced_nd_dask(self):
+        self.base({'X': 1, 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
+                  [slice(1, 2), slice(2, 3), slice(1, 7, 3), slice(1, 2)],
+                  True, True)
+
+    def test_all_but_one_dims_sliced_2d_numpy(self):
+        self.base({'X': 1, 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
+                  [slice(1, 2), slice(2, 3), slice(1, 7, 3), slice(1, 2)],
+                  False, False)
+
+    def test_all_but_one_dims_sliced_2d_dask(self):
+        self.base({'X': 1, 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
+                  [slice(1, 2), slice(2, 3), slice(1, 7, 3), slice(1, 2)],
+                  False, True)
+
+    def test_all_dims_sliced_nd_numpy(self):
+        self.base({'X': 1, 'Y': 2, 'Bias': 4, 'Cycle': 1},
+                  [slice(1, 2), slice(2, 3), slice(4, 5), slice(1, 2)],
+                  True, False)
+
+    def test_all_dims_sliced_nd_dask(self):
+        self.base({'X': 1, 'Y': 2, 'Bias': 4, 'Cycle': 1},
+                  [slice(1, 2), slice(2, 3), slice(4, 5), slice(1, 2)],
+                  True, True)
+
+    def test_all_dims_sliced_2d_dask(self):
+        self.base({'X': 1, 'Y': 2, 'Bias': 4, 'Cycle': 1},
+                  [slice(1, 2), slice(2, 3), slice(4, 5), slice(1, 2)],
+                  False, False)
+
+    def test_all_dims_sliced_2d_dask(self):
+        self.base({'X': 1, 'Y': 2, 'Bias': 4, 'Cycle': 1},
+                  [slice(1, 2), slice(2, 3), slice(4, 5), slice(1, 2)],
+                  False, True)
+
 
 class TestSorting(TestUSIDataset):
 
