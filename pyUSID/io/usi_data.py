@@ -542,6 +542,9 @@ class USIDataset(h5py.Dataset):
         spec_slice : list of unsigned int
             Spectroscopic indices included in the slice
         """
+        if slice_dict is None:
+            slice_dict = dict()
+
         self.__validate_slice_dict(slice_dict)
 
         if len(slice_dict) == 0:
@@ -630,6 +633,8 @@ class USIDataset(h5py.Dataset):
         spec_dims : list
             List of :class:`~pyUSID.io.write_utils.Dimension` objects for each of the remaining spectroscopic dimensions
         """
+        if slice_dict is None:
+            slice_dict = dict()
 
         pos_labels = self.pos_dim_labels
         pos_units = get_attr(self.h5_pos_inds, 'units')
