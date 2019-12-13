@@ -10,6 +10,7 @@ import os
 import sys
 import h5py
 import numpy as np
+import dask.array as da
 
 
 sys.path.append("../../pyUSID/")
@@ -267,13 +268,6 @@ class TestGetUnitValues(TestUSIDataset):
 
 class TestSlice(TestUSIDataset):
 
-    def test_empty(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = usi_main.slice(None, lazy=False)
-            nd_slow_to_fast, nd_fast_to_slow = self.get_expected_n_dim(h5_f)
-            self.assertTrue(np.allclose(nd_fast_to_slow, actual))
-
     def test_non_existent_dim(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
@@ -286,84 +280,136 @@ class TestSlice(TestUSIDataset):
             with self.assertRaises(TypeError):
                 _ = usi_main.slice({'X': 'fdfd', 'Y': 1})
 
-    def test_negative_index(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = usi_main.slice({'X': -2, 'Y': 1}, lazy=False)
-            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
-            expected = n_dim_f2s[-2, 1, :, :]
-            self.assertTrue(np.allclose(expected, actual))
-            self.assertTrue(success)
-
     def test_out_of_bounds(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             with self.assertRaises(IndexError):
                 _ = usi_main.slice({'X': 15, 'Y': 1})
 
-    def test_one_pos_dim_removed(self):
+    def base(self, slice_dict, f2s_slice_list, result_as_nd, lazy_result,
+             verbose=False):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = usi_main.slice(slice_dict={'X': 3}, lazy=False)
-            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
-            expected = n_dim_f2s[3, :, :, :]
-            self.assertTrue(np.allclose(expected, actual))
-            self.assertTrue(success)
+            actual, success = usi_main.slice(slice_dict,
+                                             ndim_form=result_as_nd,
+                                             lazy=lazy_result)
+            if verbose:
+                print('Status: {}, actual.shape: {}, actual.dtype: {}, '
+                      'type(actual): {}'.format(success, actual.shape,
+                                                actual.dtype, type(actual)))
 
-    def test_one_pos_dim_sliced(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = usi_main.slice({'X': slice(1, 5, 2)}, lazy=False)
-            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
-            expected = n_dim_f2s[slice(1, 5, 2), :, :, :]
-            self.assertTrue(np.allclose(expected, actual))
             self.assertTrue(success)
+            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
 
-    def test_two_pos_dim_sliced(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = usi_main.slice({'X': slice(1, 5, 2), 'Y': 1}, lazy=False)
-            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
-            expected = n_dim_f2s[slice(1, 5, 2), 1, :, :]
-            self.assertTrue(np.allclose(expected, actual))
-            self.assertTrue(success)
+            if result_as_nd:
+                expected = n_dim_f2s[f2s_slice_list]
+                expected = expected.squeeze()
+            else:
+                s2f_slice_list = f2s_slice_list[:2][::-1] + \
+                                 f2s_slice_list[2:][::-1]
+                if verbose:
+                    print('Slice list converted from: {} to {}'
+                          ''.format(f2s_slice_list, s2f_slice_list))
 
-    def test_two_pos_dim_sliced_list(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = usi_main.slice({'X': [1, 2, 4], 'Y': 1}, lazy=False)
-            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
-            expected = n_dim_f2s[[1, 2, 4], 1, :, :]
-            self.assertTrue(np.allclose(expected, actual))
-            self.assertTrue(success)
+                expected = n_dim_s2f[s2f_slice_list]
+                if verbose:
+                    print('Expected in N-dim form: {}'.format(expected.shape))
 
-    def test_both_pos_removed(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = usi_main.slice({'X': 3, 'Y': 1}, lazy=False)
-            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
-            expected = n_dim_f2s[3, 1, :, :]
-            self.assertTrue(np.allclose(expected, actual))
-            self.assertTrue(success)
+                expected = expected.reshape(np.prod(expected.shape[:2]),
+                                            np.prod(expected.shape[2:]))
+                if verbose:
+                    print('Expected after flattening of shape: {}'.format(expected.shape))
 
-    def test_pos_and_spec_sliced_list(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = usi_main.slice({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)}, lazy=False)
-            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
-            expected = n_dim_f2s[[1, 2, 4], :, slice(1, 7, 3), :]
-            self.assertTrue(np.allclose(expected, actual))
-            self.assertTrue(success)
+            if lazy_result:
+                self.assertIsInstance(actual, da.core.Array)
+                actual = actual.compute()
 
-    def test_all_dims_sliced_list(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
-            actual, success = usi_main.slice({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
-                                              lazy=False)
-            n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
-            expected = n_dim_f2s[[1, 2, 4], 2, slice(1, 7, 3), 1]
             self.assertTrue(np.allclose(expected, actual))
-            self.assertTrue(success)
+
+    def test_empty_2d_numpy(self):
+        self.base(None, [slice(None) for _ in range(4)], False, False)
+
+    def test_empty_nd_numpy(self):
+        self.base(None, [slice(None) for _ in range(4)], True, False)
+
+    def test_negative_index_nd_numpy(self):
+        self.base({'X': -2, 'Y': 1},
+                  [slice(-2, -1), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  True, False)
+
+    def test_negative_index_2d_numpy(self):
+        self.base({'X': -2, 'Y': 1},
+                  [slice(-2, -1), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  False, False, verbose=True)
+
+    def test_one_pos_dim_removed_nd_numpy(self):
+        self.base({'X': 3},
+                  [3] + [slice(None) for _ in range(3)], True, False)
+
+    def test_one_pos_dim_removed_2d_numpy(self):
+        self.base({'X': 3},
+                  [slice(3, 4)] + [slice(None) for _ in range(3)],
+                  False, False)
+
+    def test_one_pos_dim_sliced_nd_numpy(self):
+        self.base({'X': slice(1, 5, 2)},
+                  [slice(1, 5, 2)] + [slice(None) for _ in range(3)],
+                  True, False)
+
+    def test_one_pos_dim_sliced_2d_numpy(self):
+        self.base({'X': slice(1, 5, 2)},
+                  [slice(1, 5, 2)] + [slice(None) for _ in range(3)],
+                  False, False)
+
+    def test_two_pos_dim_sliced_nd_numpy(self):
+        self.base({'X': slice(1, 5, 2), 'Y': 1},
+                  [slice(1, 5, 2), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  True, False)
+
+    def test_two_pos_dim_sliced_2d_numpy(self):
+        self.base({'X': slice(1, 5, 2), 'Y': 1},
+                  [slice(1, 5, 2), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  False, False)
+
+    def test_two_pos_dim_sliced_list_nd_numpy(self):
+        self.base({'X': [1, 2, 4], 'Y': 1},
+                  [[1, 2, 4], slice(1, 2)] + [slice(None) for _ in range(2)],
+                  True, False)
+
+    def test_two_pos_dim_sliced_list_2d_numpy(self):
+        self.base({'X': [1, 2, 4], 'Y': 1},
+                  [[1, 2, 4], slice(1, 2)] + [slice(None) for _ in range(2)],
+                  False, False)
+
+    def test_both_pos_removed_nd_numpy(self):
+        self.base({'X': 3, 'Y': 1},
+                  [slice(3, 4), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  True, False)
+
+    def test_both_pos_removed_2d_numpy(self):
+        self.base({'X': 3, 'Y': 1},
+                  [slice(3, 4), slice(1, 2)] + [slice(None) for _ in range(2)],
+                  False, False)
+
+    def test_pos_and_spec_sliced_list_nd_numpy(self):
+        self.base({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)},
+                  [[1, 2, 4], slice(None), slice(1, 7, 3), slice(None)],
+                  True, False)
+
+    def test_pos_and_spec_sliced_list_2d_numpy(self):
+        self.base({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)},
+                  [[1, 2, 4], slice(None), slice(1, 7, 3), slice(None)],
+                  False, False)
+
+    def test_all_dims_sliced_nd_numpy(self):
+        self.base({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
+                  [[1, 2, 4], slice(2, 3), slice(1, 7, 3), slice(1, 2)],
+                  True, False)
+
+    def test_all_dims_sliced_2d_numpy(self):
+        self.base({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
+                  [[1, 2, 4], slice(2, 3), slice(1, 7, 3), slice(1, 2)],
+                  False, False)
 
 
 class TestSorting(TestUSIDataset):
