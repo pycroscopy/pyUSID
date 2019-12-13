@@ -302,7 +302,7 @@ class TestSlice(TestUSIDataset):
             n_dim_s2f, n_dim_f2s = self.get_expected_n_dim(h5_f)
 
             if result_as_nd:
-                expected = n_dim_f2s[f2s_slice_list]
+                expected = n_dim_f2s[tuple(f2s_slice_list)]
                 expected = expected.squeeze()
             else:
                 s2f_slice_list = f2s_slice_list[:2][::-1] + \
@@ -311,7 +311,7 @@ class TestSlice(TestUSIDataset):
                     print('Slice list converted from: {} to {}'
                           ''.format(f2s_slice_list, s2f_slice_list))
 
-                expected = n_dim_s2f[s2f_slice_list]
+                expected = n_dim_s2f[tuple(s2f_slice_list)]
                 if verbose:
                     print('Expected in N-dim form: {}'.format(expected.shape))
 
