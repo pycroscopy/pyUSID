@@ -665,8 +665,8 @@ class USIDataset(h5py.Dataset):
             print('Spec Inds: {}, Spec Vals: {}'.format(spec_inds.shape, spec_vals.shape))
 
         if spec_inds.ndim == 1:
-            spec_inds = np.expand_dims(spec_inds, axis=0)
-            spec_vals = np.expand_dims(spec_vals, axis=0)
+            spec_inds = np.expand_dims(spec_inds, axis=1)
+            spec_vals = np.expand_dims(spec_vals, axis=1)
 
         if verbose:
             print('After correction of shape:')
@@ -674,10 +674,11 @@ class USIDataset(h5py.Dataset):
                                                                                     spec_inds.shape,
                                                                                     spec_vals.shape))
 
+        # TODO: This assumes an N-dimensional form!
         pos_unit_values = get_unit_values(pos_inds, pos_vals, all_dim_names=self.pos_dim_labels, is_spec=False,
-                                          verbose=False)
+                                          verbose=verbose)
         spec_unit_values = get_unit_values(spec_inds, spec_vals, all_dim_names=self.spec_dim_labels, is_spec=True,
-                                           verbose=False)
+                                           verbose=verbose)
 
         if verbose:
             print('Position unit values:')
