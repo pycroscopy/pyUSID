@@ -53,15 +53,26 @@ class TestFormatQuantity(unittest.TestCase):
         ret_val = io_utils.format_quantity(6300, qty_names, qty_factors)
         self.assertEqual(ret_val, '1.75 hours')
 
-    def test_illegal(self):
+    def test_unequal_lengths(self):
         with self.assertRaises(ValueError):
             _ = io_utils.format_quantity(315, ['sec', 'mins', 'hours'], [1, 60, 3600, 3600*24])
         with self.assertRaises(ValueError):
             _ = io_utils.format_quantity(315, ['sec', 'mins', 'hours'], [1, 60])
+
+    def test_incorrect_element_types(self):
         with self.assertRaises(TypeError):
             _ = io_utils.format_quantity(315, ['sec', 14, 'hours'], [1, 60, 3600*24])
+
+    def test_incorrect_number_to_format(self):
         with self.assertRaises(TypeError):
             _ = io_utils.format_quantity('hello', ['sec', 'mins', 'hours'], [1, 60, 3600])
+
+    def test_not_iterable(self):
+        with self.assertRaises(TypeError):
+            _ = io_utils.format_quantity(315, 14, [1, 60, 3600])
+
+        with self.assertRaises(TypeError):
+            _ = io_utils.format_quantity(315, ['sec', 'mins', 'hours'], slice(None))
 
 
 class TestTimeSizeFormatting(unittest.TestCase):
