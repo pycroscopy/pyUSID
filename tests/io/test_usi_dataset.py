@@ -668,5 +668,83 @@ class TestGetDimsForSlice(TestUSIDataset):
                   [self.default_dimension], [self.default_dimension])
 
 
+"""
+def validate_image(axis):
+    pass
+
+
+def validate_curve(axis):
+    # for each curve in the plot:
+    # verify x values
+    # verify y values
+    # verify legend
+    # verify x label
+    # verify y label
+    # verify title
+    # verify fig suptitles
+    pass
+
+
+def validate_subplots(axes):
+    pass
+
+
+class TestSimpleStaticVisualization(TestUSIDataset):
+    
+    def test_two_pos(self):
+        pass
+    
+    def test_two_spec(self):
+        pass
+    
+    def test_one_pos_one_spec(self):
+        pass
+    
+    def test_one_pos(self):
+        pass
+    
+    def test_one_spec(self):
+        pass
+    
+    def test_no_dims(self):
+        pass
+    
+    def test_more_than_2_dims(self):
+        pass
+    
+
+class TestComplexStaticVisualization(unittest.TestCase):
+    
+    def setUp(self):
+        self.file_path = 'complex_viz.h5'
+        pass
+        
+    def tearDown(self):
+        os.remove(self.file_path)
+    
+    def test_image(self):
+        pass
+
+    def test_curve(self):
+        pass
+
+
+class TestCompoundStaticVisualization(unittest.TestCase):
+    
+    def setUp(self):
+        self.file_path = 'complex_viz.h5'
+        pass
+        
+    def tearDown(self):
+        os.remove(self.file_path)
+    
+    def test_image(self):
+        pass
+
+    def test_curve(self):
+        pass
+"""
+
+
 if __name__ == '__main__':
     unittest.main()
