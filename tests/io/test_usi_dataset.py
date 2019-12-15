@@ -15,7 +15,7 @@ import dask.array as da
 
 sys.path.append("../../pyUSID/")
 from pyUSID.io import USIDataset, hdf_utils
-from pyUSID.io.write_utils import Dimension, DimType
+from pyUSID.io.write_utils import Dimension
 
 from . import data_utils
 
@@ -616,7 +616,7 @@ class TestGetDimsForSlice(TestUSIDataset):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             pos_act, spec_act = usi_main._get_dims_for_slice(slice_dict=slice_dict,
-                                                  verbose=False)
+                                                             verbose=verbose)
         if verbose:
             print(pos_act)
             print(spec_act)
@@ -630,56 +630,43 @@ class TestGetDimsForSlice(TestUSIDataset):
     def test_single_pos_dim_sliced(self):
         self.base({'X': 2}, [self.pos_dict['Y']], self.spec_dims)
 
+    def test_single_pos_dim_truncated(self):
+        new_pos_dims = list()
+        for item in self.pos_dims:
+            if item.name == 'X':
+                new_pos_dims.append(Dimension(item.name, item.units, item.values[slice(1, 5, 2)]))
+            else:
+                new_pos_dims.append(item)
+
+        self.base({'X': slice(1, 5, 2)}, new_pos_dims, self.spec_dims)
+
     def test_both_pos_dim_sliced(self):
         self.base({'X': 2, 'Y': 0}, [self.default_dimension], self.spec_dims)
 
-    """
-    def test_one_pos_dim_removed(self):
-        self.base({'X': 3},
-                  [3] + [slice(None) for _ in range(3)], True, False)
+    def test_single_spec_dim_sliced(self):
+        self.base({'Bias': 2}, self.pos_dims, [self.spec_dict['Cycle']])
 
-    def test_one_pos_dim_sliced(self):
-        self.base({'X': slice(1, 5, 2)},
-                  [slice(1, 5, 2)] + [slice(None) for _ in range(3)],
-                  True, False)
+    def test_single_spec_dim_truncated(self):
+        new_spec_dims = list()
+        for item in self.spec_dims:
+            if item.name == 'Bias':
+                new_spec_dims.append(Dimension(item.name, item.units, item.values[slice(1, 7, 3)]))
+            else:
+                new_spec_dims.append(item)
 
-    def test_two_pos_dim_sliced(self):
-        self.base({'X': slice(1, 5, 2), 'Y': 1},
-                  [slice(1, 5, 2), slice(1, 2)] + [slice(None) for _ in range(2)],
-                  True, False)
+        self.base({'Bias': slice(1, 7, 3)}, self.pos_dims, new_spec_dims)
 
-    def test_two_pos_dim_sliced_list(self):
-        self.base({'X': [1, 2, 4], 'Y': 1},
-                  [[1, 2, 4], slice(1, 2)] + [slice(None) for _ in range(2)],
-                  True, False)
+    def test_both_spec_dim_sliced(self):
+        self.base({'Bias': 4, 'Cycle': 1}, self.pos_dims, [self.default_dimension],
+                  verbose=True)
 
-    def test_both_pos_removed(self):
-        self.base({'X': 3, 'Y': 1},
-                  [slice(3, 4), slice(1, 2)] + [slice(None) for _ in range(2)],
-                  True, False)
-
-    def test_pos_and_spec_sliced_list(self):
-        self.base({'X': [1, 2, 4], 'Bias': slice(1, 7, 3)},
-                  [[1, 2, 4], slice(None), slice(1, 7, 3), slice(None)],
-                  True, False)
-
-    def test_all_dims_sliced(self):
-        self.base({'X': [1, 2, 4], 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
-                  [[1, 2, 4], slice(2, 3), slice(1, 7, 3), slice(1, 2)],
-                  True, False)
-
-    def test_all_but_one_dims_sliced(self):
-        self.base({'X': 1, 'Y': 2, 'Bias': slice(1, 7, 3), 'Cycle': 1},
-                  [slice(1, 2), slice(2, 3), slice(1, 7, 3), slice(1, 2)],
-                  True, False)
-
+    def test_one_pos_one_spec_dims_sliced(self):
+        self.base({'X': 1, 'Bias': 2}, [self.pos_dict['Y']], [self.spec_dict['Cycle']])
 
     def test_all_dims_sliced(self):
         self.base({'X': 1, 'Y': 2, 'Bias': 4, 'Cycle': 1},
-                  [slice(1, 2), slice(2, 3), slice(4, 5), slice(1, 2)],
-                  True, False)
+                  [self.default_dimension], [self.default_dimension])
 
-    """
 
 if __name__ == '__main__':
     unittest.main()
