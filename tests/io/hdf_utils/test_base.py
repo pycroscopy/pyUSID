@@ -521,7 +521,7 @@ class TestWriteBookKeepingAttrs(TestHDFUtilsBase):
             hdf_utils.write_book_keeping_attrs(np.arange(4))
 
 
-class TestPrintTree(TestHDFUtilsBase):
+class TestPrintTreeNoMain(unittest.TestCase):
 
     def test_not_a_group(self):
         file_path = 'test.h5'
@@ -533,7 +533,7 @@ class TestPrintTree(TestHDFUtilsBase):
                 hdf_utils.print_tree(dset, rel_paths=False,
                                      main_dsets_only=False)
 
-    def test_single_level_tree_no_main(self):
+    def test_single_level_tree(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         expected = ['/']
@@ -557,7 +557,7 @@ class TestPrintTree(TestHDFUtilsBase):
         self.assertEqual(expected, actual)
         os.remove(file_path)
 
-    def test_single_level_rel_paths_no_main(self):
+    def test_single_level_rel_paths(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         expected = ['/']
@@ -580,7 +580,7 @@ class TestPrintTree(TestHDFUtilsBase):
         self.assertEqual(expected, actual)
         os.remove(file_path)
 
-    def test_multi_level_tree_no_main(self):
+    def test_multi_level_tree(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         expected = ['/']
@@ -623,7 +623,165 @@ class TestPrintTree(TestHDFUtilsBase):
         self.assertEqual(expected, actual)
         os.remove(file_path)
 
-    def test_multi_level_rel_paths_no_main(self):
+    def test_multi_level_tree_main_dsets_only(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        expected = ['/']
+        with h5py.File(file_path, mode='w') as h5_f:
+
+            level = 0
+
+            obj_name = 'A_Group'
+            expected.append(level * '  ' + '├ ' + obj_name)
+            expected.append((level + 1) * '  ' + len(obj_name) * '-')
+            grp_1 = h5_f.create_group(obj_name)
+            level += 1
+
+            obj_name = 'B_Group'
+            expected.append(level * '  ' + '├ ' + obj_name)
+            expected.append((level + 1) * '  ' + len(obj_name) * '-')
+            grp_2 = grp_1.create_group(obj_name)
+            level += 1
+
+            obj_name = 'C_Group'
+            expected.append(level * '  ' + '├ ' + obj_name)
+            expected.append((level + 1) * '  ' + len(obj_name) * '-')
+            grp_3 = grp_2.create_group(obj_name)
+            level += 1
+
+            obj_name = 'Y_Dataset'
+            # expected.append(level * '  ' + '├ ' + obj_name)
+            _ = grp_3.create_dataset(obj_name, data=[1, 2, 3])
+
+            obj_name = 'X_Dataset'
+            # expected.append(0 * '  ' + '├ ' + obj_name)
+            _ = h5_f.create_dataset(obj_name, data=[1, 2, 3])
+
+            with data_utils.capture_stdout() as get_value:
+                hdf_utils.print_tree(h5_f, rel_paths=False,
+                                     main_dsets_only=True)
+
+                actual = get_value()
+        expected = '\n'.join(expected) + '\n'
+        self.assertEqual(expected, actual)
+        os.remove(file_path)
+
+    def test_multi_level_tree_grp_a(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        expected = []
+        with h5py.File(file_path, mode='w') as h5_f:
+
+            obj_name = 'A_Group'
+            grp_1 = h5_f.create_group(obj_name)
+            # Full path printed for root always
+            expected.append(grp_1.name)
+
+            level = 0
+
+            obj_name = 'B_Group'
+            expected.append(level * '  ' + '├ ' + obj_name)
+            expected.append((level + 1) * '  ' + len(obj_name) * '-')
+            grp_2 = grp_1.create_group(obj_name)
+            level += 1
+
+            obj_name = 'C_Group'
+            expected.append(level * '  ' + '├ ' + obj_name)
+            expected.append((level + 1) * '  ' + len(obj_name) * '-')
+            grp_3 = grp_2.create_group(obj_name)
+            level += 1
+
+            obj_name = 'Y_Dataset'
+            expected.append(level * '  ' + '├ ' + obj_name)
+            _ = grp_3.create_dataset(obj_name, data=[1, 2, 3])
+
+            obj_name = 'X_Dataset'
+            # expected.append(0 * '  ' + '├ ' + obj_name)
+            _ = h5_f.create_dataset(obj_name, data=[1, 2, 3])
+
+            with data_utils.capture_stdout() as get_value:
+                hdf_utils.print_tree(grp_1, rel_paths=False,
+                                     main_dsets_only=False)
+
+                actual = get_value()
+        expected = '\n'.join(expected) + '\n'
+        self.assertEqual(expected, actual)
+        os.remove(file_path)
+
+    def test_multi_level_tree_grp_b(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        expected = []
+        with h5py.File(file_path, mode='w') as h5_f:
+
+            obj_name = 'A_Group'
+            grp_1 = h5_f.create_group(obj_name)
+
+            obj_name = 'B_Group'
+            grp_2 = grp_1.create_group(obj_name)
+            # Full path printed for root always
+            expected.append(grp_2.name)
+
+            level = 0
+
+            obj_name = 'C_Group'
+            expected.append(level * '  ' + '├ ' + obj_name)
+            expected.append((level + 1) * '  ' + len(obj_name) * '-')
+            grp_3 = grp_2.create_group(obj_name)
+            level += 1
+
+            obj_name = 'Y_Dataset'
+            expected.append(level * '  ' + '├ ' + obj_name)
+            _ = grp_3.create_dataset(obj_name, data=[1, 2, 3])
+
+            obj_name = 'X_Dataset'
+            # expected.append(0 * '  ' + '├ ' + obj_name)
+            _ = h5_f.create_dataset(obj_name, data=[1, 2, 3])
+
+            with data_utils.capture_stdout() as get_value:
+                hdf_utils.print_tree(grp_2, rel_paths=False,
+                                     main_dsets_only=False)
+
+                actual = get_value()
+        expected = '\n'.join(expected) + '\n'
+        self.assertEqual(expected, actual)
+        os.remove(file_path)
+
+    def test_multi_level_rel_paths_grp_b(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        expected = []
+        with h5py.File(file_path, mode='w') as h5_f:
+
+            obj_name = 'A_Group'
+            grp_1 = h5_f.create_group(obj_name)
+
+            obj_name = 'B_Group'
+            grp_2 = grp_1.create_group(obj_name)
+            # Full path printed for root always
+            expected.append(grp_2.name)
+
+            obj_name = 'C_Group'
+            grp_3 = grp_2.create_group(obj_name)
+            expected.append(grp_3.name.replace(grp_2.name + '/', ''))
+
+            obj_name = 'Y_Dataset'
+            dset = grp_3.create_dataset(obj_name, data=[1, 2, 3])
+            expected.append(dset.name.replace(grp_2.name + '/', ''))
+
+            obj_name = 'X_Dataset'
+            _ = h5_f.create_dataset(obj_name, data=[1, 2, 3])
+
+            with data_utils.capture_stdout() as get_value:
+                hdf_utils.print_tree(grp_2, rel_paths=True,
+                                     main_dsets_only=False)
+
+                actual = get_value()
+        expected = '\n'.join(expected) + '\n'
+        self.assertEqual(expected, actual)
+        os.remove(file_path)
+
+    def test_multi_level_rel_paths(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)
         expected = ['/']
