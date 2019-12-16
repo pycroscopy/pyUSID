@@ -93,5 +93,20 @@ class TestGetAvailableMemory(unittest.TestCase):
         self.assertEqual(mem, comp_utils.get_available_memory())
 
 
+class TestGetMPI(unittest.TestCase):
+
+    def test_standard(self):
+        try:
+            from mpi4py import MPI
+            if MPI.COMM_WORLD.Get_size() == 1:
+                # mpi4py available but NOT called via mpirun or mpiexec => single node
+                MPI = None
+        except ImportError:
+            # mpi4py not even present! Single node by default:
+            MPI = None
+
+        self.assertEqual(comp_utils.get_MPI(), MPI)
+
+
 if __name__ == '__main__':
     unittest.main()
