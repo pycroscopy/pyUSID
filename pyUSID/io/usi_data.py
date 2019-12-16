@@ -864,7 +864,7 @@ class USIDataset(h5py.Dataset):
 
             # see if the total number of pos and spec keys are either 1 or 2
             if not (0 < len(pos_dims) < 3) or not (0 < len(spec_dims) < 3):
-                raise ValueError('Number of position ({}) / spectroscopic dimensions ({}) not 1 or 2'
+                raise ValueError('Number of position ({}) / spectroscopic dimensions ({}) more than 2'
                                  '. Try slicing again'.format(len(pos_dims), len(spec_dims)))
 
             # now should be safe to slice:
@@ -1004,6 +1004,7 @@ class USIDataset(h5py.Dataset):
                 return fig, axis
 
         if np.prod([len(item.values) for item in spec_dims]) == 1:
+            # No spectroscopic dimensions at all
             if len(pos_dims) == 2:
                 # 2D spatial map
                 # Check if we need to adjust the aspect ratio of the image (only if units are same):
@@ -1022,6 +1023,12 @@ class USIDataset(h5py.Dataset):
                     np.prod([len(item.values) for item in spec_dims]) > 1:
                 # 1D spectral curve:
                 return plot_curve(spec_dims, data_slice)
+
+        elif len(pos_dims) == 1 and len(spec_dims) == 1 and \
+            np.prod([len(item.values) for item in pos_dims]) > 1 and \
+            np.prod([len(item.values) for item in spec_dims]) > 1:
+            # One spectroscopic and one position dimension
+            return plot_image(pos_dims + spec_dims, data_slice)
 
         # If data has at least one dimension with 2 values in pos. AND spec., it can be visualized interactively:
         return simple_ndim_visualizer(data_slice, pos_dims, spec_dims, verbose=verbose, **kwargs)
