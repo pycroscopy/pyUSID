@@ -12,6 +12,8 @@ import h5py
 import numpy as np
 import dask.array as da
 import matplotlib as mpl
+# Attempting to get things to work for all versions of python on Travis
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 
@@ -614,7 +616,7 @@ class TestGetDimsForSlice(TestUSIDataset):
         for left, right in zip(expected, actual):
             self.assertEqual(left, right)
 
-    def base(self, slice_dict, pos_exp, spec_exp, verbose=True):
+    def base(self, slice_dict, pos_exp, spec_exp, verbose=False):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             pos_act, spec_act = usi_main._get_dims_for_slice(slice_dict=slice_dict,
@@ -660,7 +662,7 @@ class TestGetDimsForSlice(TestUSIDataset):
 
     def test_both_spec_dim_sliced(self):
         self.base({'Bias': 4, 'Cycle': 1}, self.pos_dims, [self.default_dimension],
-                  verbose=True)
+                  verbose=False)
 
     def test_one_pos_one_spec_dims_sliced(self):
         self.base({'X': 1, 'Bias': 2}, [self.pos_dict['Y']], [self.spec_dict['Cycle']])
@@ -754,7 +756,7 @@ class TestSimpleStaticVisualization(TestUSIDataset):
             usi_main = USIDataset(h5_f[dset_path])
             slice_dict = {'X': 3, 'Bias': 2}
             exp_data, success = usi_main.slice(slice_dict=slice_dict)
-            fig, axis = usi_main.visualize(slice_dict=slice_dict, verbose=True)
+            fig, axis = usi_main.visualize(slice_dict=slice_dict)
             spec_ind = usi_main.spec_dim_labels.index('Cycle')
             pos_ind = usi_main.pos_dim_labels.index('Y')
             validate_imshow(self, axis, exp_data, title=dset_path,
