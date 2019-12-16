@@ -20,6 +20,9 @@ class TestFormattedStrToNum(unittest.TestCase):
 
     def test_wrong_types(self):
         with self.assertRaises(TypeError):
+            _ = io_utils.formatted_str_to_number("4.32 MHz", ["MHz", "kHz"],
+                                                [1E+6, 1E+3], separator=14)
+        with self.assertRaises(TypeError):
             _ = io_utils.formatted_str_to_number({'dfdfd': 123}, ["MHz"], [1E+6])
         with self.assertRaises(TypeError):
             _ = io_utils.formatted_str_to_number("dfdfdf", ["MHz"], 1E+6)
