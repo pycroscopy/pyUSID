@@ -11,6 +11,8 @@ import sys
 import h5py
 import numpy as np
 import dask.array as da
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 
 
 sys.path.append("../../pyUSID/")
@@ -668,11 +670,37 @@ class TestGetDimsForSlice(TestUSIDataset):
                   [self.default_dimension], [self.default_dimension])
 
 
+def get_tick_labels(tick_labels):
+    return np.array([float(x.get_text()) for x in tick_labels])
+
+
+def validate_imshow(self, axis, exp_data, title=None, x_vec=None, y_vec=None,
+                    x_label=None, y_label=None, verbose=False):
+    self.assertIsInstance(axis, mpl.axes.Axes)
+    im_handles = [obj for obj in axis.get_children() if
+                  isinstance(obj, mpl.image.AxesImage)]
+    self.assertEqual(len(im_handles), 1)
+    im_handle = im_handles[0]
+    actual_data = im_handle.get_array().data
+    if verbose:
+        print(actual_data.shape, exp_data.shape)
+    self.assertTrue(np.allclose(actual_data, exp_data))
+    if title is not None:
+        self.assertEqual(axis.get_title(), title)
+    if x_label is not None:
+        self.assertEqual(axis.get_xlabel(), x_label)
+    if y_label is not None:
+        self.assertEqual(axis.get_ylabel(), y_label)
+    self.assertEqual(axis.get_xscale(), 'linear')
+
+    x_ref = get_tick_labels(axis.get_xticklabels())
+    y_ref = get_tick_labels(axis.get_yticklabels())
+    self.assertAlmostEqual(x_ref[0], np.round(x_vec[0], 2))
+    self.assertAlmostEqual(x_ref[-1], np.round(x_vec[-1], 2))
+    self.assertAlmostEqual(y_ref[0], np.round(y_vec[0], 2))
+    self.assertAlmostEqual(y_ref[-1], np.round(y_vec[-1], 2))
+
 """
-def validate_image(axis):
-    pass
-
-
 def validate_curve(axis):
     # for each curve in the plot:
     # verify x values
@@ -687,18 +715,54 @@ def validate_curve(axis):
 
 def validate_subplots(axes):
     pass
+    
+"""
 
 
 class TestSimpleStaticVisualization(TestUSIDataset):
     
-    def test_two_pos(self):
-        pass
+    def test_two_pos_simple(self):
+
+        with h5py.File(test_h5_file_path, mode='r') as h5_f:
+            dset_path = '/Raw_Measurement/source_main'
+            usi_main = USIDataset(h5_f[dset_path])
+            slice_dict = {'Bias': 0, 'Cycle': 1}
+            exp_data, success = usi_main.slice(slice_dict=slice_dict)
+            fig, axis = usi_main.visualize(slice_dict=slice_dict)
+            validate_imshow(self, axis, exp_data, title=dset_path,
+                            x_vec=h5_f['/Raw_Measurement/' + usi_main.pos_dim_labels[1]],
+                            y_vec=h5_f['/Raw_Measurement/' + usi_main.pos_dim_labels[0]],
+                            x_label=usi_main.pos_dim_descriptors[1],
+                            y_label=usi_main.pos_dim_descriptors[0])
     
     def test_two_spec(self):
-        pass
-    
+        with h5py.File(test_h5_file_path, mode='r') as h5_f:
+            dset_path = '/Raw_Measurement/source_main'
+            usi_main = USIDataset(h5_f[dset_path])
+            slice_dict = {'X': 3, 'Y': 2}
+            exp_data, success = usi_main.slice(slice_dict=slice_dict)
+            fig, axis = usi_main.visualize(slice_dict=slice_dict)
+            validate_imshow(self, axis, exp_data, title=dset_path,
+                            x_vec=h5_f['/Raw_Measurement/' + usi_main.spec_dim_labels[1]],
+                            y_vec=h5_f['/Raw_Measurement/' + usi_main.spec_dim_labels[0]],
+                            x_label=usi_main.spec_dim_descriptors[1],
+                            y_label=usi_main.spec_dim_descriptors[0])
+
+    """
     def test_one_pos_one_spec(self):
-        pass
+        with h5py.File(test_h5_file_path, mode='r') as h5_f:
+            dset_path = '/Raw_Measurement/source_main'
+            usi_main = USIDataset(h5_f[dset_path])
+            slice_dict = {'X': 3, 'Bias': 2}
+            exp_data, success = usi_main.slice(slice_dict=slice_dict)
+            fig, axis = usi_main.visualize(slice_dict=slice_dict, verbose=True)
+            spec_ind = usi_main.spec_dim_labels.index('Cycle')
+            pos_ind = usi_main.pos_dim_labels.index('Y')
+            validate_imshow(self, axis, exp_data, title=dset_path,
+                            x_vec=h5_f['/Raw_Measurement/' + usi_main.spec_dim_labels[spec_ind]],
+                            y_vec=h5_f['/Raw_Measurement/' + usi_main.pos_dim_labels[pos_ind]],
+                            x_label=usi_main.spec_dim_descriptors[spec_ind],
+                            y_label=usi_main.pos_dim_descriptors[pos_ind])
     
     def test_one_pos(self):
         pass
@@ -711,7 +775,8 @@ class TestSimpleStaticVisualization(TestUSIDataset):
     
     def test_more_than_2_dims(self):
         pass
-    
+
+
 
 class TestComplexStaticVisualization(unittest.TestCase):
     
