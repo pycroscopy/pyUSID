@@ -748,7 +748,6 @@ class TestSimpleStaticVisualization(TestUSIDataset):
                             x_label=usi_main.spec_dim_descriptors[1],
                             y_label=usi_main.spec_dim_descriptors[0])
 
-    """
     def test_one_pos_one_spec(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             dset_path = '/Raw_Measurement/source_main'
@@ -763,7 +762,7 @@ class TestSimpleStaticVisualization(TestUSIDataset):
                             y_vec=h5_f['/Raw_Measurement/' + usi_main.pos_dim_labels[pos_ind]],
                             x_label=usi_main.spec_dim_descriptors[spec_ind],
                             y_label=usi_main.pos_dim_descriptors[pos_ind])
-    
+"""    
     def test_one_pos(self):
         pass
     
