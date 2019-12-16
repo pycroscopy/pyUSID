@@ -11,9 +11,6 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 import abc
 import sys
 import os
-from warnings import warn
-import time as tm
-from .io_utils import get_time_stamp
 from .dtype_utils import validate_list_of_strings, validate_single_string_arg
 from ..processing.comp_utils import get_available_memory
 
