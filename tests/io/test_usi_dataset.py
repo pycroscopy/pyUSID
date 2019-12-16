@@ -702,22 +702,29 @@ def validate_imshow(self, axis, exp_data, title=None, x_vec=None, y_vec=None,
     self.assertAlmostEqual(y_ref[0], np.round(y_vec[0], 2))
     self.assertAlmostEqual(y_ref[-1], np.round(y_vec[-1], 2))
 
-"""
-def validate_curve(axis):
+
+def validate_single_curve(self, axis, x_vec, y_vec, title=None, x_label=None,
+                          y_label=None):
+    self.assertIsInstance(axis, mpl.axes.Axes)
+    line_handles = [obj for obj in axis.get_children() if
+                  isinstance(obj, mpl.lines.Line2D)]
+    self.assertEqual(len(line_handles), 1)
+    line_handle = line_handles[0]
     # for each curve in the plot:
-    # verify x values
-    # verify y values
+    self.assertTrue(np.allclose(line_handle.get_xdata(), x_vec))
+    self.assertTrue(np.allclose(line_handle.get_ydata(), y_vec))
     # verify legend
-    # verify x label
-    # verify y label
-    # verify title
+    if x_label is not None:
+        self.assertEqual(axis.get_xlabel(), x_label)
+    if y_label is not None:
+        self.assertEqual(axis.get_ylabel(), y_label)
+    if title is not None:
+        self.assertEqual(axis.get_title(), title)
     # verify fig suptitles
-    pass
 
-
+"""
 def validate_subplots(axes):
     pass
-    
 """
 
 
@@ -730,6 +737,7 @@ class TestSimpleStaticVisualization(TestUSIDataset):
             usi_main = USIDataset(h5_f[dset_path])
             slice_dict = {'Bias': 0, 'Cycle': 1}
             exp_data, success = usi_main.slice(slice_dict=slice_dict)
+            self.assertTrue(success)
             fig, axis = usi_main.visualize(slice_dict=slice_dict)
             validate_imshow(self, axis, exp_data, title=dset_path,
                             x_vec=h5_f['/Raw_Measurement/' + usi_main.pos_dim_labels[1]],
@@ -744,6 +752,7 @@ class TestSimpleStaticVisualization(TestUSIDataset):
             usi_main = USIDataset(h5_f[dset_path])
             slice_dict = {'X': 3, 'Y': 2}
             exp_data, success = usi_main.slice(slice_dict=slice_dict)
+            self.assertTrue(success)
             fig, axis = usi_main.visualize(slice_dict=slice_dict)
             validate_imshow(self, axis, exp_data, title=dset_path,
                             x_vec=h5_f['/Raw_Measurement/' + usi_main.spec_dim_labels[1]],
@@ -758,6 +767,7 @@ class TestSimpleStaticVisualization(TestUSIDataset):
             usi_main = USIDataset(h5_f[dset_path])
             slice_dict = {'X': 3, 'Bias': 2}
             exp_data, success = usi_main.slice(slice_dict=slice_dict)
+            self.assertTrue(success)
             fig, axis = usi_main.visualize(slice_dict=slice_dict)
             spec_ind = usi_main.spec_dim_labels.index('Cycle')
             pos_ind = usi_main.pos_dim_labels.index('Y')
@@ -766,13 +776,42 @@ class TestSimpleStaticVisualization(TestUSIDataset):
                             y_vec=h5_f['/Raw_Measurement/' + usi_main.pos_dim_labels[pos_ind]],
                             x_label=usi_main.spec_dim_descriptors[spec_ind],
                             y_label=usi_main.pos_dim_descriptors[pos_ind])
-"""    
+
     def test_one_pos(self):
-        pass
+        if skip_viz_tests: return
+        with h5py.File(test_h5_file_path, mode='r') as h5_f:
+            dset_path = '/Raw_Measurement/source_main'
+            usi_main = USIDataset(h5_f[dset_path])
+            slice_dict = {'Bias': 4, 'Cycle': 1, 'Y': 2}
+            rem_dim_name = 'X'
+            pos_ind = usi_main.pos_dim_labels.index(rem_dim_name)
+            exp_data, success = usi_main.slice(slice_dict=slice_dict)
+            self.assertTrue(success)
+            fig, axis = usi_main.visualize(slice_dict=slice_dict)
+            validate_single_curve(self, axis, h5_f['/Raw_Measurement/' + rem_dim_name],
+                                  exp_data,
+                                  title=dset_path,
+                                  x_label=usi_main.pos_dim_descriptors[pos_ind],
+                                  y_label=usi_main.data_descriptor)
     
     def test_one_spec(self):
-        pass
-    
+        if skip_viz_tests: return
+        with h5py.File(test_h5_file_path, mode='r') as h5_f:
+            dset_path = '/Raw_Measurement/source_main'
+            usi_main = USIDataset(h5_f[dset_path])
+            slice_dict = {'Bias': 4, 'X': 1, 'Y': 2}
+            rem_dim_name = 'Cycle'
+            spec_ind = usi_main.spec_dim_labels.index(rem_dim_name)
+            exp_data, success = usi_main.slice(slice_dict=slice_dict)
+            self.assertTrue(success)
+            fig, axis = usi_main.visualize(slice_dict=slice_dict)
+            validate_single_curve(self, axis, h5_f['/Raw_Measurement/' + rem_dim_name],
+                                  exp_data,
+                                  title=dset_path,
+                                  x_label=usi_main.spec_dim_descriptors[spec_ind],
+                                  y_label=usi_main.data_descriptor)
+
+"""
     def test_no_dims(self):
         pass
     
