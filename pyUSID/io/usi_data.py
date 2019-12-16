@@ -997,7 +997,11 @@ class USIDataset(h5py.Dataset):
                 # Need to convert to float since image could be unsigned integers or low precision floats
                 plot_map(axis, np.float32(np.squeeze(img)), show_xy_ticks=True, show_cbar=True,
                          cbar_label=self.data_descriptor, x_vec=ref_dims[1].values, y_vec=ref_dims[0].values, **kwargs)
-                axis.set_title(self.name, pad=15)
+                try:
+                    axis.set_title(self.name, pad=15)
+                except AttributeError:
+                    axis.set_title(self.name)
+
                 axis.set_xlabel(ref_dims[1].name + ' (' + ref_dims[1].units + ')' + suffix[1])
                 axis.set_ylabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + suffix[0])
                 fig.tight_layout()
