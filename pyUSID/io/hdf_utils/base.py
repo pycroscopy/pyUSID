@@ -38,6 +38,9 @@ def print_tree(parent, rel_paths=False, main_dsets_only=False):
         True - prints only groups and Main datasets
         False - prints all dataset and group objects
     """
+    if not isinstance(parent, (h5py.File, h5py.Group)):
+        raise TypeError('Provided object is not a h5py.File or h5py.Group '
+                        'object')
 
     def __print(name, obj):
         show = True
