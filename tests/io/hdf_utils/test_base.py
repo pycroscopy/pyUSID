@@ -817,5 +817,72 @@ class TestPrintTreeNoMain(unittest.TestCase):
         os.remove(file_path)
 
 
+class TestPrintTreeBEPS(TestHDFUtilsBase):
+
+    def test_root_all_dsets(self):
+        level = 0
+        expected = ['/',
+                    level * '  ' + '├ ' + 'Raw_Measurement',
+                    (level + 1) * '  ' + len('Raw_Measurement') * '-']
+        level += 1
+        expected += [
+                    level * '  ' + '├ ' + 'Ancillary',
+                    level * '  ' + '├ ' + 'Bias',
+                    level * '  ' + '├ ' + 'Cycle',
+                    level * '  ' + '├ ' + 'Misc',
+                    (level + 1) * '  ' + len('Misc') * '-',
+                    level * '  ' + '├ ' + 'Position_Indices',
+                    level * '  ' + '├ ' + 'Position_Values',
+                    level * '  ' + '├ ' + 'Spectroscopic_Indices',
+                    level * '  ' + '├ ' + 'Spectroscopic_Values',
+                    level * '  ' + '├ ' + 'X',
+                    level * '  ' + '├ ' + 'Y',
+                    level * '  ' + '├ ' + 'n_dim_form',
+                    level * '  ' + '├ ' + 'source_main']
+        level += 1
+        for ind in range(2):
+            expected += [
+                        (level-1) * '  ' + '├ ' + 'source_main-Fitter_00'+str(ind),
+                        level * '  ' + len('source_main-Fitter_000') * '-',
+                        level * '  ' + '├ ' + 'Spectroscopic_Indices',
+                        level * '  ' + '├ ' + 'Spectroscopic_Values',
+                        level * '  ' + '├ ' + 'results_main',
+                        ]
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            with data_utils.capture_stdout() as get_value:
+                hdf_utils.print_tree(h5_f, rel_paths=False,
+                                     main_dsets_only=False)
+
+                actual = get_value()
+        expected = '\n'.join(expected) + '\n'
+        self.assertEqual(expected, actual)
+
+    def test_root_main_dsets_only(self):
+        level = 0
+        expected = ['/',
+                    level * '  ' + '├ ' + 'Raw_Measurement',
+                    (level + 1) * '  ' + len('Raw_Measurement') * '-']
+        level += 1
+        expected += [
+            level * '  ' + '├ ' + 'Misc',
+            (level + 1) * '  ' + len('Misc') * '-',
+            level * '  ' + '├ ' + 'source_main']
+        level += 1
+        for ind in range(2):
+            expected += [
+                (level - 1) * '  ' + '├ ' + 'source_main-Fitter_00' + str(ind),
+                level * '  ' + len('source_main-Fitter_000') * '-',
+                level * '  ' + '├ ' + 'results_main',
+            ]
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            with data_utils.capture_stdout() as get_value:
+                hdf_utils.print_tree(h5_f, rel_paths=False,
+                                     main_dsets_only=True)
+
+                actual = get_value()
+        expected = '\n'.join(expected) + '\n'
+        self.assertEqual(expected, actual)
+
+
 if __name__ == '__main__':
     unittest.main()
