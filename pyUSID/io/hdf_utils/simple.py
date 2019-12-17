@@ -192,6 +192,9 @@ def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
         if not isinstance(anc_refs, (list, tuple)):
             raise TypeError('anc_refs should be a list / tuple')
 
+    if anc_refs is None and h5_main is None:
+        raise ValueError('No objected provided to link as ancillary')
+
     def __check_and_link_single(h5_obj_ref, target_ref_name):
         if isinstance(h5_obj_ref, h5py.Reference):
             h5_dset.attrs[target_ref_name] = h5_obj_ref
