@@ -107,7 +107,19 @@ class TestGetMPI(unittest.TestCase):
             # mpi4py not even present! Single node by default:
             MPI = None
 
-        self.assertEqual(comp_utils.get_MPI(), MPI)
+        self.assertAlmostEqual(comp_utils.get_MPI(), MPI)
+
+
+def func_w_args_only(vec, arg_1, arg_2):
+    return (vec - arg_1) * arg_2
+
+
+def func_w_kwargs_only(vec, arg_1=0, arg_2=1):
+    return(vec - arg_1) * arg_2
+
+
+def func_w_args_and_kwargs(vec, arg_1, arg_2=1):
+    return (vec - arg_1) * arg_2
 
 
 class TestParallelCompute(unittest.TestCase):
@@ -175,14 +187,6 @@ class TestParallelCompute(unittest.TestCase):
 
     def base_with_custom_func(self, use_args=False, use_kwargs=False,
                               cores=None, expected_cores=None):
-        def func_w_args_only(vec, arg_1, arg_2):
-            return (vec - arg_1) * arg_2
-
-        def func_w_kwargs_only(vec, arg_1=0, arg_2=1):
-            return(vec - arg_1) * arg_2
-
-        def func_w_args_and_kwargs(vec, arg_1, arg_2=1):
-            return (vec - arg_1) * arg_2
 
         if not use_args and not use_kwargs:
             use_args = True
