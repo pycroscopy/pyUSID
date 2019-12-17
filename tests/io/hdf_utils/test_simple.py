@@ -1461,7 +1461,72 @@ class TestCheckAndLinkAncillary(TestSimple):
                                                    h5_main=None, anc_refs=None)
         os.remove(file_path)
 
+    def test_linking_main_legit_anc_names(self):
+        file_path = 'check_and_link_ancillary.h5'
+        data_utils.delete_existing_file(file_path)
+        shutil.copy(data_utils.std_beps_path, file_path)
+        with h5py.File(file_path, mode='r+') as h5_f:
+            h5_grp = h5_f['Raw_Measurement']
+            h5_dset_source = h5_grp['Ancillary']
+            h5_main = h5_grp['source_main']
+            att_names = ['Spectroscopic_Values', 'Position_Indices']
+            expected = [h5_grp[name] for name in att_names]
+            hdf_utils.check_and_link_ancillary(h5_dset_source, att_names,
+                                               h5_main=h5_main, anc_refs=None)
+            self.assertEqual(len(h5_dset_source.attrs.keys()), len(att_names))
+            self.assertEqual(set(att_names), set(h5_dset_source.attrs.keys()))
+            for name, exp_val in zip(att_names, expected):
+                actual = h5_dset_source.attrs[name]
+                self.assertIsInstance(actual, h5py.Reference)
+                self.assertEqual(h5_f[actual], exp_val)
+        os.remove(file_path)
 
+    def test_h5_main_non_dset_anc_names(self):
+        file_path = 'check_and_link_ancillary.h5'
+        data_utils.delete_existing_file(file_path)
+        shutil.copy(data_utils.std_beps_path, file_path)
+        with h5py.File(file_path, mode='r+') as h5_f:
+            h5_grp = h5_f['Raw_Measurement']
+            h5_dset_source = h5_grp['Ancillary']
+            h5_main = h5_grp['source_main']
+            att_names = ['Spectroscopic_Values', 'quantity']
+            hdf_utils.check_and_link_ancillary(h5_dset_source, att_names,
+                                               h5_main=h5_main, anc_refs=None)
+            # Should NOT copy the quantity attribute since it is not a dset
+            att_names = [att_names[0]]
+            expected = [h5_grp['Spectroscopic_Values']]
+            self.assertEqual(set(att_names),
+                             set(h5_dset_source.attrs.keys()))
+            for name, exp_val in zip(att_names, expected):
+                actual = h5_dset_source.attrs[name]
+                self.assertIsInstance(actual, h5py.Reference)
+                self.assertEqual(h5_f[actual], exp_val)
+        os.remove(file_path)
+
+"""
+    def test_linking_main_plus_other_dsets(self):
+        file_path = 'check_and_link_ancillary.h5'
+        data_utils.delete_existing_file(file_path)
+        shutil.copy(data_utils.std_beps_path, file_path)
+        with h5py.File(file_path, mode='r+') as h5_f:
+            h5_grp = h5_f['Raw_Measurement']
+            h5_dset_source = h5_grp['Ancillary']
+            h5_main = h5_grp['source_main']
+            att_names = ['Spectroscopic_Values', 'Position_Indices', 'X', 'Y']
+            expected = [h5_grp[name] for name in att_names]
+            hdf_utils.check_and_link_ancillary(h5_dset_source, att_names,
+                                               h5_main=h5_main,
+                                               anc_refs=expected[2:])
+            for key, val in h5_dset_source.attrs.items():
+                print(key, val)
+            self.assertEqual(len(h5_dset_source.attrs.keys()), len(att_names))
+            self.assertEqual(set(att_names), set(h5_dset_source.attrs.keys()))
+            for name, exp_val in zip(att_names, expected):
+                actual = h5_dset_source.attrs[name]
+                self.assertIsInstance(actual, h5py.Reference)
+                self.assertEqual(h5_f[actual], exp_val)
+        os.remove(file_path)
+"""
 
 
 if __name__ == '__main__':
