@@ -124,7 +124,7 @@ class TestCheckIfMain(TestSimple):
                 h5_main.attrs[anc_dset_name] = h5_pos_ind.ref
             for anc_dset_name in ['Spectroscopic_Indices', 'Spectroscopic_Values']:
                 h5_main.attrs[anc_dset_name] = h5_spec_ind.ref
-            self.assertFalse(hdf_utils.check_if_main(h5_main, verbose=True))
+            self.assertFalse(hdf_utils.check_if_main(h5_main, verbose=False))
         os.remove(temp_path)
 
 
@@ -678,7 +678,7 @@ class TestCheckForOld(TestSimple):
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'units': ['V'], 'labels': ['Bias']}
             dset_name = 'Spectroscopic_Indices'
-            groups = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=dset_name, verbose=True)
+            groups = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=dset_name, verbose=False)
             groups = set(groups)
             self.assertEqual(groups, set([h5_f['/Raw_Measurement/source_main-Fitter_000/'],
                                           h5_f['/Raw_Measurement/source_main-Fitter_001/']]))
@@ -1343,32 +1343,125 @@ class TestCheckAndLinkAncillary(TestSimple):
         with self.assertRaises(TypeError):
             hdf_utils.check_and_link_ancillary(np.arange(5), ['Spec'])
 
-    def test_not_string_tuple(self):
-        file_path = 'check_and_link_ancillary.h5'
-        data_utils.delete_existing_file(file_path)
-        with h5py.File(file_path, mode='w') as h5_f:
-            h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
-            with self.assertRaises(TypeError):
-                hdf_utils.check_and_link_ancillary(h5_dset_source, 'Spec')
-        os.remove(file_path)
-
     def test_h5_main_not_dset(self):
         file_path = 'check_and_link_ancillary.h5'
         data_utils.delete_existing_file(file_path)
         with h5py.File(file_path, mode='w') as h5_f:
             h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
             with self.assertRaises(TypeError):
-                hdf_utils.check_and_link_ancillary(h5_dset_source, ['Spec'], h5_main="not_a_dataset")
+                hdf_utils.check_and_link_ancillary(h5_dset_source, ['Spec'],
+                                                   h5_main="not_a_dataset")
         os.remove(file_path)
 
-    def test_anc_refs_not_list_of_hdf(self):
+    def test_one_dset_to_name(self):
         file_path = 'check_and_link_ancillary.h5'
         data_utils.delete_existing_file(file_path)
         with h5py.File(file_path, mode='w') as h5_f:
             h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
-            with self.assertRaises(TypeError):
-                hdf_utils.check_and_link_ancillary(h5_dset_source, ['Spec'], anc_refs=h5_dset_source)
+            h5_dset_2 = h5_f.create_dataset('Other', data=[1, 2, 3])
+            att_name = 'root'
+            expected = h5_dset_2
+            hdf_utils.check_and_link_ancillary(h5_dset_source, att_name,
+                                               h5_main=None, anc_refs=expected)
+            # Only one attribute expected
+            self.assertEqual(len(h5_dset_source.attrs.keys()), 1)
+            self.assertTrue(att_name in h5_dset_source.attrs.keys())
+            actual = h5_dset_source.attrs[att_name]
+            self.assertIsInstance(actual, h5py.Reference)
+            self.assertEqual(h5_f[actual], expected)
         os.remove(file_path)
+
+    def test_many_objs_to_many_names(self):
+        file_path = 'check_and_link_ancillary.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
+            h5_dset_2 = h5_f.create_dataset('Other', data=[1, 2, 3])
+            h5_grp = h5_f.create_group('Blah')
+            att_names = ['Meh', 'Wah']
+            expected = [h5_dset_2, h5_grp]
+            hdf_utils.check_and_link_ancillary(h5_dset_source, att_names,
+                                               h5_main=None, anc_refs=expected)
+            self.assertEqual(len(h5_dset_source.attrs.keys()), len(att_names))
+            self.assertEqual(set(att_names), set(h5_dset_source.attrs.keys()))
+            for name, exp_val in zip(att_names, expected):
+                actual = h5_dset_source.attrs[name]
+                self.assertIsInstance(actual, h5py.Reference)
+                self.assertEqual(h5_f[actual], exp_val)
+        os.remove(file_path)
+
+    def test_objs_and_refs_to_names(self):
+        file_path = 'check_and_link_ancillary.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
+            h5_dset_2 = h5_f.create_dataset('Other', data=[1, 2, 3])
+            h5_grp = h5_f.create_group('Blah')
+            att_names = ['Meh', 'Wah']
+            expected = [h5_dset_2, h5_grp.ref]
+            hdf_utils.check_and_link_ancillary(h5_dset_source, att_names,
+                                               h5_main=None, anc_refs=expected)
+            expected = [h5_dset_2, h5_grp]
+            self.assertEqual(len(h5_dset_source.attrs.keys()), len(att_names))
+            self.assertEqual(set(att_names), set(h5_dset_source.attrs.keys()))
+            for name, exp_val in zip(att_names, expected):
+                actual = h5_dset_source.attrs[name]
+                self.assertIsInstance(actual, h5py.Reference)
+                self.assertEqual(h5_f[actual], exp_val)
+        os.remove(file_path)
+
+    def test_too_many_names(self):
+        file_path = 'check_and_link_ancillary.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
+            h5_dset_2 = h5_f.create_dataset('Other', data=[1, 2, 3])
+            _ = h5_f.create_group('Blah')
+            att_names = ['Meh', 'Wah']
+            expected = [h5_dset_2]
+            hdf_utils.check_and_link_ancillary(h5_dset_source, att_names,
+                                               h5_main=None, anc_refs=expected)
+            att_names = [att_names[0]]
+            print(list(h5_dset_source.attrs.keys()), att_names)
+            self.assertEqual(len(h5_dset_source.attrs.keys()), len(att_names))
+            self.assertEqual(set(att_names), set(h5_dset_source.attrs.keys()))
+            for name, exp_val in zip(att_names, expected):
+                actual = h5_dset_source.attrs[name]
+                self.assertIsInstance(actual, h5py.Reference)
+                self.assertEqual(h5_f[actual], exp_val)
+        os.remove(file_path)
+
+    def test_too_many_ancs(self):
+        file_path = 'check_and_link_ancillary.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
+            h5_dset_2 = h5_f.create_dataset('Other', data=[1, 2, 3])
+            h5_grp = h5_f.create_group('Blah')
+            att_names = ['Meh']
+            expected = [h5_dset_2, h5_grp]
+            hdf_utils.check_and_link_ancillary(h5_dset_source, att_names,
+                                               h5_main=None, anc_refs=expected)
+            expected = [expected[0]]
+            self.assertEqual(len(h5_dset_source.attrs.keys()), len(att_names))
+            self.assertEqual(set(att_names), set(h5_dset_source.attrs.keys()))
+            for name, exp_val in zip(att_names, expected):
+                actual = h5_dset_source.attrs[name]
+                self.assertIsInstance(actual, h5py.Reference)
+                self.assertEqual(h5_f[actual], exp_val)
+        os.remove(file_path)
+
+    def test_no_anc_refs_provided(self):
+        file_path = 'check_and_link_ancillary.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
+            with self.assertRaises(ValueError):
+                hdf_utils.check_and_link_ancillary(h5_dset_source, ['M', 'Wa'],
+                                                   h5_main=None, anc_refs=None)
+        os.remove(file_path)
+
+
 
 
 if __name__ == '__main__':
