@@ -12,6 +12,7 @@ import numpy as np
 import h5py
 import sys
 #from pycroscopy.processing.fft import LowPassFilter
+from ..io import data_utils
 from .proc_utils import sho_slow_guess
 from ..io.data_utils import *
 from shutil import copyfile
@@ -20,48 +21,252 @@ import tempfile
 sys.path.append("../../../pyUSID/")
 import pyUSID as usid
 
-orig_file_path = 'data/BELine_0004.h5'
-temp_file_path = './BELine_0004.h5'
+
+def _create_results_grp_dsets(h5_main, process_name, parms_dict):
+    h5_results_grp = usid.hdf_utils.create_results_group(h5_main,
+                                                              process_name)
+
+    usid.hdf_utils.write_simple_attrs(h5_results_grp, parms_dict)
+
+    spec_dims = usid.write_utils.Dimension('Empty', 'a. u.', 1)
+
+    # 3. Create an empty results dataset that will hold all the results
+    h5_results = usid.hdf_utils.write_main_dataset(
+        h5_results_grp, (h5_main.shape[0], 1), 'Results',
+        'quantity', 'units', None, spec_dims,
+        dtype=np.float32,
+        h5_pos_inds=h5_main.h5_pos_inds,
+        h5_pos_vals=h5_main.h5_pos_vals)
+
+    return h5_results_grp, h5_results
 
 
-class SuperBasicProcess(usid.Process):
+class AvgSpecUltraBasic(usid.Process):
 
-    def __init__(self, h5_main):
-        super(SuperBasicProcess, self).__init__(h5_main)
+    def __init__(self, h5_main, *args, **kwargs):
+        parms_dict = {'parm_1': 1, 'parm_2': [1, 2, 3]}
+        super(AvgSpecUltraBasic, self).__init__(h5_main, 'Mean_Val',
+                                                parms_dict=parms_dict,
+                                                *args, **kwargs)
 
     def _create_results_datasets(self):
-        self.process_name = 'Peak_Finding'
-
-        self.h5_results_grp = usid.hdf_utils.create_results_group(self.h5_main, self.process_name)
-
-        usid.hdf_utils.write_simple_attrs(self.h5_results_grp,
-                                          {'last_pixel': 0, 'algorithm': 'find_all_peaks'})
-
-        results_shape = (self.h5_main.shape[0], 1)
-        results_dset_name = 'Peak_Response'
-        results_quantity = 'Amplitude'
-        results_units = 'V'
-        pos_dims = None  # Reusing those linked to self.h5_main
-        spec_dims = usid.write_utils.Dimension('Empty', 'a. u.', 1)
-
-        self.h5_results = usid.hdf_utils.write_main_dataset(self.h5_results_grp, results_shape,
-                                                            results_dset_name,
-                                                            results_quantity, results_units, pos_dims,
-                                                            spec_dims,
-                                                            dtype=np.float32,
-                                                            h5_pos_inds=self.h5_main.h5_pos_inds,
-                                                            h5_pos_vals=self.h5_main.h5_pos_vals)
-
-    def _write_results_chunk(self):
-        pos_in_batch = self._get_pixels_in_current_batch()
-        self.h5_results[pos_in_batch, 0] = np.array(self._results)
+        self.h5_results_grp, self.h5_results = _create_results_grp_dsets(self.h5_main, self.process_name, self.parms_dict)
 
     @staticmethod
-    def _map_function(spectra, *args, **kwargs):
+    def _map_function(spectrogram, *args, **kwargs):
+        return np.mean(spectrogram)
 
-        sho_parms = sho_slow_guess(spectra, np.arange(spectra.size))
+    def _write_results_chunk(self):
+        """
+        Write the computed results back to the H5
+        In this case, there isn't any more additional post-processing required
+        """
+        # Find out the positions to write to:
+        pos_in_batch = self._get_pixels_in_current_batch()
 
-        return sho_parms[0]  # just the amplitude
+        # write the results to the file
+        self.h5_results[pos_in_batch, 0] = np.array(self._results)
+
+
+class AvgSpecUltraBasicWTest(AvgSpecUltraBasic):
+
+    def test(self, pos_ind):
+        return np.mean(self.h5_main[pos_ind])
+
+
+class AvgSpecUltraBasicWGetPrevResults(AvgSpecUltraBasic):
+
+    def _get_existing_datasets(self):
+        self.h5_results = self.h5_results_grp['Results']
+
+
+class TestInvalidInitialization(unittest.TestCase):
+
+    def test_read_only_file(self):
+        delete_existing_file(data_utils.std_beps_path)
+        data_utils.make_beps_file()
+        self.h5_file = h5py.File(data_utils.std_beps_path, mode='r')
+        self.h5_main = self.h5_file['Raw_Measurement/source_main']
+        self.h5_main = usid.USIDataset(self.h5_main)
+
+        with self.assertRaises(TypeError):
+            self.proc = AvgSpecUltraBasic(self.h5_main)
+        delete_existing_file(data_utils.std_beps_path)
+
+    def test_not_main_dataset(self):
+        delete_existing_file(data_utils.std_beps_path)
+        data_utils.make_beps_file()
+        self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
+        self.h5_main = self.h5_file['Raw_Measurement/X']
+
+        with self.assertRaises(ValueError):
+            self.proc = AvgSpecUltraBasic(self.h5_main)
+        delete_existing_file(data_utils.std_beps_path)
+
+    def test_invalid_process_name(self):
+        delete_existing_file(data_utils.std_beps_path)
+        data_utils.make_beps_file()
+        self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
+        self.h5_main = self.h5_file['Raw_Measurement/source_main']
+        self.h5_main = usid.USIDataset(self.h5_main)
+
+        class TempProc(usid.Process):
+
+            def __init__(self, h5_main, *args, **kwargs):
+                parms_dict = {'parm_1': 1, 'parm_2': [1, 2, 3]}
+                super(AvgSpecUltraBasic, self).__init__(h5_main, {'a': 1},
+                                                        parms_dict=parms_dict,
+                                                        *args, **kwargs)
+
+        with self.assertRaises(TypeError):
+            self.proc = TempProc(self.h5_main)
+        delete_existing_file(data_utils.std_beps_path)
+
+    def test_invalid_parms_dict(self):
+        delete_existing_file(data_utils.std_beps_path)
+        data_utils.make_beps_file()
+        self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
+        self.h5_main = self.h5_file['Raw_Measurement/source_main']
+        self.h5_main = usid.USIDataset(self.h5_main)
+
+        class TempProc(usid.Process):
+
+            def __init__(self, h5_main, *args, **kwargs):
+                super(AvgSpecUltraBasic, self).__init__(h5_main, 'Proc',
+                                                        parms_dict='Parms',
+                                                        *args, **kwargs)
+
+        with self.assertRaises(TypeError):
+            self.proc = TempProc(self.h5_main)
+        delete_existing_file(data_utils.std_beps_path)
+
+
+class TestCoreProcessNoTest(unittest.TestCase):
+
+    def setUp(self, proc_class=AvgSpecUltraBasic):
+        delete_existing_file(data_utils.std_beps_path)
+        data_utils.make_beps_file()
+        self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
+        self.h5_main = self.h5_file['Raw_Measurement/source_main']
+        self.h5_main = usid.USIDataset(self.h5_main)
+        self.exp_result = np.expand_dims(np.mean(self.h5_main[()], axis=1),
+                                         axis=1)
+
+        self.proc = proc_class(self.h5_main)
+
+    def test_tfunc(self):
+        with self.assertRaises(NotImplementedError):
+            self.proc.test()
+
+    def tearDown(self):
+        delete_existing_file(data_utils.std_beps_path)
+
+    def test_compute(self):
+        h5_grp = self.proc.compute()
+        self.assertIsInstance(h5_grp, h5py.Group)
+        self.assertEqual(h5_grp, self.proc.h5_results_grp)
+        results_dset = h5_grp['Results']
+        self.assertTrue(np.allclose(results_dset[()], self.exp_result))
+        # Verify status dataset has been written:
+        self.assertTrue('completed_positions' in list(h5_grp.keys()))
+        h5_status_dset = h5_grp['completed_positions']
+        self.assertIsInstance(h5_status_dset, h5py.Dataset)
+        self.assertEqual(h5_status_dset.shape, (self.h5_main.shape[0],))
+        self.assertEqual(h5_status_dset.dtype, np.uint8)
+
+
+class TestCoreProcessWTest(TestCoreProcessNoTest):
+
+    def setUp(self, proc_class=AvgSpecUltraBasicWTest):
+        super(TestCoreProcessWTest,
+              self).setUp(proc_class=AvgSpecUltraBasicWTest)
+
+    def test_tfunc(self):
+        pix_ind = 5
+        actual = self.proc.test(pix_ind)
+        expected = self.exp_result[pix_ind]
+        self.assertTrue(np.allclose(actual, expected))
+
+
+class TestCoreProcessWExistingResults(unittest.TestCase):
+
+    def setUp(self, proc_class=AvgSpecUltraBasicWGetPrevResults,
+              percent_complete=100):
+        delete_existing_file(data_utils.std_beps_path)
+        data_utils.make_beps_file()
+        self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
+        self.h5_main = self.h5_file['Raw_Measurement/source_main']
+        self.h5_main = usid.USIDataset(self.h5_main)
+
+        # Make some fake results here:
+        parms_dict = {'parm_1': 1, 'parm_2': [1, 2, 3]}
+
+        self.fake_results_grp, self.h5_results = _create_results_grp_dsets(
+            self.h5_main, 'Mean_Val', parms_dict)
+
+        # Intentionally set different results
+        self.exp_result = np.expand_dims(np.random.rand(self.h5_results.shape[0]),
+                                         axis=1)
+        self.h5_results[:, 0] = self.exp_result[:, 0]
+
+        # Build status:
+        status = np.ones(shape=self.h5_main.shape[0], dtype=np.uint8)
+
+        # Reset last portion of results to mean (expected)
+        complete_index = int(self.h5_main.shape[0] * percent_complete / 100)
+        if percent_complete < 100:
+            # print('Reset results from position: {}'.format(complete_index))
+            status[complete_index:] = 0
+            # print(status)
+            self.exp_result[complete_index:, 0] = np.mean(self.h5_main[complete_index:], axis=1)
+
+        # 4. Create fake status dataset
+        _ = self.fake_results_grp.create_dataset('completed_positions',
+                                                 data=status)
+
+        self.proc = AvgSpecUltraBasicWGetPrevResults(self.h5_main)
+
+    def test_compute(self):
+        h5_results_grp = self.proc.compute(override=False)
+        self.assertEqual(self.fake_results_grp, h5_results_grp)
+
+
+class TestCoreProcessWDuplicateResultsOverride(TestCoreProcessWExistingResults):
+
+    def test_compute(self):
+        h5_grp = self.proc.compute(override=True)
+        self.assertNotEqual(self.fake_results_grp, h5_grp)
+
+        self.assertIsInstance(h5_grp, h5py.Group)
+        self.assertTrue(h5_grp.name.endswith('001'))
+
+        self.assertEqual(h5_grp, self.proc.h5_results_grp)
+        results_dset = h5_grp['Results']
+        self.assertTrue(np.allclose(results_dset[()],
+                                    np.expand_dims(
+                                        np.mean(self.h5_main[()], axis=1),
+                                        axis=1)
+                                    ))
+        # Verify status dataset has been written:
+        self.assertTrue('completed_positions' in list(h5_grp.keys()))
+        h5_status_dset = h5_grp['completed_positions']
+        self.assertIsInstance(h5_status_dset, h5py.Dataset)
+        self.assertEqual(h5_status_dset.shape, (self.h5_main.shape[0],))
+        self.assertEqual(h5_status_dset.dtype, np.uint8)
+
+
+class TestCoreProcessWExistingPartResults(TestCoreProcessWExistingResults):
+
+    def setUp(self, proc_class=AvgSpecUltraBasicWGetPrevResults,
+              percent_complete=50):
+        super(TestCoreProcessWExistingPartResults,
+              self).setUp(percent_complete=percent_complete)
+
+
+
+
+orig_file_path = 'data/BELine_0004.h5'
+temp_file_path = './BELine_0004.h5'
 
 
 class TestProcess(unittest.TestCase):
@@ -73,31 +278,7 @@ class TestProcess(unittest.TestCase):
     def tearDown(self):
         delete_existing_file(temp_file_path)
 
-    def test_init_not_hdf5_dataset(self):
-
-        file = np.arange(100).reshape(10,10)
-
-        self.assertFalse(usid.hdf_utils.check_if_main(file))
 '''
-    def test_init_file_not_r_plus(self):
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            h5_path = tmp_dir + 'gline.h5'
-            copyfile(temp_file_path, h5_path)
-
-        h5_main = h5py.File(h5_path, mode='r')
-
-        with self.assertRaises(TypeError):
-            sbp = SuperBasicProcess(h5_main)
-
-    def test_init_not_main_dset(self):
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            h5_path = tmp_dir + 'gline.h5'
-            copyfile(temp_file_path, h5_path)
-
-        h5_main = h5py.File(h5_path, mode='r+')
-
-        with self.assertRaises(ValueError):
-            sbp = SuperBasicProcess(h5_main)
 
     def test_disruption(self):
         orig_path = 'data/pzt_nanocap_6_just_translation_copy.h5'
