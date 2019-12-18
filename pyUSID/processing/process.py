@@ -7,7 +7,8 @@ Created on 7/17/16 10:08 AM
 @author: Suhas Somnath, Chris Smith
 """
 
-from __future__ import division, print_function, absolute_import
+from __future__ import division, unicode_literals, print_function, \
+    absolute_import
 import numpy as np
 import psutil
 import time as tm
