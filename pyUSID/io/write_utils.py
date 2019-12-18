@@ -13,8 +13,11 @@ from warnings import warn
 from enum import Enum
 from itertools import groupby
 import numpy as np
-from collections import Iterable
 from .dtype_utils import contains_integers, validate_list_of_strings, validate_single_string_arg
+if sys.version_info.major == 3:
+    from collections.abc import Iterable
+else:
+    from collections import Iterable
 
 __all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE', 'get_slope',
            'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions', 'DimType',
