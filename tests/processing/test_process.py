@@ -114,9 +114,9 @@ class TestInvalidInitialization(unittest.TestCase):
 
             def __init__(self, h5_main, *args, **kwargs):
                 parms_dict = {'parm_1': 1, 'parm_2': [1, 2, 3]}
-                super(AvgSpecUltraBasic, self).__init__(h5_main, {'a': 1},
-                                                        parms_dict=parms_dict,
-                                                        *args, **kwargs)
+                super(TempProc, self).__init__(h5_main, {'a': 1},
+                                               parms_dict=parms_dict,
+                                               *args, **kwargs)
 
         with self.assertRaises(TypeError):
             self.proc = TempProc(self.h5_main)
@@ -132,12 +132,30 @@ class TestInvalidInitialization(unittest.TestCase):
         class TempProc(usid.Process):
 
             def __init__(self, h5_main, *args, **kwargs):
-                super(AvgSpecUltraBasic, self).__init__(h5_main, 'Proc',
-                                                        parms_dict='Parms',
-                                                        *args, **kwargs)
+                super(TempProc, self).__init__(h5_main, 'Proc',
+                                               parms_dict='Parms',
+                                               *args, **kwargs)
 
         with self.assertRaises(TypeError):
             self.proc = TempProc(self.h5_main)
+        delete_existing_file(data_utils.std_beps_path)
+
+    def test_none_parms_dict(self):
+        delete_existing_file(data_utils.std_beps_path)
+        data_utils.make_beps_file()
+        self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
+        self.h5_main = self.h5_file['Raw_Measurement/source_main']
+        self.h5_main = usid.USIDataset(self.h5_main)
+
+        class TempProc(usid.Process):
+
+            def __init__(self, h5_main, *args, **kwargs):
+                super(TempProc, self).__init__(h5_main, 'Proc',
+                                               parms_dict=None,
+                                               *args, **kwargs)
+
+        self.proc = TempProc(self.h5_main)
+        self.assertEqual(self.proc.parms_dict, dict())
         delete_existing_file(data_utils.std_beps_path)
 
 
