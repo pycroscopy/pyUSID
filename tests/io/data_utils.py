@@ -493,7 +493,24 @@ def make_beps_file(rev_spec=False):
         write_aux_reg_ref(h5_results_1_spec_vals, results_spec_attrs['labels'], is_spec=True)
         write_string_list_as_attr(h5_results_1_spec_vals, results_spec_attrs)
 
-        results_1_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
+        # Let this be a compound dataset:
+        struc_dtype = np.dtype({'names': ['r', 'g', 'b'],
+                                'formats': [np.float32, np.float128,
+                                            np.float64]})
+
+        num_elems = (num_rows, num_cols, num_cycles, num_cycle_pts)
+        results_1_nd = np.zeros(shape=num_elems, dtype=struc_dtype)
+        for name_ind, name in enumerate(struc_dtype.names):
+            results_1_nd[name] = np.random.random(size=num_elems)
+
+        h5_results_1_nd = h5_results_grp_1.create_dataset('n_dim_form',
+                                                          data=results_1_nd)
+        write_string_list_as_attr(h5_results_1_nd,
+                                  {'dims': ['Y', 'X', 'Cycle', 'Bias']})
+
+        results_1_main_data = results_1_nd.reshape(num_rows * num_cols,
+                                                   num_cycle_pts * num_cycles)
+
         h5_results_1_main = h5_results_grp_1.create_dataset('results_main', data=results_1_main_data)
         write_safe_attrs(h5_results_1_main, {'units': 'pF', 'quantity': 'Capacitance'})
 
@@ -508,7 +525,17 @@ def make_beps_file(rev_spec=False):
                                         {'att_1': 'other_string_val', 'att_2': 5.4321, 'att_3': [4, 1, 3]})
         write_string_list_as_attr(h5_results_grp_2, {'att_4': ['s', 'str_2', 'str_3']})
 
-        results_2_main_data = np.random.rand(num_rows * num_cols, num_cycle_pts * num_cycles)
+        # Let these results be a complex typed dataset:
+        results_2_nd = np.random.random(size=num_elems) + \
+                       1j * np.random.random(size=num_elems)
+
+        h5_results_2_nd = h5_results_grp_2.create_dataset('n_dim_form',
+                                                          data=results_2_nd)
+        write_string_list_as_attr(h5_results_2_nd,
+                                  {'dims': ['Y', 'X', 'Cycle', 'Bias']})
+
+        results_2_main_data = results_2_nd.reshape(num_rows * num_cols,
+                                                   num_cycle_pts * num_cycles)
         h5_results_2_main = h5_results_grp_2.create_dataset('results_main', data=results_2_main_data)
         write_safe_attrs(h5_results_2_main, {'units': 'pF', 'quantity': 'Capacitance'})
 
