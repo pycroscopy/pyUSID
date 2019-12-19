@@ -846,6 +846,7 @@ class TestPrintTreeBEPS(TestHDFUtilsBase):
                         level * '  ' + len('source_main-Fitter_000') * '-',
                         level * '  ' + '├ ' + 'Spectroscopic_Indices',
                         level * '  ' + '├ ' + 'Spectroscopic_Values',
+                        level * '  ' + '├ ' + 'n_dim_form',
                         level * '  ' + '├ ' + 'results_main',
                         ]
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
