@@ -27,7 +27,7 @@ from . import dtype_utils
 from . import write_utils
 
 from .usi_data import USIDataset
-from .translator import Translator, generate_dummy_main_parms
+from .translator import Translator
 from .numpy_translator import NumpyTranslator, ArrayTranslator
 from .image import ImageTranslator
 from .write_utils import Dimension, DimType

@@ -1,22 +1,25 @@
 # -*- coding: utf-8 -*-
 """
-:class:`~pyUSID.io.numpy_translator.ArrayTranslator` capable of translating numeric arrays to USID HDF5 files
+:class:`~pyUSID.io.numpy_translator.ArrayTranslator` capable of translating
+numeric arrays to USID HDF5 files
 
 Created on Fri Jan 27 17:58:35 2017
 
 @author: Suhas Somnath
 """
 
-from __future__ import division, print_function, absolute_import, unicode_literals
+from __future__ import division, print_function, absolute_import, \
+    unicode_literals
 
 from os import path, remove
 import sys
 import h5py
 import numpy as np
 import dask.array as da
-from .translator import Translator, generate_dummy_main_parms
+from .translator import Translator
 from .dtype_utils import validate_string_args
-from .hdf_utils import write_main_dataset, write_simple_attrs, create_indexed_group, write_book_keeping_attrs, \
+from .hdf_utils import write_main_dataset, write_simple_attrs, \
+    create_indexed_group, write_book_keeping_attrs, \
     validate_dims_against_main, validate_main_dset
 from pyUSID.io.write_utils import validate_dimensions
 
@@ -108,7 +111,7 @@ class ArrayTranslator(Translator):
         if parm_dict is None:
             parm_dict = {}
 
-        global_parms = generate_dummy_main_parms()
+        global_parms = dict()
         global_parms['data_type'] = data_name
         global_parms['translator'] = translator_name
 

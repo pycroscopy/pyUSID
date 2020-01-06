@@ -7,7 +7,8 @@ Created on 7/17/16 10:08 AM
 @author: Suhas Somnath, Chris Smith
 """
 
-from __future__ import division, print_function, absolute_import
+from __future__ import division, unicode_literals, print_function, \
+    absolute_import
 import numpy as np
 import psutil
 import time as tm
@@ -15,10 +16,12 @@ import h5py
 from numbers import Number
 from multiprocessing import cpu_count
 
-from .comp_utils import parallel_compute, get_MPI, group_ranks_by_socket, get_available_memory
+from .comp_utils import parallel_compute, get_MPI, group_ranks_by_socket, \
+    get_available_memory
 from ..io.hdf_utils import check_if_main, check_for_old, get_attributes
 from ..io.usi_data import USIDataset
-from ..io.dtype_utils import integers_to_slices
+from ..io.dtype_utils import integers_to_slices, lazy_load_array, \
+    validate_single_string_arg
 from ..io.io_utils import format_time, format_size
 
 # TODO: internalize as many attributes as possible. Expose only those that will be required by the user
@@ -31,13 +34,16 @@ class Process(object):
     only need to specify application-relevant code for processing the data.
     """
 
-    def __init__(self, h5_main, cores=None, max_mem_mb=4*1024,
-                 mem_multiplier=1.0, verbose=False):
+    def __init__(self, h5_main, process_name, parms_dict=None, cores=None,
+                 max_mem_mb=4*1024, mem_multiplier=1.0, lazy=False,
+                 verbose=False):
         """
         Parameters
         ----------
         h5_main : :class:`~pyUSID.io.usi_data.USIDataset`
             The USID main HDF5 dataset over which the analysis will be performed.
+         self.process_name : str
+            Name of the process
         cores : uint, optional
             How many cores to use for the computation. Default: all available cores - 2 if operating outside MPI context
         max_mem_mb : uint, optional
@@ -52,6 +58,9 @@ class Process(object):
             the size of results datasets as well. For example, if the result
             dataset is the same size and precision as the source dataset,
             the multiplier will be 2 (1 for source, 1 for result)
+        lazy : bool, optional. Default = False
+            If True, read_data_chunk and write_results_chunk will operate on
+            dask arrays. If False - everything will be in numpy.
         verbose : bool, Optional, default = False
             Whether or not to print debugging statements
 
@@ -178,6 +187,14 @@ class Process(object):
         if not check_if_main(h5_main, verbose=verbose and self.mpi_rank == 0):
             raise ValueError('Provided dataset is not a "Main" dataset with necessary ancillary datasets')
 
+        process_name = validate_single_string_arg(process_name, 'process_name')
+
+        if parms_dict is None:
+            parms_dict = {}
+        else:
+            if not isinstance(parms_dict, dict):
+                raise TypeError("Expected 'parms_dict' of type: dict")
+
         if MPI is not None:
             MPI.COMM_WORLD.barrier()
         # Not sure if we need a barrier here.
@@ -193,6 +210,7 @@ class Process(object):
 
         # Saving these as properties of the object:
         self.verbose = verbose
+        self.__lazy = lazy
         self._cores = None
         self.__ranks_on_socket = 1
         self.__socket_master_rank = 0
@@ -214,8 +232,8 @@ class Process(object):
             print('Finished collecting info on memory and workers')
         self.duplicate_h5_groups = []
         self.partial_h5_groups = []
-        self.process_name = None  # Reset this in the extended classes
-        self.parms_dict = None
+        self.process_name = process_name  # Reset this in the extended classes
+        self.parms_dict = parms_dict
 
         """
         The name of the HDF5 dataset that should be present to signify which positions have already been computed
@@ -246,8 +264,8 @@ class Process(object):
             print('Consider calling test() to check results before calling compute() which computes on the entire'
                   ' dataset and writes back to the HDF5 file')
 
-        # DON'T check for duplicates since parms_dict has not yet been initialized.
-        # Sub classes will check by themselves if they are interested.
+        self.duplicate_h5_groups, self.partial_h5_groups = self._check_for_duplicates()
+
 
     def __assign_job_indices(self):
         """
@@ -338,7 +356,9 @@ class Process(object):
         Returns
         -------
         duplicate_h5_groups : list of h5py.Group objects
-            List of groups satisfying the above conditions
+            List of groups satisfying the above conditions with completely computed results
+        partial_h5_groups : list of h5py.Group objects
+            List of groups satisfying the above conditions with partially computed results
         """
         if self.verbose and self.mpi_rank == 0:
             print('Checking for duplicates:')
@@ -659,8 +679,13 @@ class Process(object):
                                      tot_workers,
                                      bytes_this_read * tot_workers))
 
-            # TODO: Read as Dask array to minimize memory copies when restructuring in child classes
-            self.data = self.h5_main[self.__pixels_in_batch, :]
+            # Reading as Dask array to minimize memory copies when restructuring in child classes
+            if self.__lazy:
+                main_dset = lazy_load_array(self.h5_main)
+            else:
+                main_dset = self.h5_main
+
+            self.data = main_dset[self.__pixels_in_batch, :]
             # DON'T update the start position
 
         else:

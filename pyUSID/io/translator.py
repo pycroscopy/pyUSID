@@ -11,9 +11,6 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 import abc
 import sys
 import os
-from warnings import warn
-import time as tm
-from .io_utils import get_time_stamp
 from .dtype_utils import validate_list_of_strings, validate_single_string_arg
 from ..processing.comp_utils import get_available_memory
 
@@ -99,33 +96,3 @@ class Translator(object):
             return file_path
         else:
             return None
-
-
-def generate_dummy_main_parms():
-    """
-    Generates a (dummy) dictionary of parameters that will be used at the root level of the h5 file
-
-    Returns
-    ----------
-    main_parms : dictionary
-        Dictionary containing basic descriptors that describe a dataset
-    """
-    warn('generate_dummy_main_parms() only serves as an example for metadata that should be included with the data.\n'
-        'Please consider populating appropriate metadata manually instead of using this function', DeprecationWarning)
-
-    main_parms = dict()
-    main_parms['translate_time'] = get_time_stamp()
-    main_parms['instrument'] = 'cypher_west'
-    main_parms['xcams_id'] = 'abc'
-    main_parms['user_name'] = 'John Doe'
-    main_parms['sample_name'] = 'PZT'
-    main_parms['sample_description'] = 'Thin Film'
-    main_parms['project_name'] = 'Band Excitation'
-    main_parms['project_id'] = 'CNMS_2015B_X0000'
-    main_parms['comments'] = 'Band Excitation data'
-    main_parms['data_tool'] = 'be_analyzer'
-    # This parameter actually need not be a dummy and can be extracted from the parms file
-    main_parms['experiment_date'] = '2015-10-05 14:55:05'
-    main_parms['experiment_unix_time'] = tm.time()
-
-    return main_parms

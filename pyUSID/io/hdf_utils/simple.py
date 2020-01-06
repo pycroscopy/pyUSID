@@ -176,6 +176,13 @@ def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
     """
     if not isinstance(h5_dset, h5py.Dataset):
         raise TypeError('h5_dset should be a h5py.Dataset object')
+
+    if isinstance(anc_names, (str, unicode)):
+        anc_names = [anc_names]
+    if isinstance(anc_refs, (h5py.Dataset, h5py.Group, h5py.File,
+                             h5py.Reference)):
+        anc_refs = [anc_refs]
+
     if not isinstance(anc_names, (list, tuple)):
         raise TypeError('anc_names should be a list / tuple')
     if h5_main is not None:
@@ -185,10 +192,13 @@ def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
         if not isinstance(anc_refs, (list, tuple)):
             raise TypeError('anc_refs should be a list / tuple')
 
+    if anc_refs is None and h5_main is None:
+        raise ValueError('No objected provided to link as ancillary')
+
     def __check_and_link_single(h5_obj_ref, target_ref_name):
         if isinstance(h5_obj_ref, h5py.Reference):
             h5_dset.attrs[target_ref_name] = h5_obj_ref
-        elif isinstance(h5_obj_ref, h5py.Dataset):
+        elif isinstance(h5_obj_ref, (h5py.Dataset, h5py.Group, h5py.File)):
             h5_dset.attrs[target_ref_name] = h5_obj_ref.ref
         elif h5_main is not None:
             h5_anc = get_auxiliary_datasets(h5_main, aux_dset_name=[target_ref_name])

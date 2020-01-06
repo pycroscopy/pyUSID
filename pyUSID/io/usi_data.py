@@ -21,7 +21,7 @@ from .hdf_utils import check_if_main, get_attr, create_results_group, write_redu
     get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset, reshape_from_n_dims, \
     copy_attributes
 from .dtype_utils import flatten_to_real, contains_integers, get_exponent, is_complex_dtype, \
-    validate_single_string_arg, validate_list_of_strings
+    validate_single_string_arg, validate_list_of_strings, lazy_load_array
 from .write_utils import Dimension
 from ..viz.jupyter_utils import simple_ndim_visualizer
 from ..viz.plot_utils import plot_map, get_plot_grid_size
@@ -138,11 +138,14 @@ class USIDataset(h5py.Dataset):
         self.n_dim_labels = None
         self.n_dim_sizes = None
 
+        self.__lazy_2d = lazy_load_array(self)
+
         self.__set_labels_and_sizes()
 
         try:
             self.__n_dim_data_orig = self.get_n_dim_form(lazy=True)
             self.__n_dim_form_avail = True
+            # TODO: This line keeps failing. Fix it
             self.__n_dim_data_s2f = self.__n_dim_data_orig.transpose(self.__n_dim_sort_order_orig_s2f)
         except ValueError:
             warn('This dataset does not have an N-dimensional form')
@@ -447,19 +450,33 @@ class USIDataset(h5py.Dataset):
 
         # Now that the slices are built, we just need to apply them to the data
         # This method is slow and memory intensive but shouldn't fail if multiple lists are given.
-        if len(pos_slice) <= len(spec_slice):
-            # Fewer final positions than spectra
-            data_slice = np.atleast_2d(self[pos_slice[:, 0], :])[:, spec_slice[:, 0]]
+        if lazy:
+            raw_2d = self.__lazy_2d
         else:
-            # Fewer final spectral points compared to positions
-            data_slice = np.atleast_2d(self[:, spec_slice[:, 0]])[pos_slice[:, 0], :]
+            raw_2d = self
 
         if verbose:
-            print('data_slice of shape: {} after slicing'.format(data_slice.shape))
-        orig_shape = data_slice.shape
-        data_slice = np.atleast_2d(np.squeeze(data_slice))
-        if data_slice.shape[0] == orig_shape[1] and data_slice.shape[1] == orig_shape[0]:
-            data_slice = data_slice.T
+            print('Slicing to 2D based on dataset of shape: {} and type: {}'
+                  ''.format(raw_2d.shape, type(raw_2d)))
+
+        if lazy:
+            data_slice = raw_2d[pos_slice[:, 0], :][:, spec_slice[:, 0]]
+        else:
+            if len(pos_slice) <= len(spec_slice):
+                # Fewer final positions than spectra
+                data_slice = np.atleast_2d(raw_2d[pos_slice[:, 0], :])[:, spec_slice[:, 0]]
+            else:
+                # Fewer final spectral points compared to positions
+                data_slice = np.atleast_2d(raw_2d[:, spec_slice[:, 0]])[pos_slice[:, 0], :]
+
+        if verbose:
+            print('data_slice of shape: {} and type: {} after slicing'
+                  ''.format(data_slice.shape, type(data_slice)))
+        if not lazy:
+            orig_shape = data_slice.shape
+            data_slice = np.atleast_2d(np.squeeze(data_slice))
+            if data_slice.shape[0] == orig_shape[1] and data_slice.shape[1] == orig_shape[0]:
+                data_slice = data_slice.T
         if verbose:
             print('data_slice of shape: {} after squeezing'.format(data_slice.shape))
 
@@ -501,7 +518,7 @@ class USIDataset(h5py.Dataset):
         if ndim_form:
             # TODO: if data is already loaded into memory, try to avoid I/O and slice in memory!!!!
             data_slice, success = reshape_to_n_dims(data_slice, h5_pos=pos_inds, h5_spec=spec_inds, verbose=verbose, lazy=lazy)
-            data_slice = np.squeeze(data_slice)
+            data_slice = data_slice.squeeze()
 
         if as_scalar:
             return flatten_to_real(data_slice), success
@@ -525,6 +542,9 @@ class USIDataset(h5py.Dataset):
         spec_slice : list of unsigned int
             Spectroscopic indices included in the slice
         """
+        if slice_dict is None:
+            slice_dict = dict()
+
         self.__validate_slice_dict(slice_dict)
 
         if len(slice_dict) == 0:
@@ -556,6 +576,7 @@ class USIDataset(h5py.Dataset):
                 raise TypeError('The slices must be array-likes or slice objects.')
 
             if not contains_integers(val, min_val=0):
+                # TODO: Is there a more elegant way of handling this?
                 raise ValueError('Slicing indices should be >= 0')
 
             # check to make sure that the values are not out of bounds:
@@ -612,6 +633,8 @@ class USIDataset(h5py.Dataset):
         spec_dims : list
             List of :class:`~pyUSID.io.write_utils.Dimension` objects for each of the remaining spectroscopic dimensions
         """
+        if slice_dict is None:
+            slice_dict = dict()
 
         pos_labels = self.pos_dim_labels
         pos_units = get_attr(self.h5_pos_inds, 'units')
@@ -642,8 +665,8 @@ class USIDataset(h5py.Dataset):
             print('Spec Inds: {}, Spec Vals: {}'.format(spec_inds.shape, spec_vals.shape))
 
         if spec_inds.ndim == 1:
-            spec_inds = np.expand_dims(spec_inds, axis=0)
-            spec_vals = np.expand_dims(spec_vals, axis=0)
+            spec_inds = np.expand_dims(spec_inds, axis=1)
+            spec_vals = np.expand_dims(spec_vals, axis=1)
 
         if verbose:
             print('After correction of shape:')
@@ -651,10 +674,11 @@ class USIDataset(h5py.Dataset):
                                                                                     spec_inds.shape,
                                                                                     spec_vals.shape))
 
+        # TODO: This assumes an N-dimensional form!
         pos_unit_values = get_unit_values(pos_inds, pos_vals, all_dim_names=self.pos_dim_labels, is_spec=False,
-                                          verbose=False)
+                                          verbose=verbose)
         spec_unit_values = get_unit_values(spec_inds, spec_vals, all_dim_names=self.spec_dim_labels, is_spec=True,
-                                           verbose=False)
+                                           verbose=verbose)
 
         if verbose:
             print('Position unit values:')
@@ -840,7 +864,7 @@ class USIDataset(h5py.Dataset):
 
             # see if the total number of pos and spec keys are either 1 or 2
             if not (0 < len(pos_dims) < 3) or not (0 < len(spec_dims) < 3):
-                raise ValueError('Number of position ({}) / spectroscopic dimensions ({}) not 1 or 2'
+                raise ValueError('Number of position ({}) / spectroscopic dimensions ({}) more than 2'
                                  '. Try slicing again'.format(len(pos_dims), len(spec_dims)))
 
             # now should be safe to slice:
@@ -973,13 +997,18 @@ class USIDataset(h5py.Dataset):
                 # Need to convert to float since image could be unsigned integers or low precision floats
                 plot_map(axis, np.float32(np.squeeze(img)), show_xy_ticks=True, show_cbar=True,
                          cbar_label=self.data_descriptor, x_vec=ref_dims[1].values, y_vec=ref_dims[0].values, **kwargs)
-                axis.set_title(self.name, pad=15)
+                try:
+                    axis.set_title(self.name, pad=15)
+                except AttributeError:
+                    axis.set_title(self.name)
+
                 axis.set_xlabel(ref_dims[1].name + ' (' + ref_dims[1].units + ')' + suffix[1])
                 axis.set_ylabel(ref_dims[0].name + ' (' + ref_dims[0].units + ')' + suffix[0])
                 fig.tight_layout()
                 return fig, axis
 
         if np.prod([len(item.values) for item in spec_dims]) == 1:
+            # No spectroscopic dimensions at all
             if len(pos_dims) == 2:
                 # 2D spatial map
                 # Check if we need to adjust the aspect ratio of the image (only if units are same):
@@ -998,6 +1027,12 @@ class USIDataset(h5py.Dataset):
                     np.prod([len(item.values) for item in spec_dims]) > 1:
                 # 1D spectral curve:
                 return plot_curve(spec_dims, data_slice)
+
+        elif len(pos_dims) == 1 and len(spec_dims) == 1 and \
+            np.prod([len(item.values) for item in pos_dims]) > 1 and \
+            np.prod([len(item.values) for item in spec_dims]) > 1:
+            # One spectroscopic and one position dimension
+            return plot_image(pos_dims + spec_dims, data_slice)
 
         # If data has at least one dimension with 2 values in pos. AND spec., it can be visualized interactively:
         return simple_ndim_visualizer(data_slice, pos_dims, spec_dims, verbose=verbose, **kwargs)
