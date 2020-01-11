@@ -363,86 +363,105 @@ class Process(object):
             print('Checking for duplicates:')
 
         # This list will contain completed runs only
-        duplicate_h5_groups = check_for_old(self.h5_main, self.process_name,
-                                            new_parms=self.parms_dict,
-                                            verbose=self.verbose and self.mpi_rank==0)
+        existing = check_for_old(self.h5_main, self.process_name,
+                                 new_parms=self.parms_dict,
+                                 verbose=self.verbose and self.mpi_rank == 0)
+
         partial_h5_groups = []
+        duplicate_h5_groups = []
 
         # First figure out which ones are partially completed:
-        if len(duplicate_h5_groups) > 0:
-            for index, curr_group in enumerate(duplicate_h5_groups):
-                """
-                Earlier, we only checked the 'last_pixel' but to be rigorous we should check self._status_dset_name
-                The last_pixel attribute check may be deprecated in the future.
-                Note that legacy computations did not have this dataset. We can add to partially computed datasets
-                """
-                # Case 1: Modern book-keeping dataset available:
-                if self._status_dset_name in curr_group.keys():
+        while len(existing) > 0:
+            curr_group = existing.pop(0)
+            """
+            Earlier, we only checked the 'last_pixel' but to be rigorous we 
+            should check self._status_dset_name
+            The last_pixel attribute check may be deprecated in the future.
+            Note that legacy computations did not have this dataset. We can add 
+            to partially computed datasets
+            """
 
-                    status_dset = curr_group[self._status_dset_name]
+            # Case 1: Modern book-keeping dataset available:
+            if self._status_dset_name in curr_group.keys():
 
-                    if not isinstance(status_dset, h5py.Dataset):
-                        # We should not come here if things were implemented correctly
-                        if self.mpi_rank == 0:
-                            print('Results group: {} contained an object named: {} that should have been a dataset'
-                                  '.'.format(curr_group, self._status_dset_name))
+                status_dset = curr_group[self._status_dset_name]
 
-                    if self.h5_main.shape[0] != status_dset.shape[0] or len(status_dset.shape) > 1 or \
-                            status_dset.dtype != np.uint8:
-                        if self.mpi_rank == 0:
-                            print('Status dataset: {} was not of the expected shape or datatype'.format(status_dset))
-
-                    # ##### ACTUAL COMPLETENESS TEST HERE #########
-
-                    completed_positions = np.sum(status_dset[()])
-
-                    if self.verbose and self.mpi_rank == 0:
-                        print('{} has results that are {} % complete'
-                              '.'.format(status_dset.name,
-                                         int(100 * completed_positions / self.h5_main.shape[0])))
-
-                    # Case 1.A: Incomplete computation?
-                    if completed_positions < self.h5_main.shape[0]:
-                        # If there are pixels uncompleted
-                        # remove from duplicates and move to partial
-                        if self.verbose and self.mpi_rank == 0:
-                            print('moving {} to partial'.format(curr_group.name))
-                        partial_h5_groups.append(duplicate_h5_groups.pop(index))
-                        # Let's write the legacy attribute for safety
-                        curr_group.attrs['last_pixel'] = self.h5_main.shape[0]
-                        # No further checks necessary
-                        continue
-
-                    # Case 1.B: Complete computation:
-                    if self.verbose and self.mpi_rank == 0:
-                        print('Leaving {} in duplicate groups'.format(curr_group.name))
-                    continue
-
-                # Case 2: Even the legacy book-keeping is absent:
-                elif 'last_pixel' not in curr_group.attrs.keys():
+                if not isinstance(status_dset, h5py.Dataset):
+                    # We should not come here if things were implemented correctly
                     if self.mpi_rank == 0:
-                        # Should not be coming here at all
-                        print('Group: {} had neither the status HDF5 dataset or the legacy attribute: "last_pixel"'
-                              '.'.format(curr_group))
-                    # Not sure what to do with such groups. Don't consider them
-                    duplicate_h5_groups.pop(index)
+                        print('Results group: {} contained an object named: {} that should have been a dataset'
+                              '.'.format(curr_group, self._status_dset_name))
                     continue
 
-                # Case 3.A: Only the legacy book-keeping is available:
-                elif curr_group.attrs['last_pixel'] < self.h5_main.shape[0]:
-                    # Should we create the dataset here, to make the group future-proof?
+                if self.h5_main.shape[0] != status_dset.shape[0] or len(status_dset.shape) > 1 or \
+                        status_dset.dtype != np.uint8:
+                    if self.mpi_rank == 0:
+                        print('Status dataset: {} was not of the expected shape or datatype'.format(status_dset))
+                    continue
+
+                # ##### ACTUAL COMPLETENESS TEST HERE #########
+
+                completed_positions = np.sum(status_dset[()])
+
+                if self.verbose and self.mpi_rank == 0:
+                    print('{} has results that are {} % complete'
+                          '.'.format(status_dset.name,
+                                     int(100 * completed_positions / self.h5_main.shape[0])))
+
+                # Case 1.A: Incomplete computation?
+                if completed_positions < self.h5_main.shape[0]:
+                    # If there are pixels uncompleted
                     # remove from duplicates and move to partial
+                    if self.verbose and self.mpi_rank == 0:
+                        print('moving {} to partial'.format(curr_group.name))
+                    partial_h5_groups.append(curr_group)
+                    # Let's write the legacy attribute for safety
+                    curr_group.attrs['last_pixel'] = self.h5_main.shape[0]
+                    # No further checks necessary
+                    continue
+
+                # Case 1.B: Complete computation:
+                if self.verbose and self.mpi_rank == 0:
+                    print('Moving {} to duplicate groups'.format(curr_group.name))
+                duplicate_h5_groups.append(curr_group)
+                continue
+
+            # Case 2: Even the legacy book-keeping is absent:
+            elif 'last_pixel' not in curr_group.attrs.keys():
+                if self.mpi_rank == 0:
+                    # Should not be coming here at all
+                    print('Group: {} had neither the status HDF5 dataset or the legacy attribute: "last_pixel"'
+                          '.'.format(curr_group))
+                # Not sure what to do with such groups. Don't consider them
+                continue
+
+            # Case 3: Only the legacy book-keeping is available:
+            else:
+                last_pixel = curr_group.attrs['last_pixel']
+
+                # Creating status dataset for forward compatibility:
+                self._h5_status_dset = curr_group.create_dataset(
+                    self._status_dset_name, dtype=np.uint8,
+                    shape=(self.h5_main.shape[0],))
+                if last_pixel > 0:
+                    self._h5_status_dset[:last_pixel] = 1
+
+                # Case 3.A: Partial
+                if last_pixel < self.h5_main.shape[0]:
+                    # move to partial
                     if self.verbose and self.mpi_rank == 0:
                         print('moving {} to partial since computation was {} % complete'
                               '.'.format(curr_group.name,
                                          int(100 * curr_group.attrs['last_pixel'] / self.h5_main.shape[0])))
-                    partial_h5_groups.append(duplicate_h5_groups.pop(index))
-
+                    partial_h5_groups.append(curr_group)
                     continue
 
-                # Case 4: legacy book-keeping shows that computation is complete:
-                if self.verbose and self.mpi_rank == 0:
-                    print('Leaving {} in duplicate groups'.format(curr_group.name))
+                # Case 3.B: complete:
+                else:
+                    if self.verbose and self.mpi_rank == 0:
+                        print('Moving {} to duplicate groups'.format(curr_group.name))
+                    duplicate_h5_groups.append(curr_group)
+                    continue
 
         if len(duplicate_h5_groups) > 0 and self.mpi_rank == 0:
             print('\nNote: ' + self.process_name + ' has already been performed with the same parameters before. '
