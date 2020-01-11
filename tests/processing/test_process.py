@@ -209,7 +209,7 @@ class TestCoreProcessWTest(TestCoreProcessNoTest):
 class TestCoreProcessWExistingResults(unittest.TestCase):
 
     def setUp(self, proc_class=AvgSpecUltraBasicWGetPrevResults,
-              percent_complete=100):
+              percent_complete=100, parms_dict=None):
         delete_existing_file(data_utils.std_beps_path)
         data_utils.make_beps_file()
         self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
@@ -217,7 +217,8 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
         self.h5_main = usid.USIDataset(self.h5_main)
 
         # Make some fake results here:
-        parms_dict = {'parm_1': 1, 'parm_2': [1, 2, 3]}
+        if parms_dict is None:
+            parms_dict = {'parm_1': 1, 'parm_2': [1, 2, 3]}
 
         self.fake_results_grp, self.h5_results = _create_results_grp_dsets(
             self.h5_main, 'Mean_Val', parms_dict)
@@ -248,11 +249,14 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
         h5_results_grp = self.proc.compute(override=False)
         self.assertEqual(self.fake_results_grp, h5_results_grp)
 
+    def tearDown(self):
+        delete_existing_file(data_utils.std_beps_path)
+
 
 class TestCoreProcessWDuplicateResultsOverride(TestCoreProcessWExistingResults):
 
-    def test_compute(self):
-        h5_grp = self.proc.compute(override=True)
+    def test_compute(self, override=True):
+        h5_grp = self.proc.compute(override=override)
         self.assertNotEqual(self.fake_results_grp, h5_grp)
 
         self.assertIsInstance(h5_grp, h5py.Group)
@@ -273,6 +277,24 @@ class TestCoreProcessWDuplicateResultsOverride(TestCoreProcessWExistingResults):
         self.assertEqual(h5_status_dset.dtype, np.uint8)
 
 
+class TestCoreProcessWExistResultsDiffParms(TestCoreProcessWDuplicateResultsOverride):
+
+    def setUp(self, proc_class=AvgSpecUltraBasicWGetPrevResults,
+              percent_complete=100,
+              parms_dict={'parm_1': 'Decoy', 'parm_2': 14.56}):
+        super(TestCoreProcessWExistResultsDiffParms,
+              self).setUp(percent_complete=percent_complete,
+                          parms_dict=parms_dict)
+
+    def test_duplicate_partial_results(self):
+        self.assertEqual(len(self.proc.duplicate_h5_groups), 0)
+        self.assertEqual(len(self.proc.partial_h5_groups), 0)
+
+    def test_compute(self, override=False):
+        super(TestCoreProcessWExistResultsDiffParms,
+              self).test_compute(override=override)
+
+
 class TestCoreProcessWExistingPartResults(TestCoreProcessWExistingResults):
 
     def setUp(self, proc_class=AvgSpecUltraBasicWGetPrevResults,
@@ -280,8 +302,6 @@ class TestCoreProcessWExistingPartResults(TestCoreProcessWExistingResults):
         super(TestCoreProcessWExistingPartResults,
               self).setUp(percent_complete=percent_complete)
 
-
-# TODO: existing results different parameters
 # TODO: Only legacy book-keeping available for partial - check new status dset
 # TODO: Only legacy book-keeping available for complete
 # TODO: results available but no status dataset or attribute
