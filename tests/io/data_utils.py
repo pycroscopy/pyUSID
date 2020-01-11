@@ -495,7 +495,7 @@ def make_beps_file(rev_spec=False):
 
         # Let this be a compound dataset:
         struc_dtype = np.dtype({'names': ['r', 'g', 'b'],
-                                'formats': [np.float32, np.float128,
+                                'formats': [np.float32, np.float16,
                                             np.float64]})
 
         num_elems = (num_rows, num_cols, num_cycles, num_cycle_pts)
