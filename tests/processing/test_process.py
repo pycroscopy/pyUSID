@@ -237,17 +237,21 @@ class TestCoreProcessWTest(TestCoreProcessNoTest):
 class TestCoreProcessWExistingResults(unittest.TestCase):
 
     def __create_fake_result(self, percent_complete=100, parms_dict=None,
-                             status_dset=True, status_attr=False):
+                             status_dset=True, status_attr=False,
+                             verbose=False):
 
         if parms_dict is None:
             parms_dict = {'parm_1': 1, 'parm_2': [1, 2, 3]}
+
+        if verbose:
+            print('Using parms_dict: {}'.format(parms_dict))
 
         results_grp, h5_results_dset = _create_results_grp_dsets(
             self.h5_main, 'Mean_Val', parms_dict)
 
         # Intentionally set different results
         exp_result = np.expand_dims(np.random.rand(h5_results_dset.shape[0]),
-                                         axis=1)
+                                    axis=1)
         h5_results_dset[:, 0] = exp_result[:, 0]
 
         # Build status:
@@ -255,6 +259,10 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
 
         # Reset last portion of results to mean (expected)
         complete_index = int(self.h5_main.shape[0] * percent_complete / 100)
+        if verbose:
+            print('Positions up to {} of {} will be marked as complete'
+                  '.'.format(complete_index, self.h5_main.shape[0]))
+
         if percent_complete < 100:
             # print('Reset results from position: {}'.format(complete_index))
             status[complete_index:] = 0
@@ -263,16 +271,19 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
 
         # 4. Create fake status dataset
         if status_dset:
-            _ = results_grp.create_dataset('completed_positions',
-                                                     data=status)
+            if verbose:
+                print('Creating status dataset')
+            _ = results_grp.create_dataset('completed_positions', data=status)
         if status_attr:
+            if verbose:
+                print('Writing legacy status attribute')
             results_grp.attrs['last_pixel'] = complete_index
 
         return results_grp, h5_results_dset, exp_result
 
     def setUp(self, proc_class=AvgSpecUltraBasicWGetPrevResults,
               percent_complete=100, parms_dict=None, status_dset=True,
-              status_attr=False):
+              status_attr=False, verbose=False):
         delete_existing_file(data_utils.std_beps_path)
         data_utils.make_beps_file()
         self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
@@ -294,7 +305,8 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
                 ret_vals = self.__create_fake_result(percent_complete=this_per,
                                                      parms_dict=this_parms,
                                                      status_dset=has_status_dset,
-                                                     status_attr=has_status_attr)
+                                                     status_attr=has_status_attr,
+                                                     verbose=verbose)
                 self.fake_results_grp.append(ret_vals[0])
                 self.h5_results.append(ret_vals[1])
                 self.exp_result.append(ret_vals[2])
@@ -302,10 +314,12 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
             ret_vals = self.__create_fake_result(percent_complete=percent_complete,
                                                  parms_dict=parms_dict,
                                                  status_dset=status_dset,
-                                                 status_attr=status_attr)
+                                                 status_attr=status_attr,
+                                                 verbose=verbose)
             self.fake_results_grp, self.h5_results, self.exp_result = ret_vals
 
-        self.proc = AvgSpecUltraBasicWGetPrevResults(self.h5_main)
+        self.proc = AvgSpecUltraBasicWGetPrevResults(self.h5_main,
+                                                     verbose=verbose)
 
     def test_compute(self):
         h5_results_grp = self.proc.compute(override=False)
@@ -325,10 +339,12 @@ class TestProcWLegacyResultsComplete(TestCoreProcessWExistingResults):
     def test_compute(self):
         super(TestProcWLegacyResultsComplete,
               self).test_compute()
-        # Should only have the results, Spec inds, Spec Vals. No Status dset
         items_in_grp = list(self.proc.h5_results_grp.keys())
-        self.assertEqual(len(items_in_grp), 3)
-        self.assertTrue(self.proc._status_dset_name not in items_in_grp)
+        # Should also have status dataset
+        self.assertEqual(len(items_in_grp), 4)
+        self.assertTrue(self.proc._status_dset_name in items_in_grp)
+        status_dset = self.proc.h5_results_grp[self.proc._status_dset_name]
+        self.assertEqual(np.sum(status_dset[()]), self.h5_main.shape[0])
 
 
 class TestCoreProcessWDuplicateResultsOverride(TestCoreProcessWExistingResults):
@@ -405,6 +421,46 @@ class TestProcWoStatus(TestCoreProcessWDuplicateResultsOverride):
 
     def test_compute(self, override=False):
         super(TestProcWoStatus, self).test_compute(override=override)
+
+
+class TestProcReturnCompletedNotPartial(TestCoreProcessWExistingResults):
+
+    def setUp(self):
+        super().setUp(percent_complete=[100, 50],
+                      parms_dict=[None, None],
+                      status_dset=[True, False],
+                      status_attr=[False, True],
+                      verbose=False)
+
+    def test_compute(self):
+        self.assertEqual(len(self.proc.duplicate_h5_groups), 1)
+        self.assertEqual(self.proc.duplicate_h5_groups[0],
+                         self.fake_results_grp[0])
+        self.assertEqual(len(self.proc.partial_h5_groups), 1)
+        self.assertEqual(self.proc.partial_h5_groups[0],
+                         self.fake_results_grp[1])
+
+        h5_results_grp = self.proc.compute(override=False)
+        self.assertEqual(self.fake_results_grp[0], h5_results_grp)
+
+
+class TestProcLastPartialResult(TestCoreProcessWExistingResults):
+
+    def setUp(self):
+        super().setUp(percent_complete=[75, 50],
+                      parms_dict=[None, None],
+                      status_dset=[True, False],
+                      status_attr=[False, True],
+                      verbose=False)
+
+    def test_compute(self):
+        self.assertEqual(len(self.proc.duplicate_h5_groups), 0)
+        self.assertEqual(len(self.proc.partial_h5_groups), 2)
+        for exp in self.fake_results_grp:
+            self.assertTrue(exp in self.proc.partial_h5_groups)
+
+        h5_results_grp = self.proc.compute(override=False)
+        self.assertEqual(self.fake_results_grp[-1], h5_results_grp)
 
 
 # TODO: Manually call use_partial_computation
