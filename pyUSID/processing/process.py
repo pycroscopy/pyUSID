@@ -843,6 +843,7 @@ class Process(object):
             if len(self.duplicate_h5_groups) > 0:
                 if self.mpi_rank == 0:
                     print('Returned previously computed results at ' + self.duplicate_h5_groups[-1].name)
+                self.h5_results_grp = self.duplicate_h5_groups[-1]
                 return self.duplicate_h5_groups[-1]
             elif len(self.partial_h5_groups) > 0:
                 if self.mpi_rank == 0:
