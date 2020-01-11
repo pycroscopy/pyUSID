@@ -484,7 +484,7 @@ class TestUsePartialComputationLegit(TestProcLastPartialResult):
         self.assertEqual(self.fake_results_grp[0], h5_results_grp)
 
 
-class TestMultiBatchCompute(TestCoreProcessWTest):
+class TestMultiBatchCompute(TestCoreProcessNoTest):
 
     def test_compute(self):
         self.proc.verbose = True

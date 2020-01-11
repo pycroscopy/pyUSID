@@ -696,7 +696,8 @@ class Process(object):
                           '.'.format(self.mpi_rank,
                                      format_size(get_available_memory()),
                                      tot_workers,
-                                     bytes_this_read * tot_workers))
+                                     format_size(bytes_this_read * tot_workers)
+                                     ))
 
             # Reading as Dask array to minimize memory copies when restructuring in child classes
             if self.__lazy:
