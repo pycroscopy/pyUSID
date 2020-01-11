@@ -301,7 +301,6 @@ class TestProcWLegacyResultsComplete(TestCoreProcessWExistingResults):
         self.assertTrue(self.proc._status_dset_name not in items_in_grp)
 
 
-
 class TestCoreProcessWDuplicateResultsOverride(TestCoreProcessWExistingResults):
 
     def test_compute(self, override=True):
@@ -367,9 +366,18 @@ class TestProcWLegacyResultsPartial(TestCoreProcessWExistingResults):
         self.assertTrue(self.proc._status_dset_name in items_in_grp)
 
 
+class TestProcWoStatus(TestCoreProcessWDuplicateResultsOverride):
+
+    def setUp(self, percent_complete=50):
+        super(TestProcWoStatus,
+              self).setUp(percent_complete=percent_complete,
+                          status_dset=False, status_attr=False)
+
+    def test_compute(self, override=False):
+        super(TestProcWoStatus, self).test_compute(override=override)
+
 
 # TODO: Manually call use_partial_computation
-# TODO: results available but no status dataset or attribute
 # TODO: multi batch processing
 # TODO: interrupt computation
 # TODO: set_cores
