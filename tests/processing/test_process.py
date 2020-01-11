@@ -483,7 +483,14 @@ class TestUsePartialComputationLegit(TestProcLastPartialResult):
         h5_results_grp = self.proc.compute(override=False)
         self.assertEqual(self.fake_results_grp[0], h5_results_grp)
 
-# TODO: multi batch processing
+
+class TestMultiBatchCompute(TestCoreProcessWTest):
+
+    def test_compute(self):
+        self.proc.verbose = True
+        self.proc._max_pos_per_read = 6
+        super().test_compute()
+
 # TODO: interrupt computation
 # TODO: set_cores
 # TODO: set_memory
