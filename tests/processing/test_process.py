@@ -236,26 +236,19 @@ class TestCoreProcessWTest(TestCoreProcessNoTest):
 
 class TestCoreProcessWExistingResults(unittest.TestCase):
 
-    def setUp(self, proc_class=AvgSpecUltraBasicWGetPrevResults,
-              percent_complete=100, parms_dict=None, status_dset=True,
-              status_attr=False):
-        delete_existing_file(data_utils.std_beps_path)
-        data_utils.make_beps_file()
-        self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
-        self.h5_main = self.h5_file['Raw_Measurement/source_main']
-        self.h5_main = usid.USIDataset(self.h5_main)
+    def __create_fake_result(self, percent_complete=100, parms_dict=None,
+                             status_dset=True, status_attr=False):
 
-        # Make some fake results here:
         if parms_dict is None:
             parms_dict = {'parm_1': 1, 'parm_2': [1, 2, 3]}
 
-        self.fake_results_grp, self.h5_results = _create_results_grp_dsets(
+        results_grp, h5_results_dset = _create_results_grp_dsets(
             self.h5_main, 'Mean_Val', parms_dict)
 
         # Intentionally set different results
-        self.exp_result = np.expand_dims(np.random.rand(self.h5_results.shape[0]),
+        exp_result = np.expand_dims(np.random.rand(h5_results_dset.shape[0]),
                                          axis=1)
-        self.h5_results[:, 0] = self.exp_result[:, 0]
+        h5_results_dset[:, 0] = exp_result[:, 0]
 
         # Build status:
         status = np.ones(shape=self.h5_main.shape[0], dtype=np.uint8)
@@ -266,14 +259,51 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
             # print('Reset results from position: {}'.format(complete_index))
             status[complete_index:] = 0
             # print(status)
-            self.exp_result[complete_index:, 0] = np.mean(self.h5_main[complete_index:], axis=1)
+            exp_result[complete_index:, 0] = np.mean(self.h5_main[complete_index:], axis=1)
 
         # 4. Create fake status dataset
         if status_dset:
-            _ = self.fake_results_grp.create_dataset('completed_positions',
+            _ = results_grp.create_dataset('completed_positions',
                                                      data=status)
         if status_attr:
-            self.fake_results_grp.attrs['last_pixel'] = complete_index
+            results_grp.attrs['last_pixel'] = complete_index
+
+        return results_grp, h5_results_dset, exp_result
+
+    def setUp(self, proc_class=AvgSpecUltraBasicWGetPrevResults,
+              percent_complete=100, parms_dict=None, status_dset=True,
+              status_attr=False):
+        delete_existing_file(data_utils.std_beps_path)
+        data_utils.make_beps_file()
+        self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
+        self.h5_main = self.h5_file['Raw_Measurement/source_main']
+        self.h5_main = usid.USIDataset(self.h5_main)
+
+        # Make some fake results here:
+        if any([isinstance(item, (list, tuple)) for item in [percent_complete,
+                                                             status_attr,
+                                                             status_dset,
+                                                             parms_dict]]):
+            self.fake_results_grp = []
+            self.h5_results = []
+            self.exp_result = []
+
+            for this_per, this_parms, has_status_dset, has_status_attr in zip(
+                percent_complete, parms_dict, status_dset, status_attr):
+
+                ret_vals = self.__create_fake_result(percent_complete=this_per,
+                                                     parms_dict=this_parms,
+                                                     status_dset=has_status_dset,
+                                                     status_attr=has_status_attr)
+                self.fake_results_grp.append(ret_vals[0])
+                self.h5_results.append(ret_vals[1])
+                self.exp_result.append(ret_vals[2])
+        else:
+            ret_vals = self.__create_fake_result(percent_complete=percent_complete,
+                                                 parms_dict=parms_dict,
+                                                 status_dset=status_dset,
+                                                 status_attr=status_attr)
+            self.fake_results_grp, self.h5_results, self.exp_result = ret_vals
 
         self.proc = AvgSpecUltraBasicWGetPrevResults(self.h5_main)
 
