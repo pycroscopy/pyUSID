@@ -224,6 +224,21 @@ except ImportError:
 
 class PeakFinder(usid.Process):
 
+    def __init__(self, h5_main, **kwargs):
+        """
+        Applies Bayesian Inference to General Mode IV (G-IV) data to extract the true current
+
+        Parameters
+        ----------
+        h5_main : h5py.Dataset object
+            Dataset to process
+        kwargs : dict
+            Other parameters specific to the Process class and nuanced bayesian_inference parameters
+        """
+        super(PeakFinder, self).__init__(h5_main, 'Peak_Finding',
+                                         parms_dict={'algorithm': 'find_all_peaks'},
+                                         **kwargs)
+
     def test(self, pixel_ind):
         """
         Test the algorithm on a single pixel
@@ -248,14 +263,11 @@ class PeakFinder(usid.Process):
 
         Please see examples on utilities for writing h5USID files for more information
         """
-        self.process_name = 'Peak_Finding'
-
         # 1. create a HDF5 group to hold the results
         self.h5_results_grp = usid.hdf_utils.create_results_group(self.h5_main, self.process_name)
 
         # 2. Write relevant metadata to the group
-        usid.hdf_utils.write_simple_attrs(self.h5_results_grp,
-                                        {'last_pixel': 0, 'algorithm': 'find_all_peaks'})
+        usid.hdf_utils.write_simple_attrs(self.h5_results_grp, self.parms_dict)
 
         # Explicitly stating all the inputs to write_main_dataset
         # The process will reduce the spectra at each position to a single value
