@@ -237,7 +237,8 @@ class TestCoreProcessWTest(TestCoreProcessNoTest):
 class TestCoreProcessWExistingResults(unittest.TestCase):
 
     def setUp(self, proc_class=AvgSpecUltraBasicWGetPrevResults,
-              percent_complete=100, parms_dict=None):
+              percent_complete=100, parms_dict=None, status_dset=True,
+              status_attr=False):
         delete_existing_file(data_utils.std_beps_path)
         data_utils.make_beps_file()
         self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
@@ -268,8 +269,11 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
             self.exp_result[complete_index:, 0] = np.mean(self.h5_main[complete_index:], axis=1)
 
         # 4. Create fake status dataset
-        _ = self.fake_results_grp.create_dataset('completed_positions',
-                                                 data=status)
+        if status_dset:
+            _ = self.fake_results_grp.create_dataset('completed_positions',
+                                                     data=status)
+        if status_attr:
+            self.fake_results_grp.attrs['last_pixel'] = complete_index
 
         self.proc = AvgSpecUltraBasicWGetPrevResults(self.h5_main)
 
@@ -279,6 +283,23 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
 
     def tearDown(self):
         delete_existing_file(data_utils.std_beps_path)
+
+
+class TestProcWLegacyResultsComplete(TestCoreProcessWExistingResults):
+
+    def setUp(self, percent_complete=100):
+        super(TestProcWLegacyResultsComplete,
+              self).setUp(percent_complete=percent_complete,
+                          status_dset=False, status_attr=True)
+
+    def test_compute(self):
+        super(TestProcWLegacyResultsComplete,
+              self).test_compute()
+        # Should only have the results, Spec inds, Spec Vals. No Status dset
+        items_in_grp = list(self.proc.h5_results_grp.keys())
+        self.assertEqual(len(items_in_grp), 3)
+        self.assertTrue(self.proc._status_dset_name not in items_in_grp)
+
 
 
 class TestCoreProcessWDuplicateResultsOverride(TestCoreProcessWExistingResults):
@@ -330,9 +351,24 @@ class TestCoreProcessWExistingPartResults(TestCoreProcessWExistingResults):
         super(TestCoreProcessWExistingPartResults,
               self).setUp(percent_complete=percent_complete)
 
+
+class TestProcWLegacyResultsPartial(TestCoreProcessWExistingResults):
+
+    def setUp(self, percent_complete=50):
+        super(TestProcWLegacyResultsPartial,
+              self).setUp(percent_complete=percent_complete,
+                          status_dset=False, status_attr=True)
+
+    def test_compute(self):
+        super(TestProcWLegacyResultsPartial,
+              self).test_compute()
+        items_in_grp = list(self.proc.h5_results_grp.keys())
+        self.assertEqual(len(items_in_grp), 4)
+        self.assertTrue(self.proc._status_dset_name in items_in_grp)
+
+
+
 # TODO: Manually call use_partial_computation
-# TODO: Only legacy book-keeping available for partial - check new status dset
-# TODO: Only legacy book-keeping available for complete
 # TODO: results available but no status dataset or attribute
 # TODO: multi batch processing
 # TODO: interrupt computation
