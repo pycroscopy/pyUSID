@@ -281,6 +281,19 @@ class TestCoreProcessWExistingPartResults(TestCoreProcessWExistingResults):
               self).setUp(percent_complete=percent_complete)
 
 
+# TODO: existing results different parameters
+# TODO: Only legacy book-keeping available for partial - check new status dset
+# TODO: Only legacy book-keeping available for complete
+# TODO: results available but no status dataset or attribute
+# TODO: multi batch processing
+# TODO: interrupt computation
+# TODO: set_cores
+# TODO: set_memory
+# TODO: Non-callable map_function or unit_computation
+# TODO: lazy data chunk read
+# TODO: parallel computation indeed being used (roughly N times faster)
+# TODO: Timing per batch
+
 
 
 orig_file_path = 'data/BELine_0004.h5'
