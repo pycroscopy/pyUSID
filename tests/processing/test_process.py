@@ -24,7 +24,7 @@ import pyUSID as usid
 
 def _create_results_grp_dsets(h5_main, process_name, parms_dict):
     h5_results_grp = usid.hdf_utils.create_results_group(h5_main,
-                                                              process_name)
+                                                         process_name)
 
     usid.hdf_utils.write_simple_attrs(h5_results_grp, parms_dict)
 
@@ -39,6 +39,19 @@ def _create_results_grp_dsets(h5_main, process_name, parms_dict):
         h5_pos_vals=h5_main.h5_pos_vals)
 
     return h5_results_grp, h5_results
+
+
+class NoMapFunc(usid.Process):
+
+    def __init__(self, h5_main):
+        parms_dict = {'parm_1': 1, 'parm_2': [1, 2, 3]}
+        super(NoMapFunc, self).__init__(h5_main, 'Mean_Val',
+                                                parms_dict=parms_dict)
+
+    def _create_results_datasets(self):
+        self.h5_results_grp, self.h5_results = _create_results_grp_dsets(self.h5_main,
+                                                                         self.process_name,
+                                                                         self.parms_dict)
 
 
 class AvgSpecUltraBasic(usid.Process):
@@ -82,6 +95,21 @@ class AvgSpecUltraBasicWGetPrevResults(AvgSpecUltraBasic):
 
 class TestInvalidInitialization(unittest.TestCase):
 
+    def test_no_map_func(self):
+        delete_existing_file(data_utils.std_beps_path)
+        data_utils.make_beps_file()
+        self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
+        self.h5_main = self.h5_file['Raw_Measurement/source_main']
+        self.h5_main = usid.USIDataset(self.h5_main)
+
+        proc = NoMapFunc(self.h5_main)
+
+        with self.assertRaises(NotImplementedError):
+            _ = proc.compute()
+
+        delete_existing_file(data_utils.std_beps_path)
+
+
     def test_read_only_file(self):
         delete_existing_file(data_utils.std_beps_path)
         data_utils.make_beps_file()
@@ -90,7 +118,7 @@ class TestInvalidInitialization(unittest.TestCase):
         self.h5_main = usid.USIDataset(self.h5_main)
 
         with self.assertRaises(TypeError):
-            self.proc = AvgSpecUltraBasic(self.h5_main)
+            _ = AvgSpecUltraBasic(self.h5_main)
         delete_existing_file(data_utils.std_beps_path)
 
     def test_not_main_dataset(self):
@@ -100,7 +128,7 @@ class TestInvalidInitialization(unittest.TestCase):
         self.h5_main = self.h5_file['Raw_Measurement/X']
 
         with self.assertRaises(ValueError):
-            self.proc = AvgSpecUltraBasic(self.h5_main)
+            _ = AvgSpecUltraBasic(self.h5_main)
         delete_existing_file(data_utils.std_beps_path)
 
     def test_invalid_process_name(self):
@@ -119,7 +147,7 @@ class TestInvalidInitialization(unittest.TestCase):
                                                *args, **kwargs)
 
         with self.assertRaises(TypeError):
-            self.proc = TempProc(self.h5_main)
+            _ = TempProc(self.h5_main)
         delete_existing_file(data_utils.std_beps_path)
 
     def test_invalid_parms_dict(self):
@@ -137,7 +165,7 @@ class TestInvalidInitialization(unittest.TestCase):
                                                *args, **kwargs)
 
         with self.assertRaises(TypeError):
-            self.proc = TempProc(self.h5_main)
+            _ = TempProc(self.h5_main)
         delete_existing_file(data_utils.std_beps_path)
 
     def test_none_parms_dict(self):
@@ -154,8 +182,8 @@ class TestInvalidInitialization(unittest.TestCase):
                                                parms_dict=None,
                                                *args, **kwargs)
 
-        self.proc = TempProc(self.h5_main)
-        self.assertEqual(self.proc.parms_dict, dict())
+        proc = TempProc(self.h5_main)
+        self.assertEqual(proc.parms_dict, dict())
         delete_existing_file(data_utils.std_beps_path)
 
 
@@ -302,6 +330,7 @@ class TestCoreProcessWExistingPartResults(TestCoreProcessWExistingResults):
         super(TestCoreProcessWExistingPartResults,
               self).setUp(percent_complete=percent_complete)
 
+# TODO: Manually call use_partial_computation
 # TODO: Only legacy book-keeping available for partial - check new status dset
 # TODO: Only legacy book-keeping available for complete
 # TODO: results available but no status dataset or attribute
