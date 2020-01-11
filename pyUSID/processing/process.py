@@ -498,7 +498,8 @@ class Process(object):
             if h5_partial_group not in self.partial_h5_groups:
                 raise ValueError('Provided group does not appear to be in the list of discovered groups')
 
-        self.parms_dict = get_attributes(h5_partial_group)
+        # Unnecessary since this will be defined at init
+        # self.parms_dict = get_attributes(h5_partial_group)
 
         self.h5_results_grp = h5_partial_group
 
@@ -864,7 +865,7 @@ class Process(object):
                     print('Returned previously computed results at ' + self.duplicate_h5_groups[-1].name)
                 self.h5_results_grp = self.duplicate_h5_groups[-1]
                 return self.duplicate_h5_groups[-1]
-            elif len(self.partial_h5_groups) > 0:
+            elif len(self.partial_h5_groups) > 0 and self.h5_results_grp is None:
                 if self.mpi_rank == 0:
                     print('Resuming computation in group: ' + self.partial_h5_groups[-1].name)
                 self.use_partial_computation()
