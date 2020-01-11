@@ -463,7 +463,26 @@ class TestProcLastPartialResult(TestCoreProcessWExistingResults):
         self.assertEqual(self.fake_results_grp[-1], h5_results_grp)
 
 
-# TODO: Manually call use_partial_computation
+class TestUsePartialComputationIllegal(TestProcLastPartialResult):
+
+    def test_compute(self):
+        h5_grp = self.h5_main.parent.create_group('Blah')
+        with self.assertRaises(ValueError):
+            self.proc.use_partial_computation(h5_grp)
+
+
+class TestUsePartialComputationLegit(TestProcLastPartialResult):
+
+    def test_compute(self):
+        self.proc.use_partial_computation(self.fake_results_grp[0])
+        self.assertEqual(len(self.proc.duplicate_h5_groups), 0)
+        self.assertEqual(len(self.proc.partial_h5_groups), 2)
+        for exp in self.fake_results_grp:
+            self.assertTrue(exp in self.proc.partial_h5_groups)
+
+        h5_results_grp = self.proc.compute(override=False)
+        self.assertEqual(self.fake_results_grp[0], h5_results_grp)
+
 # TODO: multi batch processing
 # TODO: interrupt computation
 # TODO: set_cores
