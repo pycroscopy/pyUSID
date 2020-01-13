@@ -29,7 +29,47 @@ if sys.version_info.major == 3:
 test_h5_file_path = data_utils.std_beps_path
 
 
-class TestUSIDataset(unittest.TestCase):
+class TestBEPS(unittest.TestCase):
+
+    def setUp(self):
+        data_utils.make_beps_file()
+        self.orig_labels_order = ['X', 'Y', 'Cycle', 'Bias']
+        self.h5_file = h5py.File(data_utils.std_beps_path, mode='r')
+
+        h5_grp = self.h5_file['/Raw_Measurement/']
+        self.source_nd_s2f = h5_grp['n_dim_form'][()]
+        self.source_nd_f2s = self.source_nd_s2f.transpose(1, 0, 3, 2)
+        self.h5_source = USIDataset(h5_grp['source_main'])
+
+        self.pos_dims=[]
+        self.spec_dims=[]
+
+        for dim_name, dim_units in zip(self.h5_source.pos_dim_labels,
+                                       hdf_utils.get_attr(self.h5_source.h5_pos_inds, 'units')):
+            self.pos_dims.append(
+                Dimension(dim_name, dim_units, h5_grp[dim_name][()]))
+
+        for dim_name, dim_units in zip(self.h5_source.spec_dim_labels,
+                                       hdf_utils.get_attr(self.h5_source.h5_spec_inds, 'units')):
+            self.spec_dims.append(
+                Dimension(dim_name, dim_units, h5_grp[dim_name][()]))
+
+        res_grp_0 = h5_grp['source_main-Fitter_000']
+        self.results_0_nd_s2f = res_grp_0['n_dim_form'][()]
+        self.results_0_nd_f2s = self.results_0_nd_s2f.transpose(1, 0, 3, 2)
+        self.h5_compound = USIDataset(res_grp_0['results_main'])
+
+        res_grp_1 = h5_grp['source_main-Fitter_001']
+        self.results_1_nd_s2f = res_grp_1['n_dim_form'][()]
+        self.results_1_nd_f2s = self.results_1_nd_s2f.transpose(1, 0, 3, 2)
+        self.h5_complex = USIDataset(res_grp_1['results_main'])
+
+    def tearDown(self):
+        self.h5_file.close()
+        os.remove(data_utils.std_beps_path)
+
+
+class TestUSIDatasetReal(unittest.TestCase):
 
     def setUp(self):
         self.rev_spec = False
@@ -46,40 +86,37 @@ class TestUSIDataset(unittest.TestCase):
             nd_fast_to_slow = nd_fast_to_slow.transpose(0, 1, 3, 2)
         return nd_slow_to_fast, nd_fast_to_slow
 
-class TestStringRepr(TestUSIDataset):
+
+class TestStringRepr(TestBEPS):
 
     def test_string_representation(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            usi_dset = USIDataset(h5_main)
-            actual = usi_dset.__repr__()
-            actual = [line.strip() for line in actual.split("\n")]
-            actual = [actual[line_ind] for line_ind in [0, 2, 4, 7, 8, 10, 11]]
+        usi_dset = self.h5_source
+        h5_main = self.h5_file[usi_dset.name]
+        actual = usi_dset.__repr__()
+        actual = [line.strip() for line in actual.split("\n")]
+        actual = [actual[line_ind] for line_ind in [0, 2, 4, 7, 8, 10, 11]]
 
-            expected = list()
-            expected.append(h5_main.__repr__())
-            expected.append(h5_main.name)
-            expected.append(hdf_utils.get_attr(h5_main, "quantity") + " (" + hdf_utils.get_attr(h5_main, "units") + ")")
-            for h5_inds in [usi_dset.h5_pos_inds, usi_dset.h5_spec_inds]:
-                for dim_name, dim_size in zip(hdf_utils.get_attr(h5_inds, "labels"),
-                                              hdf_utils.get_dimensionality(h5_inds)):
-                    expected.append(dim_name + ' - size: ' + str(dim_size))
-            self.assertTrue(np.all([x == y for x, y in zip(actual, expected)]))
+        expected = list()
+        expected.append(h5_main.__repr__())
+        expected.append(h5_main.name)
+        expected.append(hdf_utils.get_attr(h5_main, "quantity") + " (" + hdf_utils.get_attr(h5_main, "units") + ")")
+        for h5_inds in [usi_dset.h5_pos_inds, usi_dset.h5_spec_inds]:
+            for dim_name, dim_size in zip(hdf_utils.get_attr(h5_inds, "labels"),
+                                          hdf_utils.get_dimensionality(h5_inds)):
+                expected.append(dim_name + ' - size: ' + str(dim_size))
+        self.assertTrue(np.all([x == y for x, y in zip(actual, expected)]))
 
 
-class TestEquality(TestUSIDataset):
+class TestEquality(TestBEPS):
 
     def test_correct_USIDataset(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            expected = USIDataset(h5_main)
-            self.assertTrue(expected == expected)
+        expected = USIDataset(self.h5_source)
+        self.assertTrue(expected == expected)
 
     def test_correct_h5_dataset(self):
-        with h5py.File(test_h5_file_path, mode='r') as h5_f:
-            h5_main = h5_f['/Raw_Measurement/source_main']
-            expected = USIDataset(h5_main)
-            self.assertTrue(expected == h5_main)
+        h5_main = self.h5_file[self.h5_source.name]
+        expected = USIDataset(h5_main)
+        self.assertTrue(expected == h5_main)
 
     def test_incorrect_USIDataset(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -103,7 +140,7 @@ class TestEquality(TestUSIDataset):
             self.assertFalse(expected == incorrect)
 
 
-class TestGetNDimFormExists(TestUSIDataset):
+class TestGetNDimFormExistsReal(TestUSIDatasetReal):
 
     def test_sorted_and_unsorted(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -120,7 +157,7 @@ class TestGetNDimFormExists(TestUSIDataset):
             self.assertTrue(np.allclose(nd_slow_to_fast, actual_s2f))
 
 
-class TestPosSpecSlices(TestUSIDataset):
+class TestPosSpecSlicesReal(TestUSIDatasetReal):
 
     def test_empty_dict(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -238,7 +275,7 @@ class TestPosSpecSlices(TestUSIDataset):
             self.assertTrue(np.allclose(expected_pos, actual_pos))
 
 
-class TestGetUnitValues(TestUSIDataset):
+class TestGetUnitValuesReal(TestUSIDatasetReal):
 
     def test_get_pos_values(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -273,7 +310,7 @@ class TestGetUnitValues(TestUSIDataset):
                 _ = usi_main.get_spec_values(np.array(5))
 
 
-class TestSlice(TestUSIDataset):
+class TestSliceReal(TestUSIDatasetReal):
 
     def test_non_existent_dim(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
@@ -541,7 +578,7 @@ class TestSlice(TestUSIDataset):
                   False, True)
 
 
-class TestSorting(TestUSIDataset):
+class TestSortingReal(TestUSIDatasetReal):
 
     def test_toggle_sorting(self):
         # Need to change data file so that sorting actually does something
@@ -578,7 +615,7 @@ class TestSorting(TestUSIDataset):
             self.assertTrue(test_str == sorted_str)
 
 
-class TestGetDimsForSlice(TestUSIDataset):
+class TestGetDimsForSliceReal(TestUSIDatasetReal):
 
     @staticmethod
     def get_all_dimensions():
@@ -599,7 +636,7 @@ class TestGetDimsForSlice(TestUSIDataset):
         return pos_dims, spec_dims
 
     def setUp(self):
-        super(TestGetDimsForSlice, self).setUp()
+        super(TestGetDimsForSliceReal, self).setUp()
         self.pos_dims, self.spec_dims = self.get_all_dimensions()
         self.default_dimension = Dimension('arb.', 'a. u.', [1])
         self.pos_dict = dict()
@@ -728,7 +765,7 @@ def validate_subplots(axes):
 """
 
 
-class TestSimpleStaticVisualization(TestUSIDataset):
+class TestSimpleStaticVisualizationReal(TestUSIDatasetReal):
     
     def test_two_pos_simple(self):
         if skip_viz_tests: return
