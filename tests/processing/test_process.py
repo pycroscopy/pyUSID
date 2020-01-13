@@ -417,11 +417,12 @@ class TestProcWoStatus(TestCoreProcessWDuplicateResultsOverride):
 class TestProcReturnCompletedNotPartial(TestCoreProcessWExistingResults):
 
     def setUp(self):
-        super().setUp(percent_complete=[100, 50],
-                      parms_dict=[None, None],
-                      status_dset=[True, False],
-                      status_attr=[False, True],
-                      verbose=False)
+        super(TestProcReturnCompletedNotPartial,
+              self).setUp(percent_complete=[100, 50],
+                          parms_dict=[None, None],
+                          status_dset=[True, False],
+                          status_attr=[False, True],
+                          verbose=False)
 
     def test_compute(self):
         self.assertEqual(len(self.proc.duplicate_h5_groups), 1)
@@ -438,11 +439,12 @@ class TestProcReturnCompletedNotPartial(TestCoreProcessWExistingResults):
 class TestProcLastPartialResult(TestCoreProcessWExistingResults):
 
     def setUp(self):
-        super().setUp(percent_complete=[75, 50],
-                      parms_dict=[None, None],
-                      status_dset=[True, False],
-                      status_attr=[False, True],
-                      verbose=False)
+        super(TestProcLastPartialResult,
+              self).setUp(percent_complete=[75, 50],
+                          parms_dict=[None, None],
+                          status_dset=[True, False],
+                          status_attr=[False, True],
+                          verbose=False)
 
     def test_compute(self):
         self.assertEqual(len(self.proc.duplicate_h5_groups), 0)
@@ -480,7 +482,7 @@ class TestMultiBatchCompute(TestCoreProcessNoTest):
     def test_compute(self):
         self.proc.verbose = True
         self.proc._max_pos_per_read = 6
-        super().test_compute()
+        super(TestMultiBatchCompute, self).test_compute()
 
 # TODO: read_data_chunk
 # TODO: interrupt computation
