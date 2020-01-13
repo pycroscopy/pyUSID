@@ -419,6 +419,9 @@ def discrete_cmap(num_bins, cmap=None):
     elif not isinstance(cmap, (str, unicode)):
         raise TypeError('cmap should be a string or a matplotlib.colors.Colormap object')
 
+    if not isinstance(num_bins, int):
+        raise TypeError('num_bins must be an unsigned integer')
+
     return plt.get_cmap(cmap, num_bins)
 
 
