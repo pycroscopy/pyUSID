@@ -441,6 +441,15 @@ class TestReshapeToNDims(TestModel):
     def test_numpy_ordinary(self):
         self.base_comparison_4d(False, False)
 
+    def test_dask_input(self):
+        self.base_comparison_4d(False, False, lazy_in=True, lazy_out=False)
+
+    def test_dask_output(self):
+        self.base_comparison_4d(False, False, lazy_in=False, lazy_out=True)
+
+    def test_dask_all(self):
+        self.base_comparison_4d(False, False, lazy_in=True, lazy_out=True)
+
     def test_numpy_pos_inds_order_flipped(self):
         self.base_comparison_4d(True, False)
 
@@ -448,7 +457,7 @@ class TestReshapeToNDims(TestModel):
         # This is the same situation as in BEPS
         self.base_comparison_4d(False, True)
 
-    def test_numpy_inds_order_flipped(self):
+    def test_numpy_both_inds_order_flipped(self):
         self.base_comparison_4d(True, True)
 
     def test_h5_both_inds_flipped(self):
