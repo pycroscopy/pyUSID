@@ -81,18 +81,18 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         if not check_if_main(h5_main):
             raise ValueError('if h5_main is a h5py.Dataset it should be a Main dataset')
     else:
-        if not isinstance(h5_main, (h5py.Dataset, np.ndarray)):
+        if not isinstance(h5_main, (h5py.Dataset, np.ndarray, da.core.Array)):
             raise TypeError('h5_main should either be a h5py.Dataset or numpy array')
 
     if h5_pos is not None:
-        if not isinstance(h5_pos, (h5py.Dataset, np.ndarray)):
+        if not isinstance(h5_pos, (h5py.Dataset, np.ndarray, da.core.Array)):
             raise TypeError('h5_pos should either be a h5py.Dataset or numpy array')
         if h5_pos.shape[0] != h5_main.shape[0]:
             raise ValueError('The size of h5_pos: {} does not match with h5_main: {}'.format(h5_pos.shape,
                                                                                              h5_main.shape))
 
     if h5_spec is not None:
-        if not isinstance(h5_spec, (h5py.Dataset, np.ndarray)):
+        if not isinstance(h5_spec, (h5py.Dataset, np.ndarray, da.core.Array)):
             raise TypeError('h5_spec should either be a h5py.Dataset or numpy array')
         if h5_spec.shape[1] != h5_main.shape[1]:
             raise ValueError('The size of h5_spec: {} does not match with h5_main: {}'.format(h5_spec.shape,
@@ -125,7 +125,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         """
         ds_pos = h5_pos[()]
         pos_labs = get_attr(h5_pos, 'labels')
-    elif isinstance(h5_pos, np.ndarray):
+    elif isinstance(h5_pos, (np.ndarray, da.core.Array)):
         ds_pos = np.atleast_2d(h5_pos)
         pos_labs = np.array(['Position Dimension {}'.format(ipos) for ipos in range(ds_pos.shape[1])])
     else:
@@ -157,7 +157,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         """
         ds_spec = h5_spec[()]
         spec_labs = get_attr(h5_spec, 'labels')
-    elif isinstance(h5_spec, np.ndarray):
+    elif isinstance(h5_spec, (np.ndarray, da.core.Array)):
         ds_spec = h5_spec
         spec_labs = np.array(['Spectral Dimension {}'.format(ispec) for ispec in range(ds_spec.shape[0])])
     else:
@@ -268,15 +268,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         print('Axes will permuted in this order:', swap_axes)
         print('New labels ordering:', all_labels[swap_axes])
 
-    # Get a numeric version of the numpy version for comparisons
-    np_ver = np.__version__.split('.')[:2]
-    np_ver = float(np_ver[0] + '.' + np_ver[1])
-
-    if isinstance(ds_Nd, np.ndarray) and np_ver > 1.16:
-        ds_Nd = ds_Nd.transpose(tuple(swap_axes))[0]
-    else:
-        ds_Nd = ds_Nd.transpose(tuple(swap_axes))
-
+    ds_Nd = ds_Nd.transpose(tuple(swap_axes))
     results = [ds_Nd, True]
 
     if verbose:
@@ -489,6 +481,8 @@ def get_dimensionality(ds_index, index_sort=None):
         Dimensionality of each row in ds_index.  If index_sort is supplied, it will be in the sorted order
 
     """
+    if isinstance(ds_index, da.core.Array):
+        ds_index = ds_index.compute()
     if not isinstance(ds_index, (np.ndarray, h5py.Dataset)):
         raise TypeError('ds_index should either be a numpy array or h5py.Dataset')
 
@@ -531,6 +525,8 @@ def get_sort_order(ds_spec):
         Order of rows sorted from fastest changing to slowest
 
     """
+    if isinstance(ds_spec, da.core.Array):
+        ds_spec = ds_spec.compute()
     if not isinstance(ds_spec, (np.ndarray, h5py.Dataset)):
         raise TypeError('ds_spec should either be a numpy array or h5py.Dataset')
 

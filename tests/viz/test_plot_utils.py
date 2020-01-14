@@ -208,7 +208,7 @@ class TestDiscreteCmap(unittest.TestCase):
     """
 
     def test_numbins_is_not_uint(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             plot_utils.discrete_cmap(num_bins='hello')
 
     def test_cmap_not_str(self):
