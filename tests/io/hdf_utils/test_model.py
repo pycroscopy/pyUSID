@@ -463,6 +463,127 @@ class TestReshapeToNDims(TestModel):
     def test_dask_all_both_inds_order_flipped(self):
         self.base_comparison_4d(True, True, lazy_in=True, lazy_out=True)
 
+    def build_main_anc_1_2d(self, is_2d=True, is_spec=False):
+        num_rows = 2
+        num_cols = 3
+        # arrange as fast, slow
+        pos_inds = np.vstack((np.tile(np.arange(num_cols), num_rows),
+                              np.repeat(np.arange(num_rows), num_cols))).T
+
+        # Data is arranged from slowest to fastest
+        main_nd = np.random.randint(0, high=255, size=(num_rows, num_cols),
+                                    dtype=np.uint8)
+        if not is_2d:
+            pos_inds = np.expand_dims(np.arange(num_rows), axis=1)
+            main_nd = np.random.randint(0, high=255, size=num_rows,
+                                        dtype=np.uint8)
+
+        spec_inds= np.expand_dims([0], axis=0)
+
+        if is_spec:
+            return main_nd, spec_inds, pos_inds.T
+
+        return main_nd, pos_inds, spec_inds
+
+    def base_comparison_1_2d(self, is_2d, is_spec, flip_inds,
+                             lazy_in=False, lazy_out=False):
+        # Data is always stored from fastest to slowest
+        # By default the ancillary dimensions are arranged from fastest to slowest
+        main_nd, pos_inds, spec_inds = self.build_main_anc_1_2d(is_2d=is_2d,
+                                                                is_spec=is_spec)
+
+        main_2d = main_nd.reshape(-1, 1)
+        main_nd_w_sing = np.expand_dims(main_nd, axis=-1)
+        if is_spec:
+            main_2d = main_2d.T
+            main_nd_w_sing = np.expand_dims(main_nd, axis=0)
+
+            # nd    (Y, X)
+        order = [1, 0, 2]
+        if is_spec:
+            order = [0, 2, 1]
+        if flip_inds:
+            # arranged as slow to fast
+            if is_spec:
+                spec_inds = np.flipud(spec_inds)
+                order = [0] + order[1:][::-1]
+            else:
+                pos_inds = np.fliplr(pos_inds)
+                order = order[:2][::-1] + [2]
+
+        print('2D: {}, Spec: {}, Flip: {}'.format(is_2d, is_spec, flip_inds))
+        print('Main data shapes ND: {}, 2D: {}'.format(main_nd.shape, main_2d.shape))
+
+        print(main_nd)
+        print(main_2d)
+
+        if lazy_in:
+            main_2d = da.from_array(main_2d, chunks='auto')
+
+        n_dim, success = hdf_utils.reshape_to_n_dims(main_2d, h5_pos=pos_inds,
+                                                     h5_spec=spec_inds,
+                                                     sort_dims=True,
+                                                     get_labels=False,
+                                                     lazy=lazy_out,
+                                                     verbose=True)
+        if lazy_out:
+            self.assertIsInstance(n_dim, da.core.Array)
+        self.assertTrue(np.allclose(main_nd_w_sing, n_dim))
+
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+        n_dim, success = hdf_utils.reshape_to_n_dims(main_2d, h5_pos=pos_inds,
+                                                     h5_spec=spec_inds,
+                                                     sort_dims=False,
+                                                     get_labels=False,
+                                                     lazy=lazy_out,
+                                                     verbose=True)
+        if lazy_out:
+            self.assertIsInstance(n_dim, da.core.Array)
+
+        if is_2d:
+            main_nd_w_sing = main_nd_w_sing.transpose(order)
+
+        self.assertTrue(np.allclose(main_nd_w_sing,  n_dim))
+
+    def test_numpy_ordinary_1d_pos(self):
+        self.base_comparison_1_2d(False, False, False)
+
+    def test_dask_in_ordinary_1d_pos(self):
+        self.base_comparison_1_2d(False, False, False,
+                                  lazy_in=True, lazy_out=False)
+
+    def test_dask_out_ordinary_1d_pos(self):
+        self.base_comparison_1_2d(False, False, False,
+                                  lazy_in=False, lazy_out=True)
+
+    def test_dask_all_ordinary_1d_pos(self):
+        self.base_comparison_1_2d(False, False, False,
+                                  lazy_in=True, lazy_out=True)
+
+    def test_numpy_ordinary_1d_spec(self):
+        self.base_comparison_1_2d(False, True, False)
+
+    def test_dask_in_ordinary_1d_spec(self):
+        self.base_comparison_1_2d(False, True, False,
+                                  lazy_in=True, lazy_out=False)
+
+    def test_dask_out_ordinary_1d_spec(self):
+        self.base_comparison_1_2d(False, True, False,
+                                  lazy_in=False, lazy_out=True)
+
+    def test_dask_all_ordinary_1d_spec(self):
+        self.base_comparison_1_2d(False, True, False,
+                                  lazy_in=True, lazy_out=True)
+
+    def test_numpy_ordinary_2d_pos(self):
+        self.base_comparison_1_2d(True, False, False)
+
+    def test_numpy_ordinary_2d_spec(self):
+        self.base_comparison_1_2d(True, True, False)
+
+
+
     def test_h5_both_inds_flipped(self):
         # Flipping both the spec and pos dimensions means that the order in which
         # the data is stored is the same order in which dimensions are arranged
