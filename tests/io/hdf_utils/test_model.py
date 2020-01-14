@@ -270,6 +270,52 @@ class TestReshapeToNDims(TestModel):
             self.assertTrue(np.all([x == y for x, y in zip(labels, ['Y', 'X', 'Cycle', 'Bias'])]))
             self.assertTrue(np.allclose(nd_slow_to_fast, n_dim))
 
+    def test_h5_manually_provided_anc_dsets_h5(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            nd_slow_to_fast = h5_f['/Raw_Measurement/n_dim_form'][()]
+            nd_fast_to_slow = nd_slow_to_fast.transpose(1, 0, 3, 2)
+            exp_labs = ['X', 'Y', 'Bias', 'Cycle']
+
+
+            h5_main = h5_f['/Raw_Measurement/source_main']
+            h5_pos_inds = h5_f['/Raw_Measurement/Position_Indices']
+            h5_spec_inds = h5_f['/Raw_Measurement/Spectroscopic_Indices']
+
+            # BOTH POS AND SPEC
+            n_dim, success, labels = hdf_utils.reshape_to_n_dims(h5_main,
+                                                                 h5_pos=h5_pos_inds,
+                                                                 h5_spec=h5_spec_inds,
+                                                                 get_labels=True,
+                                                                 sort_dims=False,
+                                                                 lazy=False, verbose=True)
+            self.assertTrue(np.all([x == y for x, y in zip(labels, exp_labs)]))
+            self.assertTrue(success)
+            self.assertTrue(np.allclose(nd_fast_to_slow, n_dim))
+
+            # ONLY POS:
+            n_dim, success, labels = hdf_utils.reshape_to_n_dims(h5_main,
+                                                                 h5_pos=h5_pos_inds,
+                                                                 h5_spec=None,
+                                                                 get_labels=True,
+                                                                 sort_dims=False,
+                                                                 lazy=False,
+                                                                 verbose=True)
+            self.assertTrue(np.all([x == y for x, y in zip(labels, exp_labs)]))
+            self.assertTrue(success)
+            self.assertTrue(np.allclose(nd_fast_to_slow, n_dim))
+
+            # ONLY SPEC
+            n_dim, success, labels = hdf_utils.reshape_to_n_dims(h5_main,
+                                                                 h5_pos=None,
+                                                                 h5_spec=h5_spec_inds,
+                                                                 get_labels=True,
+                                                                 sort_dims=False,
+                                                                 lazy=False,
+                                                                 verbose=True)
+            self.assertTrue(np.all([x == y for x, y in zip(labels, exp_labs)]))
+            self.assertTrue(success)
+            self.assertTrue(np.allclose(nd_fast_to_slow, n_dim))
+
     def test_h5_not_main_dset(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/Ancillary']
