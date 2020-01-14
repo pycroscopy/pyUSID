@@ -348,46 +348,95 @@ class TestReshapeToNDims(TestModel):
                                np.repeat(np.arange(num_cycles), num_cycle_pts)))
 
         # Data is arranged from slowest to fastest
-        main_nd = np.zeros(shape=(num_rows, num_cols, num_cycles, num_cycle_pts), dtype=np.float16)
+        main_nd = np.zeros(shape=(num_rows, num_cols, num_cycles,
+                                  num_cycle_pts), dtype=np.uint8)
         for row_ind in range(num_rows):
             for col_ind in range(num_cols):
                 for cycle_ind in range(num_cycles):
                     # for bias_ind in range(num_cycle_pts):
                     val = 1E+3*row_ind + 1E+2*col_ind + 1E+1*cycle_ind + np.arange(num_cycle_pts)
+                    main_nd[row_ind, col_ind, cycle_ind] = val
 
         return main_nd, pos_inds, spec_inds
 
-    def base_comparison(self, flip_pos_inds, flip_spec_inds):
-        # Data is always stored from fastest to slowest
-        # By default the ancillary dimensions are arranged from fastest to slowest
-        main_nd, pos_inds, spec_inds = self.build_main_anc_4d()
+    def base_comparison_4d(self, flip_pos_inds, flip_spec_inds, lazy_in=False,
+                           lazy_out=False, verbose=False):
+        # Generated Data dims from slowest to fastest
+        exp_nd_s2f, pos_inds, spec_inds = self.build_main_anc_4d()
         # nd    (Y, X, Cycle, Bias)
-        order = (1, 0, 3, 2)
+        main_2d = exp_nd_s2f.reshape(np.prod(exp_nd_s2f.shape[:2]),
+                                  np.prod(exp_nd_s2f.shape[2:]))
+
+        # Dimension names arranged from slowest to fastest
+        labs_s2f = ['Position Dimension 1', 'Position Dimension 0',
+                    'Spectral Dimension 1', 'Spectral Dimension 0']
+
+        # Generated ancillary dimensions are arranged from fastest to slowest
+        # Unless any flipping is requested, as-is order should be fast to slow
+        as_is_nd_order = [1, 0, 3, 2]
+        # Unless any flipping is requested, s2f order is already in place
+        s2f_lab_order = [0, 1, 2, 3]
         if flip_pos_inds:
             # arranged as slow to fast
             pos_inds = np.fliplr(pos_inds)
-            order = tuple([0, 1] + list(order[2:]))
+            as_is_nd_order = as_is_nd_order[:2][::-1] + as_is_nd_order[2:]
+            s2f_lab_order = [1, 0] + s2f_lab_order[2:]
         if flip_spec_inds:
-            order = tuple(list(order[:2]) + [2, 3])
+            # arranged as slow to fast
+            as_is_nd_order = as_is_nd_order[:2] + as_is_nd_order[2:][::-1]
+            s2f_lab_order = s2f_lab_order[:2] + [3, 2]
             spec_inds = np.flipud(spec_inds)
 
-        main_2d = main_nd.reshape(np.prod(main_nd.shape[:2]),
-                                  np.prod(main_nd.shape[2:]))
+        if lazy_in:
+            main_2d = da.from_array(main_2d, chunks='auto')
+            pos_inds = da.from_array(pos_inds, chunks='auto')
+            spec_inds = da.from_array(spec_inds, chunks='auto')
 
-        n_dim, success = hdf_utils.reshape_to_n_dims(main_2d, h5_pos=pos_inds,
+        n_dim, suc, labs = hdf_utils.reshape_to_n_dims(main_2d,
+                                                       h5_pos=pos_inds,
                                                      h5_spec=spec_inds, sort_dims=True,
-                                                     get_labels=False, lazy=False, verbose=False)
-        self.assertTrue(np.allclose(main_nd, n_dim))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                                                       get_labels=True,
+                                                       lazy=lazy_out,
+                                                       verbose=verbose)
+        if lazy_out:
+            self.assertIsInstance(n_dim, da.core.Array)
+        self.assertTrue(np.allclose(exp_nd_s2f, n_dim))
+        self.assertTrue(suc)
+        # labels were auto-generated and these will be flipped blindly
+        exp_labs = np.array(labs_s2f)[s2f_lab_order]
+        self.assertTrue(np.all([x == y for x, y in zip(labs, exp_labs)]))
 
-        n_dim, success = hdf_utils.reshape_to_n_dims(main_2d, h5_pos=pos_inds,
+        if verbose:
+            print('~~~~~~~~~~~~~~~~~~~~~~ UNSORTED ~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+        n_dim, suc, labs = hdf_utils.reshape_to_n_dims(main_2d,
+                                                       h5_pos=pos_inds,
                                                      h5_spec=spec_inds,
                                                      sort_dims=False,
-                                                     get_labels=False,
-                                                     lazy=False, verbose=False)
-        # print(main_nd.shape, 'permuted ->', order)
-        main_nd = main_nd.transpose(order)
-        self.assertTrue(np.allclose(main_nd,  n_dim))
+                                                       get_labels=True,
+                                                       lazy=lazy_out,
+                                                       verbose=verbose)
+        if lazy_out:
+            self.assertIsInstance(n_dim, da.core.Array)
+
+        # Rearrange the dim labels and N-dim form from slow-to-fast to:
+        if verbose:
+            print('N-dim order will be permuted as: {}'.format(as_is_nd_order))
+            print('Labels will be permuted as: {}'.format([1, 0, 3, 2]))
+        exp_nd = exp_nd_s2f.transpose(tuple(as_is_nd_order))
+        """
+        This is sort of confusing:
+        No matter how the pos / spec dims are ordered, the names will always
+        start as P0, P1, S0, S1
+        """
+        exp_labs = np.array(labs_s2f)[[1, 0, 3, 2]]
+        if verbose:
+            print('Expected N-dim shape: {} and labels: {}'
+                  ''.format(exp_nd.shape, exp_labs))
+
+        self.assertTrue(np.allclose(exp_nd,  n_dim))
+        self.assertTrue(suc)
+        self.assertTrue(np.all([x == y for x, y in zip(labs, exp_labs)]))
 
     def test_numpy_ordinary(self):
         self.base_comparison(False, False)
