@@ -81,18 +81,18 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
         if not check_if_main(h5_main):
             raise ValueError('if h5_main is a h5py.Dataset it should be a Main dataset')
     else:
-        if not isinstance(h5_main, (h5py.Dataset, np.ndarray)):
+        if not isinstance(h5_main, (h5py.Dataset, np.ndarray, da.core.Array)):
             raise TypeError('h5_main should either be a h5py.Dataset or numpy array')
 
     if h5_pos is not None:
-        if not isinstance(h5_pos, (h5py.Dataset, np.ndarray)):
+        if not isinstance(h5_pos, (h5py.Dataset, np.ndarray, da.core.Array)):
             raise TypeError('h5_pos should either be a h5py.Dataset or numpy array')
         if h5_pos.shape[0] != h5_main.shape[0]:
             raise ValueError('The size of h5_pos: {} does not match with h5_main: {}'.format(h5_pos.shape,
                                                                                              h5_main.shape))
 
     if h5_spec is not None:
-        if not isinstance(h5_spec, (h5py.Dataset, np.ndarray)):
+        if not isinstance(h5_spec, (h5py.Dataset, np.ndarray, da.core.Array)):
             raise TypeError('h5_spec should either be a h5py.Dataset or numpy array')
         if h5_spec.shape[1] != h5_main.shape[1]:
             raise ValueError('The size of h5_spec: {} does not match with h5_main: {}'.format(h5_spec.shape,
