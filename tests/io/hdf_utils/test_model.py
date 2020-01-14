@@ -252,14 +252,21 @@ class TestReshapeToNDims(TestModel):
             nd_slow_to_fast = h5_f['/Raw_Measurement/n_dim_form'][()]
 
             h5_main = h5_f['/Raw_Measurement/source_main']
+            # Data is always slowest to fastest
+            # Anc dims arranged from fastest to slowest
+            # Expecting data dims to be arranged according to anc dims order
             n_dim, success, labels = hdf_utils.reshape_to_n_dims(h5_main, get_labels=True, sort_dims=False,
-                                                                 lazy=False, verbose=False)
+                                                                 lazy=False, verbose=True)
             self.assertTrue(np.all([x == y for x, y in zip(labels, ['X', 'Y', 'Bias', 'Cycle'])]))
+            self.assertTrue(success)
             nd_fast_to_slow = nd_slow_to_fast.transpose(1, 0, 3, 2)
             self.assertTrue(np.allclose(nd_fast_to_slow, n_dim))
 
+            # Anc dims arranged from fastest to slowest
+            # Expecting data dims to be arranged according to slow to fast
             n_dim, success, labels = hdf_utils.reshape_to_n_dims(h5_main, get_labels=True, sort_dims=True,
-                                                                 lazy=False, verbose=False)
+                                                                 lazy=False, verbose=True)
+            self.assertTrue(success)
             self.assertTrue(np.all([x == y for x, y in zip(labels, ['Y', 'X', 'Cycle', 'Bias'])]))
             self.assertTrue(np.allclose(nd_slow_to_fast, n_dim))
 
