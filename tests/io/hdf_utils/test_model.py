@@ -460,6 +460,9 @@ class TestReshapeToNDims(TestModel):
     def test_numpy_both_inds_order_flipped(self):
         self.base_comparison_4d(True, True)
 
+    def test_dask_all_both_inds_order_flipped(self):
+        self.base_comparison_4d(True, True, lazy_in=True, lazy_out=True)
+
     def test_h5_both_inds_flipped(self):
         # Flipping both the spec and pos dimensions means that the order in which
         # the data is stored is the same order in which dimensions are arranged
