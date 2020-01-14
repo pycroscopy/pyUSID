@@ -439,17 +439,17 @@ class TestReshapeToNDims(TestModel):
         self.assertTrue(np.all([x == y for x, y in zip(labs, exp_labs)]))
 
     def test_numpy_ordinary(self):
-        self.base_comparison(False, False)
+        self.base_comparison_4d(False, False)
 
     def test_numpy_pos_inds_order_flipped(self):
-        self.base_comparison(True, False)
+        self.base_comparison_4d(True, False)
 
     def test_numpy_spec_inds_order_flipped(self):
         # This is the same situation as in BEPS
-        self.base_comparison(False, True)
+        self.base_comparison_4d(False, True)
 
     def test_numpy_inds_order_flipped(self):
-        self.base_comparison(True, True)
+        self.base_comparison_4d(True, True)
 
     def test_h5_both_inds_flipped(self):
         # Flipping both the spec and pos dimensions means that the order in which
