@@ -388,9 +388,9 @@ class TestReshapeToNDims(TestModel):
             spec_inds = np.flipud(spec_inds)
 
         if lazy_in:
-            main_2d = da.from_array(main_2d, chunks='auto')
-            pos_inds = da.from_array(pos_inds, chunks='auto')
-            spec_inds = da.from_array(spec_inds, chunks='auto')
+            main_2d = da.from_array(main_2d, chunks=main_2d.shape)
+            pos_inds = da.from_array(pos_inds, chunks=pos_inds.shape)
+            spec_inds = da.from_array(spec_inds, chunks=spec_inds.shape)
 
         n_dim, suc, labs = hdf_utils.reshape_to_n_dims(main_2d,
                                                        h5_pos=pos_inds,
@@ -518,7 +518,7 @@ class TestReshapeToNDims(TestModel):
         print(main_2d)
 
         if lazy_in:
-            main_2d = da.from_array(main_2d, chunks='auto')
+            main_2d = da.from_array(main_2d, chunks=main_2d.shape)
 
         n_dim, success = hdf_utils.reshape_to_n_dims(main_2d, h5_pos=pos_inds,
                                                      h5_spec=spec_inds,
