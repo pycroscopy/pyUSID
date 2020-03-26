@@ -1056,41 +1056,6 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
     return h5_indices, h5_values
 
 
-def write_reduced_spec_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_name, basename='Spectroscopic',
-                             verbose=False):
-    """
-    Creates new Spectroscopic Indices and Values datasets from the input datasets
-    and keeps the dimensions specified in keep_dim
-
-    Parameters
-    ----------
-    h5_parent_group : :class:`h5py.Group` or :class:`h5py.File`
-        Group under which the indices and values datasets will be created
-    h5_spec_inds : HDF5 Dataset
-            Spectroscopic indices dataset
-    h5_spec_vals : HDF5 Dataset
-            Spectroscopic values dataset
-    dim_name : str or unicode or list of strings
-            Names of the dimension(s) to remove
-    basename : str or unicode, Optional
-            String to which '_Indices' and '_Values' will be appended to get the names
-            of the new datasets
-    verbose : bool, optional. Default = False
-            Whether or not to print debugging print statements
-
-    Returns
-    -------
-    h5_inds : h5py.Dataset
-            Reduced Spectroscopic indices dataset
-    h5_vals : h5py.Dataset
-            Reduces Spectroscopic values dataset
-
-    """
-    warn('write_reduced_spec_dsets is deprecated. Please use write_reduced_anc_dsets instead', FutureWarning)
-    return write_reduced_anc_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_name, basename=basename,
-                                   verbose=verbose)
-
-
 def copy_region_refs(h5_source, h5_target):
     """
     Check the input dataset for plot groups, copy them if they exist
