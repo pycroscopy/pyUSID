@@ -398,7 +398,7 @@ class TestIsEditableH5(TestHDFUtilsBase):
             _ = hdf_utils.is_editable_h5(h5_group)
 
 
-class TestLinkH5ObjAsAlias(TestHDFUtilsBase):
+class TestLinkH5ObjAsAlias(unittest.TestCase):
 
     def test_legal(self):
         file_path = 'link_as_alias.h5'
@@ -448,7 +448,7 @@ class TestLinkH5ObjAsAlias(TestHDFUtilsBase):
         os.remove(file_path)
 
 
-class TestLinkH5ObjectAsAttribute(TestHDFUtilsBase):
+class TestLinkH5ObjectAsAttribute(unittest.TestCase):
 
     def test_legal(self):
         file_path = 'link_h5_objects_as_attrs.h5'
@@ -489,7 +489,7 @@ class TestLinkH5ObjectAsAttribute(TestHDFUtilsBase):
         os.remove(file_path)
 
 
-def TestValidateH5ObjsInSameFile(TestHDFUtilsBase):
+class TestValidateH5ObjsInSameFile(unittest.TestCase):
 
     def test_diff_file(self):
         file_path_1 = 'source.h5'
@@ -517,7 +517,7 @@ def TestValidateH5ObjsInSameFile(TestHDFUtilsBase):
         os.remove(file_path)
 
 
-class TestWriteBookKeepingAttrs(TestHDFUtilsBase):
+class TestWriteBookKeepingAttrs(unittest.TestCase):
 
     def test_file(self):
         file_path = 'test.h5'
