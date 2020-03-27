@@ -1519,6 +1519,94 @@ class TestCheckAndLinkAncillary(TestSimple):
         os.remove(file_path)
 
 
+class TestValidateAncH5Dsets(TestSimple):
+
+    def test_valid_shapes(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_grp = h5_f['Raw_Measurement']
+            h5_main = h5_grp['source_main']
+
+            h5_pos_inds = h5_grp['Position_Indices']
+            h5_pos_vals = h5_grp['Position_Values']
+
+            hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals, h5_main,
+                                            is_spectroscopic=False)
+
+            hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
+                                            h5_main.shape,
+                                            is_spectroscopic=False)
+
+            hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
+                                            list(h5_main.shape),
+                                            is_spectroscopic=False)
+
+            h5_spec_inds = h5_grp['Spectroscopic_Indices']
+            h5_spec_vals = h5_grp['Spectroscopic_Values']
+
+            hdf_utils.validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals, h5_main,
+                                            is_spectroscopic=True)
+
+            hdf_utils.validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals,
+                                            h5_main.shape,
+                                            is_spectroscopic=True)
+
+            hdf_utils.validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals,
+                                            list(h5_main.shape),
+                                            is_spectroscopic=True)
+
+    def test_invalid_spec_pos_bool(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_grp = h5_f['Raw_Measurement']
+            h5_main = h5_grp['source_main']
+
+            h5_pos_inds = h5_grp['Position_Indices']
+            h5_pos_vals = h5_grp['Position_Values']
+
+            with self.assertRaises(ValueError):
+                hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
+                                                h5_main,
+                                                is_spectroscopic=True)
+
+            h5_spec_inds = h5_grp['Spectroscopic_Indices']
+            h5_spec_vals = h5_grp['Spectroscopic_Values']
+
+            with self.assertRaises(ValueError):
+                hdf_utils.validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals,
+                                                h5_main,
+                                                is_spectroscopic=False)
+
+    def test_mismatched_anc_shapes(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_grp = h5_f['Raw_Measurement']
+            h5_main = h5_grp['source_main']
+
+            h5_pos_inds = h5_grp['Position_Indices']
+            h5_pos_vals = h5_grp['Ancillary']
+
+            with self.assertRaises(ValueError):
+                hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
+                                                h5_main,
+                                                is_spectroscopic=False)
+
+    def test_invali_dtypes(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_grp = h5_f['Raw_Measurement']
+            h5_main = h5_grp['source_main']
+
+            h5_pos_inds = h5_grp['Position_Indices']
+            h5_pos_vals = h5_grp['Position_Values']
+
+            with self.assertRaises(TypeError):
+                hdf_utils.validate_anc_h5_dsets('h5_pos_inds', h5_pos_vals,
+                                                h5_main,
+                                                is_spectroscopic=False)
+
+            with self.assertRaises(TypeError):
+                hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
+                                                np.arange(3),
+                                                is_spectroscopic=False)
+
+
 """
     def test_linking_main_plus_other_dsets(self):
         file_path = 'check_and_link_ancillary.h5'
