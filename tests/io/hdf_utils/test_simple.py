@@ -1325,6 +1325,43 @@ class TestCreateEmptyDataset(unittest.TestCase):
 
         os.remove(file_path)
 
+    def test_diff_file_new_attrs(self):
+        file_path = 'test.h5'
+        new_path = 'new.h5'
+        existing_attrs = {'a': 1, 'b': 'Hello'}
+        easy_attrs = {'1_string': 'Current', '1_number': 35.23}
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
+            h5_dset_source.attrs.update(existing_attrs)
+            h5_other = h5_f.create_dataset('Other', data=[1, 2, 3])
+            h5_dset_source.attrs['dset_ref'] = h5_other.ref
+            with h5py.File(new_path, mode='w') as h5_f_new:
+                func = hdf_utils.create_empty_dataset
+                if sys.version_info.major == 3:
+                    with self.assertWarns(UserWarning):
+                        h5_duplicate = func(h5_dset_source, np.float16,
+                                            'Duplicate', h5_group=h5_f_new,
+                                            new_attrs=easy_attrs,
+                                            skip_refs=False)
+                else:
+                    h5_duplicate = func(h5_dset_source, np.float16,
+                                        'Duplicate', h5_group=h5_f_new,
+                                        new_attrs=easy_attrs, skip_refs=False)
+                self.assertIsInstance(h5_duplicate, h5py.Dataset)
+                self.assertEqual(h5_duplicate.parent, h5_f_new)
+                self.assertFalse(h5_dset_source.file == h5_duplicate.file)
+                self.assertEqual(h5_duplicate.name, '/Duplicate')
+                self.assertEqual(h5_duplicate.dtype, np.float16)
+                for key, val in easy_attrs.items():
+                    self.assertEqual(val, h5_duplicate.attrs[key])
+                for key, val in existing_attrs.items():
+                    self.assertEqual(val, h5_duplicate.attrs[key])
+                self.assertTrue('dset_ref' in h5_dset_source.attrs.keys())
+                self.assertTrue('dset_ref' not in h5_duplicate.attrs.keys())
+
+        os.remove(file_path)
+
     def test_diff_groups(self):
         file_path = 'test.h5'
         existing_attrs = {'a': 1, 'b': 'Hello'}
