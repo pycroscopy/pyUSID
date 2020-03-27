@@ -189,6 +189,7 @@ def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
     if h5_main is not None:
         if not isinstance(h5_main, h5py.Dataset):
             raise TypeError('h5_main should be a h5py.Dataset object')
+        validate_h5_objs_in_same_h5_file(h5_dset, h5_main)
     if anc_refs is not None:
         if not isinstance(anc_refs, (list, tuple)):
             raise TypeError('anc_refs should be a list / tuple')
@@ -198,8 +199,10 @@ def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
 
     def __check_and_link_single(h5_obj_ref, target_ref_name):
         if isinstance(h5_obj_ref, h5py.Reference):
+            # TODO: Same HDF5 file?
             h5_dset.attrs[target_ref_name] = h5_obj_ref
         elif isinstance(h5_obj_ref, (h5py.Dataset, h5py.Group, h5py.File)):
+            validate_h5_objs_in_same_h5_file(h5_obj_ref, h5_dset)
             h5_dset.attrs[target_ref_name] = h5_obj_ref.ref
         elif h5_main is not None:
             h5_anc = get_auxiliary_datasets(h5_main, aux_dset_name=[target_ref_name])
