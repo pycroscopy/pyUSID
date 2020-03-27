@@ -1588,7 +1588,7 @@ class TestValidateAncH5Dsets(TestSimple):
                                                 h5_main,
                                                 is_spectroscopic=False)
 
-    def test_invali_dtypes(self):
+    def test_invalid_dtypes(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_grp = h5_f['Raw_Measurement']
             h5_main = h5_grp['source_main']
@@ -1605,6 +1605,51 @@ class TestValidateAncH5Dsets(TestSimple):
                 hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
                                                 np.arange(3),
                                                 is_spectroscopic=False)
+
+
+class TestValidateDimsAgainstMAin(unittest.TestCase):
+
+    def test_single_dim(self):
+        func = hdf_utils.validate_dims_against_main
+        func((1, 5), write_utils.Dimension('blah', 'meh', np.arange(5)),
+             is_spectroscopic=True)
+        func((5, 1), [write_utils.Dimension('blah', 'meh', np.arange(5))],
+             is_spectroscopic=False)
+
+    def test_multi_dims(self):
+        func = hdf_utils.validate_dims_against_main
+        func((1, 15), [write_utils.Dimension('a', 'b', 5),
+                       write_utils.Dimension('a', 'b', 3)],
+             is_spectroscopic=True)
+        func((15, 5), [write_utils.Dimension('a', 'b', 5),
+                       write_utils.Dimension('a', 'b', 3)],
+             is_spectroscopic=False)
+
+    def test_invalid_dims(self):
+        func = hdf_utils.validate_dims_against_main
+        with self.assertRaises(ValueError):
+            func((1, 25), [write_utils.Dimension('a', 'b', 5),
+                           write_utils.Dimension('a', 'b', 3)],
+                 is_spectroscopic=True)
+        with self.assertRaises(ValueError):
+            func((25, 5), [write_utils.Dimension('a', 'b', 5)],
+                 is_spectroscopic=False)
+
+    def test_invalid_dtypes(self):
+        func = hdf_utils.validate_dims_against_main
+        with self.assertRaises(TypeError):
+            func('hello', write_utils.Dimension('a', 'b', 5))
+        with self.assertRaises(TypeError):
+            func((25, 5), "Dimension")
+
+    def test_invalid_main_shape(self):
+        func = hdf_utils.validate_dims_against_main
+        with self.assertRaises(ValueError):
+            func([-5, 1], write_utils.Dimension('a', 'b', 5))
+        with self.assertRaises(ValueError):
+            func([5], write_utils.Dimension('a', 'b', 5))
+        with self.assertRaises(ValueError):
+            func([1, 2, 5], write_utils.Dimension('a', 'b', 5))
 
 
 """
