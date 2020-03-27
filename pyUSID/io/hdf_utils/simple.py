@@ -238,8 +238,7 @@ def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
     h5_dset.file.flush()
 
 
-def copy_attributes(source, dest, skip_refs=True):
-    # TODO: VERY confusing - why call copy_region_refs() AND copy region refs here???
+def copy_attributes(source, dest, skip_refs=True, verbose=False):
     """
     Copy attributes from one h5object to another
 
@@ -251,56 +250,56 @@ def copy_attributes(source, dest, skip_refs=True):
         Object to which the attributes need to be copied to
     skip_refs : bool, optional. default = True
         Whether or not the references (dataset and region) should be skipped
+    verbose : bool, optional. Defualt = False
+        Whether or not to print logs for debugging
 
     """
+    mesg = 'should be a h5py.Dataset, h5py.Group,or h5py.File object'
     if not isinstance(source, (h5py.Dataset, h5py.Group, h5py.File)):
-        raise TypeError('source should be a h5py.Dataset, h5py.Group,or h5py.File object')
+        raise TypeError('source ' + mesg)
     if not isinstance(dest, (h5py.Dataset, h5py.Group, h5py.File)):
-        raise TypeError('dest should be a h5py.Dataset, h5py.Group, or h5py.File object')
+        raise TypeError('dest ' + mesg)
+
+    skip_dset_refs = skip_refs
+    try:
+        validate_h5_objs_in_same_h5_file(source, dest)
+    except ValueError:
+        if not skip_refs:
+            warn('Dataset references will not be copied since {} and {} are '
+                 'in different files'.format(source, dest))
+        skip_dset_refs = True
 
     for att_name in source.attrs.keys():
         att_val = get_attr(source, att_name)
         """
         Don't copy references unless asked
         """
-        if isinstance(att_val, h5py.Reference):
-
-            if not skip_refs and not isinstance(dest, h5py.Dataset):
-                warn('Skipping region reference named: {}'.format(att_name))
-                continue
-            elif isinstance(att_val, h5py.RegionReference):
-                #     """
-                #     Dereference old reference, get the appropriate data
-                #     slice and create new reference.
-                #     """
-                #     try:
-                #         region = h5py.h5r.get_region(att_val, source.id)
-                #
-                #         start, end = region.get_select_bounds()
-                #         ref_slice = []
-                #         for i in range(len(start)):
-                #             if start[i] == end[i]:
-                #                 ref_slice.append(start[i])
-                #             else:
-                #                 ref_slice.append(slice(start[i], end[i]))
-                #     except:
-                #         warn('Could not copy region reference:{} to {}'.format(att_name, dest.name))
-                #         continue
-                #
-                #     dest.attrs[att_name] = dest.regionref[tuple(ref_slice)]
-                continue
-            else:
+        if isinstance(att_val, h5py.Reference) and not isinstance(att_val, h5py.RegionReference):
+            if not skip_dset_refs:
+                if verbose:
+                    print('dset ref copying ' + att_name)
                 dest.attrs[att_name] = att_val
-                continue
-
-        # everything else
-        dest.attrs[att_name] = clean_string_att(att_val)
+        elif isinstance(att_val, h5py.RegionReference):
+            # handled in dedicated if condition below
+            continue
+        else:
+            # everything else
+            if verbose:
+                print('simple copying ' + att_name)
+            dest.attrs[att_name] = clean_string_att(att_val)
 
     if not skip_refs:
-        try:
-            copy_region_refs(source, dest)
-        except TypeError:
-            print('Could not copy region references to {}.'.format(dest.name))
+        # This can be copied across files without problems
+        mesg = 'Could not copy region references to {}.'.format(dest.name)
+        if isinstance(dest, h5py.Dataset):
+            try:
+                if verbose:
+                    print('requested reg ref copy')
+                copy_region_refs(source, dest)
+            except TypeError:
+                warn(mesg)
+        else:
+            warn('Cannot copy region references to {}'.format(type(dest)))
 
     return dest
 
@@ -836,6 +835,12 @@ def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs
         if not isinstance(h5_group, (h5py.Group, h5py.File)):
             raise TypeError('h5_group should be a h5py.Group or h5py.File object')
 
+        if source_dset.file != h5_group.file and not skip_refs:
+            # Cannot carry over references
+            warn('H5 object references will not be copied over since {} is in '
+                 'a different HDF5 file as {}'.format(h5_group, source_dset))
+            skip_refs = True
+
     dset_name = validate_single_string_arg(dset_name, 'dset_name')
     if '-' in dset_name:
         warn('dset_name should not contain the "-" character. Reformatted name from:{} to '
@@ -1115,6 +1120,8 @@ def copy_region_refs(h5_source, h5_target):
     are_main = all([check_if_main(h5_source), check_if_main(h5_target)])
     if not all([isinstance(h5_source, h5py.Dataset), isinstance(h5_target, h5py.Dataset)]):
         raise TypeError('Inputs to copyRegionRefs must be HDF5 Datasets or PycroDatasets.')
+
+    validate_h5_objs_in_same_h5_file(h5_source, h5_target)
 
     if are_main:
         h5_source_inds = h5_source.file[h5_source.attrs['Spectroscopic_Indices']]
