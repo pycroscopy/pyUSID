@@ -394,7 +394,7 @@ def validate_dims_against_main(main_shape, dims, is_spectroscopic=True):
         raise TypeError('main_shape should be a list or tuple. Provided object'
                         ' was of type: {}'.format(type(main_shape)))
     if isinstance(dims, Dimension):
-        dims = list(Dimension)
+        dims = list(dims)
     elif not isinstance(dims, (list, tuple)):
         raise TypeError('"dims" must be a list or tuple of usid.Dimension '
                         'objects. Provided object was of type: {}'
