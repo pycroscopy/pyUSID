@@ -347,14 +347,16 @@ def validate_anc_h5_dsets(h5_inds, h5_vals, main_or_shape, is_spectroscopic=True
         HDF5 dataset corresponding to the main dataset OR
         Shape of the main dataset expressed as a tuple or similar
     is_spectroscopic : bool, Optional. Default = True
-        set to True if ``dims`` correspond to Spectroscopic Dimensions. False otherwise.
+        set to True if ``dims`` correspond to Spectroscopic Dimensions.
+        False otherwise.
     """
     if not isinstance(h5_inds, h5py.Dataset):
         raise TypeError('h5_inds must be a h5py.Dataset object')
     if not isinstance(h5_vals, h5py.Dataset):
         raise TypeError('h5_vals must be a h5py.Dataset object')
     if h5_inds.shape != h5_vals.shape:
-        raise ValueError('h5_inds: {} and h5_vals: {} should be of the same shape'.format(h5_inds.shape, h5_vals.shape))
+        raise ValueError('h5_inds: {} and h5_vals: {} should be of the same '
+                         'shape'.format(h5_inds.shape, h5_vals.shape))
 
     if isinstance(main_or_shape, h5py.Dataset):
         main_shape = main_or_shape.shape
@@ -368,8 +370,9 @@ def validate_anc_h5_dsets(h5_inds, h5_vals, main_or_shape, is_spectroscopic=True
                         ''.format(type(main_or_shape)))
 
     if h5_inds.shape[is_spectroscopic] != main_shape[is_spectroscopic]:
-        raise ValueError('index {} in shape of h5_inds: {} and main_data: {} should be equal'
-                         '.'.format(int(is_spectroscopic), h5_inds.shape, main_shape))
+        raise ValueError('index {} in shape of h5_inds: {} and main_data: {} '
+                         'should be equal'.format(int(is_spectroscopic),
+                                                  h5_inds.shape, main_shape))
 
 
 def validate_dims_against_main(main_shape, dims, is_spectroscopic=True):
@@ -384,7 +387,8 @@ def validate_dims_against_main(main_shape, dims, is_spectroscopic=True):
     dims : iterable
         List of Dimension objects
     is_spectroscopic : bool, Optional. Default = True
-        set to True if ``dims`` correspond to Spectroscopic Dimensions. False otherwise.
+        set to True if ``dims`` correspond to Spectroscopic Dimensions.
+        False otherwise.
     """
     if not isinstance(main_shape, (list, tuple)):
         raise TypeError('main_shape should be a list or tuple. Provided object'
@@ -405,12 +409,14 @@ def validate_dims_against_main(main_shape, dims, is_spectroscopic=True):
         main_dim = 0
         dim_category = 'Position'
 
-    # TODO: This is where the dimension type will need to be taken into account:
+    # TODO: This is where the dimension type will need to be taken into account
     lhs = main_shape[main_dim]
     rhs = np.product([len(x.values) for x in dims])
     if lhs != rhs:
-        raise ValueError(dim_category + ' dimensions in main data of size: {} do not match with product of values in provided '
-                                        'Dimension objects: {}'.format(lhs, rhs))
+        raise ValueError(dim_category +
+                         ' dimensions in main data of size: {} do not match '
+                         'with product of values in provided Dimension objects'
+                         ': {}'.format(lhs, rhs))
 
 
 def check_if_main(h5_main, verbose=False):
@@ -426,7 +432,8 @@ def check_if_main(h5_main, verbose=False):
     * quantity
     * units
 
-    In addition, the shapes of the ancillary matrices should match with that of h5_main
+    In addition, the shapes of the ancillary matrices should match with that of
+    h5_main
 
     Parameters
     ----------
