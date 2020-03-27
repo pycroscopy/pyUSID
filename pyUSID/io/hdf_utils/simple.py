@@ -386,6 +386,18 @@ def validate_dims_against_main(main_shape, dims, is_spectroscopic=True):
     is_spectroscopic : bool, Optional. Default = True
         set to True if ``dims`` correspond to Spectroscopic Dimensions. False otherwise.
     """
+    if not isinstance(main_shape, (list, tuple)):
+        raise TypeError('main_shape should be a list or tuple. Provided object'
+                        ' was of type: {}'.format(type(main_shape)))
+    if isinstance(dims, Dimension):
+        dims = list(Dimension)
+    elif not isinstance(dims, (list, tuple)):
+        raise TypeError('"dims" must be a list or tuple of usid.Dimension '
+                        'objects. Provided object was of type: {}'
+                        ''.format(type(dims)))
+    if not all([isinstance(obj, Dimension) for obj in dims]):
+        raise TypeError('One or more objects in "dims" was not usid.Dimension')
+
     if is_spectroscopic:
         main_dim = 1
         dim_category = 'Spectroscopic'
