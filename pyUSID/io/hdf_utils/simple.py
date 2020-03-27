@@ -14,7 +14,7 @@ import h5py
 import numpy as np
 import dask.array as da
 
-from ..dtype_utils import validate_dtype, validate_single_string_arg, validate_list_of_strings
+from ..dtype_utils import validate_dtype, validate_single_string_arg, validate_list_of_strings, contains_integers
 from ..reg_ref import write_region_references, simple_region_ref_copy, copy_reg_ref_reduced_dim, \
     create_region_reference
 from ..write_utils import clean_string_att, build_ind_val_matrices, get_aux_dset_slicing, INDICES_DTYPE, \
@@ -393,8 +393,12 @@ def validate_dims_against_main(main_shape, dims, is_spectroscopic=True):
     if not isinstance(main_shape, (list, tuple)):
         raise TypeError('main_shape should be a list or tuple. Provided object'
                         ' was of type: {}'.format(type(main_shape)))
+    if len(main_shape) != 2:
+        raise ValueError('"main_shape" should be of length 2')
+    contains_integers(main_shape, min_val=1)
+
     if isinstance(dims, Dimension):
-        dims = list(dims)
+        dims = [dims]
     elif not isinstance(dims, (list, tuple)):
         raise TypeError('"dims" must be a list or tuple of usid.Dimension '
                         'objects. Provided object was of type: {}'
