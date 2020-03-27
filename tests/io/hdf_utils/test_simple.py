@@ -668,17 +668,22 @@ class TestCheckForOld(TestSimple):
                 _ = hdf_utils.check_for_old(h5_main, 1.234)
 
             with self.assertRaises(TypeError):
-                _ = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms="not_a_dictionary")
+                _ = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                            new_parms="not_a_dictionary")
 
             with self.assertRaises(TypeError):
-                _ = hdf_utils.check_for_old(h5_main, 'Fitter', target_dset=1.234)
+                _ = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                            target_dset=1.234)
 
     def test_valid_target_dset(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'units': ['V'], 'labels': ['Bias']}
             dset_name = 'Spectroscopic_Indices'
-            groups = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=dset_name, verbose=False)
+            groups = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                             new_parms=attrs,
+                                             target_dset=dset_name,
+                                             verbose=False)
             groups = set(groups)
             self.assertEqual(groups, set([h5_f['/Raw_Measurement/source_main-Fitter_000/'],
                                           h5_f['/Raw_Measurement/source_main-Fitter_001/']]))
@@ -687,8 +692,10 @@ class TestCheckForOld(TestSimple):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_1': 'string_val', 'att_2': 1.2345,
-                     'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2', 'str_3']}
-            ret = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset='Does_not_exist')
+                     'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2',
+                                                      'str_3']}
+            ret = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs,
+                                          target_dset='Does_not_exist')
             self.assertEqual(ret, [])
 
     def test_exact_match(self):
@@ -696,7 +703,9 @@ class TestCheckForOld(TestSimple):
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_1': 'string_val', 'att_2': 1.2345,
                      'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2', 'str_3']}
-            [h5_ret_grp] = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=None)
+            [h5_ret_grp] = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                                   new_parms=attrs,
+                                                   target_dset=None)
             self.assertEqual(h5_ret_grp, h5_f['/Raw_Measurement/source_main-Fitter_000'])
 
     def test_subset_but_match(self):
@@ -704,7 +713,9 @@ class TestCheckForOld(TestSimple):
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_2': 1.2345,
                      'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2', 'str_3']}
-            [h5_ret_grp] = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=None)
+            [h5_ret_grp] = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                                   new_parms=attrs,
+                                                   target_dset=None)
             self.assertEqual(h5_ret_grp, h5_f['/Raw_Measurement/source_main-Fitter_000'])
 
     def test_exact_match_02(self):
@@ -712,7 +723,9 @@ class TestCheckForOld(TestSimple):
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_1': 'other_string_val', 'att_2': 5.4321,
                      'att_3': [4, 1, 3], 'att_4': ['s', 'str_2', 'str_3']}
-            [h5_ret_grp] = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=None)
+            [h5_ret_grp] = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                                   new_parms=attrs,
+                                                   target_dset=None)
             self.assertEqual(h5_ret_grp, h5_f['/Raw_Measurement/source_main-Fitter_001'])
 
     def test_fail_01(self):
@@ -720,7 +733,8 @@ class TestCheckForOld(TestSimple):
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_1': [4, 1, 3], 'att_2': ['s', 'str_2', 'str_3'],
                      'att_3': 'other_string_val', 'att_4': 5.4321}
-            ret_val = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=None)
+            ret_val = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                              new_parms=attrs, target_dset=None)
             self.assertIsInstance(ret_val, list)
             self.assertEqual(len(ret_val), 0)
 
@@ -729,12 +743,13 @@ class TestCheckForOld(TestSimple):
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_x': [4, 1, 3], 'att_z': ['s', 'str_2', 'str_3'],
                      'att_y': 'other_string_val', 'att_4': 5.4321}
-            ret_val = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=None)
+            ret_val = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                              new_parms=attrs, target_dset=None)
             self.assertIsInstance(ret_val, list)
             self.assertEqual(len(ret_val), 0)
 
 
-class TestCreateIndexedGroup(TestSimple):
+class TestCreateIndexedGroup(unittest.TestCase):
 
     def test_first_group(self):
         file_path = 'test.h5'
@@ -801,7 +816,7 @@ class TestCreateIndexedGroup(TestSimple):
         os.remove(file_path)
 
 
-class TestCreateResultsGroup(TestSimple):
+class TestCreateResultsGroup(unittest.TestCase):
 
     def test_first(self):
         self.helper_first()
@@ -897,7 +912,7 @@ class TestAssignGroupIndex(TestSimple):
                 _ = hdf_utils.assign_group_index(h5_group, 1.24)
 
 
-class TestLinkAsMain(TestSimple):
+class TestLinkAsMain(unittest.TestCase):
 
     def test_pos_args_not_h5_dset(self):
         file_path = 'link_as_main.h5'
@@ -1037,7 +1052,7 @@ class TestLinkAsMain(TestSimple):
         self.helper_test(False)
 
 
-class TestCopyAttributes(TestSimple):
+class TestCopyAttributes(unittest.TestCase):
 
     def test_not_h5_dset(self):
         temp_path = 'copy_attributes.h5'
@@ -1188,7 +1203,7 @@ class TestCopyAttributes(TestSimple):
                 hdf_utils.copy_attributes(h5_dset_source, h5_dset_dest, skip_refs=False)
 
 
-class TestCopyMainAttributes(TestSimple):
+class TestCopyMainAttributes(unittest.TestCase):
 
     def test_valid(self):
         file_path = 'test.h5'
@@ -1228,7 +1243,7 @@ class TestCopyMainAttributes(TestSimple):
         os.remove(file_path)
 
 
-class TestCreateEmptyDataset(TestSimple):
+class TestCreateEmptyDataset(unittest.TestCase):
 
     def test_invalid_types(self):
         with self.assertRaises(TypeError):
@@ -1502,6 +1517,7 @@ class TestCheckAndLinkAncillary(TestSimple):
                 self.assertIsInstance(actual, h5py.Reference)
                 self.assertEqual(h5_f[actual], exp_val)
         os.remove(file_path)
+
 
 """
     def test_linking_main_plus_other_dsets(self):
