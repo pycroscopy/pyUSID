@@ -1727,7 +1727,21 @@ class TestValidateDimsAgainstMAin(unittest.TestCase):
 
 class TestCopyLinkedObjects(TestSimple):
 
-    def test_two_dsets_simple_attrs(self):
+    def validate_copied_dataset(self, h5_f_new, h5_dest, dset_new_name,
+                                dset_data, dset_attrs):
+        self.assertTrue(dset_new_name in h5_f_new.keys())
+        h5_anc_dest = h5_f_new[dset_new_name]
+        self.assertIsInstance(h5_anc_dest, h5py.Dataset)
+        self.assertTrue(np.allclose(dset_data, h5_anc_dest[()]))
+        self.assertEqual(len(dset_attrs),
+                         len(h5_anc_dest.attrs.keys()))
+        for key, val in dset_attrs.items():
+            self.assertEqual(val, h5_anc_dest.attrs[key])
+        self.assertTrue(dset_new_name in h5_dest.attrs.keys())
+        self.assertEqual(h5_f_new[h5_dest.attrs[dset_new_name]],
+                         h5_anc_dest)
+
+    def test_two_dsets_simple_attrs_empty_dest(self):
         file_path = 'test.h5'
         new_path = 'new.h5'
         data_utils.delete_existing_file(file_path)
@@ -1754,27 +1768,12 @@ class TestCopyLinkedObjects(TestSimple):
 
                 self.assertEqual(len(h5_f_new.keys()), 3)
 
-                self.assertTrue('Pos_Inds' in h5_f_new.keys())
-                h5_anc_1_dest = h5_f_new['Pos_Inds']
-                self.assertTrue(np.allclose(h5_anc_1[()], h5_anc_1_dest[()]))
-                self.assertEqual(len(anc_1_attrs),
-                                 len(h5_anc_1_dest.attrs.keys()))
-                for key, val in anc_1_attrs.items():
-                    self.assertEqual(val, h5_anc_1_dest.attrs[key])
-                self.assertTrue('Pos_Inds' in h5_dest.attrs.keys())
-                self.assertEqual(h5_f_new[h5_dest.attrs['Pos_Inds']],
-                                 h5_anc_1_dest)
+                self.validate_copied_dataset(h5_f_new, h5_dest, 'Pos_Inds',
+                                        h5_anc_1[()], anc_1_attrs)
 
-                self.assertTrue('Pos_Vals' in h5_f_new.keys())
-                h5_anc_2_dest = h5_f_new['Pos_Vals']
-                self.assertTrue(np.allclose(h5_anc_2[()], h5_anc_2_dest[()]))
-                self.assertEqual(len(anc_2_attrs),
-                                 len(h5_anc_2_dest.attrs.keys()))
-                for key, val in anc_2_attrs.items():
-                    self.assertEqual(val, h5_anc_2_dest.attrs[key])
-                self.assertTrue('Pos_Vals' in h5_dest.attrs.keys())
-                self.assertEqual(h5_f_new[h5_dest.attrs['Pos_Vals']],
-                                 h5_anc_2_dest)
+                self.validate_copied_dataset(h5_f_new, h5_dest, 'Pos_Vals',
+                                             h5_anc_2[()], anc_2_attrs)
+
 
         os.remove(file_path)
         os.remove(new_path)
