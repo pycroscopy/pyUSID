@@ -622,7 +622,8 @@ def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None,
         target_dset = validate_single_string_arg(target_dset, 'target_dset')
 
     matching_groups = []
-    groups = find_results_groups(h5_base, tool_name)
+    groups = find_results_groups(h5_base, tool_name,
+                                 h5_parent_group=h5_parent_goup)
 
     for group in groups:
         if verbose:
