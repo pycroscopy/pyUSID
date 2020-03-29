@@ -631,11 +631,13 @@ class TestFindResultsGroup(TestSimple):
             with self.assertRaises(TypeError):
                 _ = hdf_utils.find_results_groups(h5_main, np.arange(5))
 
-    def test_illegal(self):
+    def test_no_such_tool(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             ret_val = hdf_utils.find_results_groups(h5_main, 'Blah')
             self.assertEqual(len(ret_val), 0)
+
+
 
 
 class TestCheckForMatchingAttrs(TestSimple):
@@ -924,7 +926,7 @@ class TestCreateResultsGroup(unittest.TestCase):
             h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
             with self.assertRaises(TypeError):
                 _ = hdf_utils.create_results_group(h5_dset, 'Tool',
-                                                   h5_parent_goup='not_group')
+                                                   h5_parent_group='not_group')
 
         os.remove(file_path)
 
@@ -943,7 +945,7 @@ class TestCreateResultsGroup(unittest.TestCase):
                 _ = h5_f_new.create_group('Main-Tool_000')
 
                 h5_group = hdf_utils.create_results_group(h5_dset, 'Tool',
-                                                          h5_parent_goup=h5_f_new)
+                                                          h5_parent_group=h5_f_new)
 
                 self.assertIsInstance(h5_group, h5py.Group)
                 self.assertEqual(h5_group.name, '/Main-Tool_001')
