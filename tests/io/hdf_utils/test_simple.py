@@ -1916,6 +1916,106 @@ class TestCopyLinkedObjects(TestSimple):
                                          exist_dset_diff_data=False,
                                          exist_grp_inst_dset=True)
 
+
+class TestCopyDataset(TestSimple):
+
+    def validate_copied_dataset(self, h5_f_new, dset_new_name,
+                                dset_data, dset_attrs):
+        self.assertTrue(dset_new_name in h5_f_new.keys())
+        h5_anc_dest = h5_f_new[dset_new_name]
+        self.assertIsInstance(h5_anc_dest, h5py.Dataset)
+        self.assertTrue(np.allclose(dset_data, h5_anc_dest[()]))
+        self.assertEqual(len(dset_attrs),
+                         len(h5_anc_dest.attrs.keys()))
+        for key, val in dset_attrs.items():
+            self.assertEqual(val, h5_anc_dest.attrs[key])
+
+    def base_test(self, exist_dset_same_data=False, use_alias=False,
+                  exist_dset_diff_data_shape=False, exist_dset_diff_data=False,
+                  exist_grp_inst_dset=False):
+        file_path = 'test.h5'
+        new_path = 'new.h5'
+        data_utils.delete_existing_file(file_path)
+        data_utils.delete_existing_file(new_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_source = h5_f.create_dataset('Original', data=[1, 2, 3])
+            simple_attrs = {'quantity': 'blah', 'units': 'nA'}
+            h5_source.attrs.update(simple_attrs)
+
+            with h5py.File(new_path, mode='w') as h5_f_new:
+
+                if use_alias:
+                    alias = 'Duplicate'
+                else:
+                    alias = 'Original'
+
+                if exist_dset_same_data:
+                    _ = h5_f_new.create_dataset(alias, data=[1, 2, 3])
+                elif exist_dset_diff_data:
+                    _ = h5_f_new.create_dataset(alias, data=[8, 1, 3])
+                elif exist_dset_diff_data_shape:
+                    _ = h5_f_new.create_dataset(alias,
+                                                data=np.random.rand(5, 3))
+                elif exist_grp_inst_dset:
+                    _ = h5_f_new.create_group(alias)
+
+                if use_alias:
+                    al_arg = alias
+                else:
+                    al_arg = None
+
+                func = hdf_utils.copy_dataset
+                args = [h5_source, h5_f_new]
+                kwargs = {'alias': al_arg, 'verbose': False}
+
+                if exist_dset_diff_data or exist_dset_diff_data_shape:
+                    with self.assertRaises(ValueError):
+                        _ = func(*args, **kwargs)
+                elif exist_grp_inst_dset:
+                    with self.assertRaises(TypeError):
+                        _ = func(*args, **kwargs)
+                else:
+                    _ = func(*args, **kwargs)
+
+                if not exist_dset_diff_data_shape and not exist_dset_diff_data\
+                        and not exist_grp_inst_dset:
+                    self.assertEqual(len(h5_f_new.keys()), 1)
+                    self.validate_copied_dataset(h5_f_new, alias,
+                                                 h5_source[()], simple_attrs)
+
+        os.remove(file_path)
+        os.remove(new_path)
+
+    def test_exact_copy(self):
+        self.base_test(exist_dset_same_data=False, use_alias=False,
+                       exist_dset_diff_data_shape=False,
+                       exist_dset_diff_data=False, exist_grp_inst_dset=False)
+
+    def test_copy_w_alias(self):
+        self.base_test(exist_dset_same_data=False, use_alias=True,
+                       exist_dset_diff_data_shape=False,
+                       exist_dset_diff_data=False, exist_grp_inst_dset=False)
+
+    def test_existing_group_same_name(self):
+        self.base_test(exist_dset_same_data=False, use_alias=False,
+                       exist_dset_diff_data_shape=False,
+                       exist_dset_diff_data=False, exist_grp_inst_dset=True)
+
+    def test_existing_dset_same_name_data(self):
+        self.base_test(exist_dset_same_data=True, use_alias=False,
+                       exist_dset_diff_data_shape=False,
+                       exist_dset_diff_data=False, exist_grp_inst_dset=False)
+
+    def test_existing_dset_same_name_diff_data_shape(self):
+        self.base_test(exist_dset_same_data=False, use_alias=False,
+                       exist_dset_diff_data_shape=True,
+                       exist_dset_diff_data=False, exist_grp_inst_dset=False)
+
+    def test_existing_dset_same_name_diff_data(self):
+        self.base_test(exist_dset_same_data=False, use_alias=False,
+                       exist_dset_diff_data_shape=False,
+                       exist_dset_diff_data=True, exist_grp_inst_dset=False)
+
 """
     def test_linking_main_plus_other_dsets(self):
         file_path = 'check_and_link_ancillary.h5'
