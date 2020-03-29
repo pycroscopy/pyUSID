@@ -1743,7 +1743,8 @@ class TestCopyLinkedObjects(TestSimple):
 
     def base_two_dsets_simple_attrs(self, exist_dset_same_data=False,
                                     exist_dset_diff_data_shape=False,
-                                    exist_dset_diff_data=False):
+                                    exist_dset_diff_data=False,
+                                    exist_grp_inst_dset=False):
         file_path = 'test.h5'
         new_path = 'new.h5'
         data_utils.delete_existing_file(file_path)
@@ -1774,6 +1775,8 @@ class TestCopyLinkedObjects(TestSimple):
                 elif exist_dset_diff_data_shape:
                     _ = h5_f_new.create_dataset('Pos_Vals',
                                                 data=np.random.rand(5, 3))
+                elif exist_grp_inst_dset:
+                    _ = h5_f_new.create_group('Pos_Vals')
 
                 if sys.version_info.major == 3 and exist_dset_same_data:
                     with self.assertWarns(UserWarning):
@@ -1783,11 +1786,16 @@ class TestCopyLinkedObjects(TestSimple):
                     with self.assertRaises(ValueError):
                         hdf_utils.copy_linked_objects(h5_source, h5_dest,
                                                       verbose=False)
+                elif exist_grp_inst_dset:
+                    with self.assertRaises(TypeError):
+                        hdf_utils.copy_linked_objects(h5_source, h5_dest,
+                                                      verbose=False)
                 else:
                     hdf_utils.copy_linked_objects(h5_source, h5_dest,
                                                   verbose=False)
 
-                if not exist_dset_diff_data_shape and not exist_dset_diff_data:
+                if not exist_dset_diff_data_shape and not exist_dset_diff_data\
+                        and not exist_grp_inst_dset:
                     self.assertEqual(len(h5_f_new.keys()), 3)
 
                     self.validate_copied_dataset(h5_f_new, h5_dest, 'Pos_Inds',
@@ -1802,22 +1810,32 @@ class TestCopyLinkedObjects(TestSimple):
     def test_two_dsets_simple_attrs_empty_dest(self):
         self.base_two_dsets_simple_attrs(exist_dset_same_data=False,
                                          exist_dset_diff_data_shape=False,
-                                         exist_dset_diff_data=False)
+                                         exist_dset_diff_data=False,
+                                         exist_grp_inst_dset=False)
 
     def test_existing_anc_dset_same_data_no_attrs(self):
         self.base_two_dsets_simple_attrs(exist_dset_same_data=True,
                                          exist_dset_diff_data_shape=False,
-                                         exist_dset_diff_data=False)
+                                         exist_dset_diff_data=False,
+                                         exist_grp_inst_dset=False)
 
     def test_existing_anc_dset_diff_data(self):
         self.base_two_dsets_simple_attrs(exist_dset_same_data=False,
                                          exist_dset_diff_data_shape=False,
-                                         exist_dset_diff_data=True)
+                                         exist_dset_diff_data=True,
+                                         exist_grp_inst_dset=False)
 
     def test_existing_anc_dset_diff_data_shape(self):
         self.base_two_dsets_simple_attrs(exist_dset_same_data=False,
                                          exist_dset_diff_data_shape=True,
-                                         exist_dset_diff_data=False)
+                                         exist_dset_diff_data=False,
+                                         exist_grp_inst_dset=False)
+
+    def test_existing_group_instead_of_det(self):
+        self.base_two_dsets_simple_attrs(exist_dset_same_data=False,
+                                         exist_dset_diff_data_shape=False,
+                                         exist_dset_diff_data=False,
+                                         exist_grp_inst_dset=True)
 
 """
     def test_linking_main_plus_other_dsets(self):
