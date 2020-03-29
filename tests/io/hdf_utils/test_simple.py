@@ -921,7 +921,37 @@ class TestCreateResultsGroup(unittest.TestCase):
             with self.assertRaises(TypeError):
                 _ = hdf_utils.create_results_group(h5_f, 'Tool')
 
+            h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
+            with self.assertRaises(TypeError):
+                _ = hdf_utils.create_results_group(h5_dset, 'Tool',
+                                                   h5_parent_goup='not_group')
+
         os.remove(file_path)
+
+    def test_different_file(self):
+        file_path = 'test.h5'
+        new_path = 'new.h5'
+        data_utils.delete_existing_file(file_path)
+        data_utils.delete_existing_file(new_path)
+
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
+            # Ensuring that index is calculated at destination, not source:
+            _ = h5_f.create_group('Main-Tool_000')
+
+            with h5py.File(new_path, mode='w') as h5_f_new:
+
+                h5_group = hdf_utils.create_results_group(h5_dset, 'Tool',
+                                                          h5_parent_goup=h5_f_new)
+
+                self.assertIsInstance(h5_group, h5py.Group)
+                self.assertEqual(h5_group.name, '/Main-Tool_000')
+                self.assertEqual(h5_group.parent, h5_f_new)
+                self.assertNotEqual(h5_dset.file, h5_group.file)
+                data_utils.verify_book_keeping_attrs(self, h5_group)
+
+        os.remove(file_path)
+        os.remove(new_path)
 
 
 class TestAssignGroupIndex(TestSimple):
