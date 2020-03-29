@@ -940,12 +940,13 @@ class TestCreateResultsGroup(unittest.TestCase):
             _ = h5_f.create_group('Main-Tool_000')
 
             with h5py.File(new_path, mode='w') as h5_f_new:
+                _ = h5_f_new.create_group('Main-Tool_000')
 
                 h5_group = hdf_utils.create_results_group(h5_dset, 'Tool',
                                                           h5_parent_goup=h5_f_new)
 
                 self.assertIsInstance(h5_group, h5py.Group)
-                self.assertEqual(h5_group.name, '/Main-Tool_000')
+                self.assertEqual(h5_group.name, '/Main-Tool_001')
                 self.assertEqual(h5_group.parent, h5_f_new)
                 self.assertNotEqual(h5_dset.file, h5_group.file)
                 data_utils.verify_book_keeping_attrs(self, h5_group)
