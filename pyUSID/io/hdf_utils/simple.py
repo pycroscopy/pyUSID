@@ -622,7 +622,8 @@ def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=
 
 def get_source_dataset(h5_group):
     """
-    Find the name of the source dataset used to create the input `h5_group`
+    Find the name of the source dataset used to create the input `h5_group`,
+    so long as the source dataset is in the same HDF5 file
 
     Parameters
     ----------
@@ -638,8 +639,6 @@ def get_source_dataset(h5_group):
     if not isinstance(h5_group, h5py.Group):
         raise TypeError('h5_group should be a h5py.Group object')
 
-    from ..usi_data import USIDataset
-
     h5_parent_group = h5_group.parent
     group_name = h5_group.name.split('/')[-1]
     # What if the group name was not formatted according to Pycroscopy rules?
@@ -651,6 +650,8 @@ def get_source_dataset(h5_group):
 
     if not isinstance(h5_source, h5py.Dataset):
         raise ValueError('Source object was not a dataset!')
+
+    from ..usi_data import USIDataset
 
     return USIDataset(h5_source)
 
