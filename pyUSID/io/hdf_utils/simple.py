@@ -113,9 +113,10 @@ def find_dataset(h5_group, dset_name):
     return datasets
 
 
-def find_results_groups(h5_main, tool_name):
+def find_results_groups(h5_main, tool_name, h5_parent_group=None):
     """
-    Finds a list of all groups containing results of the process of name `tool_name` being applied to the dataset
+    Finds a list of all groups containing results of the process of name
+    `tool_name` being applied to the dataset
 
     Parameters
     ----------
@@ -123,6 +124,11 @@ def find_results_groups(h5_main, tool_name):
         Reference to the target dataset to which the tool was applied
     tool_name : String / unicode
         Name of the tool applied to the target dataset
+    h5_parent_group : h5py.Group, optional. Default = None
+        Parent group under which the results group will be searched for. Use
+        this option when the results groups are contained in different HDF5
+        file compared to `h5_main`. BY default, this function will search
+        within the same group that contains `h5_main`
 
     Returns
     -------
@@ -134,8 +140,14 @@ def find_results_groups(h5_main, tool_name):
         raise TypeError('h5_main should be a h5py.Dataset object')
     tool_name = validate_single_string_arg(tool_name, 'tool_name')
 
+    if h5_parent_group is not None:
+        if not isinstance(h5_parent_group, (h5py.File, h5py.Group)):
+            raise TypeError("'h5_parent_group' should either be a h5py.File "
+                            "or h5py.Group object")
+    else:
+        h5_parent_group = h5_main.parent
+
     dset_name = h5_main.name.split('/')[-1]
-    h5_parent_group = h5_main.parent
     groups = []
     for key in h5_parent_group.keys():
         if dset_name in key and tool_name in key and isinstance(h5_parent_group[key], h5py.Group):
@@ -561,7 +573,8 @@ def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals):
         return h5_main
 
 
-def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=False):
+def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None,
+                  h5_parent_goup=None, verbose=False):
     """
     Check to see if the results of a tool already exist and if they
     were performed with the same parameters.
@@ -577,6 +590,10 @@ def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=
     target_dset : str, optional, default = None
             Name of the dataset whose attributes will be compared against new_parms.
             Default - checking against the group
+    h5_parent_goup : h5py.Group, optional. Default = None
+            The group to search under. Use this option when `h5_base` and
+            the potential results groups (within `h5_parent_goup` are located
+            in different HDF5 files. Default - search within h5_base.parent
     verbose : bool, optional, default = False
            Whether or not to print debugging statements
 
@@ -588,6 +605,14 @@ def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=
     if not isinstance(h5_base, h5py.Dataset):
         raise TypeError('h5_base should be a h5py.Dataset object')
     tool_name = validate_single_string_arg(tool_name, 'tool_name')
+
+    if h5_parent_goup is not None:
+        if not isinstance(h5_parent_goup, (h5py.File, h5py.Group)):
+            raise TypeError("'h5_parent_group' should either be a h5py.File "
+                            "or h5py.Group object")
+    else:
+        h5_parent_goup = h5_base.parent
+
     if new_parms is None:
         new_parms = dict()
     else:
@@ -729,7 +754,7 @@ def create_indexed_group(h5_parent_group, base_name):
     return h5_new_group
 
 
-def create_results_group(h5_main, tool_name, h5_parent_goup=None):
+def create_results_group(h5_main, tool_name, h5_parent_group=None):
     """
     Creates a h5py.Group object autoindexed and named as 'DatasetName-ToolName_00x'
 
@@ -752,12 +777,12 @@ def create_results_group(h5_main, tool_name, h5_parent_goup=None):
     """
     if not isinstance(h5_main, h5py.Dataset):
         raise TypeError('h5_main should be a h5py.Dataset object')
-    if h5_parent_goup is not None:
-        if not isinstance(h5_parent_goup, (h5py.File, h5py.Group)):
+    if h5_parent_group is not None:
+        if not isinstance(h5_parent_group, (h5py.File, h5py.Group)):
             raise TypeError("'h5_parent_group' should either be a h5py.File "
                             "or h5py.Group object")
     else:
-        h5_parent_goup = h5_main.parent
+        h5_parent_group = h5_main.parent
 
     tool_name = validate_single_string_arg(tool_name, 'tool_name')
 
@@ -767,9 +792,9 @@ def create_results_group(h5_main, tool_name, h5_parent_goup=None):
     tool_name = tool_name.replace('-', '_')
 
     group_name = h5_main.name.split('/')[-1] + '-' + tool_name + '_'
-    group_name = assign_group_index(h5_parent_goup, group_name)
+    group_name = assign_group_index(h5_parent_group, group_name)
 
-    h5_group = h5_parent_goup.create_group(group_name)
+    h5_group = h5_parent_group.create_group(group_name)
 
     write_book_keeping_attrs(h5_group)
 
