@@ -876,8 +876,10 @@ def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs
         h5_new_dset = h5_group.create_dataset(dset_name, **kwargs)
 
     # This should link the ancillary datasets correctly
-    # TODO: Note that ancillary datasets need to be copied over if different file
-    h5_new_dset = copy_attributes(source_dset, h5_new_dset, skip_refs=skip_refs)
+    h5_new_dset = copy_attributes(source_dset, h5_new_dset,
+                                  skip_refs=skip_refs)
+    if source_dset.file != h5_group.file:
+        copy_linked_objects(source_dset, h5_new_dset)
     h5_new_dset.attrs.update(new_attrs)
 
     if check_if_main(h5_new_dset):
