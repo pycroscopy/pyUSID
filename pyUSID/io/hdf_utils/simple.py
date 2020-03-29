@@ -728,7 +728,7 @@ def create_indexed_group(h5_parent_group, base_name):
     return h5_new_group
 
 
-def create_results_group(h5_main, tool_name):
+def create_results_group(h5_main, tool_name, h5_parent_goup=None):
     """
     Creates a h5py.Group object autoindexed and named as 'DatasetName-ToolName_00x'
 
@@ -738,6 +738,10 @@ def create_results_group(h5_main, tool_name):
         Reference to the dataset based on which the process / analysis is being performed
     tool_name : string / unicode
         Name of the Process / Analysis applied to h5_main
+    h5_parent_group : h5py.Group, optional. Default = None
+        Parent group under which the results group will be created. Use this
+        option to write results into a new HDF5 file. By default, results will
+        be written into the same group containing `h5_main`
 
     Returns
     -------
@@ -746,7 +750,14 @@ def create_results_group(h5_main, tool_name):
 
     """
     if not isinstance(h5_main, h5py.Dataset):
-        raise TypeError('h5_main should be a h5py.Dataset or Pycrodataset object')
+        raise TypeError('h5_main should be a h5py.Dataset object')
+    if h5_parent_goup is not None:
+        if not isinstance(h5_parent_goup, (h5py.File, h5py.Group)):
+            raise TypeError("'h5_parent_group' should either be a h5py.File "
+                            "or h5py.Group object")
+    else:
+        h5_parent_goup = h5_main.parent
+
     tool_name = validate_single_string_arg(tool_name, 'tool_name')
 
     if '-' in tool_name:
@@ -755,9 +766,9 @@ def create_results_group(h5_main, tool_name):
     tool_name = tool_name.replace('-', '_')
 
     group_name = h5_main.name.split('/')[-1] + '-' + tool_name + '_'
-    group_name = assign_group_index(h5_main.parent, group_name)
+    group_name = assign_group_index(h5_parent_goup, group_name)
 
-    h5_group = h5_main.parent.create_group(group_name)
+    h5_group = h5_parent_goup.create_group(group_name)
 
     write_book_keeping_attrs(h5_group)
 
