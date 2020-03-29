@@ -1033,11 +1033,11 @@ class TestLinkAsMain(unittest.TestCase):
 
         data_utils.delete_existing_file(file_path)
 
-    def test_pos_args_not_h5_dset(self):
+    def test_anc_args_not_h5_dset(self):
         file_path = 'link_as_main.h5'
         data_utils.delete_existing_file(file_path)
         with h5py.File(file_path, mode='w') as h5_f:
-            h5_dset = h5_f.create_dataset("Blah", data=[1, 2, 3, 4])
+            h5_dset = h5_f.create_dataset("Blah", data=np.random.rand(2, 3))
             with self.assertRaises(TypeError):
                 hdf_utils.link_as_main("h5_main", 1.234, -2, False, {"h5_spec_vals": 2.432})
 
@@ -1681,9 +1681,6 @@ class TestValidateAncH5Dsets(TestSimple):
             h5_pos_inds = h5_grp['Position_Indices']
             h5_pos_vals = h5_grp['Position_Values']
 
-            hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals, h5_main,
-                                            is_spectroscopic=False)
-
             hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
                                             h5_main.shape,
                                             is_spectroscopic=False)
@@ -1695,8 +1692,6 @@ class TestValidateAncH5Dsets(TestSimple):
             h5_spec_inds = h5_grp['Spectroscopic_Indices']
             h5_spec_vals = h5_grp['Spectroscopic_Values']
 
-            hdf_utils.validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals, h5_main,
-                                            is_spectroscopic=True)
 
             hdf_utils.validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals,
                                             h5_main.shape,
@@ -1716,7 +1711,7 @@ class TestValidateAncH5Dsets(TestSimple):
 
             with self.assertRaises(ValueError):
                 hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
-                                                h5_main,
+                                                h5_main.shape,
                                                 is_spectroscopic=True)
 
             h5_spec_inds = h5_grp['Spectroscopic_Indices']
@@ -1724,7 +1719,7 @@ class TestValidateAncH5Dsets(TestSimple):
 
             with self.assertRaises(ValueError):
                 hdf_utils.validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals,
-                                                h5_main,
+                                                h5_main.shape,
                                                 is_spectroscopic=False)
 
     def test_mismatched_anc_shapes(self):
@@ -1737,7 +1732,7 @@ class TestValidateAncH5Dsets(TestSimple):
 
             with self.assertRaises(ValueError):
                 hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
-                                                h5_main,
+                                                h5_main.shape,
                                                 is_spectroscopic=False)
 
     def test_invalid_dtypes(self):
@@ -1750,7 +1745,7 @@ class TestValidateAncH5Dsets(TestSimple):
 
             with self.assertRaises(TypeError):
                 hdf_utils.validate_anc_h5_dsets('h5_pos_inds', h5_pos_vals,
-                                                h5_main,
+                                                h5_main.shape,
                                                 is_spectroscopic=False)
 
             with self.assertRaises(TypeError):
