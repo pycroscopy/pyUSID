@@ -637,7 +637,35 @@ class TestFindResultsGroup(TestSimple):
             ret_val = hdf_utils.find_results_groups(h5_main, 'Blah')
             self.assertEqual(len(ret_val), 0)
 
+    def test_results_in_diff_file(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
 
+        new_path = 'new.h5'
+        data_utils.delete_existing_file(new_path)
+
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_main = h5_f.create_dataset('Main', data=[1, 2, 3])
+            with h5py.File(new_path, mode='w') as h5_f_2:
+                grp_1 = h5_f_2.create_group('Main-Tool_000')
+                grp_2 = h5_f_2.create_group('Main-Tool_001')
+                grps = hdf_utils.find_results_groups(h5_main, 'Tool',
+                                                     h5_parent_group=h5_f_2)
+                self.assertEqual(set([grp_1, grp_2]), set(grps))
+
+        os.remove(file_path)
+        os.remove(new_path)
+
+    def test_results_in_diff_file_invalid_type(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_main = h5_f.create_dataset('Main', data=[1, 2, 3])
+            with self.assertRaises(TypeError):
+                _ = hdf_utils.find_results_groups(h5_main, 'Tool',
+                                                  h5_parent_group=h5_main)
+
+        os.remove(file_path)
 
 
 class TestCheckForMatchingAttrs(TestSimple):
