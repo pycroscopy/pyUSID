@@ -1325,7 +1325,21 @@ class TestCreateEmptyDataset(unittest.TestCase):
 
         os.remove(file_path)
 
-    def test_diff_file_new_attrs(self):
+    def validate_copied_dataset(self, h5_f_new, h5_dest, dset_new_name,
+                                dset_data, dset_attrs):
+        self.assertTrue(dset_new_name in h5_f_new.keys())
+        h5_anc_dest = h5_f_new[dset_new_name]
+        self.assertIsInstance(h5_anc_dest, h5py.Dataset)
+        self.assertTrue(np.allclose(dset_data, h5_anc_dest[()]))
+        self.assertEqual(len(dset_attrs),
+                         len(h5_anc_dest.attrs.keys()))
+        for key, val in dset_attrs.items():
+            self.assertEqual(val, h5_anc_dest.attrs[key])
+        self.assertTrue(dset_new_name in h5_dest.attrs.keys())
+        self.assertEqual(h5_f_new[h5_dest.attrs[dset_new_name]],
+                         h5_anc_dest)
+
+    def test_diff_file_new_attrs_linked_dsets(self):
         file_path = 'test.h5'
         new_path = 'new.h5'
         existing_attrs = {'a': 1, 'b': 'Hello'}
@@ -1335,6 +1349,8 @@ class TestCreateEmptyDataset(unittest.TestCase):
             h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
             h5_dset_source.attrs.update(existing_attrs)
             h5_other = h5_f.create_dataset('Other', data=[1, 2, 3])
+            anc_attrs = {'a': 1, 'b': -55}
+            h5_other.attrs.update(anc_attrs)
             h5_dset_source.attrs['dset_ref'] = h5_other.ref
             with h5py.File(new_path, mode='w') as h5_f_new:
                 func = hdf_utils.create_empty_dataset
@@ -1357,8 +1373,10 @@ class TestCreateEmptyDataset(unittest.TestCase):
                     self.assertEqual(val, h5_duplicate.attrs[key])
                 for key, val in existing_attrs.items():
                     self.assertEqual(val, h5_duplicate.attrs[key])
-                self.assertTrue('dset_ref' in h5_dset_source.attrs.keys())
-                self.assertTrue('dset_ref' not in h5_duplicate.attrs.keys())
+                self.assertTrue('dset_ref' in h5_duplicate.attrs.keys())
+                self.validate_copied_dataset(h5_f_new, h5_duplicate,
+                                             'dset_ref', h5_other[()],
+                                             anc_attrs)
 
         os.remove(file_path)
 
