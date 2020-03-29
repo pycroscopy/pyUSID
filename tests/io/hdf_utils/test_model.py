@@ -936,6 +936,9 @@ class TestWriteMainDataset(TestModel):
 
             data_utils.validate_aux_dset_pair(self, targ_loc, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names, spec_units,
                                           spec_data, h5_main=usid_main, is_spectral=True, slow_to_fast=False)
+
+        if to_new_file:
+            os.remove(new_file_path)
         os.remove(file_path)
 
     def test_numpy_small(self):
@@ -956,8 +959,14 @@ class TestWriteMainDataset(TestModel):
     def test_write_main_existing_spec_aux(self):
         self.base_write(pre_pos=False, pre_spec=True)
 
+    def test_write_main_existing_spec_aux_diff_file(self):
+        self.base_write(pre_pos=False, pre_spec=True, to_new_file=True)
+
     def test_write_main_both_existing_aux(self):
         self.base_write(pre_pos=True, pre_spec=True)
+
+    def test_write_main_both_existing_aux_diff_file(self):
+        self.base_write(pre_pos=True, pre_spec=True, to_new_file=True)
 
     def test_prod_sizes_mismatch(self):
         file_path = 'test.h5'
