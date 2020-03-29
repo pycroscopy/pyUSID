@@ -16,7 +16,7 @@ import dask.array as da
 
 from ..dtype_utils import validate_dtype, validate_single_string_arg, validate_list_of_strings, contains_integers, lazy_load_array
 from ..reg_ref import write_region_references, simple_region_ref_copy, copy_reg_ref_reduced_dim, \
-    create_region_reference
+    create_region_reference, copy_all_region_refs
 from ..write_utils import clean_string_att, build_ind_val_matrices, get_aux_dset_slicing, INDICES_DTYPE, \
     VALUES_DTYPE, Dimension, DimType
 from .base import get_auxiliary_datasets, link_h5_obj_as_alias, get_attr, \
@@ -1225,6 +1225,7 @@ def copy_dataset(h5_orig_dset, h5_dest_grp, alias=None, verbose=False):
               'destination dataset: {}'.format(h5_orig_dset, h5_new_dset))
 
     copy_attributes(h5_orig_dset, h5_new_dset, skip_refs=True)
+    copy_all_region_refs(h5_orig_dset, h5_new_dset)
 
     return h5_new_dset
 
@@ -1327,11 +1328,12 @@ def copy_region_refs(h5_source, h5_target):
     '''
     Check both h5_source and h5_target to ensure that are Main
     '''
+    # TODO: Move this vestige to pycroscopy. Use copy_all_region_refs instead
     are_main = all([check_if_main(h5_source), check_if_main(h5_target)])
     if not all([isinstance(h5_source, h5py.Dataset), isinstance(h5_target, h5py.Dataset)]):
-        raise TypeError('Inputs to copyRegionRefs must be HDF5 Datasets or PycroDatasets.')
+        raise TypeError('Inputs to copy_region_refs must be HDF5 Datasets')
 
-    validate_h5_objs_in_same_h5_file(h5_source, h5_target)
+    # It is OK if objects are in different files
 
     if are_main:
         h5_source_inds = h5_source.file[h5_source.attrs['Spectroscopic_Indices']]
