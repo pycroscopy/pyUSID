@@ -346,7 +346,7 @@ def validate_main_dset(h5_main, must_be_h5):
         raise ValueError('Main data is not 2D. Provided object has shape: {}'.format(h5_main.shape))
 
 
-def validate_anc_h5_dsets(h5_inds, h5_vals, main_or_shape, is_spectroscopic=True):
+def validate_anc_h5_dsets(h5_inds, h5_vals, main_shape, is_spectroscopic=True):
     """
     Checks ancillary HDF5 datasets against shape of a main dataset.
     Errors in parameters will result in Exceptions
@@ -357,8 +357,7 @@ def validate_anc_h5_dsets(h5_inds, h5_vals, main_or_shape, is_spectroscopic=True
         HDF5 dataset corresponding to the ancillary Indices dataset
     h5_vals : h5py.Dataset
         HDF5 dataset corresponding to the ancillary Values dataset
-    main_or_shape : h5py.Dataset or array-like
-        HDF5 dataset corresponding to the main dataset OR
+    main_shape : array-like
         Shape of the main dataset expressed as a tuple or similar
     is_spectroscopic : bool, Optional. Default = True
         set to True if ``dims`` correspond to Spectroscopic Dimensions.
@@ -371,17 +370,15 @@ def validate_anc_h5_dsets(h5_inds, h5_vals, main_or_shape, is_spectroscopic=True
     if h5_inds.shape != h5_vals.shape:
         raise ValueError('h5_inds: {} and h5_vals: {} should be of the same '
                          'shape'.format(h5_inds.shape, h5_vals.shape))
-
-    if isinstance(main_or_shape, h5py.Dataset):
-        main_shape = main_or_shape.shape
-        for h5_anc_dset in [h5_inds, h5_vals]:
-            validate_h5_objs_in_same_h5_file(main_or_shape, h5_anc_dset)
-    elif isinstance(main_or_shape, (list, tuple)):
-        main_shape = main_or_shape
+    print(main_shape)
+    if isinstance(main_shape, (list, tuple)):
+        if not contains_integers(main_shape, min_val=1) or \
+                len(main_shape) != 2:
+            raise ValueError("'main_shape' must be a valid HDF5 dataset shape")
     else:
-        raise TypeError('main_or_shape should be of the following types:'
+        raise TypeError('main_shape should be of the following types:'
                         'h5py.Dataset, tuple, or list. {} provided'
-                        ''.format(type(main_or_shape)))
+                        ''.format(type(main_shape)))
 
     if h5_inds.shape[is_spectroscopic] != main_shape[is_spectroscopic]:
         raise ValueError('index {} in shape of h5_inds: {} and main_data: {} '
@@ -556,8 +553,10 @@ def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals):
     if not isinstance(h5_main, h5py.Dataset):
         raise TypeError('h5_main should be a h5py.Dataset object')
 
-    validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals, h5_main, is_spectroscopic=False)
-    validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals, h5_main, is_spectroscopic=True)
+    validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals, h5_main.shape,
+                          is_spectroscopic=False)
+    validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals, h5_main.shape,
+                          is_spectroscopic=True)
 
     link_h5_obj_as_alias(h5_main, h5_pos_inds, 'Position_Indices')
     link_h5_obj_as_alias(h5_main, h5_pos_vals, 'Position_Values')
