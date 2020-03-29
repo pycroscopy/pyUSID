@@ -14,7 +14,7 @@ import h5py
 import numpy as np
 import dask.array as da
 
-from ..dtype_utils import validate_dtype, validate_single_string_arg, validate_list_of_strings, contains_integers
+from ..dtype_utils import validate_dtype, validate_single_string_arg, validate_list_of_strings, contains_integers, lazy_load_array
 from ..reg_ref import write_region_references, simple_region_ref_copy, copy_reg_ref_reduced_dim, \
     create_region_reference
 from ..write_utils import clean_string_att, build_ind_val_matrices, get_aux_dset_slicing, INDICES_DTYPE, \
@@ -876,6 +876,7 @@ def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs
         h5_new_dset = h5_group.create_dataset(dset_name, **kwargs)
 
     # This should link the ancillary datasets correctly
+    # TODO: Note that ancillary datasets need to be copied over if different file
     h5_new_dset = copy_attributes(source_dset, h5_new_dset, skip_refs=skip_refs)
     h5_new_dset.attrs.update(new_attrs)
 
@@ -1099,6 +1100,136 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
                                      'type': [dim.mode.value for dim in dimensions]})
 
     return h5_indices, h5_values
+
+
+def copy_linked_objects(h5_source, h5_dest, verbose=False):
+    """
+    Recursively copies datasets linked to the source h5 object to the
+    destination h5 object that are be in different HDF5 files.
+
+    Notes
+    -----
+    We anticipate this function being used to copy over ancillary datasets
+
+    Parameters
+    ----------
+    h5_source : h5py.Dataset or h5py.Group object
+        Source object
+    h5_dest : h5py.Dataset or h5py.Group object
+        Destination object
+    verbose : bool, optional. Default: False
+        Whether or not to print logs for debugging purposes
+    """
+    try:
+        # The following line takes care of object validation
+        validate_h5_objs_in_same_h5_file(h5_source, h5_dest)
+        same_file = True
+    except ValueError:
+        same_file = False
+
+    if same_file:
+        warn('{} and {} are in the same HDF5 file. Consider copying references'
+             ' instead of copying linked objects'.format(h5_source, h5_dest))
+        return
+
+    h5_dest_grp = h5_dest.parent
+
+    def __copy_attrs_and_link_child(orig_child, new_child, alias):
+        # Data same, then copy attributes instead of checking:
+        copy_attributes(orig_child, new_child, skip_refs=True)
+        # If everything checks out, link:
+        h5_dest.attrs[alias] = new_child.ref
+
+    # Now we are working on other files
+    for link_obj_name in h5_source.attrs.keys():
+        h5_orig_obj = get_attr(h5_source, link_obj_name)
+        if isinstance(h5_orig_obj, h5py.Reference) and not \
+                isinstance(h5_orig_obj, h5py.RegionReference):
+            h5_orig_obj = h5_source.file[h5_orig_obj]
+            if verbose:
+                print('Attempting to copy object linked to source: {} as {}'
+                      ''.format(h5_orig_obj, link_obj_name))
+            # Check to see if such a dataset already exist
+            if link_obj_name in h5_dest_grp.keys():
+                h5_new_obj = h5_dest_grp[link_obj_name]
+                warn('An object with the same name: {} already exists in the '
+                     'destination group: {}'.format(h5_new_obj, h5_dest_grp.name))
+                if type(h5_dest_grp[link_obj_name]) != type(h5_orig_obj):
+                    mesg = 'Destination parent: {} already has a child named' \
+                           ' {} that is of type: {} which does not match ' \
+                           'with that of the object linked with the source ' \
+                           'dataset: {}'.format(h5_dest_grp, link_obj_name,
+                                                type(h5_orig_obj),
+                                                type(h5_new_obj))
+                    raise TypeError(mesg)
+
+                elif isinstance(h5_new_obj, h5py.Dataset):
+                    # Most likely and important case:
+                    # If it does, does it have the same data, attributes -
+                    # then skip creation
+                    da_source = lazy_load_array(h5_orig_obj)
+                    da_dest = lazy_load_array(h5_new_obj)
+                    mesg = 'Existing dataset at destination: {}, contains ' \
+                           'different data from source dataset: {}' \
+                           ''.format(h5_new_obj, h5_orig_obj)
+                    if da_source.shape != da_dest.shape:
+                        raise ValueError(mesg)
+                    if not da.allclose(da_source, da_dest):
+                        raise ValueError(mesg)
+                    else:
+                        if verbose:
+                            print('Existing dataset found to have same data as'
+                                  ' original dataset. Copying simple '
+                                  'attributes of original dataset: {} to '
+                                  'destination dataset: {}\nLinking latter '
+                                  'dataset to {} as {}'
+                                  ''.format(h5_orig_obj, h5_new_obj, h5_dest,
+                                            link_obj_name))
+                        __copy_attrs_and_link_child(h5_orig_obj, h5_new_obj,
+                                                    link_obj_name)
+                        continue
+                elif isinstance(h5_new_obj, h5py.Group):
+                    raise ValueError('Destination already contains another '
+                                     'HDF5 group: {} with the same name as '
+                                     'the source: {}'.format(h5_new_obj,
+                                                             h5_orig_obj))
+            else:
+                if isinstance(h5_orig_obj, h5py.Dataset):
+                    kwargs = {'shape': h5_orig_obj.shape,
+                              'dtype': h5_orig_obj.dtype,
+                              'compression': h5_orig_obj.compression,
+                              'chunks': h5_orig_obj.chunks}
+                    if h5_orig_obj.file.driver == 'mpio':
+                        if kwargs.pop('compression', None) is not None:
+                            warn('This HDF5 file has been opened wth the '
+                                '"mpio" communicator. mpi4py does not allow '
+                                 'creation of compressed datasets. Compression'
+                                 ' kwarg has been removed')
+                    if verbose:
+                        print('Creating new HDF5 dataset named: {} at: {} with'
+                              ' kwargs: {}'.format(link_obj_name, h5_dest_grp,
+                                                   kwargs))
+                    h5_new_obj = h5_dest_grp.create_dataset(link_obj_name,
+                                                            **kwargs)
+                    if verbose:
+                        print('dask.array will copy data from source dataset '
+                              'to new dataset')
+                    da.to_hdf5(h5_new_obj.file.filename,
+                               {h5_new_obj.name: lazy_load_array(h5_orig_obj)})
+                    if verbose:
+                        print(
+                            'Copying simple attributes of original dataset: '
+                            '{} to destination dataset: {}\nLinking latter '
+                            'dataset to {} as {}'.format(
+                                h5_orig_obj, h5_new_obj, h5_dest,
+                                link_obj_name))
+
+                    __copy_attrs_and_link_child(h5_orig_obj, h5_new_obj,
+                                                link_obj_name)
+                else:
+                    raise NotImplementedError('Unable to copy {} objects yet'
+                                              '. Contact developer if you need'
+                                              ' this'.format(type(h5_orig_obj)))
 
 
 def copy_region_refs(h5_source, h5_target):
