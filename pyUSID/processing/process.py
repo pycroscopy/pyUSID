@@ -36,7 +36,7 @@ class Process(object):
 
     def __init__(self, h5_main, process_name, parms_dict=None, cores=None,
                  max_mem_mb=4*1024, mem_multiplier=1.0, lazy=False,
-                 verbose=False):
+                 h5_target_group=None, verbose=False):
         """
         Parameters
         ----------
@@ -61,6 +61,11 @@ class Process(object):
         lazy : bool, optional. Default = False
             If True, read_data_chunk and write_results_chunk will operate on
             dask arrays. If False - everything will be in numpy.
+        h5_target_group : h5py.Group, optional. Default = None
+            Location where to look for existing results and to place newly
+            computed results. Use this kwarg if the results need to be written
+            to a different HDF5 file. By default, this value is set to the
+            parent group containing `h5_main`
         verbose : bool, Optional, default = False
             Whether or not to print debugging statements
 
@@ -186,6 +191,13 @@ class Process(object):
         # Checking if dataset is "Main"
         if not check_if_main(h5_main, verbose=verbose and self.mpi_rank == 0):
             raise ValueError('Provided dataset is not a "Main" dataset with necessary ancillary datasets')
+
+        if h5_target_group is not None:
+            if not isinstance(h5_target_group, (h5py.Group, h5py.File)):
+                raise TypeError("'h5_target_group' must be a h5py.Group object")
+        else:
+            h5_target_group = h5_main.parent
+        self._h5_target_group = h5_target_group
 
         process_name = validate_single_string_arg(process_name, 'process_name')
 
@@ -365,6 +377,7 @@ class Process(object):
         # This list will contain completed runs only
         existing = check_for_old(self.h5_main, self.process_name,
                                  new_parms=self.parms_dict,
+                                 h5_parent_goup=self._h5_target_group,
                                  verbose=self.verbose and self.mpi_rank == 0)
 
         partial_h5_groups = []
