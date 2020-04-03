@@ -183,7 +183,7 @@ class TestInvalidInitialization(unittest.TestCase):
 
 class TestCoreProcessNoTest(unittest.TestCase):
 
-    def setUp(self, proc_class=AvgSpecUltraBasic):
+    def setUp(self, proc_class=AvgSpecUltraBasic, **proc_kwargs):
         delete_existing_file(data_utils.std_beps_path)
         data_utils.make_beps_file()
         self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
@@ -192,7 +192,7 @@ class TestCoreProcessNoTest(unittest.TestCase):
         self.exp_result = np.expand_dims(np.mean(self.h5_main[()], axis=1),
                                          axis=1)
 
-        self.proc = proc_class(self.h5_main)
+        self.proc = proc_class(self.h5_main, **proc_kwargs)
 
     def test_tfunc(self):
         with self.assertRaises(NotImplementedError):
@@ -217,15 +217,35 @@ class TestCoreProcessNoTest(unittest.TestCase):
 
 class TestCoreProcessWTest(TestCoreProcessNoTest):
 
-    def setUp(self, proc_class=AvgSpecUltraBasicWTest):
+    def setUp(self, proc_class=AvgSpecUltraBasicWTest, **proc_kwargs):
         super(TestCoreProcessWTest,
-              self).setUp(proc_class=AvgSpecUltraBasicWTest)
+              self).setUp(proc_class=proc_class, **proc_kwargs)
 
     def test_tfunc(self):
         pix_ind = 5
         actual = self.proc.test(pix_ind)
         expected = self.exp_result[pix_ind]
         self.assertTrue(np.allclose(actual, expected))
+
+
+class TestWriteResultsToNewH5File(TestCoreProcessWTest):
+
+    def setUp(self, proc_class=AvgSpecUltraBasicWTest, **proc_kwargs):
+        self.results_h5_file_path = 'sep_results.h5'
+        self.h5_f_new = h5py.File(self.results_h5_file_path, mode='w')
+        super(TestWriteResultsToNewH5File,
+              self).setUp(proc_class=proc_class, h5_target_group=self.h5_f_new,
+                          **proc_kwargs)
+
+    def test_compute(self):
+        super(TestWriteResultsToNewH5File, self).test_compute()
+        self.assertNotEqual(self.proc.h5_results_grp.file, self.h5_main.file)
+        self.assertEqual(self.proc.h5_results_grp.file, self.h5_f_new)
+
+    def tearDown(self):
+        super(TestWriteResultsToNewH5File, self).tearDown()
+        self.h5_f_new.close()
+        delete_existing_file(self.results_h5_file_path)
 
 
 class TestCoreProcessWExistingResults(unittest.TestCase):
