@@ -1015,7 +1015,7 @@ class TestLinkAsMain(unittest.TestCase):
         file_path = 'link_as_main.h5'
         data_utils.delete_existing_file(file_path)
         with h5py.File(file_path, mode='w') as h5_f:
-            h5_dset = h5_f.create_dataset("Blah", data=[1, 2, 3, 4])
+            h5_dset = h5_f.create_dataset("Blah", data=np.random.rand(2, 3))
             with self.assertRaises(TypeError):
                 hdf_utils.link_as_main("h5_main", 1.234, -2, False, {"h5_spec_vals": 2.432})
 
