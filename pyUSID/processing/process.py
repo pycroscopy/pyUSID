@@ -102,6 +102,8 @@ class Process(object):
             List of objects returned as the result of computation performed by
             the self._map_function for each position in the current batch of
             positions that were processed
+        self._h5_target_group : h5py.Group
+            Location where existing / future results will be stored
         self.__resume_implemented : bool
             Whether or not this (child) class has implemented the
             self._get_existing_datasets() function
