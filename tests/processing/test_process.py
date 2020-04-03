@@ -3,7 +3,7 @@
 """
 Created on Tue Nov  3 15:07:16 2017
 
-@author: Emily Costa, Suhas Somnath
+@author: Suhas Somnath
 """
 from __future__ import division, print_function, unicode_literals, absolute_import
 import unittest
@@ -13,9 +13,11 @@ sys.path.append("../../../pyUSID/")
 import pyUSID as usid
 
 
-def _create_results_grp_dsets(h5_main, process_name, parms_dict):
+def _create_results_grp_dsets(h5_main, process_name, parms_dict,
+                              h5_parent_group=None):
     h5_results_grp = usid.hdf_utils.create_results_group(h5_main,
-                                                         process_name)
+                                                         process_name,
+                                                         h5_parent_group=h5_parent_group)
 
     usid.hdf_utils.write_simple_attrs(h5_results_grp, parms_dict)
 
@@ -34,15 +36,16 @@ def _create_results_grp_dsets(h5_main, process_name, parms_dict):
 
 class NoMapFunc(usid.Process):
 
-    def __init__(self, h5_main):
+    def __init__(self, h5_main, **kwargs):
         parms_dict = {'parm_1': 1, 'parm_2': [1, 2, 3]}
         super(NoMapFunc, self).__init__(h5_main, 'Mean_Val',
-                                                parms_dict=parms_dict)
+                                        parms_dict=parms_dict, **kwargs)
 
     def _create_results_datasets(self):
         self.h5_results_grp, self.h5_results = _create_results_grp_dsets(self.h5_main,
                                                                          self.process_name,
-                                                                         self.parms_dict)
+                                                                         self.parms_dict,
+                                                                         h5_parent_group=self._h5_target_group)
 
 
 class AvgSpecUltraBasic(usid.Process):
@@ -54,7 +57,7 @@ class AvgSpecUltraBasic(usid.Process):
                                                 *args, **kwargs)
 
     def _create_results_datasets(self):
-        self.h5_results_grp, self.h5_results = _create_results_grp_dsets(self.h5_main, self.process_name, self.parms_dict)
+        self.h5_results_grp, self.h5_results = _create_results_grp_dsets(self.h5_main, self.process_name, self.parms_dict, h5_parent_group=self._h5_target_group)
 
     @staticmethod
     def _map_function(spectrogram, *args, **kwargs):
@@ -229,7 +232,7 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
 
     def __create_fake_result(self, percent_complete=100, parms_dict=None,
                              status_dset=True, status_attr=False,
-                             verbose=False):
+                             verbose=False, h5_parent_group=None):
 
         if parms_dict is None:
             parms_dict = {'parm_1': 1, 'parm_2': [1, 2, 3]}
@@ -238,7 +241,8 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
             print('Using parms_dict: {}'.format(parms_dict))
 
         results_grp, h5_results_dset = _create_results_grp_dsets(
-            self.h5_main, 'Mean_Val', parms_dict)
+            self.h5_main, 'Mean_Val', parms_dict,
+            h5_parent_group=h5_parent_group)
 
         # Intentionally set different results
         exp_result = np.expand_dims(np.random.rand(h5_results_dset.shape[0]),
@@ -274,7 +278,7 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
 
     def setUp(self, proc_class=AvgSpecUltraBasicWGetPrevResults,
               percent_complete=100, parms_dict=None, status_dset=True,
-              status_attr=False, verbose=False):
+              status_attr=False, verbose=False, h5_target_group=None):
         delete_existing_file(data_utils.std_beps_path)
         data_utils.make_beps_file()
         self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
@@ -297,6 +301,7 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
                                                      parms_dict=this_parms,
                                                      status_dset=has_status_dset,
                                                      status_attr=has_status_attr,
+                                                     h5_parent_group=h5_target_group,
                                                      verbose=verbose)
                 self.fake_results_grp.append(ret_vals[0])
                 self.h5_results.append(ret_vals[1])
@@ -306,10 +311,12 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
                                                  parms_dict=parms_dict,
                                                  status_dset=status_dset,
                                                  status_attr=status_attr,
+                                                 h5_parent_group=h5_target_group,
                                                  verbose=verbose)
             self.fake_results_grp, self.h5_results, self.exp_result = ret_vals
 
         self.proc = AvgSpecUltraBasicWGetPrevResults(self.h5_main,
+                                                     h5_target_group=h5_target_group,
                                                      verbose=verbose)
 
     def test_compute(self):
@@ -438,13 +445,13 @@ class TestProcReturnCompletedNotPartial(TestCoreProcessWExistingResults):
 
 class TestProcLastPartialResult(TestCoreProcessWExistingResults):
 
-    def setUp(self):
+    def setUp(self, **kwargs):
         super(TestProcLastPartialResult,
               self).setUp(percent_complete=[75, 50],
                           parms_dict=[None, None],
                           status_dset=[True, False],
                           status_attr=[False, True],
-                          verbose=False)
+                          verbose=False, **kwargs)
 
     def test_compute(self):
         self.assertEqual(len(self.proc.duplicate_h5_groups), 0)
@@ -454,6 +461,20 @@ class TestProcLastPartialResult(TestCoreProcessWExistingResults):
 
         h5_results_grp = self.proc.compute(override=False)
         self.assertEqual(self.fake_results_grp[-1], h5_results_grp)
+
+
+class TestProcessWExistingResultsDiffFile(TestProcLastPartialResult):
+
+    def setUp(self):
+        self.results_h5_file_path = 'sep_results.h5'
+        self.h5_f_new = h5py.File(self.results_h5_file_path, mode='w')
+        super(TestProcessWExistingResultsDiffFile,
+              self).setUp(h5_target_group=self.h5_f_new)
+
+    def tearDown(self):
+        super(TestProcessWExistingResultsDiffFile, self).tearDown()
+        self.h5_f_new.close()
+        delete_existing_file(self.results_h5_file_path)
 
 
 class TestUsePartialComputationIllegal(TestProcLastPartialResult):
