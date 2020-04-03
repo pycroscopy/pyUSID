@@ -220,6 +220,38 @@ def get_h5_obj_refs(obj_names, h5_refs):
     return found_objects
 
 
+def validate_h5_objs_in_same_h5_file(h5_src, h5_other):
+    """
+    Checks if the provided objects are in the same HDF5 file.
+    If not, it throws a ValueError
+
+    Parameters
+    ----------
+    h5_src : h5py.Dataset, h5py.File, or h5py.Group object
+        First object to compare
+    h5_other : h5py.Dataset, h5py.File, or h5py.Group object
+        Second object to compare
+    """
+    if not isinstance(h5_src, (h5py.Dataset, h5py.File, h5py.Group)):
+        raise TypeError('h5_src should either be a h5py Dataset, File, or '
+                        'Group')
+    if not isinstance(h5_other, (h5py.Dataset, h5py.File, h5py.Group)):
+        raise TypeError('h5_other should either be a h5py Dataset, File, or'
+                        ' Group')
+    if h5_src.file != h5_other.file:
+        raise ValueError('Cannot link h5 objects across files. '
+                         '{} is present in file: {}, while {} is in file :'
+                         '{}'.format(h5_src.name, h5_src.file, h5_other.name,
+                                     h5_other.file))
+
+
+def __link_h5_obj(h5_src, h5_other, alias=None):
+    validate_h5_objs_in_same_h5_file(h5_src, h5_other)
+    if alias is None:
+        alias = h5_other.name.split('/')[-1]
+    h5_src.attrs[alias] = h5_other.ref
+
+
 def link_h5_objects_as_attrs(src, h5_objects):
     """
     Creates Dataset attributes that contain references to other Dataset Objects.
@@ -244,7 +276,7 @@ def link_h5_objects_as_attrs(src, h5_objects):
     for itm in h5_objects:
         if not isinstance(itm, (h5py.Dataset, h5py.Group)):
             raise TypeError('h5_objects should only contain h5py. Dataset and Group objects')
-        src.attrs[itm.name.split('/')[-1]] = itm.ref
+        __link_h5_obj(src, itm)
 
 
 def link_h5_obj_as_alias(h5_main, h5_ancillary, alias_name):
@@ -269,7 +301,7 @@ def link_h5_obj_as_alias(h5_main, h5_ancillary, alias_name):
         raise TypeError('h5_ancillary should be a h5py. Dataset or Group object')
     alias_name = validate_single_string_arg(alias_name, 'alias_name')
 
-    h5_main.attrs[alias_name] = h5_ancillary.ref
+    __link_h5_obj(h5_main, h5_ancillary, alias=alias_name)
 
 
 def is_editable_h5(h5_obj):

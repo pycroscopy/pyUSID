@@ -398,7 +398,7 @@ class TestIsEditableH5(TestHDFUtilsBase):
             _ = hdf_utils.is_editable_h5(h5_group)
 
 
-class TestLinkH5ObjAsAlias(TestHDFUtilsBase):
+class TestLinkH5ObjAsAlias(unittest.TestCase):
 
     def test_legal(self):
         file_path = 'link_as_alias.h5'
@@ -426,6 +426,7 @@ class TestLinkH5ObjAsAlias(TestHDFUtilsBase):
             hdf_utils.link_h5_obj_as_alias(h5_f, h5_group, 'France')
             self.assertEqual(h5_f[h5_f.attrs['Paris']], h5_main)
             self.assertEqual(h5_f[h5_f.attrs['France']], h5_group)
+        os.remove(file_path)
 
     def test_not_h5_obj(self):
         file_path = 'link_as_alias.h5'
@@ -447,7 +448,7 @@ class TestLinkH5ObjAsAlias(TestHDFUtilsBase):
         os.remove(file_path)
 
 
-class TestLinkH5ObjectAsAttribute(TestHDFUtilsBase):
+class TestLinkH5ObjectAsAttribute(unittest.TestCase):
 
     def test_legal(self):
         file_path = 'link_h5_objects_as_attrs.h5'
@@ -488,7 +489,35 @@ class TestLinkH5ObjectAsAttribute(TestHDFUtilsBase):
         os.remove(file_path)
 
 
-class TestWriteBookKeepingAttrs(TestHDFUtilsBase):
+class TestValidateH5ObjsInSameFile(unittest.TestCase):
+
+    def test_diff_file(self):
+        file_path_1 = 'source.h5'
+        file_path_2 = 'sink.h5'
+        data_utils.delete_existing_file(file_path_1)
+        h5_f1 = h5py.File(file_path_1, mode='w')
+        h5_main = h5_f1.create_dataset('main', data=np.arange(5))
+        h5_f2 = h5py.File(file_path_2, mode='w')
+        h5_other = h5_f2.create_dataset('other', data=np.arange(5))
+
+        with self.assertRaises(ValueError):
+            hdf_utils.validate_h5_objs_in_same_h5_file(h5_main, h5_other)
+
+        os.remove(file_path_1)
+        os.remove(file_path_2)
+
+    def test_same_file(self):
+        file_path = 'test_same_file.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_main = h5_f.create_dataset('main', data=np.arange(5))
+            h5_anc = h5_f.create_dataset('Ancillary', data=np.arange(3))
+            # Nothing should happen here.
+            hdf_utils.validate_h5_objs_in_same_h5_file(h5_main, h5_anc)
+        os.remove(file_path)
+
+
+class TestWriteBookKeepingAttrs(unittest.TestCase):
 
     def test_file(self):
         file_path = 'test.h5'

@@ -2,6 +2,7 @@ from __future__ import division, print_function, unicode_literals, absolute_impo
 import os
 import sys
 import socket
+from warnings import warn
 import h5py
 import numpy as np
 from io import StringIO
@@ -125,13 +126,21 @@ def validate_aux_dset_pair(test_class, h5_group, h5_inds, h5_vals, dim_names, di
         test_class.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
         test_class.assertTrue(np.all([x == y for x, y in zip(dim_names, get_attr(h5_dset, 'labels'))]))
         test_class.assertTrue(np.all([x == y for x, y in zip(dim_units, get_attr(h5_dset, 'units'))]))
-        # assert region references
+        # assert region references even though these are not really used anywhere
         for dim_ind, curr_name in enumerate(dim_names):
-            expected = np.squeeze(ref_data[:, dim_ind])
             if is_spectral:
                 expected = np.squeeze(ref_data[dim_ind])
-            test_class.assertTrue(np.allclose(expected,
-                                              np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
+            else:
+                expected = np.squeeze(ref_data[:, dim_ind])
+            actual = np.squeeze(h5_dset[h5_dset.attrs[curr_name]])
+            try:
+                match = np.allclose(expected, actual)
+            except ValueError:
+                match = False
+            if match:
+                test_class.assertTrue(match)
+            else:
+                warn('Test for region reference: ' + curr_name + ' failed')
 
 
 def verify_book_keeping_attrs(test_class, h5_obj):

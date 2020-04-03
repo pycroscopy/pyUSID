@@ -310,6 +310,42 @@ class TestWriteReducedAncDsets(TestSimple):
 
         os.remove(duplicate_path)
 
+    def test_spec_2d_to_1d_new_file(self):
+        new_file_path = 'reduced_ancs.h5'
+        data_utils.delete_existing_file(new_file_path)
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_spec_inds_orig = h5_f['/Raw_Measurement/Spectroscopic_Indices']
+            h5_spec_vals_orig = h5_f['/Raw_Measurement/Spectroscopic_Values']
+            new_base_name = 'Blah'
+            with h5py.File(new_file_path, mode='w') as h5_f_new:
+
+                h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_anc_dsets(h5_f_new,
+                                                                                       h5_spec_inds_orig,
+                                                                                       h5_spec_vals_orig,
+                                                                                       'Bias',
+                                                                                       basename=new_base_name)
+
+                dim_names = ['Cycle']
+                dim_units = ['']
+                ref_data = np.expand_dims(np.arange(2), axis=0)
+                for h5_dset, exp_dtype, exp_name in zip([h5_spec_inds_new, h5_spec_vals_new],
+                                                        [h5_spec_inds_orig.dtype, h5_spec_vals_orig.dtype],
+                                                        [new_base_name + '_Indices', new_base_name + '_Values']):
+                    self.assertIsInstance(h5_dset, h5py.Dataset)
+                    self.assertEqual(h5_dset.parent, h5_f_new)
+                    self.assertEqual(h5_dset.name.split('/')[-1], exp_name)
+                    self.assertTrue(np.allclose(ref_data, h5_dset[()]))
+                    self.assertEqual(h5_dset.dtype, exp_dtype)
+                    self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
+                    self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
+                    self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
+                    # assert region references
+                    for dim_ind, curr_name in enumerate(dim_names):
+                        self.assertTrue(np.allclose(np.squeeze(ref_data[dim_ind]),
+                                                    np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
+
+        os.remove(new_file_path)
+
     def test_spec_1d_to_0d(self):
         duplicate_path = 'copy_test_hdf_utils.h5'
         data_utils.delete_existing_file(duplicate_path)
@@ -595,11 +631,41 @@ class TestFindResultsGroup(TestSimple):
             with self.assertRaises(TypeError):
                 _ = hdf_utils.find_results_groups(h5_main, np.arange(5))
 
-    def test_illegal(self):
+    def test_no_such_tool(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             ret_val = hdf_utils.find_results_groups(h5_main, 'Blah')
             self.assertEqual(len(ret_val), 0)
+
+    def test_results_in_diff_file(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+
+        new_path = 'new.h5'
+        data_utils.delete_existing_file(new_path)
+
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_main = h5_f.create_dataset('Main', data=[1, 2, 3])
+            with h5py.File(new_path, mode='w') as h5_f_2:
+                grp_1 = h5_f_2.create_group('Main-Tool_000')
+                grp_2 = h5_f_2.create_group('Main-Tool_001')
+                grps = hdf_utils.find_results_groups(h5_main, 'Tool',
+                                                     h5_parent_group=h5_f_2)
+                self.assertEqual(set([grp_1, grp_2]), set(grps))
+
+        os.remove(file_path)
+        os.remove(new_path)
+
+    def test_results_in_diff_file_invalid_type(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_main = h5_f.create_dataset('Main', data=[1, 2, 3])
+            with self.assertRaises(TypeError):
+                _ = hdf_utils.find_results_groups(h5_main, 'Tool',
+                                                  h5_parent_group=h5_main)
+
+        os.remove(file_path)
 
 
 class TestCheckForMatchingAttrs(TestSimple):
@@ -668,17 +734,22 @@ class TestCheckForOld(TestSimple):
                 _ = hdf_utils.check_for_old(h5_main, 1.234)
 
             with self.assertRaises(TypeError):
-                _ = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms="not_a_dictionary")
+                _ = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                            new_parms="not_a_dictionary")
 
             with self.assertRaises(TypeError):
-                _ = hdf_utils.check_for_old(h5_main, 'Fitter', target_dset=1.234)
+                _ = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                            target_dset=1.234)
 
     def test_valid_target_dset(self):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'units': ['V'], 'labels': ['Bias']}
             dset_name = 'Spectroscopic_Indices'
-            groups = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=dset_name, verbose=False)
+            groups = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                             new_parms=attrs,
+                                             target_dset=dset_name,
+                                             verbose=False)
             groups = set(groups)
             self.assertEqual(groups, set([h5_f['/Raw_Measurement/source_main-Fitter_000/'],
                                           h5_f['/Raw_Measurement/source_main-Fitter_001/']]))
@@ -687,8 +758,10 @@ class TestCheckForOld(TestSimple):
         with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_1': 'string_val', 'att_2': 1.2345,
-                     'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2', 'str_3']}
-            ret = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset='Does_not_exist')
+                     'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2',
+                                                      'str_3']}
+            ret = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs,
+                                          target_dset='Does_not_exist')
             self.assertEqual(ret, [])
 
     def test_exact_match(self):
@@ -696,7 +769,9 @@ class TestCheckForOld(TestSimple):
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_1': 'string_val', 'att_2': 1.2345,
                      'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2', 'str_3']}
-            [h5_ret_grp] = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=None)
+            [h5_ret_grp] = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                                   new_parms=attrs,
+                                                   target_dset=None)
             self.assertEqual(h5_ret_grp, h5_f['/Raw_Measurement/source_main-Fitter_000'])
 
     def test_subset_but_match(self):
@@ -704,7 +779,9 @@ class TestCheckForOld(TestSimple):
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_2': 1.2345,
                      'att_3': [1, 2, 3, 4], 'att_4': ['str_1', 'str_2', 'str_3']}
-            [h5_ret_grp] = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=None)
+            [h5_ret_grp] = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                                   new_parms=attrs,
+                                                   target_dset=None)
             self.assertEqual(h5_ret_grp, h5_f['/Raw_Measurement/source_main-Fitter_000'])
 
     def test_exact_match_02(self):
@@ -712,7 +789,9 @@ class TestCheckForOld(TestSimple):
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_1': 'other_string_val', 'att_2': 5.4321,
                      'att_3': [4, 1, 3], 'att_4': ['s', 'str_2', 'str_3']}
-            [h5_ret_grp] = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=None)
+            [h5_ret_grp] = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                                   new_parms=attrs,
+                                                   target_dset=None)
             self.assertEqual(h5_ret_grp, h5_f['/Raw_Measurement/source_main-Fitter_001'])
 
     def test_fail_01(self):
@@ -720,7 +799,8 @@ class TestCheckForOld(TestSimple):
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_1': [4, 1, 3], 'att_2': ['s', 'str_2', 'str_3'],
                      'att_3': 'other_string_val', 'att_4': 5.4321}
-            ret_val = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=None)
+            ret_val = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                              new_parms=attrs, target_dset=None)
             self.assertIsInstance(ret_val, list)
             self.assertEqual(len(ret_val), 0)
 
@@ -729,12 +809,13 @@ class TestCheckForOld(TestSimple):
             h5_main = h5_f['/Raw_Measurement/source_main']
             attrs = {'att_x': [4, 1, 3], 'att_z': ['s', 'str_2', 'str_3'],
                      'att_y': 'other_string_val', 'att_4': 5.4321}
-            ret_val = hdf_utils.check_for_old(h5_main, 'Fitter', new_parms=attrs, target_dset=None)
+            ret_val = hdf_utils.check_for_old(h5_main, 'Fitter',
+                                              new_parms=attrs, target_dset=None)
             self.assertIsInstance(ret_val, list)
             self.assertEqual(len(ret_val), 0)
 
 
-class TestCreateIndexedGroup(TestSimple):
+class TestCreateIndexedGroup(unittest.TestCase):
 
     def test_first_group(self):
         file_path = 'test.h5'
@@ -801,7 +882,7 @@ class TestCreateIndexedGroup(TestSimple):
         os.remove(file_path)
 
 
-class TestCreateResultsGroup(TestSimple):
+class TestCreateResultsGroup(unittest.TestCase):
 
     def test_first(self):
         self.helper_first()
@@ -870,7 +951,38 @@ class TestCreateResultsGroup(TestSimple):
             with self.assertRaises(TypeError):
                 _ = hdf_utils.create_results_group(h5_f, 'Tool')
 
+            h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
+            with self.assertRaises(TypeError):
+                _ = hdf_utils.create_results_group(h5_dset, 'Tool',
+                                                   h5_parent_group='not_group')
+
         os.remove(file_path)
+
+    def test_different_file(self):
+        file_path = 'test.h5'
+        new_path = 'new.h5'
+        data_utils.delete_existing_file(file_path)
+        data_utils.delete_existing_file(new_path)
+
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_dset = h5_f.create_dataset('Main', data=[1, 2, 3])
+            # Ensuring that index is calculated at destination, not source:
+            _ = h5_f.create_group('Main-Tool_000')
+
+            with h5py.File(new_path, mode='w') as h5_f_new:
+                _ = h5_f_new.create_group('Main-Tool_000')
+
+                h5_group = hdf_utils.create_results_group(h5_dset, 'Tool',
+                                                          h5_parent_group=h5_f_new)
+
+                self.assertIsInstance(h5_group, h5py.Group)
+                self.assertEqual(h5_group.name, '/Main-Tool_001')
+                self.assertEqual(h5_group.parent, h5_f_new)
+                self.assertNotEqual(h5_dset.file, h5_group.file)
+                data_utils.verify_book_keeping_attrs(self, h5_group)
+
+        os.remove(file_path)
+        os.remove(new_path)
 
 
 class TestAssignGroupIndex(TestSimple):
@@ -897,13 +1009,13 @@ class TestAssignGroupIndex(TestSimple):
                 _ = hdf_utils.assign_group_index(h5_group, 1.24)
 
 
-class TestLinkAsMain(TestSimple):
+class TestLinkAsMain(unittest.TestCase):
 
     def test_pos_args_not_h5_dset(self):
         file_path = 'link_as_main.h5'
         data_utils.delete_existing_file(file_path)
         with h5py.File(file_path, mode='w') as h5_f:
-            h5_dset = h5_f.create_dataset("Blah", data=[1, 2, 3, 4])
+            h5_dset = h5_f.create_dataset("Blah", data=np.random.rand(2, 3))
             with self.assertRaises(TypeError):
                 hdf_utils.link_as_main("h5_main", 1.234, -2, False, {"h5_spec_vals": 2.432})
 
@@ -921,11 +1033,11 @@ class TestLinkAsMain(TestSimple):
 
         data_utils.delete_existing_file(file_path)
 
-    def test_pos_args_not_h5_dset(self):
+    def test_anc_args_not_h5_dset(self):
         file_path = 'link_as_main.h5'
         data_utils.delete_existing_file(file_path)
         with h5py.File(file_path, mode='w') as h5_f:
-            h5_dset = h5_f.create_dataset("Blah", data=[1, 2, 3, 4])
+            h5_dset = h5_f.create_dataset("Blah", data=np.random.rand(2, 3))
             with self.assertRaises(TypeError):
                 hdf_utils.link_as_main("h5_main", 1.234, -2, False, {"h5_spec_vals": 2.432})
 
@@ -1037,7 +1149,7 @@ class TestLinkAsMain(TestSimple):
         self.helper_test(False)
 
 
-class TestCopyAttributes(TestSimple):
+class TestCopyAttributes(unittest.TestCase):
 
     def test_not_h5_dset(self):
         temp_path = 'copy_attributes.h5'
@@ -1188,7 +1300,7 @@ class TestCopyAttributes(TestSimple):
                 hdf_utils.copy_attributes(h5_dset_source, h5_dset_dest, skip_refs=False)
 
 
-class TestCopyMainAttributes(TestSimple):
+class TestCopyMainAttributes(unittest.TestCase):
 
     def test_valid(self):
         file_path = 'test.h5'
@@ -1228,7 +1340,7 @@ class TestCopyMainAttributes(TestSimple):
         os.remove(file_path)
 
 
-class TestCreateEmptyDataset(TestSimple):
+class TestCreateEmptyDataset(unittest.TestCase):
 
     def test_invalid_types(self):
         with self.assertRaises(TypeError):
@@ -1271,6 +1383,61 @@ class TestCreateEmptyDataset(TestSimple):
                 self.assertEqual(val, h5_duplicate.attrs[key])
             for key, val in existing_attrs.items():
                 self.assertEqual(val, h5_duplicate.attrs[key])
+
+        os.remove(file_path)
+
+    def validate_copied_dataset(self, h5_f_new, h5_dest, dset_new_name,
+                                dset_data, dset_attrs):
+        self.assertTrue(dset_new_name in h5_f_new.keys())
+        h5_anc_dest = h5_f_new[dset_new_name]
+        self.assertIsInstance(h5_anc_dest, h5py.Dataset)
+        self.assertTrue(np.allclose(dset_data, h5_anc_dest[()]))
+        self.assertEqual(len(dset_attrs),
+                         len(h5_anc_dest.attrs.keys()))
+        for key, val in dset_attrs.items():
+            self.assertEqual(val, h5_anc_dest.attrs[key])
+        self.assertTrue(dset_new_name in h5_dest.attrs.keys())
+        self.assertEqual(h5_f_new[h5_dest.attrs[dset_new_name]],
+                         h5_anc_dest)
+
+    def test_diff_file_new_attrs_linked_dsets(self):
+        file_path = 'test.h5'
+        new_path = 'new.h5'
+        existing_attrs = {'a': 1, 'b': 'Hello'}
+        easy_attrs = {'1_string': 'Current', '1_number': 35.23}
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_dset_source = h5_f.create_dataset('Source', data=[1, 2, 3])
+            h5_dset_source.attrs.update(existing_attrs)
+            h5_other = h5_f.create_dataset('Other', data=[1, 2, 3])
+            anc_attrs = {'a': 1, 'b': -55}
+            h5_other.attrs.update(anc_attrs)
+            h5_dset_source.attrs['dset_ref'] = h5_other.ref
+            with h5py.File(new_path, mode='w') as h5_f_new:
+                func = hdf_utils.create_empty_dataset
+                if sys.version_info.major == 3:
+                    with self.assertWarns(UserWarning):
+                        h5_duplicate = func(h5_dset_source, np.float16,
+                                            'Duplicate', h5_group=h5_f_new,
+                                            new_attrs=easy_attrs,
+                                            skip_refs=False)
+                else:
+                    h5_duplicate = func(h5_dset_source, np.float16,
+                                        'Duplicate', h5_group=h5_f_new,
+                                        new_attrs=easy_attrs, skip_refs=False)
+                self.assertIsInstance(h5_duplicate, h5py.Dataset)
+                self.assertEqual(h5_duplicate.parent, h5_f_new)
+                self.assertFalse(h5_dset_source.file == h5_duplicate.file)
+                self.assertEqual(h5_duplicate.name, '/Duplicate')
+                self.assertEqual(h5_duplicate.dtype, np.float16)
+                for key, val in easy_attrs.items():
+                    self.assertEqual(val, h5_duplicate.attrs[key])
+                for key, val in existing_attrs.items():
+                    self.assertEqual(val, h5_duplicate.attrs[key])
+                self.assertTrue('dset_ref' in h5_duplicate.attrs.keys())
+                self.validate_copied_dataset(h5_f_new, h5_duplicate,
+                                             'dset_ref', h5_other[()],
+                                             anc_attrs)
 
         os.remove(file_path)
 
@@ -1502,6 +1669,347 @@ class TestCheckAndLinkAncillary(TestSimple):
                 self.assertIsInstance(actual, h5py.Reference)
                 self.assertEqual(h5_f[actual], exp_val)
         os.remove(file_path)
+
+
+class TestValidateAncH5Dsets(TestSimple):
+
+    def test_valid_shapes(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_grp = h5_f['Raw_Measurement']
+            h5_main = h5_grp['source_main']
+
+            h5_pos_inds = h5_grp['Position_Indices']
+            h5_pos_vals = h5_grp['Position_Values']
+
+            hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
+                                            h5_main.shape,
+                                            is_spectroscopic=False)
+
+            hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
+                                            list(h5_main.shape),
+                                            is_spectroscopic=False)
+
+            h5_spec_inds = h5_grp['Spectroscopic_Indices']
+            h5_spec_vals = h5_grp['Spectroscopic_Values']
+
+
+            hdf_utils.validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals,
+                                            h5_main.shape,
+                                            is_spectroscopic=True)
+
+            hdf_utils.validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals,
+                                            list(h5_main.shape),
+                                            is_spectroscopic=True)
+
+    def test_invalid_spec_pos_bool(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_grp = h5_f['Raw_Measurement']
+            h5_main = h5_grp['source_main']
+
+            h5_pos_inds = h5_grp['Position_Indices']
+            h5_pos_vals = h5_grp['Position_Values']
+
+            with self.assertRaises(ValueError):
+                hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
+                                                h5_main.shape,
+                                                is_spectroscopic=True)
+
+            h5_spec_inds = h5_grp['Spectroscopic_Indices']
+            h5_spec_vals = h5_grp['Spectroscopic_Values']
+
+            with self.assertRaises(ValueError):
+                hdf_utils.validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals,
+                                                h5_main.shape,
+                                                is_spectroscopic=False)
+
+    def test_mismatched_anc_shapes(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_grp = h5_f['Raw_Measurement']
+            h5_main = h5_grp['source_main']
+
+            h5_pos_inds = h5_grp['Position_Indices']
+            h5_pos_vals = h5_grp['Ancillary']
+
+            with self.assertRaises(ValueError):
+                hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
+                                                h5_main.shape,
+                                                is_spectroscopic=False)
+
+    def test_invalid_dtypes(self):
+        with h5py.File(data_utils.std_beps_path, mode='r') as h5_f:
+            h5_grp = h5_f['Raw_Measurement']
+            h5_main = h5_grp['source_main']
+
+            h5_pos_inds = h5_grp['Position_Indices']
+            h5_pos_vals = h5_grp['Position_Values']
+
+            with self.assertRaises(TypeError):
+                hdf_utils.validate_anc_h5_dsets('h5_pos_inds', h5_pos_vals,
+                                                h5_main.shape,
+                                                is_spectroscopic=False)
+
+            with self.assertRaises(TypeError):
+                hdf_utils.validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals,
+                                                np.arange(3),
+                                                is_spectroscopic=False)
+
+
+class TestValidateDimsAgainstMAin(unittest.TestCase):
+
+    def test_single_dim(self):
+        func = hdf_utils.validate_dims_against_main
+        func((1, 5), write_utils.Dimension('blah', 'meh', np.arange(5)),
+             is_spectroscopic=True)
+        func((5, 1), [write_utils.Dimension('blah', 'meh', np.arange(5))],
+             is_spectroscopic=False)
+
+    def test_multi_dims(self):
+        func = hdf_utils.validate_dims_against_main
+        func((1, 15), [write_utils.Dimension('a', 'b', 5),
+                       write_utils.Dimension('a', 'b', 3)],
+             is_spectroscopic=True)
+        func((15, 5), [write_utils.Dimension('a', 'b', 5),
+                       write_utils.Dimension('a', 'b', 3)],
+             is_spectroscopic=False)
+
+    def test_invalid_dims(self):
+        func = hdf_utils.validate_dims_against_main
+        with self.assertRaises(ValueError):
+            func((1, 25), [write_utils.Dimension('a', 'b', 5),
+                           write_utils.Dimension('a', 'b', 3)],
+                 is_spectroscopic=True)
+        with self.assertRaises(ValueError):
+            func((25, 5), [write_utils.Dimension('a', 'b', 5)],
+                 is_spectroscopic=False)
+
+    def test_invalid_dtypes(self):
+        func = hdf_utils.validate_dims_against_main
+        with self.assertRaises(TypeError):
+            func('hello', write_utils.Dimension('a', 'b', 5))
+        with self.assertRaises(TypeError):
+            func((25, 5), "Dimension")
+
+    def test_invalid_main_shape(self):
+        func = hdf_utils.validate_dims_against_main
+        with self.assertRaises(ValueError):
+            func([-5, 1], write_utils.Dimension('a', 'b', 5))
+        with self.assertRaises(ValueError):
+            func([5], write_utils.Dimension('a', 'b', 5))
+        with self.assertRaises(ValueError):
+            func([1, 2, 5], write_utils.Dimension('a', 'b', 5))
+
+
+class TestCopyLinkedObjects(TestSimple):
+
+    def validate_copied_dataset(self, h5_f_new, h5_dest, dset_new_name,
+                                dset_data, dset_attrs):
+        self.assertTrue(dset_new_name in h5_f_new.keys())
+        h5_anc_dest = h5_f_new[dset_new_name]
+        self.assertIsInstance(h5_anc_dest, h5py.Dataset)
+        self.assertTrue(np.allclose(dset_data, h5_anc_dest[()]))
+        self.assertEqual(len(dset_attrs),
+                         len(h5_anc_dest.attrs.keys()))
+        for key, val in dset_attrs.items():
+            self.assertEqual(val, h5_anc_dest.attrs[key])
+        self.assertTrue(dset_new_name in h5_dest.attrs.keys())
+        self.assertEqual(h5_f_new[h5_dest.attrs[dset_new_name]],
+                         h5_anc_dest)
+
+    def base_two_dsets_simple_attrs(self, exist_dset_same_data=False,
+                                    exist_dset_diff_data_shape=False,
+                                    exist_dset_diff_data=False,
+                                    exist_grp_inst_dset=False):
+        file_path = 'test.h5'
+        new_path = 'new.h5'
+        data_utils.delete_existing_file(file_path)
+        data_utils.delete_existing_file(new_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_source = h5_f.create_dataset('Main', data=[1, 2, 3])
+            simple_attrs = {'quantity': 'blah', 'units': 'nA'}
+            h5_source.attrs.update(simple_attrs)
+
+            h5_anc_1 = h5_f.create_dataset('Anc_1', data=[4, 5, 6])
+            anc_1_attrs = {'a': 1, 'b': 3}
+            h5_anc_1.attrs.update(anc_1_attrs)
+
+            h5_anc_2 = h5_f.create_dataset('Anc_2', data=[7, 8, 9])
+            anc_2_attrs = {'p': 78, 'j': 8}
+            h5_anc_2.attrs.update(anc_2_attrs)
+
+            h5_source.attrs['Pos_Inds'] = h5_anc_1.ref
+            h5_source.attrs['Pos_Vals'] = h5_anc_2.ref
+
+            with h5py.File(new_path, mode='w') as h5_f_new:
+                h5_dest = h5_f_new.create_dataset('Duplicate', data=[1, 2, 3])
+
+                if exist_dset_same_data:
+                    _ = h5_f_new.create_dataset('Pos_Vals', data=[7, 8, 9])
+                elif exist_dset_diff_data:
+                    _ = h5_f_new.create_dataset('Pos_Vals', data=[8, 1, 3])
+                elif exist_dset_diff_data_shape:
+                    _ = h5_f_new.create_dataset('Pos_Vals',
+                                                data=np.random.rand(5, 3))
+                elif exist_grp_inst_dset:
+                    _ = h5_f_new.create_group('Pos_Vals')
+
+                if sys.version_info.major == 3 and exist_dset_same_data:
+                    with self.assertWarns(UserWarning):
+                        hdf_utils.copy_linked_objects(h5_source, h5_dest,
+                                                      verbose=False)
+                elif exist_dset_diff_data or exist_dset_diff_data_shape:
+                    with self.assertRaises(ValueError):
+                        hdf_utils.copy_linked_objects(h5_source, h5_dest,
+                                                      verbose=False)
+                elif exist_grp_inst_dset:
+                    with self.assertRaises(TypeError):
+                        hdf_utils.copy_linked_objects(h5_source, h5_dest,
+                                                      verbose=False)
+                else:
+                    hdf_utils.copy_linked_objects(h5_source, h5_dest,
+                                                  verbose=False)
+
+                if not exist_dset_diff_data_shape and not exist_dset_diff_data\
+                        and not exist_grp_inst_dset:
+                    self.assertEqual(len(h5_f_new.keys()), 3)
+
+                    self.validate_copied_dataset(h5_f_new, h5_dest, 'Pos_Inds',
+                                                 h5_anc_1[()], anc_1_attrs)
+
+                    self.validate_copied_dataset(h5_f_new, h5_dest, 'Pos_Vals',
+                                                 h5_anc_2[()], anc_2_attrs)
+
+        os.remove(file_path)
+        os.remove(new_path)
+
+    def test_two_dsets_simple_attrs_empty_dest(self):
+        self.base_two_dsets_simple_attrs(exist_dset_same_data=False,
+                                         exist_dset_diff_data_shape=False,
+                                         exist_dset_diff_data=False,
+                                         exist_grp_inst_dset=False)
+
+    def test_existing_anc_dset_same_data_no_attrs(self):
+        self.base_two_dsets_simple_attrs(exist_dset_same_data=True,
+                                         exist_dset_diff_data_shape=False,
+                                         exist_dset_diff_data=False,
+                                         exist_grp_inst_dset=False)
+
+    def test_existing_anc_dset_diff_data(self):
+        self.base_two_dsets_simple_attrs(exist_dset_same_data=False,
+                                         exist_dset_diff_data_shape=False,
+                                         exist_dset_diff_data=True,
+                                         exist_grp_inst_dset=False)
+
+    def test_existing_anc_dset_diff_data_shape(self):
+        self.base_two_dsets_simple_attrs(exist_dset_same_data=False,
+                                         exist_dset_diff_data_shape=True,
+                                         exist_dset_diff_data=False,
+                                         exist_grp_inst_dset=False)
+
+    def test_existing_group_instead_of_det(self):
+        self.base_two_dsets_simple_attrs(exist_dset_same_data=False,
+                                         exist_dset_diff_data_shape=False,
+                                         exist_dset_diff_data=False,
+                                         exist_grp_inst_dset=True)
+
+
+class TestCopyDataset(TestSimple):
+
+    def validate_copied_dataset(self, h5_f_new, dset_new_name,
+                                dset_data, dset_attrs):
+        self.assertTrue(dset_new_name in h5_f_new.keys())
+        h5_anc_dest = h5_f_new[dset_new_name]
+        self.assertIsInstance(h5_anc_dest, h5py.Dataset)
+        self.assertTrue(np.allclose(dset_data, h5_anc_dest[()]))
+        self.assertEqual(len(dset_attrs),
+                         len(h5_anc_dest.attrs.keys()))
+        for key, val in dset_attrs.items():
+            self.assertEqual(val, h5_anc_dest.attrs[key])
+
+    def base_test(self, exist_dset_same_data=False, use_alias=False,
+                  exist_dset_diff_data_shape=False, exist_dset_diff_data=False,
+                  exist_grp_inst_dset=False):
+        file_path = 'test.h5'
+        new_path = 'new.h5'
+        data_utils.delete_existing_file(file_path)
+        data_utils.delete_existing_file(new_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            h5_source = h5_f.create_dataset('Original', data=[1, 2, 3])
+            simple_attrs = {'quantity': 'blah', 'units': 'nA'}
+            h5_source.attrs.update(simple_attrs)
+
+            with h5py.File(new_path, mode='w') as h5_f_new:
+
+                if use_alias:
+                    alias = 'Duplicate'
+                else:
+                    alias = 'Original'
+
+                if exist_dset_same_data:
+                    _ = h5_f_new.create_dataset(alias, data=[1, 2, 3])
+                elif exist_dset_diff_data:
+                    _ = h5_f_new.create_dataset(alias, data=[8, 1, 3])
+                elif exist_dset_diff_data_shape:
+                    _ = h5_f_new.create_dataset(alias,
+                                                data=np.random.rand(5, 3))
+                elif exist_grp_inst_dset:
+                    _ = h5_f_new.create_group(alias)
+
+                if use_alias:
+                    al_arg = alias
+                else:
+                    al_arg = None
+
+                func = hdf_utils.copy_dataset
+                args = [h5_source, h5_f_new]
+                kwargs = {'alias': al_arg, 'verbose': False}
+
+                if exist_dset_diff_data or exist_dset_diff_data_shape:
+                    with self.assertRaises(ValueError):
+                        _ = func(*args, **kwargs)
+                elif exist_grp_inst_dset:
+                    with self.assertRaises(TypeError):
+                        _ = func(*args, **kwargs)
+                else:
+                    _ = func(*args, **kwargs)
+
+                if not exist_dset_diff_data_shape and not exist_dset_diff_data\
+                        and not exist_grp_inst_dset:
+                    self.assertEqual(len(h5_f_new.keys()), 1)
+                    self.validate_copied_dataset(h5_f_new, alias,
+                                                 h5_source[()], simple_attrs)
+
+        os.remove(file_path)
+        os.remove(new_path)
+
+    def test_exact_copy(self):
+        self.base_test(exist_dset_same_data=False, use_alias=False,
+                       exist_dset_diff_data_shape=False,
+                       exist_dset_diff_data=False, exist_grp_inst_dset=False)
+
+    def test_copy_w_alias(self):
+        self.base_test(exist_dset_same_data=False, use_alias=True,
+                       exist_dset_diff_data_shape=False,
+                       exist_dset_diff_data=False, exist_grp_inst_dset=False)
+
+    def test_existing_group_same_name(self):
+        self.base_test(exist_dset_same_data=False, use_alias=False,
+                       exist_dset_diff_data_shape=False,
+                       exist_dset_diff_data=False, exist_grp_inst_dset=True)
+
+    def test_existing_dset_same_name_data(self):
+        self.base_test(exist_dset_same_data=True, use_alias=False,
+                       exist_dset_diff_data_shape=False,
+                       exist_dset_diff_data=False, exist_grp_inst_dset=False)
+
+    def test_existing_dset_same_name_diff_data_shape(self):
+        self.base_test(exist_dset_same_data=False, use_alias=False,
+                       exist_dset_diff_data_shape=True,
+                       exist_dset_diff_data=False, exist_grp_inst_dset=False)
+
+    def test_existing_dset_same_name_diff_data(self):
+        self.base_test(exist_dset_same_data=False, use_alias=False,
+                       exist_dset_diff_data_shape=False,
+                       exist_dset_diff_data=True, exist_grp_inst_dset=False)
 
 """
     def test_linking_main_plus_other_dsets(self):
