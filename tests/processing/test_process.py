@@ -491,6 +491,11 @@ class TestProcessWExistingResultsDiffFile(TestProcLastPartialResult):
         super(TestProcessWExistingResultsDiffFile,
               self).setUp(h5_target_group=self.h5_f_new)
 
+    def test_compute(self):
+        super(TestProcessWExistingResultsDiffFile, self).test_compute()
+        self.assertNotEqual(self.proc.h5_results_grp.file, self.h5_main.file)
+        self.assertEqual(self.proc.h5_results_grp.file, self.h5_f_new)
+
     def tearDown(self):
         super(TestProcessWExistingResultsDiffFile, self).tearDown()
         self.h5_f_new.close()
