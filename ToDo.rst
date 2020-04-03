@@ -9,7 +9,6 @@ Near-term Goals
   * accept the N-dimensional array itself. No flattening required by user.
   * Minimize the requirements like quantity and units. Things will look ugly with a lot of unknowns. Is this relaxation worth it.
 * Simplify documentation or add new series to focus on important functions rather than going over the many developer functions that users will not care about
-* Integrate pyUSID with more scientific domain packages to improve adoption. Eg - HyperSpy
 * New optional attribute attached to Main dataset - ``type``: ``AFM scan``.
 * Simplify ``USIDataset``:
 
