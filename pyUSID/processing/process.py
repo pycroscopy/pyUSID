@@ -276,7 +276,7 @@ class Process(object):
 
         if self.mpi_rank == 0:
             print('Consider calling test() to check results before calling compute() which computes on the entire'
-                  ' dataset and writes back to the HDF5 file')
+                  ' dataset and writes results to the HDF5 file')
 
         self.duplicate_h5_groups, self.partial_h5_groups = self._check_for_duplicates()
 
@@ -377,6 +377,7 @@ class Process(object):
             print('Checking for duplicates:')
 
         # This list will contain completed runs only
+        print('PRocess name is: {}'.format(self.process_name))
         existing = check_for_old(self.h5_main, self.process_name,
                                  new_parms=self.parms_dict,
                                  h5_parent_goup=self._h5_target_group,
