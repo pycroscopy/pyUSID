@@ -18,7 +18,7 @@ from multiprocessing import cpu_count
 
 from .comp_utils import parallel_compute, get_MPI, group_ranks_by_socket, \
     get_available_memory
-from ..io.hdf_utils import check_if_main, check_for_old, get_attributes
+from ..io.hdf_utils import check_if_main, check_for_old, write_simple_attrs
 from ..io.usi_data import USIDataset
 from ..io.dtype_utils import integers_to_slices, lazy_load_array, \
     validate_single_string_arg
@@ -377,7 +377,6 @@ class Process(object):
             print('Checking for duplicates:')
 
         # This list will contain completed runs only
-        print('PRocess name is: {}'.format(self.process_name))
         existing = check_for_old(self.h5_main, self.process_name,
                                  new_parms=self.parms_dict,
                                  h5_parent_goup=self._h5_target_group,
@@ -772,6 +771,17 @@ class Process(object):
                 if completed_pixels > 0:
                     self._h5_status_dset[:completed_pixels] = 1
 
+    def _write_source_dset_provenance(self):
+        """
+        Writes path of HDF5 file and path of h5_main to the results group
+        if results are being written to a new HDF5 file
+        """
+        if self.h5_main.file == self.h5_results_grp.file:
+            return
+        write_simple_attrs(self.h5_results_grp,
+                           {'source_file_path': self.h5_main.file.filename,
+                            'source_dataset_path': self.h5_main.name})
+
     def _get_existing_datasets(self):
         """
         The purpose of this function is to allow processes to resume from partly computed results
@@ -893,6 +903,7 @@ class Process(object):
             if self.verbose and self.mpi_rank == 0:
                 print('Creating HDF5 group and datasets to hold results')
             self._create_results_datasets()
+            self._write_source_dset_provenance()
         else:
             # resuming from previous checkpoint
             resuming = True
