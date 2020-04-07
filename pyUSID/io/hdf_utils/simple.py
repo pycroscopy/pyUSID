@@ -801,8 +801,9 @@ def create_results_group(h5_main, tool_name, h5_parent_group=None):
     # this are NOT being used right now but will be in the subsequent versions of pyUSID
     write_simple_attrs(h5_group, {'tool': tool_name, 'num_source_dsets': 1})
     # in this case, there is only one source
-    for dset_ind, dset in enumerate([h5_main]):
-        h5_group.attrs['source_' + '{:03d}'.format(dset_ind)] = dset.ref
+    if h5_parent_group.file == h5_main.file:
+        for dset_ind, dset in enumerate([h5_main]):
+            h5_group.attrs['source_' + '{:03d}'.format(dset_ind)] = dset.ref
 
     return h5_group
 
