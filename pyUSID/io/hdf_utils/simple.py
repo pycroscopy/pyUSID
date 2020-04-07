@@ -370,7 +370,6 @@ def validate_anc_h5_dsets(h5_inds, h5_vals, main_shape, is_spectroscopic=True):
     if h5_inds.shape != h5_vals.shape:
         raise ValueError('h5_inds: {} and h5_vals: {} should be of the same '
                          'shape'.format(h5_inds.shape, h5_vals.shape))
-    print(main_shape)
     if isinstance(main_shape, (list, tuple)):
         if not contains_integers(main_shape, min_val=1) or \
                 len(main_shape) != 2:
