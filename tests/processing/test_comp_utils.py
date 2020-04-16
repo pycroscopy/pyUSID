@@ -92,7 +92,7 @@ class TestGetAvailableMemory(unittest.TestCase):
         if sys.maxsize <= 2 ** 32:
             mem = min([mem, sys.maxsize])
 
-        self.assertEqual(mem, comp_utils.get_available_memory())
+        self.assertTrue(abs(mem-comp_utils.get_available_memory()) < 0.01 * virtual_memory().total)
 
 
 class TestGetMPI(unittest.TestCase):

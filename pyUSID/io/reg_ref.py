@@ -431,6 +431,28 @@ def simple_region_ref_copy(h5_source, h5_target, key):
     return ref_inds
 
 
+def copy_all_region_refs(h5_source, h5_target):
+    """
+    Copies only region references from the source dataset to the target dataset
+
+    Parameters
+    ----------
+    h5_source : h5py.Dataset
+        Dataset from which to copy region references
+    h5_target : h5py.Dataset
+        Dataset to which to copy region references to
+
+    """
+    if not isinstance(h5_source, h5py.Dataset):
+        raise TypeError("'h5_source' should be a h5py.Dataset object")
+    if not isinstance(h5_target, h5py.Dataset):
+        raise TypeError("'h5_target' should be a h5py.Dataset object")
+    for key in h5_source.attrs.keys():
+        if not isinstance(h5_source.attrs[key], h5py.RegionReference):
+            continue
+        simple_region_ref_copy(h5_source, h5_target, key)
+
+
 def write_region_references(h5_dset, reg_ref_dict, add_labels_attr=True, verbose=False):
     """
     Creates attributes of a h5py.Dataset that refer to regions in the dataset

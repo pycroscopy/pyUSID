@@ -865,8 +865,10 @@ class TestReshapeFromNDims(TestModel):
 
 class TestWriteMainDataset(TestModel):
 
-    def base_write(self, lazy_main=False, empty_main=False, pre_pos=False, pre_spec=False):
+    def base_write(self, lazy_main=False, empty_main=False, pre_pos=False,
+                   pre_spec=False, to_new_file=False):
         file_path = 'test.h5'
+        new_file_path = 'new.h5'
         data_utils.delete_existing_file(file_path)
         main_data = np.random.rand(15, 14)
         main_data_name = 'Test_Main'
@@ -916,19 +918,27 @@ class TestWriteMainDataset(TestModel):
                 kwargs.update({'h5_pos_inds': h5_pos_inds,
                                'h5_pos_vals': h5_pos_vals})
 
-            usid_main = hdf_utils.write_main_dataset(h5_f, input_data, main_data_name, quantity, dset_units, pos_dims,
-                                                     spec_dims, main_dset_attrs=None, slow_to_fast=False, **kwargs)
+            targ_loc = h5_f
+            if to_new_file:
+                h5_f_2 = h5py.File(new_file_path, mode='w')
+                targ_loc = h5_f_2
+
+            usid_main = hdf_utils.write_main_dataset(targ_loc, input_data, main_data_name, quantity, dset_units, pos_dims,
+                                                     spec_dims, main_dset_attrs=None, slow_to_fast=False, verbose=True, **kwargs)
             self.assertIsInstance(usid_main, USIDataset)
             self.assertEqual(usid_main.name.split('/')[-1], main_data_name)
-            self.assertEqual(usid_main.parent, h5_f)
+            self.assertEqual(usid_main.parent, targ_loc)
             if not empty_main:
                 self.assertTrue(np.allclose(main_data, usid_main[()]))
 
-            data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
+            data_utils.validate_aux_dset_pair(self, targ_loc, usid_main.h5_pos_inds, usid_main.h5_pos_vals, pos_names, pos_units,
                                           pos_data, h5_main=usid_main, is_spectral=False, slow_to_fast=False)
 
-            data_utils.validate_aux_dset_pair(self, h5_f, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names, spec_units,
+            data_utils.validate_aux_dset_pair(self, targ_loc, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names, spec_units,
                                           spec_data, h5_main=usid_main, is_spectral=True, slow_to_fast=False)
+
+        if to_new_file:
+            os.remove(new_file_path)
         os.remove(file_path)
 
     def test_numpy_small(self):
@@ -943,11 +953,20 @@ class TestWriteMainDataset(TestModel):
     def test_write_main_existing_pos_aux(self):
         self.base_write(pre_pos=True, pre_spec=False)
 
+    def test_write_main_existing_pos_aux_diff_file(self):
+        self.base_write(pre_pos=True, pre_spec=False, to_new_file=True)
+
     def test_write_main_existing_spec_aux(self):
         self.base_write(pre_pos=False, pre_spec=True)
 
+    def test_write_main_existing_spec_aux_diff_file(self):
+        self.base_write(pre_pos=False, pre_spec=True, to_new_file=True)
+
     def test_write_main_both_existing_aux(self):
         self.base_write(pre_pos=True, pre_spec=True)
+
+    def test_write_main_both_existing_aux_diff_file(self):
+        self.base_write(pre_pos=True, pre_spec=True, to_new_file=True)
 
     def test_prod_sizes_mismatch(self):
         file_path = 'test.h5'

@@ -14,13 +14,14 @@ import h5py
 import numpy as np
 import dask.array as da
 
-from ..dtype_utils import validate_dtype, validate_single_string_arg, validate_list_of_strings
+from ..dtype_utils import validate_dtype, validate_single_string_arg, validate_list_of_strings, contains_integers, lazy_load_array
 from ..reg_ref import write_region_references, simple_region_ref_copy, copy_reg_ref_reduced_dim, \
-    create_region_reference
+    create_region_reference, copy_all_region_refs
 from ..write_utils import clean_string_att, build_ind_val_matrices, get_aux_dset_slicing, INDICES_DTYPE, \
     VALUES_DTYPE, Dimension, DimType
-from .base import get_auxiliary_datasets, link_h5_obj_as_alias, get_attr, link_h5_objects_as_attrs, \
-    write_book_keeping_attrs, write_simple_attrs, is_editable_h5
+from .base import get_auxiliary_datasets, link_h5_obj_as_alias, get_attr, \
+    link_h5_objects_as_attrs, write_book_keeping_attrs, write_simple_attrs, \
+    is_editable_h5, validate_h5_objs_in_same_h5_file
 
 if sys.version_info.major == 3:
     unicode = str
@@ -112,9 +113,10 @@ def find_dataset(h5_group, dset_name):
     return datasets
 
 
-def find_results_groups(h5_main, tool_name):
+def find_results_groups(h5_main, tool_name, h5_parent_group=None):
     """
-    Finds a list of all groups containing results of the process of name `tool_name` being applied to the dataset
+    Finds a list of all groups containing results of the process of name
+    `tool_name` being applied to the dataset
 
     Parameters
     ----------
@@ -122,6 +124,11 @@ def find_results_groups(h5_main, tool_name):
         Reference to the target dataset to which the tool was applied
     tool_name : String / unicode
         Name of the tool applied to the target dataset
+    h5_parent_group : h5py.Group, optional. Default = None
+        Parent group under which the results group will be searched for. Use
+        this option when the results groups are contained in different HDF5
+        file compared to `h5_main`. BY default, this function will search
+        within the same group that contains `h5_main`
 
     Returns
     -------
@@ -133,8 +140,14 @@ def find_results_groups(h5_main, tool_name):
         raise TypeError('h5_main should be a h5py.Dataset object')
     tool_name = validate_single_string_arg(tool_name, 'tool_name')
 
+    if h5_parent_group is not None:
+        if not isinstance(h5_parent_group, (h5py.File, h5py.Group)):
+            raise TypeError("'h5_parent_group' should either be a h5py.File "
+                            "or h5py.Group object")
+    else:
+        h5_parent_group = h5_main.parent
+
     dset_name = h5_main.name.split('/')[-1]
-    h5_parent_group = h5_main.parent
     groups = []
     for key in h5_parent_group.keys():
         if dset_name in key and tool_name in key and isinstance(h5_parent_group[key], h5py.Group):
@@ -188,6 +201,7 @@ def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
     if h5_main is not None:
         if not isinstance(h5_main, h5py.Dataset):
             raise TypeError('h5_main should be a h5py.Dataset object')
+        validate_h5_objs_in_same_h5_file(h5_dset, h5_main)
     if anc_refs is not None:
         if not isinstance(anc_refs, (list, tuple)):
             raise TypeError('anc_refs should be a list / tuple')
@@ -197,8 +211,10 @@ def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
 
     def __check_and_link_single(h5_obj_ref, target_ref_name):
         if isinstance(h5_obj_ref, h5py.Reference):
+            # TODO: Same HDF5 file?
             h5_dset.attrs[target_ref_name] = h5_obj_ref
         elif isinstance(h5_obj_ref, (h5py.Dataset, h5py.Group, h5py.File)):
+            validate_h5_objs_in_same_h5_file(h5_obj_ref, h5_dset)
             h5_dset.attrs[target_ref_name] = h5_obj_ref.ref
         elif h5_main is not None:
             h5_anc = get_auxiliary_datasets(h5_main, aux_dset_name=[target_ref_name])
@@ -234,8 +250,7 @@ def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
     h5_dset.file.flush()
 
 
-def copy_attributes(source, dest, skip_refs=True):
-    # TODO: VERY confusing - why call copy_region_refs() AND copy region refs here???
+def copy_attributes(source, dest, skip_refs=True, verbose=False):
     """
     Copy attributes from one h5object to another
 
@@ -247,56 +262,56 @@ def copy_attributes(source, dest, skip_refs=True):
         Object to which the attributes need to be copied to
     skip_refs : bool, optional. default = True
         Whether or not the references (dataset and region) should be skipped
+    verbose : bool, optional. Defualt = False
+        Whether or not to print logs for debugging
 
     """
+    mesg = 'should be a h5py.Dataset, h5py.Group,or h5py.File object'
     if not isinstance(source, (h5py.Dataset, h5py.Group, h5py.File)):
-        raise TypeError('source should be a h5py.Dataset, h5py.Group,or h5py.File object')
+        raise TypeError('source ' + mesg)
     if not isinstance(dest, (h5py.Dataset, h5py.Group, h5py.File)):
-        raise TypeError('dest should be a h5py.Dataset, h5py.Group, or h5py.File object')
+        raise TypeError('dest ' + mesg)
+
+    skip_dset_refs = skip_refs
+    try:
+        validate_h5_objs_in_same_h5_file(source, dest)
+    except ValueError:
+        if not skip_refs:
+            warn('Dataset references will not be copied since {} and {} are '
+                 'in different files'.format(source, dest))
+        skip_dset_refs = True
 
     for att_name in source.attrs.keys():
         att_val = get_attr(source, att_name)
         """
         Don't copy references unless asked
         """
-        if isinstance(att_val, h5py.Reference):
-
-            if not skip_refs and not isinstance(dest, h5py.Dataset):
-                warn('Skipping region reference named: {}'.format(att_name))
-                continue
-            elif isinstance(att_val, h5py.RegionReference):
-                #     """
-                #     Dereference old reference, get the appropriate data
-                #     slice and create new reference.
-                #     """
-                #     try:
-                #         region = h5py.h5r.get_region(att_val, source.id)
-                #
-                #         start, end = region.get_select_bounds()
-                #         ref_slice = []
-                #         for i in range(len(start)):
-                #             if start[i] == end[i]:
-                #                 ref_slice.append(start[i])
-                #             else:
-                #                 ref_slice.append(slice(start[i], end[i]))
-                #     except:
-                #         warn('Could not copy region reference:{} to {}'.format(att_name, dest.name))
-                #         continue
-                #
-                #     dest.attrs[att_name] = dest.regionref[tuple(ref_slice)]
-                continue
-            else:
+        if isinstance(att_val, h5py.Reference) and not isinstance(att_val, h5py.RegionReference):
+            if not skip_dset_refs:
+                if verbose:
+                    print('dset ref copying ' + att_name)
                 dest.attrs[att_name] = att_val
-                continue
-
-        # everything else
-        dest.attrs[att_name] = clean_string_att(att_val)
+        elif isinstance(att_val, h5py.RegionReference):
+            # handled in dedicated if condition below
+            continue
+        else:
+            # everything else
+            if verbose:
+                print('simple copying ' + att_name)
+            dest.attrs[att_name] = clean_string_att(att_val)
 
     if not skip_refs:
-        try:
-            copy_region_refs(source, dest)
-        except TypeError:
-            print('Could not copy region references to {}.'.format(dest.name))
+        # This can be copied across files without problems
+        mesg = 'Could not copy region references to {}.'.format(dest.name)
+        if isinstance(dest, h5py.Dataset):
+            try:
+                if verbose:
+                    print('requested reg ref copy')
+                copy_region_refs(source, dest)
+            except TypeError:
+                warn(mesg)
+        else:
+            warn('Cannot copy region references to {}'.format(type(dest)))
 
     return dest
 
@@ -345,17 +360,30 @@ def validate_anc_h5_dsets(h5_inds, h5_vals, main_shape, is_spectroscopic=True):
     main_shape : array-like
         Shape of the main dataset expressed as a tuple or similar
     is_spectroscopic : bool, Optional. Default = True
-        set to True if ``dims`` correspond to Spectroscopic Dimensions. False otherwise.
+        set to True if ``dims`` correspond to Spectroscopic Dimensions.
+        False otherwise.
     """
     if not isinstance(h5_inds, h5py.Dataset):
         raise TypeError('h5_inds must be a h5py.Dataset object')
     if not isinstance(h5_vals, h5py.Dataset):
         raise TypeError('h5_vals must be a h5py.Dataset object')
     if h5_inds.shape != h5_vals.shape:
-        raise ValueError('h5_inds: {} and h5_vals: {} should be of the same shape'.format(h5_inds.shape, h5_vals.shape))
+        raise ValueError('h5_inds: {} and h5_vals: {} should be of the same '
+                         'shape'.format(h5_inds.shape, h5_vals.shape))
+    print(main_shape)
+    if isinstance(main_shape, (list, tuple)):
+        if not contains_integers(main_shape, min_val=1) or \
+                len(main_shape) != 2:
+            raise ValueError("'main_shape' must be a valid HDF5 dataset shape")
+    else:
+        raise TypeError('main_shape should be of the following types:'
+                        'h5py.Dataset, tuple, or list. {} provided'
+                        ''.format(type(main_shape)))
+
     if h5_inds.shape[is_spectroscopic] != main_shape[is_spectroscopic]:
-        raise ValueError('index {} in shape of h5_inds: {} and main_data: {} should be equal'
-                         '.'.format(int(is_spectroscopic), h5_inds.shape, main_shape))
+        raise ValueError('index {} in shape of h5_inds: {} and main_data: {} '
+                         'should be equal'.format(int(is_spectroscopic),
+                                                  h5_inds.shape, main_shape))
 
 
 def validate_dims_against_main(main_shape, dims, is_spectroscopic=True):
@@ -370,8 +398,25 @@ def validate_dims_against_main(main_shape, dims, is_spectroscopic=True):
     dims : iterable
         List of Dimension objects
     is_spectroscopic : bool, Optional. Default = True
-        set to True if ``dims`` correspond to Spectroscopic Dimensions. False otherwise.
+        set to True if ``dims`` correspond to Spectroscopic Dimensions.
+        False otherwise.
     """
+    if not isinstance(main_shape, (list, tuple)):
+        raise TypeError('main_shape should be a list or tuple. Provided object'
+                        ' was of type: {}'.format(type(main_shape)))
+    if len(main_shape) != 2:
+        raise ValueError('"main_shape" should be of length 2')
+    contains_integers(main_shape, min_val=1)
+
+    if isinstance(dims, Dimension):
+        dims = [dims]
+    elif not isinstance(dims, (list, tuple)):
+        raise TypeError('"dims" must be a list or tuple of usid.Dimension '
+                        'objects. Provided object was of type: {}'
+                        ''.format(type(dims)))
+    if not all([isinstance(obj, Dimension) for obj in dims]):
+        raise TypeError('One or more objects in "dims" was not usid.Dimension')
+
     if is_spectroscopic:
         main_dim = 1
         dim_category = 'Spectroscopic'
@@ -379,12 +424,14 @@ def validate_dims_against_main(main_shape, dims, is_spectroscopic=True):
         main_dim = 0
         dim_category = 'Position'
 
-    # TODO: This is where the dimension type will need to be taken into account:
+    # TODO: This is where the dimension type will need to be taken into account
     lhs = main_shape[main_dim]
     rhs = np.product([len(x.values) for x in dims])
     if lhs != rhs:
-        raise ValueError(dim_category + ' dimensions in main data of size: {} do not match with product of values in provided '
-                                        'Dimension objects: {}'.format(lhs, rhs))
+        raise ValueError(dim_category +
+                         ' dimensions in main data of size: {} do not match '
+                         'with product of values in provided Dimension objects'
+                         ': {}'.format(lhs, rhs))
 
 
 def check_if_main(h5_main, verbose=False):
@@ -400,7 +447,8 @@ def check_if_main(h5_main, verbose=False):
     * quantity
     * units
 
-    In addition, the shapes of the ancillary matrices should match with that of h5_main
+    In addition, the shapes of the ancillary matrices should match with that of
+    h5_main
 
     Parameters
     ----------
@@ -505,8 +553,10 @@ def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals):
     if not isinstance(h5_main, h5py.Dataset):
         raise TypeError('h5_main should be a h5py.Dataset object')
 
-    validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals, h5_main.shape, is_spectroscopic=False)
-    validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals, h5_main.shape, is_spectroscopic=True)
+    validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals, h5_main.shape,
+                          is_spectroscopic=False)
+    validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals, h5_main.shape,
+                          is_spectroscopic=True)
 
     link_h5_obj_as_alias(h5_main, h5_pos_inds, 'Position_Indices')
     link_h5_obj_as_alias(h5_main, h5_pos_vals, 'Position_Values')
@@ -522,7 +572,8 @@ def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals):
         return h5_main
 
 
-def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=False):
+def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None,
+                  h5_parent_goup=None, verbose=False):
     """
     Check to see if the results of a tool already exist and if they
     were performed with the same parameters.
@@ -538,6 +589,10 @@ def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=
     target_dset : str, optional, default = None
             Name of the dataset whose attributes will be compared against new_parms.
             Default - checking against the group
+    h5_parent_goup : h5py.Group, optional. Default = None
+            The group to search under. Use this option when `h5_base` and
+            the potential results groups (within `h5_parent_goup` are located
+            in different HDF5 files. Default - search within h5_base.parent
     verbose : bool, optional, default = False
            Whether or not to print debugging statements
 
@@ -549,6 +604,14 @@ def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=
     if not isinstance(h5_base, h5py.Dataset):
         raise TypeError('h5_base should be a h5py.Dataset object')
     tool_name = validate_single_string_arg(tool_name, 'tool_name')
+
+    if h5_parent_goup is not None:
+        if not isinstance(h5_parent_goup, (h5py.File, h5py.Group)):
+            raise TypeError("'h5_parent_group' should either be a h5py.File "
+                            "or h5py.Group object")
+    else:
+        h5_parent_goup = h5_base.parent
+
     if new_parms is None:
         new_parms = dict()
     else:
@@ -558,7 +621,8 @@ def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=
         target_dset = validate_single_string_arg(target_dset, 'target_dset')
 
     matching_groups = []
-    groups = find_results_groups(h5_base, tool_name)
+    groups = find_results_groups(h5_base, tool_name,
+                                 h5_parent_group=h5_parent_goup)
 
     for group in groups:
         if verbose:
@@ -583,7 +647,8 @@ def check_for_old(h5_base, tool_name, new_parms=None, target_dset=None, verbose=
 
 def get_source_dataset(h5_group):
     """
-    Find the name of the source dataset used to create the input `h5_group`
+    Find the name of the source dataset used to create the input `h5_group`,
+    so long as the source dataset is in the same HDF5 file
 
     Parameters
     ----------
@@ -599,8 +664,6 @@ def get_source_dataset(h5_group):
     if not isinstance(h5_group, h5py.Group):
         raise TypeError('h5_group should be a h5py.Group object')
 
-    from ..usi_data import USIDataset
-
     h5_parent_group = h5_group.parent
     group_name = h5_group.name.split('/')[-1]
     # What if the group name was not formatted according to Pycroscopy rules?
@@ -612,6 +675,8 @@ def get_source_dataset(h5_group):
 
     if not isinstance(h5_source, h5py.Dataset):
         raise ValueError('Source object was not a dataset!')
+
+    from ..usi_data import USIDataset
 
     return USIDataset(h5_source)
 
@@ -689,7 +754,7 @@ def create_indexed_group(h5_parent_group, base_name):
     return h5_new_group
 
 
-def create_results_group(h5_main, tool_name):
+def create_results_group(h5_main, tool_name, h5_parent_group=None):
     """
     Creates a h5py.Group object autoindexed and named as 'DatasetName-ToolName_00x'
 
@@ -699,6 +764,10 @@ def create_results_group(h5_main, tool_name):
         Reference to the dataset based on which the process / analysis is being performed
     tool_name : string / unicode
         Name of the Process / Analysis applied to h5_main
+    h5_parent_group : h5py.Group, optional. Default = None
+        Parent group under which the results group will be created. Use this
+        option to write results into a new HDF5 file. By default, results will
+        be written into the same group containing `h5_main`
 
     Returns
     -------
@@ -707,7 +776,14 @@ def create_results_group(h5_main, tool_name):
 
     """
     if not isinstance(h5_main, h5py.Dataset):
-        raise TypeError('h5_main should be a h5py.Dataset or Pycrodataset object')
+        raise TypeError('h5_main should be a h5py.Dataset object')
+    if h5_parent_group is not None:
+        if not isinstance(h5_parent_group, (h5py.File, h5py.Group)):
+            raise TypeError("'h5_parent_group' should either be a h5py.File "
+                            "or h5py.Group object")
+    else:
+        h5_parent_group = h5_main.parent
+
     tool_name = validate_single_string_arg(tool_name, 'tool_name')
 
     if '-' in tool_name:
@@ -716,9 +792,9 @@ def create_results_group(h5_main, tool_name):
     tool_name = tool_name.replace('-', '_')
 
     group_name = h5_main.name.split('/')[-1] + '-' + tool_name + '_'
-    group_name = assign_group_index(h5_main.parent, group_name)
+    group_name = assign_group_index(h5_parent_group, group_name)
 
-    h5_group = h5_main.parent.create_group(group_name)
+    h5_group = h5_parent_group.create_group(group_name)
 
     write_book_keeping_attrs(h5_group)
 
@@ -796,6 +872,12 @@ def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs
         if not isinstance(h5_group, (h5py.Group, h5py.File)):
             raise TypeError('h5_group should be a h5py.Group or h5py.File object')
 
+        if source_dset.file != h5_group.file and not skip_refs:
+            # Cannot carry over references
+            warn('H5 object references will not be copied over since {} is in '
+                 'a different HDF5 file as {}'.format(h5_group, source_dset))
+            skip_refs = True
+
     dset_name = validate_single_string_arg(dset_name, 'dset_name')
     if '-' in dset_name:
         warn('dset_name should not contain the "-" character. Reformatted name from:{} to '
@@ -831,7 +913,10 @@ def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs
         h5_new_dset = h5_group.create_dataset(dset_name, **kwargs)
 
     # This should link the ancillary datasets correctly
-    h5_new_dset = copy_attributes(source_dset, h5_new_dset, skip_refs=skip_refs)
+    h5_new_dset = copy_attributes(source_dset, h5_new_dset,
+                                  skip_refs=skip_refs)
+    if source_dset.file != h5_group.file:
+        copy_linked_objects(source_dset, h5_new_dset)
     h5_new_dset.attrs.update(new_attrs)
 
     if check_if_main(h5_new_dset):
@@ -1056,39 +1141,175 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
     return h5_indices, h5_values
 
 
-def write_reduced_spec_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_name, basename='Spectroscopic',
-                             verbose=False):
+def copy_dataset(h5_orig_dset, h5_dest_grp, alias=None, verbose=False):
     """
-    Creates new Spectroscopic Indices and Values datasets from the input datasets
-    and keeps the dimensions specified in keep_dim
+    Copies the provided HDF5 dataset to the provided destination. This function
+    is handy when needing to make copies of datasets to a different HDF5 file.
+
+    Notes
+    -----
+    This function does NOT copy all linked objects such as ancillary
+    datasets. Call `copy_linked_objects` to accomplish that goal.
 
     Parameters
     ----------
-    h5_parent_group : :class:`h5py.Group` or :class:`h5py.File`
-        Group under which the indices and values datasets will be created
-    h5_spec_inds : HDF5 Dataset
-            Spectroscopic indices dataset
-    h5_spec_vals : HDF5 Dataset
-            Spectroscopic values dataset
-    dim_name : str or unicode or list of strings
-            Names of the dimension(s) to remove
-    basename : str or unicode, Optional
-            String to which '_Indices' and '_Values' will be appended to get the names
-            of the new datasets
+    h5_orig_dset : h5py.Dataset
+
+    h5_dest_grp : h5py.Group or h5py.File object :
+        Destination where the duplicate dataset will be created
+    alias : str, optional. Default = name from `h5_orig_dset`:
+        Name to be assigned to the copied dataset
     verbose : bool, optional. Default = False
-            Whether or not to print debugging print statements
+        Whether or not to print logs to assist in debugging
 
     Returns
     -------
-    h5_inds : h5py.Dataset
-            Reduced Spectroscopic indices dataset
-    h5_vals : h5py.Dataset
-            Reduces Spectroscopic values dataset
 
     """
-    warn('write_reduced_spec_dsets is deprecated. Please use write_reduced_anc_dsets instead', FutureWarning)
-    return write_reduced_anc_dsets(h5_parent_group, h5_spec_inds, h5_spec_vals, dim_name, basename=basename,
-                                   verbose=verbose)
+    if not isinstance(h5_orig_dset, h5py.Dataset):
+        raise TypeError("'h5_orig_dset' should be a h5py.Dataset object")
+    if not isinstance(h5_dest_grp, (h5py.File, h5py.Group)):
+        raise TypeError("'h5_dest_grp' should either be a h5py.File or "
+                        "h5py.Group object")
+    if alias is not None:
+        validate_single_string_arg(alias, 'alias')
+    else:
+        alias = h5_orig_dset.name.split('/')[-1]
+
+    if alias in h5_dest_grp.keys():
+        if verbose:
+            warn('{} already contains an object with the same name: {}'
+                 ''.format(h5_dest_grp, alias))
+        h5_new_dset = h5_dest_grp[alias]
+        if not isinstance(h5_new_dset, h5py.Dataset):
+            raise TypeError('{} already contains an object: {} with the desired'
+                           ' name which is not a dataset'.format(h5_dest_grp,
+                                                                 h5_new_dset))
+
+        da_source = lazy_load_array(h5_orig_dset)
+        da_dest = lazy_load_array(h5_new_dset)
+
+        if da_source.shape != da_dest.shape:
+            raise ValueError('Existing dataset: {} has a different shape '
+                             'compared to the original dataset: {}'
+                             ''.format(h5_new_dset, h5_orig_dset))
+        if not da.allclose(da_source, da_dest):
+            raise ValueError('Existing dataset: {} has different contents'
+                             'compared to the original dataset: {}'
+                             ''.format(h5_new_dset, h5_orig_dset))
+    else:
+
+        kwargs = {'shape': h5_orig_dset.shape,
+                  'dtype': h5_orig_dset.dtype,
+                  'compression': h5_orig_dset.compression,
+                  'chunks': h5_orig_dset.chunks}
+        if h5_orig_dset.file.driver == 'mpio':
+            if kwargs.pop('compression', None) is not None:
+                warn('This HDF5 file has been opened wth the '
+                     '"mpio" communicator. mpi4py does not allow '
+                     'creation of compressed datasets. Compression'
+                     ' kwarg has been removed')
+        if verbose:
+            print('Creating new HDF5 dataset named: {} at: {} with'
+                  ' kwargs: {}'.format(alias, h5_dest_grp,
+                                       kwargs))
+        h5_new_dset = h5_dest_grp.create_dataset(alias,
+                                                **kwargs)
+        if verbose:
+            print('dask.array will copy data from source dataset '
+                  'to new dataset')
+        da.to_hdf5(h5_new_dset.file.filename,
+                   {h5_new_dset.name: lazy_load_array(h5_orig_dset)})
+    if verbose:
+        print('Copying simple attributes of original dataset: {} to '
+              'destination dataset: {}'.format(h5_orig_dset, h5_new_dset))
+
+    copy_attributes(h5_orig_dset, h5_new_dset, skip_refs=True)
+    copy_all_region_refs(h5_orig_dset, h5_new_dset)
+
+    return h5_new_dset
+
+
+def copy_linked_objects(h5_source, h5_dest, verbose=False):
+    """
+    Recursively copies datasets linked to the source h5 object to the
+    destination h5 object that are be in different HDF5 files.
+
+    Notes
+    -----
+    We anticipate this function being used to copy over ancillary datasets
+
+    Parameters
+    ----------
+    h5_source : h5py.Dataset or h5py.Group object
+        Source object
+    h5_dest : h5py.Dataset or h5py.Group object
+        Destination object
+    verbose : bool, optional. Default: False
+        Whether or not to print logs for debugging purposes
+    """
+    try:
+        # The following line takes care of object validation
+        validate_h5_objs_in_same_h5_file(h5_source, h5_dest)
+        same_file = True
+    except ValueError:
+        same_file = False
+
+    if same_file:
+        warn('{} and {} are in the same HDF5 file. Consider copying references'
+             ' instead of copying linked objects'.format(h5_source, h5_dest))
+        return
+
+    h5_dest_grp = h5_dest.parent
+
+    # Now we are working on other files
+    for link_obj_name in h5_source.attrs.keys():
+        h5_orig_obj = get_attr(h5_source, link_obj_name)
+        if isinstance(h5_orig_obj, h5py.Reference) and not \
+                isinstance(h5_orig_obj, h5py.RegionReference):
+            h5_orig_obj = h5_source.file[h5_orig_obj]
+            if verbose:
+                print('Attempting to copy object linked to source: {} as {}'
+                      ''.format(h5_orig_obj, link_obj_name))
+            # Check to see if such a dataset already exist
+            if link_obj_name in h5_dest_grp.keys():
+                h5_new_obj = h5_dest_grp[link_obj_name]
+                warn('An object with the same name: {} already exists in the '
+                     'destination group: {}'.format(h5_new_obj, h5_dest_grp.name))
+                if type(h5_dest_grp[link_obj_name]) != type(h5_orig_obj):
+                    mesg = 'Destination parent: {} already has a child named' \
+                           ' {} that is of type: {} which does not match ' \
+                           'with that of the object linked with the source ' \
+                           'dataset: {}'.format(h5_dest_grp, link_obj_name,
+                                                type(h5_orig_obj),
+                                                type(h5_new_obj))
+                    raise TypeError(mesg)
+
+                elif isinstance(h5_new_obj, h5py.Dataset):
+                    _ = copy_dataset(h5_orig_obj, h5_dest_grp,
+                                     alias=link_obj_name, verbose=verbose)
+                    h5_dest.attrs[link_obj_name] = h5_new_obj.ref
+                    continue
+                elif isinstance(h5_new_obj, h5py.Group):
+                    raise ValueError('Destination already contains another '
+                                     'HDF5 group: {} with the same name as '
+                                     'the source: {}'.format(h5_new_obj,
+                                                             h5_orig_obj))
+                else:
+                    raise NotImplementedError('Unable to copy {} objects yet'
+                                              '. Contact developer if you need'
+                                              ' this'
+                                              ''.format(type(h5_orig_obj)))
+            else:
+                if isinstance(h5_orig_obj, h5py.Dataset):
+                    h5_new_obj = copy_dataset(h5_orig_obj, h5_dest_grp,
+                                              alias=link_obj_name,
+                                              verbose=verbose)
+                    h5_dest.attrs[link_obj_name] = h5_new_obj.ref
+                else:
+                    raise NotImplementedError('Unable to copy {} objects yet'
+                                              '. Contact developer if you need'
+                                              ' this'.format(type(h5_orig_obj)))
 
 
 def copy_region_refs(h5_source, h5_target):
@@ -1107,9 +1328,12 @@ def copy_region_refs(h5_source, h5_target):
     '''
     Check both h5_source and h5_target to ensure that are Main
     '''
+    # TODO: Move this vestige to pycroscopy. Use copy_all_region_refs instead
     are_main = all([check_if_main(h5_source), check_if_main(h5_target)])
     if not all([isinstance(h5_source, h5py.Dataset), isinstance(h5_target, h5py.Dataset)]):
-        raise TypeError('Inputs to copyRegionRefs must be HDF5 Datasets or PycroDatasets.')
+        raise TypeError('Inputs to copy_region_refs must be HDF5 Datasets')
+
+    # It is OK if objects are in different files
 
     if are_main:
         h5_source_inds = h5_source.file[h5_source.attrs['Spectroscopic_Indices']]

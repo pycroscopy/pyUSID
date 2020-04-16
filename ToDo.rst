@@ -8,9 +8,7 @@ Near-term Goals
 
   * accept the N-dimensional array itself. No flattening required by user.
   * Minimize the requirements like quantity and units. Things will look ugly with a lot of unknowns. Is this relaxation worth it.
-* Start swapping out hard requirements for numpy to accept Dask arrays as well or by default.
 * Simplify documentation or add new series to focus on important functions rather than going over the many developer functions that users will not care about
-* Integrate pyUSID with more scientific domain packages to improve adoption. Eg - HyperSpy
 * New optional attribute attached to Main dataset - ``type``: ``AFM scan``.
 * Simplify ``USIDataset``:
 
@@ -25,7 +23,6 @@ Near-term Goals
   * visualization that replaces / builds on the base interactive / static visualization
   * operations (e.g. - functional fitting)
   * relationships / links to other source / child datasets
-* ``USIDataset`` - Do slicing on ND dataset if available by flattening to 2D and then slicing.
 * Consider Dask based backend for ``Process``
 * Add instructions on pbs script and python script information from distUSID
 * Fix problems with Travis CI
@@ -34,14 +31,14 @@ Near-term Goals
 * Examples within docstrings for popular functions where possible - not a high priority due to the complexity of functions, need for data, availability of cookbooks
 * file dialog for Jupyter not working on Mac OS
 * Revisit and address as many pending TODOs as possible
-* Technical poster for USID, pyUSID
 
 Long-term
 ~~~~~~~~~
 * Itk for visualization - https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets
 * Look into versioneer
-* A sister package with the base labview subvis that enable writing pycroscopy compatible hdf5 files. The actual acquisition can be ignored.
-* Intelligent method (using timing) to ensure that process and Fitter compute over small chunks and write to file periodically. Alternatively expose number of positions to user and provide intelligent guess by default
+* A sister package with the base labview subvis that enable writing h5usid files. The actual acquisition can be ignored.
+* Intelligent method (using timing) to ensure that process and Fitter compute over small chunks and write to file periodically.
+  Alternatively expose number of positions to user and provide intelligent guess by default
 * function for saving sub-tree to new h5 file
 * Windows compatible function for deleting sub-tree
 * Profile code to see where things are slow

@@ -17,7 +17,7 @@ from ..dtype_utils import contains_integers, validate_dtype, validate_single_str
     validate_list_of_strings, lazy_load_array
 
 from .base import get_attr, write_simple_attrs, is_editable_h5, write_book_keeping_attrs
-from .simple import link_as_main, check_if_main, write_ind_val_dsets, validate_dims_against_main, validate_anc_h5_dsets
+from .simple import link_as_main, check_if_main, write_ind_val_dsets, validate_dims_against_main, validate_anc_h5_dsets, copy_dataset
 from pyUSID.io.write_utils import validate_dimensions
 from ..write_utils import INDICES_DTYPE, make_indices_matrix
 
@@ -787,9 +787,25 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
         aux_prefix = aux_prefix.replace('-', '_')
         for dset_name in [aux_prefix + 'Indices', aux_prefix + 'Values']:
             if dset_name in h5_parent_group.keys():
+                # TODO: What if the contained data was correct?
                 raise KeyError('Dataset named: ' + dset_name + ' already exists in group: '
-                                                               '{}'.format(h5_parent_group.name))
+                                                               '{}. Consider passing these datasets using kwargs (if they are correct) instead of providing the pos_dims and spec_dims arguments'.format(h5_parent_group.name))
         return aux_prefix
+
+    def __ensure_anc_in_correct_file(h5_inds, h5_vals, prefix):
+        if h5_inds.file != h5_vals.file:
+            raise ValueError('Provided ' + prefix + ' datasets are present in different HDF5 files!')
+
+        if h5_inds.file != h5_parent_group.file:
+            # Need to copy over the anc datasets to the new group
+            if verbose:
+                print('Need to copy over ancillary datasets: {} and {} to '
+                      'destination group: {} which is in a different HDF5 '
+                      'file'.format(h5_inds, h5_vals, h5_parent_group))
+            ret_vals = [copy_dataset(x, h5_parent_group, verbose=verbose) for x in [h5_inds, h5_vals]]
+        else:
+            ret_vals = [h5_inds, h5_vals]
+        return tuple(ret_vals)
 
     if not isinstance(h5_parent_group, (h5py.Group, h5py.File)):
         raise TypeError('h5_parent_group should be a h5py.File or h5py.Group object')
@@ -835,7 +851,8 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
         # The provided datasets override fresh building instructions.
         validate_anc_h5_dsets(h5_pos_inds, h5_pos_vals, main_shape, is_spectroscopic=False)
         if verbose:
-            print('Provided h5 position indices and values OK')
+            print('The shapes of the provided h5 position indices and values are OK')
+        h5_pos_inds, h5_pos_vals = __ensure_anc_in_correct_file(h5_pos_inds, h5_pos_vals, 'Position')
     else:
         aux_pos_prefix = __check_anc_before_creation(aux_pos_prefix, dim_type='pos')
         pos_dims = validate_dimensions(pos_dims, dim_type='Position')
@@ -851,7 +868,10 @@ def write_main_dataset(h5_parent_group, main_data, main_data_name, quantity, uni
         # The provided datasets override fresh building instructions.
         validate_anc_h5_dsets(h5_spec_inds, h5_spec_vals, main_shape, is_spectroscopic=True)
         if verbose:
-            print('Provided h5 spectroscopic datasets were OK')
+            print('The shapes of the provided h5 position indices and values '
+                  'are OK')
+        h5_spec_inds, h5_spec_vals = __ensure_anc_in_correct_file(h5_spec_inds, h5_spec_vals,
+                                         'Spectroscopic')
     else:
         aux_spec_prefix = __check_anc_before_creation(aux_spec_prefix, dim_type='spec')
         spec_dims = validate_dimensions(spec_dims, dim_type='Spectroscopic')
