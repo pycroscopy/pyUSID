@@ -4,6 +4,7 @@
 ===============================================================================
 
 **Suhas Somnath**
+
 **Rajiv Giridharagopal (University of Washington)**
 
 4/24/2020
@@ -20,7 +21,6 @@ Recommended pre-requisite reading
 """
 
 import pyUSID as usid
-
 import numpy as np
 import h5py
 
@@ -33,8 +33,10 @@ import h5py
 # Let's imagine we have a 10 x 10 array that measures the height. But we're applying
 # a voltage to oscillate the height at 2 Hz for 1 second, with 10 Hz sampling and a
 # slight phase shift and amplitude shift at each pixel.
+#
 # In other words, a 10 x 10 x 100 array
 
+# Create some data
 data = np.zeros((10,10,100))
 phase = np.reshape(np.linspace(-np.pi, np.pi, 100), [10,10])
 amp = np.reshape(np.linspace(1, 5, 100), [10,10])
@@ -44,8 +46,9 @@ for x in np.arange(0,100):
             data[r,c,x] = amp[r][c] * np.sin(2*np.pi * 2*x/100 + phase[r][c]) 
 
 # To visualize a 3D stack, there's a handy built-in function
-usid.plot_utils.plot_map_stack(data)
+usid.plot_utils.plot_map_stack(data, num_comps=4, fig_mult=(2,10), pad_mult=(0.01,.4))
 
+########################################################################################################################
 # Instead of being 3D, we need it to be (10x10, 100) in 2D for USID. 
 # First, let's define the position dimensions, which are 10 x 10 nm
 pos = usid.hdf_utils.build_ind_val_matrices([np.arange(0,10e-9, 1e-9), np.arange(0,10e-9, 1e-9)], 
@@ -80,31 +83,38 @@ tran = usid.io.numpy_translator.ArrayTranslator()
 tran.translate(h5_path, 'data', data_reshape, 'Height', 'm',
                pos_dims, spec_dims)
 
+########################################################################################################################
 # That's it! We're done. It's just a few lines of code to convert a random matrix
 # of data into a USID format. We just need to know a little about our data.
-# 
-# Now that our cookbook_data is full of delicious data, let's crack it open
+# Now that our cookbook_data is full of delicious data, let's crack it open.
 #
 # We can open the file by using the h5py command
 h5_file = h5py.File(h5_path)
 
-# Print_tree shows all the data that are in this HDF5 file
+########################################################################################################################
+# Print_tree shows all the contents in this HDF5 file
 usid.hdf_utils.print_tree(h5_file, rel_paths=True)
 
-# Our data are in the 'Raw Data' dataset. How do we extract our data?
-# Option 1:
+########################################################################################################################
+# Our data are in the 'Raw_Data' dataset. How do we extract our data?
 # First let's print all the Main datasets
-usid.hdf_utils.get_all_main(h5_file)
 
-# This is a list of all the Main datasets. In this case there's only a single one
-# So we can access our data this way
+print(usid.hdf_utils.get_all_main(h5_file))
+
+########################################################################################################################
+# This is a list of all the Main datasets. In this case there's only a single one. 
+# So we can access our data in two ways:
+
+# Option 1:
+# Access a specific dataset in the list of Main datasets
 data_usid = usid.hdf_utils.get_all_main(h5_file)[0]
 
 # Option 2:
 # We could highlight the path in the tree and access it directly
 data_usid = h5_file['Measurement_000/Channel_000/Raw_Data']
 
-# Lastly, let's make this upgrade from h5py Dataset to a USID Dataset
+########################################################################################################################
+# Lastly, let's upgrade from h5py Dataset to a USID Dataset
 data_usid = usid.USIDataset(data_usid)
 print(data_usid) 
 
@@ -115,34 +125,34 @@ print(data_usid)
 # There are lots of advantages to this kind of dataset
 
 # Let's take a look via the handy visualize option
-# What is the signal at pixel (5,3)
-data_usid.visualize(slice_dict={'Rows': 5, 'Cols': 3})
+# What is the signal vs time at pixel (5,3)
+_, _ = data_usid.visualize(slice_dict={'Rows': 5, 'Cols': 3})
 
 # What about the image at 0.3 seconds?
-data_usid.visualize(slice_dict={'Time': 30})
+_, _ = data_usid.visualize(slice_dict={'Time': 30})
 
-# Okay, okay, what about at row 5, time 0.5 s?
-data_usid.visualize(slice_dict={'Rows': 5, 'Time': 50})
-
+########################################################################################################################
 # To access our data directly, we use the [()] shortcut
 data_usid[()]
 
+########################################################################################################################
 # Reconstruct the original form of (10,10,100)
 data_usid.get_n_dim_form()
 
-# What are the dimensions of our data?
-data_usid.get_pos_values('Rows')
-data_usid.get_pos_values('Cols')
-data_usid.get_spec_values('Time')
+########################################################################################################################
+# What are the properties of our data?
+print('Rows=',data_usid.get_pos_values('Rows'))
+print('Cols=',data_usid.get_pos_values('Cols'))
+print('Times=',data_usid.get_spec_values('Time'))
 
 # Attributes of the data when it was written
-usid.hdf_utils.get_attributes(data_usid)
+print(usid.hdf_utils.get_attributes(data_usid))
 
 # To get the path of the Main dataset within the HDF5 file
-data_usid.name
+print(data_usid.name)
 
 # And to get the parent folder of this Dataset, you use
-data_usid.parent.name
+print(data_usid.parent.name)
 
 ########################################################################################################################
 # Adding some new data
@@ -165,11 +175,13 @@ result_group = usid.hdf_utils.create_indexed_group(h5_file[data_usid.parent.name
 # Anyway let's print our tree out for good measure
 usid.hdf_utils.print_tree(h5_file, rel_paths=True)
 
-# And now we want to add our data. But we want to add some attributes
-# Attributes are a dictionary, so let's create one
+########################################################################################################################
+# Now we want to add our data. But we want to add some attributes as well to describe
+# what we've done to our data. Attributes are a dictionary, so let's create one.
 attrs = {'Method': 'Magnitude_Squared', 'units': 'm^2'}
 usid.hdf_utils.write_simple_attrs(result_group, attrs) 
 
+########################################################################################################################
 # Now, let's write a new main dataset
 data_result = usid.hdf_utils.write_main_dataset(result_group, 
                                                 data_proc, 
@@ -178,22 +190,18 @@ data_result = usid.hdf_utils.write_main_dataset(result_group,
                                                 pos_dims, 
                                                 spec_dims)
 
-# This populates our new folder with the new data!
+########################################################################################################################
+# This populates our new folder with the new data! Let's look for the Magnitude folder in our tree:
 usid.hdf_utils.print_tree(h5_file, rel_paths=True)
 
-# Now if we get all the Main datasets, we see a new dataset pop up
-usid.hdf_utils.get_all_main(h5_file)
+########################################################################################################################
+# If we get all the Main datasets, we see a new dataset pop up in our list.
+print(usid.hdf_utils.get_all_main(h5_file))
 
-# And to verify the attributes for the data and the data_group
-usid.hdf_utils.get_attributes(data_result)
-usid.hdf_utils.get_attributes(data_result.parent)
+########################################################################################################################
+# And to verify the attributes for the data and the data_group.
+print(usid.hdf_utils.get_attributes(data_result))
+print(usid.hdf_utils.get_attributes(data_result.parent))
 
 # Lastly, to verify this dataset is a Main dataset (with position and spectral dimensions)
-usid.hdf_utils.get_attributes(data_result)
-
-
-
-
-
-
-
+print(usid.hdf_utils.get_attributes(data_result))
