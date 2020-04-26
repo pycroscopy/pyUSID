@@ -347,14 +347,20 @@ class USIDataset(h5py.Dataset):
         None
         """
         if not isinstance(slice_dict, dict):
-            raise TypeError('slice_dict should be a dictionary of slice objects')
+            raise TypeError('slice_dict should be a dictionary of slice '
+                            'objects')
         for key, val in slice_dict.items():
             # Make sure the dimension is valid
             if key not in self.n_dim_labels:
-                raise KeyError('Cannot slice on dimension {}.  '
-                               'Valid dimensions are {}.'.format(key, self.n_dim_labels))
-            if not isinstance(val, (slice, list, np.ndarray, tuple, int)):
-                raise TypeError('The slices must be array-likes or slice objects.')
+                raise KeyError('Cannot slice on dimension {}.  Valid '
+                               'dimensions are {}.'.format(key,
+                                                           self.n_dim_labels))
+            if not isinstance(val, (slice, list, np.ndarray, tuple, int,
+                                    np.int, np.int64, np.int32, np.int16)):
+                raise TypeError('The values for a slice must be a slice, list,'
+                                ' numpy array, a tuple, or an int. Provided '
+                                'value: {} for dimension: {} was of type: {}'
+                                ''.format(val, key, type(val)))
         return True
 
     def __slice_n_dim_form(self, slice_dict, verbose=False, lazy=False):
