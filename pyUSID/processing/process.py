@@ -42,7 +42,7 @@ class Process(object):
         ----------
         h5_main : :class:`~pyUSID.io.usi_data.USIDataset`
             The USID main HDF5 dataset over which the analysis will be performed.
-         self.process_name : str
+        process_name : str
             Name of the process
         cores : uint, optional
             How many cores to use for the computation. Default: all available cores - 2 if operating outside MPI context
