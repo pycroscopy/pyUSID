@@ -1260,7 +1260,10 @@ def copy_linked_objects(h5_source, h5_dest, verbose=False):
              ' instead of copying linked objects'.format(h5_source, h5_dest))
         return
 
-    h5_dest_grp = h5_dest.parent
+    if isinstance(h5_dest, h5py.Group):
+        h5_dest_grp = h5_dest
+    else:
+        h5_dest_grp = h5_dest.parent
 
     # Now we are working on other files
     for link_obj_name in h5_source.attrs.keys():
