@@ -1234,6 +1234,10 @@ def copy_linked_objects(h5_source, h5_dest, verbose=False):
     """
     Recursively copies datasets linked to the source h5 object to the
     destination h5 object that are be in different HDF5 files.
+    
+    This is for copying ancillary datasets to a target dataset that is 
+    missing ancillary datasets. It is not meant for copying to a Group,
+    but that is supported.
 
     Notes
     -----
