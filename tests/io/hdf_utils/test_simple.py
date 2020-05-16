@@ -1911,6 +1911,42 @@ class TestCopyLinkedObjects(TestSimple):
                                          exist_dset_diff_data=False,
                                          exist_grp_inst_dset=True)
 
+    def test_target_group(self):
+        file_path = 'test.h5'
+        new_path = 'new.h5'
+        data_utils.delete_existing_file(file_path)
+        data_utils.delete_existing_file(new_path)
+        
+        with h5py.File(file_path, mode='w') as h5_f:
+            
+            h5_source = h5_f.create_dataset('Main', data=[1, 2, 3])
+            simple_attrs = {'quantity': 'blah', 'units': 'nA'}
+            h5_source.attrs.update(simple_attrs)
+
+            h5_anc_1 = h5_f.create_dataset('Anc_1', data=[4, 5, 6])
+            anc_1_attrs = {'a': 1, 'b': 3}
+            h5_anc_1.attrs.update(anc_1_attrs)
+
+            h5_anc_2 = h5_f.create_dataset('Anc_2', data=[7, 8, 9])
+            anc_2_attrs = {'p': 78, 'j': 8}
+            h5_anc_2.attrs.update(anc_2_attrs)
+
+            h5_source.attrs['Pos_Inds'] = h5_anc_1.ref
+            h5_source.attrs['Pos_Vals'] = h5_anc_2.ref
+            
+            with h5py.File(new_path, mode='w') as h5_f_new:
+                h5_dest_gp = h5_f_new.create_group('Target')
+                
+                hdf_utils.copy_linked_objects(h5_source, h5_dest_gp, verbose=False)
+          
+                self.assertTrue('Pos_Inds' in h5_dest_gp)
+                self.assertTrue('Pos_Vals' in h5_dest_gp)
+                
+                self.assertFalse('Pos_Inds' in h5_dest_gp.parent)
+                self.assertFalse('Pos_Vals' in h5_dest_gp.parent)
+          
+        os.remove(file_path)
+        os.remove(new_path)
 
 class TestCopyDataset(TestSimple):
 
