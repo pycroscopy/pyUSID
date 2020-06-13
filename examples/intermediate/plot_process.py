@@ -1,14 +1,17 @@
 """
 ================================================================================
-10. Formalizing Data Processing
+10. Formalizing Data Processing using the Process Class
 ================================================================================
 
-**Suhas Somnath**
+**Suhas Somnath, Oak Ridge National Lab**
 
-4/26/2018
+**Rajiv Giridharagopal, University of Washington**
+
+6/12/2020
 """
 ########################################################################################################################
-# **In this example, we will learn how to write a simple yet formal pyUSID class for processing data.**
+# **In this example, we will learn how to implement the pyUSID Process class. This method is 
+# ideal for situations where we want to parallel operate on a large dataset.**
 #
 # Introduction
 # ------------
@@ -23,8 +26,7 @@
 # of time is spent on fixing bugs and generalizing / formalizing code such that it can be shared or reused. Moreover, we
 # live in an era of open science where the scientific community and an ever-increasing number of scientific journals
 # are moving towards a paradigm where the data and code need to be made available with journal papers. Therefore, in the
-# interest of saving time, energy, and reputation (you do not want to show ugly code / data. Instead you want to be the
-# paragon of clean intelligible data and code), it makes a lot more sense to formalize (parts of) one's data analysis
+# interest of saving time, energy, and reputation, it makes a lot more sense to formalize (parts of) one's data analysis
 # code.
 #
 # For many researchers, formalizing data processing or analysis may seem like a daunting task due to the complexity of
@@ -73,6 +75,8 @@
 #   via ``_unit_computation()`` >> calling ``_write_results_chunk()`` to write data. Most sub-classes, including the one
 #   below, do not need to extend / modify this function.
 #
+# See the "Flow of Functions" section near the bottom for a bit more detail.
+#
 # Recommended pre-requisite reading
 # ---------------------------------
 # * `Universal Spectroscopic and Imaging Data (USID) model </../../../USID/usid_model.html>`_
@@ -83,7 +87,7 @@
 #
 # Example problem
 # ---------------
-# For this example, we will be working with a Band Excitation Piezoresponse Force Microscopy (BE-PFM) imaging dataset
+# We will be working with a Band Excitation Piezoresponse Force Microscopy (BE-PFM) imaging dataset
 # acquired from advanced atomic force microscopes. In this dataset, a spectra was collected for each position in a two
 # dimensional grid of spatial locations. Thus, this is a three dimensional dataset that has been flattened to a two
 # dimensional matrix in accordance with the USID model.
@@ -287,7 +291,7 @@ class PeakFinder(usid.Process):
                                                           h5_pos_vals=self.h5_main.h5_pos_vals)
         # Note that this function automatically creates the ancillary datasets and links them.
 
-        print('Finshed creating datasets')
+        print('Finished creating datasets')
 
     def _write_results_chunk(self):
         """
@@ -513,6 +517,7 @@ os.remove(h5_path)
 #   * call ``unit_computation()`` on ``self.data``
 #
 #     * By default ``unit_computation()`` just maps ``map_function()`` onto ``self.data``
+#	  * If you need to pass specific arguments, you may need to implement it directly. See "Advanced Examples"
 #   * call ``write_results_chunk()`` to write ``self._results`` into the HDF5 datasets
 #   * read the next chunk of data into ``self.data``
 #
@@ -520,9 +525,8 @@ os.remove(h5_path)
 # --------------------------
 # Not used in ``PeakFinder`` but this function can be called to manually specify an HDF5 group containing partial
 # results
-#
-# We encourage you to read the source code for more information.
-#
+
+########################################################################################################################
 # Advanced examples
 # -----------------
 # Please see the following pycroscopy classes to learn more about the advanced functionalities such as resuming
@@ -530,13 +534,20 @@ os.remove(h5_path)
 #
 # * `SignalFilter <https://github.com/pycroscopy/pycroscopy/blob/master/pycroscopy/processing/signal_filter.py>`_
 # * `GIVBayesian <https://github.com/pycroscopy/pycroscopy/blob/master/pycroscopy/analysis/giv_bayesian.py>`_
+# * `FFTA <https://github.com/rajgiriUW/ffta/blob/master/ffta/hdf_utils/process.py>`_
 #
-# Both these classes work on personal computers as well as a cluster of computers (e.g. - a high-performance computing
+# These classes work on personal computers as well as a cluster of computers (e.g. - a high-performance computing
 # cluster).
 #
 # Tips and tricks
-# ================
+# ----------------
 # Here we will cover a few common use-cases that will hopefully guide you in structuring your computational problem
+#
+# Integrating into your personal workflow
+# -------------------
+# As an example of how to integrate with an outside codebase, the package `FFTA <https://github.com/rajgiriUW/ffta/blob/master/ffta/hdf_utils/process.py>`_
+# implements its own Process class for parallel computation. There you can see how to pass arguments to ``unit_computation()``
+# 
 #
 # Juggling dimensions
 # -------------------
