@@ -333,6 +333,23 @@ class TestWriteSimpleAttrs(TestHDFUtilsBase):
 
         os.remove(file_path)
 
+    def test_space_in_key_removed(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            attrs = {'   before': 1,
+                     'after    ': 2,
+                     '   before_and_after  ': 3,
+                     'inside attr name': 4}
+
+            hdf_utils.write_simple_attrs(h5_f, attrs)
+
+            for key, expected_val in attrs.items():
+                self.assertTrue(key.strip() in h5_f.attrs.keys())
+                self.assertTrue(hdf_utils.get_attr(h5_f, key) == expected_val)
+
+        os.remove(file_path)
+
     def test_to_dset(self):
         file_path = 'test.h5'
         data_utils.delete_existing_file(file_path)

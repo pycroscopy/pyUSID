@@ -9,6 +9,7 @@ Created on Tue Nov  3 21:14:25 2015
 from __future__ import division, print_function, absolute_import, unicode_literals
 import socket
 import sys
+from warnings import warn
 from platform import platform
 
 import h5py
@@ -373,10 +374,14 @@ def write_simple_attrs(h5_obj, attrs, obj_type='', verbose=False):
         raise TypeError('attrs should be a dictionary but is instead of type '
                         '{}'.format(type(attrs)))
     if not isinstance(h5_obj, (h5py.File, h5py.Group, h5py.Dataset)):
-        raise TypeError('h5_obj should be a h5py File, Group or Dataset object but is instead of type '
+        raise TypeError('h5_obj should be a h5py File, Group or Dataset object'
+                        ' but is instead of type '
                         '{}t'.format(type(h5_obj)))
 
     for key, val in attrs.items():
+        # Get rid of spaces in the key
+        key = key.strip()
+
         if val is None:
             continue
         if verbose:
