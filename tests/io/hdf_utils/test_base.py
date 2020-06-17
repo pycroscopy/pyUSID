@@ -288,6 +288,25 @@ class TestWriteSimpleAttrs(TestHDFUtilsBase):
             h5_group = h5_f.create_group('Blah')
             with self.assertRaises(TypeError):
                 hdf_utils.write_simple_attrs(h5_group, ['attrs', 1.234, 'should be dict', np.arange(3)])
+        os.remove(file_path)
+
+    def test_key_not_str(self):
+        file_path = 'test.h5'
+        data_utils.delete_existing_file(file_path)
+        with h5py.File(file_path, mode='w') as h5_f:
+            for attrs in [{15: 'hello'},
+                          {None: 23},
+                          {15.234: 'blah'},
+                          {True: False}]:
+
+                if sys.version_info.major == 3:
+                    with self.assertWarns(UserWarning):
+                        hdf_utils.write_simple_attrs(h5_f, attrs)
+                else:
+                    hdf_utils.write_simple_attrs(h5_f, attrs)
+                self.assertEqual(len(h5_f.attrs.keys()), 0)
+
+        os.remove(file_path)
 
     def test_to_grp(self):
         file_path = 'test.h5'

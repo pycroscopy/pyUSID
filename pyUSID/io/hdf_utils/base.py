@@ -379,6 +379,11 @@ def write_simple_attrs(h5_obj, attrs, obj_type='', verbose=False):
                         '{}t'.format(type(h5_obj)))
 
     for key, val in attrs.items():
+        if not isinstance(key, (str, unicode)):
+            warn('Skipping attribute with key: {}. Expected str, got {}'
+                 ''.format(key, type(key)))
+            continue
+
         # Get rid of spaces in the key
         key = key.strip()
 
