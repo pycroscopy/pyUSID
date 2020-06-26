@@ -144,7 +144,7 @@ def get_attr(h5_object, attr_name):
     return att_val
 
 
-def get_attributes(h5_object, attr_names=None):
+def get_attributes(h5_object, attr_names=None, strict=False):
     """
     Returns attribute associated with some DataSet.
 
@@ -154,6 +154,11 @@ def get_attributes(h5_object, attr_names=None):
         Dataset object reference.
     attr_names : str or :class:`list` of str, optional. Default = all
         Name of attribute object to return.
+    strict : bool, optional. Default = False
+        If True - raises a KeyError if desired keys are not found.
+        Else, raises warning instead.
+        This is especially useful when attempting to read attributes with
+        invalid names such as spaces on either sides of text.
 
     Returns
     -------
@@ -168,6 +173,8 @@ def get_attributes(h5_object, attr_names=None):
         attr_names = h5_object.attrs.keys()
     else:
         attr_names = validate_list_of_strings(attr_names, 'attr_names')
+        # Set strict to True since user is looking for specific attributes
+        strict = True
 
     att_dict = {}
 
@@ -175,7 +182,12 @@ def get_attributes(h5_object, attr_names=None):
         try:
             att_dict[attr] = get_attr(h5_object, attr)
         except KeyError:
-            raise KeyError('%s is not an attribute of %s' % (str(attr), h5_object.name))
+            mesg = '"{}" is not an attribute of {}'.format(attr,
+                                                           h5_object.name)
+            if strict:
+                raise KeyError(mesg)
+            else:
+                warn(mesg)
 
     return att_dict
 
