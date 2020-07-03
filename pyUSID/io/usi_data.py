@@ -145,10 +145,15 @@ class USIDataset(h5py.Dataset):
         try:
             self.__n_dim_data_orig = self.get_n_dim_form(lazy=True)
             self.__n_dim_form_avail = True
-            # TODO: This line keeps failing. Fix it
-            self.__n_dim_data_s2f = self.__n_dim_data_orig.transpose(self.__n_dim_sort_order_orig_s2f)
+
         except ValueError:
             warn('This dataset does not have an N-dimensional form')
+
+        # TODO: This line keeps failing due to Dask transpose. 
+        try:
+            self.__n_dim_data_s2f = self.__n_dim_data_orig.transpose(self.__n_dim_sort_order_orig_s2f)
+        except:
+            pass
 
         self.__set_n_dim_view()
 
