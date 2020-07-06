@@ -523,8 +523,69 @@ def check_if_main(h5_main, verbose=False):
                   'dataset: {}'.format(h5_spec_inds.shape, h5_spec_vals.shape, h5_main.shape))
         return False
 
+    try:
+        validate_anc_dset_attrs(h5_pos_inds, h5_pos_vals, is_spec=False)
+    except ValueError:
+        if verbose:
+            print('Attributes of Position datasets did not match')
+        return False
+    try:
+        validate_anc_dset_attrs(h5_spec_inds, h5_spec_vals, is_spec=True)
+    except ValueError:
+        if verbose:
+            print('Attributes of Spectroscopic datasets did not match')
+        return False
+
     return success
 
+def validate_anc_dset_attrs(h5_inds, h5_vals, is_spec=True):
+    """
+    Validates the attributes of a pair of indices and values datasets.
+    Throws ValueErrors if any rule is not satisfied
+
+    Parameters
+    ----------
+    h5_inds : h5py.Dataset
+        Indices dataset
+    h5_vals : h5py.Dataset
+        Values Dataset
+    is_spec : bool, optional. Default = True
+        Set to True if spectroscopic. Else - Position datasets
+    """
+    def lists_match(left, right):
+        if len(left) != len(right):
+            return False
+        return all([l_it == r_it for l_it, r_it in zip(left, right)])
+
+    v_names = get_attr(h5_vals, 'labels')
+    v_units = get_attr(h5_vals, 'units')
+    i_names = get_attr(h5_inds, 'labels')
+    i_units = get_attr(h5_inds, 'units')
+
+    for names, units, dset_type in zip([v_names, i_names], [v_units, i_units],
+                                       ['Values', 'Indices']):
+        if len(names) != len(units):
+            raise ValueError('Length of labels: {} and units: {} for the {} '
+                             'dataset do not match'
+                             ''.format(len(names), len(units), dset_type))
+    for i_item, v_item, prop in zip([i_names, i_units], [v_names, v_units],
+                                       ['labels', 'units']):
+        if not lists_match(i_item, v_item):
+            raise ValueError('The "{}" values of the Indices: {} and Values: '
+                             '{} datasets do not match'.format(prop, i_item,
+                                                               v_item))
+
+    # Now check the rows / cols nums against size of any attr:
+    if h5_inds.shape != h5_vals.shape:
+        raise ValueError('Shape of Indices: {} and Values: {} datasets do '
+                         'not match'.format(h5_inds.shape, h5_vals.shape))
+    dim_ind = 1
+    if is_spec:
+        dim_ind = 0
+    if h5_inds.shape[dim_ind] != len(v_names):
+        raise ValueError('Length of mandatory attributes: {} did not match '
+                         'dimension: {} of the ancillary dataset of shape: {}'
+                         ''.format(len(v_names), dim_ind, h5_inds.shape))
 
 def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals):
     """
