@@ -36,23 +36,6 @@ class TestSimple(unittest.TestCase):
                           data_utils.relaxation_path]:
             data_utils.delete_existing_file(file_path)
 
-    def test_copy_region_refs(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        data = np.random.rand(11, 7)
-        with h5py.File(file_path, mode='w') as h5_f:
-            h5_dset_source = h5_f.create_dataset('Source', data=data)
-            h5_dset_dest = h5_f.create_dataset('Target', data=data)
-            source_ref = h5_dset_source.regionref[0:-1:2]
-            h5_dset_source.attrs['regref'] = source_ref
-
-            hdf_utils.copy_region_refs(h5_dset_source, h5_dset_dest)
-
-            self.assertTrue(np.allclose(h5_dset_source[h5_dset_source.attrs['regref']],
-                                        h5_dset_dest[h5_dset_dest.attrs['regref']]))
-
-        os.remove(file_path)
-
 
 class TestCheckIfMain(TestSimple):
 
