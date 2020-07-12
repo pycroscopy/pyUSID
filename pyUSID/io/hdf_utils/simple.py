@@ -296,6 +296,11 @@ def copy_attributes(source, dest, skip_refs=True, verbose=False):
                 print('simple copying ' + att_name)
             dest.attrs[att_name] = clean_string_att(att_val)
 
+    if not skip_refs:
+        warn('pyUSID.io.hdf_utils.simple.copy_attributes no longer copies '
+             'region references. Please use pyUSID.io.reg_ref.copy_region_refs'
+             ' to copy references manually')
+
     return dest
 
 
@@ -1146,6 +1151,7 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
             dimensions = dimensions[::-1]
         indices, values = build_ind_val_matrices([dim.values for dim in dimensions],
                                                  is_spectral=is_spectral)
+
         # At this point, dimensions and unit values are arranged from fastest to slowest
         # We want dimensions to be arranged from slowest to fastest:
         rev_func = np.flipud if is_spectral else np.fliplr
@@ -1180,6 +1186,11 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
     for h5_dset in [h5_indices, h5_values]:
         write_simple_attrs(h5_dset, {'units': [x.units for x in dimensions], 'labels': [x.name for x in dimensions],
                                      'type': [dim.mode.value for dim in dimensions]})
+
+    warn('pyUSID.io.hdf_utils.simple.write_ind_val_dsets no longer creates'
+         'region references for each dimension. Please use '
+         'pyUSID.io.reg_ref.write_region_references to manually create region '
+         'references')
 
     return h5_indices, h5_values
 
@@ -1268,6 +1279,10 @@ def copy_dataset(h5_orig_dset, h5_dest_grp, alias=None, verbose=False):
               'destination dataset: {}'.format(h5_orig_dset, h5_new_dset))
 
     copy_attributes(h5_orig_dset, h5_new_dset, skip_refs=True)
+
+    warn('pyUSID.io.hdf_utils.simple.copy_dataset no longer copies region'
+         'references. Please use pyUSID.io.reg_ref.copy_all_region_refs to '
+         'copy region references manually')
 
     return h5_new_dset
 
