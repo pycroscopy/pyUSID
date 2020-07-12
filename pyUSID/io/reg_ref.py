@@ -38,6 +38,8 @@ def get_region(h5_dset, reg_ref_name):
     value : np.ndarray
         Data specified by the region reference. Note that a squeeze is applied by default.
     """
+    warn('pyUSID.io.reg.ref.get_region will be moved to pyNSID in the next '
+         'pyUSID version.', FutureWarning)
     if not isinstance(reg_ref_name, (str, unicode)):
         raise TypeError('reg_ref_name should be a string')
     if not isinstance(h5_dset, h5py.Dataset):
@@ -66,6 +68,8 @@ def clean_reg_ref(h5_dset, reg_ref_tuple, verbose=False):
     new_reg_refs : tuple
         Instructions for the corrected region reference
     """
+    warn('pyUSID.io.reg.ref.clean_reg_ref will be moved to pyNSID in the next '
+         'pyUSID version.', FutureWarning)
     if not isinstance(reg_ref_tuple, (tuple, dict, slice)):
         raise TypeError('slices should be a tuple, list, or slice but is instead of type '
                         '{}'.format(type(reg_ref_tuple)))
@@ -120,6 +124,8 @@ def attempt_reg_ref_build(h5_dset, dim_names, verbose=False):
         The slicing information must be formatted using tuples of slice objects.
         For example {'region_1':(slice(None, None), slice (0,1))}
     """
+    warn('pyUSID.io.reg.ref.attempt_reg_ref_build will be moved to pyNSID in the next '
+         'pyUSID version.', FutureWarning)
     if not isinstance(h5_dset, h5py.Dataset):
         raise TypeError('h5_dset should be a h5py.Dataset object but is instead of type '
                         '{}.'.format(type(h5_dset)))
@@ -182,6 +188,8 @@ def get_indices_for_region_ref(h5_main, ref, return_method='slices'):
         array of indices in the source dataset that ref accesses
 
     """
+    warn('pyUSID.io.reg.ref.get_indices_for_region_ref will be moved to pyNSID in the next '
+         'pyUSID version.', FutureWarning)
     if not isinstance(h5_main, h5py.Dataset):
         raise TypeError('h5_main should be a h5py.Dataset object')
     if not isinstance(ref, h5py.RegionReference):
@@ -306,6 +314,8 @@ def copy_reg_ref_reduced_dim(h5_source, h5_target, h5_source_inds, h5_target_ind
             reference
 
     """
+    warn('pyUSID.io.reg.ref.copy_reg_ref_reduced_dim will be moved to pyNSID in the next '
+         'pyUSID version.', FutureWarning)
     for param, param_name in zip([h5_source, h5_target, h5_source_inds, h5_target_inds],
                                  ['h5_source', 'h5_target', 'h5_source_inds', 'h5_target_inds']):
         if not isinstance(param, h5py.Dataset):
@@ -374,6 +384,8 @@ def create_region_reference(h5_main, ref_inds):
         reference in `h5_main` for the blocks of points defined by `ref_inds`
 
     """
+    warn('pyUSID.io.reg.ref.create_region_reference will be moved to pyNSID '
+         'in the next pyUSID version.', FutureWarning)
     if not isinstance(h5_main, h5py.Dataset):
         raise TypeError('h5_main should be a h5py.Dataset object')
     if not isinstance(ref_inds, Iterable):
@@ -417,6 +429,8 @@ def simple_region_ref_copy(h5_source, h5_target, key):
             reference
 
     """
+    warn('pyUSID.io.reg.ref.simple_region_ref_copy will be moved to pyNSID '
+         'in the next pyUSID version.', FutureWarning)
     for param, param_name in zip([h5_source, h5_target], ['h5_source', 'h5_target']):
         if not isinstance(param, h5py.Dataset):
             raise TypeError(param_name + ' should be a h5py.Dataset object')
@@ -444,6 +458,8 @@ def copy_all_region_refs(h5_source, h5_target):
         Dataset to which to copy region references to
 
     """
+    warn('pyUSID.io.reg.ref.copy_all_region_refs will be moved to pyNSID '
+         'in the next pyUSID version.', FutureWarning)
     if not isinstance(h5_source, h5py.Dataset):
         raise TypeError("'h5_source' should be a h5py.Dataset object")
     if not isinstance(h5_target, h5py.Dataset):
@@ -470,6 +486,8 @@ def write_region_references(h5_dset, reg_ref_dict, add_labels_attr=True, verbose
     verbose : Boolean (Optional. Default = False)
         Whether or not to print status messages
     """
+    warn('pyUSID.io.reg.ref.write_region_references will be moved to pyNSID '
+         'in the next pyUSID version.', FutureWarning)
     if not isinstance(reg_ref_dict, dict):
         raise TypeError('slices should be a dictionary but is instead of type '
                         '{}'.format(type(reg_ref_dict)))
@@ -539,6 +557,8 @@ def copy_region_refs(h5_source, h5_target):
     '''
     Check both h5_source and h5_target to ensure that are Main
     '''
+    warn('pyUSID.io.reg.ref.copy_region_refs will be moved to pyNSID '
+         'in the next pyUSID version.', FutureWarning)
     are_main = all([check_if_main(h5_source), check_if_main(h5_target)])
     if not all([isinstance(h5_source, h5py.Dataset), isinstance(h5_target, h5py.Dataset)]):
         raise TypeError('Inputs to copy_region_refs must be HDF5 Datasets')
