@@ -89,7 +89,7 @@ def capture_stdout():
 
 def validate_aux_dset_pair(test_class, h5_group, h5_inds, h5_vals, dim_names, dim_units, inds_matrix,
                            vals_matrix=None, base_name=None, h5_main=None, is_spectral=True,
-                           slow_to_fast=False):
+                           slow_to_fast=False, check_reg_refs=False):
     if vals_matrix is None:
         vals_matrix = inds_matrix
     if base_name is None:
@@ -126,21 +126,23 @@ def validate_aux_dset_pair(test_class, h5_group, h5_inds, h5_vals, dim_names, di
         test_class.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
         test_class.assertTrue(np.all([x == y for x, y in zip(dim_names, get_attr(h5_dset, 'labels'))]))
         test_class.assertTrue(np.all([x == y for x, y in zip(dim_units, get_attr(h5_dset, 'units'))]))
-        # assert region references even though these are not really used anywhere
-        for dim_ind, curr_name in enumerate(dim_names):
-            if is_spectral:
-                expected = np.squeeze(ref_data[dim_ind])
-            else:
-                expected = np.squeeze(ref_data[:, dim_ind])
-            actual = np.squeeze(h5_dset[h5_dset.attrs[curr_name]])
-            try:
-                match = np.allclose(expected, actual)
-            except ValueError:
-                match = False
-            if match:
-                test_class.assertTrue(match)
-            else:
-                warn('Test for region reference: ' + curr_name + ' failed')
+
+        # assert region references even though these are not used anywhere:
+        if check_reg_refs:
+            for dim_ind, curr_name in enumerate(dim_names):
+                if is_spectral:
+                    expected = np.squeeze(ref_data[dim_ind])
+                else:
+                    expected = np.squeeze(ref_data[:, dim_ind])
+                actual = np.squeeze(h5_dset[h5_dset.attrs[curr_name]])
+                try:
+                    match = np.allclose(expected, actual)
+                except ValueError:
+                    match = False
+                if match:
+                    test_class.assertTrue(match)
+                else:
+                    warn('Test for region reference: ' + curr_name + ' failed')
 
 
 def verify_book_keeping_attrs(test_class, h5_obj):
