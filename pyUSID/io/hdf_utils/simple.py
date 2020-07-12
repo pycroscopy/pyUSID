@@ -261,7 +261,7 @@ def copy_attributes(source, dest, skip_refs=True, verbose=False):
     dest : h5py.Dataset, :class:`h5py.Group`, or :class:`h5py.File`
         Object to which the attributes need to be copied to
     skip_refs : bool, optional. default = True
-        Whether or not the references (dataset and region) should be skipped
+        Whether or not the dataset references should be skipped
     verbose : bool, optional. Defualt = False
         Whether or not to print logs for debugging
 
@@ -291,27 +291,11 @@ def copy_attributes(source, dest, skip_refs=True, verbose=False):
                 if verbose:
                     print('dset ref copying ' + att_name)
                 dest.attrs[att_name] = att_val
-        elif isinstance(att_val, h5py.RegionReference):
-            # handled in dedicated if condition below
-            continue
         else:
             # everything else
             if verbose:
                 print('simple copying ' + att_name)
             dest.attrs[att_name] = clean_string_att(att_val)
-
-    if not skip_refs:
-        # This can be copied across files without problems
-        mesg = 'Could not copy region references to {}.'.format(dest.name)
-        if isinstance(dest, h5py.Dataset):
-            try:
-                if verbose:
-                    print('requested reg ref copy')
-                copy_region_refs(source, dest)
-            except TypeError:
-                warn(mesg)
-        else:
-            warn('Cannot copy region references to {}'.format(type(dest)))
 
     return dest
 
@@ -537,6 +521,7 @@ def check_if_main(h5_main, verbose=False):
         return False
 
     return success
+
 
 def validate_anc_dset_attrs(h5_inds, h5_vals, is_spec=True):
     """
@@ -892,9 +877,11 @@ def copy_main_attributes(h5_main, h5_new):
         h5_new.attrs[att_name] = clean_string_att(val)
 
 
-def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs=None, skip_refs=False):
+def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None,
+                         new_attrs=None, skip_refs=False):
     """
-    Creates an empty dataset in the h5 file based on the provided dataset in the same or specified group
+    Creates an empty dataset in the h5 file based on the provided dataset in
+    the same or specified group
 
     Parameters
     ----------
@@ -909,7 +896,7 @@ def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs
     new_attrs : dictionary (Optional)
         Any new attributes that need to be written to the dataset
     skip_refs : boolean, optional
-        Should ObjectReferences and RegionReferences be skipped when copying attributes from the
+        Should ObjectReferences be skipped when copying attributes from the
         `source_dset`
 
     Returns
@@ -1187,15 +1174,11 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
         print('Values:')
         print(values)
 
-    # Create the slices that will define the labels
-    region_slices = get_aux_dset_slicing([x.name for x in dimensions], is_spectroscopic=is_spectral)
-
     # Create the Datasets for both Indices and Values
     h5_indices = h5_parent_group.create_dataset(base_name + 'Indices', data=INDICES_DTYPE(indices), dtype=INDICES_DTYPE)
     h5_values = h5_parent_group.create_dataset(base_name + 'Values', data=VALUES_DTYPE(values), dtype=VALUES_DTYPE)
 
     for h5_dset in [h5_indices, h5_values]:
-        write_region_references(h5_dset, region_slices, verbose=verbose)
         write_simple_attrs(h5_dset, {'units': [x.units for x in dimensions], 'labels': [x.name for x in dimensions],
                                      'type': [dim.mode.value for dim in dimensions]})
 
@@ -1286,7 +1269,6 @@ def copy_dataset(h5_orig_dset, h5_dest_grp, alias=None, verbose=False):
               'destination dataset: {}'.format(h5_orig_dset, h5_new_dset))
 
     copy_attributes(h5_orig_dset, h5_new_dset, skip_refs=True)
-    copy_all_region_refs(h5_orig_dset, h5_new_dset)
 
     return h5_new_dset
 
@@ -1579,20 +1561,9 @@ def write_reduced_anc_dsets(h5_parent_group, h5_inds, h5_vals, dim_name, basenam
         # Extracting the labels from the original spectroscopic data sets
         labels = h5_inds.attrs['labels'][keep_dim]
         # Creating the dimension slices for the new spectroscopic data sets
-        reg_ref_slices = dict()
-        for row_ind, row_name in enumerate(labels):
-            # Not necessary anymore but still.....
-            if is_spec:
-                reg_ref_slices[row_name] = (slice(row_ind, row_ind + 1), slice(None))
-            else:
-                reg_ref_slices[row_name] = (slice(None), slice(row_ind, row_ind + 1))
-
-            if verbose:
-                print(reg_ref_slices)
 
         # Adding the labels and units to the new spectroscopic data sets
         for dset in [h5_inds_new, h5_vals_new]:
-            write_region_references(dset, reg_ref_slices, verbose=False)
             write_simple_attrs(dset, {'labels': labels, 'units': h5_inds.attrs['units'][keep_dim]})
 
     else:
@@ -1600,10 +1571,7 @@ def write_reduced_anc_dsets(h5_parent_group, h5_inds, h5_vals, dim_name, basenam
         h5_inds_new = h5_parent_group.create_dataset(basename + '_Indices', data=np.array([[0]]), dtype=INDICES_DTYPE)
         h5_vals_new = h5_parent_group.create_dataset(basename + '_Values', data=np.array([[0]]), dtype=VALUES_DTYPE)
 
-        reg_ref_slices = {'Single_Step': (slice(0, None), slice(None))}
-
         for dset in [h5_inds_new, h5_vals_new]:
-            write_region_references(dset, reg_ref_slices, verbose=False)
             write_simple_attrs(dset, {'labels': ['Single_Step'], 'units': ['a. u.']})
 
     return h5_inds_new, h5_vals_new
