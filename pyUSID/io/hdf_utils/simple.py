@@ -1522,3 +1522,26 @@ def write_reduced_anc_dsets(h5_parent_group, h5_inds, h5_vals, dim_name, basenam
             write_simple_attrs(dset, {'labels': ['Single_Step'], 'units': ['a. u.']})
 
     return h5_inds_new, h5_vals_new
+
+
+def copy_region_refs(h5_source, h5_target):
+    """
+    Check the input dataset for plot groups, copy them if they exist
+    Also make references in the Spectroscopic Values and Indices tables
+
+    Parameters
+    ----------
+    h5_source : HDF5 Dataset
+            source dataset to copy references from
+    h5_target : HDF5 Dataset
+            target dataset the references from h5_source are copied to
+
+    """
+    '''
+    Check both h5_source and h5_target to ensure that are Main
+    '''
+    warn('pyUSID.io.hdf_utils.simple.copy_region_refs has been moved to '
+         'pyUSID.io.reg_ref. This alias will be removed in a future version. '
+         'Please update your import statements accordingly', FutureWarning)
+    from ..reg_ref import copy_region_refs
+    return copy_region_refs(h5_source, h5_target)
