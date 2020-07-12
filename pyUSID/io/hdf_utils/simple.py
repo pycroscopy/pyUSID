@@ -15,12 +15,11 @@ import numpy as np
 import dask.array as da
 
 from ..dtype_utils import validate_dtype, validate_single_string_arg, validate_list_of_strings, contains_integers, lazy_load_array
-from ..reg_ref import write_region_references, simple_region_ref_copy, copy_reg_ref_reduced_dim, \
-    create_region_reference, copy_all_region_refs
-from ..write_utils import clean_string_att, build_ind_val_matrices, get_aux_dset_slicing, INDICES_DTYPE, \
+from ..write_utils import clean_string_att, build_ind_val_matrices, \
+    INDICES_DTYPE, \
     VALUES_DTYPE, Dimension, DimType
 from .base import get_auxiliary_datasets, link_h5_obj_as_alias, get_attr, \
-    link_h5_objects_as_attrs, write_book_keeping_attrs, write_simple_attrs, \
+    write_book_keeping_attrs, write_simple_attrs, \
     is_editable_h5, validate_h5_objs_in_same_h5_file
 
 if sys.version_info.major == 3:
@@ -1360,73 +1359,6 @@ def copy_linked_objects(h5_source, h5_dest, verbose=False):
                     raise NotImplementedError('Unable to copy {} objects yet'
                                               '. Contact developer if you need'
                                               ' this'.format(type(h5_orig_obj)))
-
-
-def copy_region_refs(h5_source, h5_target):
-    """
-    Check the input dataset for plot groups, copy them if they exist
-    Also make references in the Spectroscopic Values and Indices tables
-
-    Parameters
-    ----------
-    h5_source : HDF5 Dataset
-            source dataset to copy references from
-    h5_target : HDF5 Dataset
-            target dataset the references from h5_source are copied to
-
-    """
-    '''
-    Check both h5_source and h5_target to ensure that are Main
-    '''
-    # TODO: Move this vestige to pycroscopy. Use copy_all_region_refs instead
-    are_main = all([check_if_main(h5_source), check_if_main(h5_target)])
-    if not all([isinstance(h5_source, h5py.Dataset), isinstance(h5_target, h5py.Dataset)]):
-        raise TypeError('Inputs to copy_region_refs must be HDF5 Datasets')
-
-    # It is OK if objects are in different files
-
-    if are_main:
-        h5_source_inds = h5_source.file[h5_source.attrs['Spectroscopic_Indices']]
-
-        h5_spec_inds = h5_target.file[h5_target.attrs['Spectroscopic_Indices']]
-        h5_spec_vals = h5_target.file[h5_target.attrs['Spectroscopic_Values']]
-
-    for key in h5_source.attrs.keys():
-        if not isinstance(h5_source.attrs[key], h5py.RegionReference):
-            continue
-
-        if are_main:
-            if h5_source_inds.shape[0] == h5_spec_inds.shape[0]:
-                '''
-                Spectroscopic dimensions are identical.
-                Do direct copy.
-                '''
-                ref_inds = simple_region_ref_copy(h5_source, h5_target, key)
-
-            else:
-                '''
-                Spectroscopic dimensions are different.
-                Do the dimension reducing copy.
-                '''
-                ref_inds = copy_reg_ref_reduced_dim(h5_source, h5_target, h5_source_inds, h5_spec_inds, key)
-
-            '''
-            Create references for Spectroscopic Indices and Values
-            Set the end-point of each hyperslab in the position dimension to the number of
-            rows in the index array
-            '''
-
-            ref_inds[:, 1, 0][ref_inds[:, 1, 0] > h5_spec_inds.shape[0]] = h5_spec_inds.shape[0] - 1
-            spec_inds_ref = create_region_reference(h5_spec_inds, ref_inds)
-            h5_spec_inds.attrs[key] = spec_inds_ref
-            spec_vals_ref = create_region_reference(h5_spec_vals, ref_inds)
-            h5_spec_vals.attrs[key] = spec_vals_ref
-
-        else:
-            '''
-            If not main datasets, then only simple copy can be used.
-            '''
-            simple_region_ref_copy(h5_source, h5_target, key)
 
 
 def write_reduced_anc_dsets(h5_parent_group, h5_inds, h5_vals, dim_name, basename=None, is_spec=None,
