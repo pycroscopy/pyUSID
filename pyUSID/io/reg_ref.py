@@ -539,7 +539,6 @@ def copy_region_refs(h5_source, h5_target):
     '''
     Check both h5_source and h5_target to ensure that are Main
     '''
-    # TODO: Move this vestige to pycroscopy. Use copy_all_region_refs instead
     are_main = all([check_if_main(h5_source), check_if_main(h5_target)])
     if not all([isinstance(h5_source, h5py.Dataset), isinstance(h5_target, h5py.Dataset)]):
         raise TypeError('Inputs to copy_region_refs must be HDF5 Datasets')
