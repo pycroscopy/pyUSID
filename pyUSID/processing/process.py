@@ -13,6 +13,7 @@ import numpy as np
 import psutil
 import time as tm
 import h5py
+from warnings import warn
 from numbers import Number
 from multiprocessing import cpu_count
 
@@ -142,6 +143,13 @@ class Process(object):
 
         MPI = get_MPI()
 
+        # Ensure that the file is opened in the correct comm or something
+        if MPI is not None and h5_main.file.driver != 'mpio':
+            warn('Code was called in MPI context but HDF5 file was not opened '
+                 'with the "mpio" driver. JobLib will be used instead of MPI '
+                 'for parallel computation')
+            MPI = None
+
         if MPI is not None:
             # If we came here then, the user has intentionally asked for multi-node computation
             comm = MPI.COMM_WORLD
@@ -160,11 +168,6 @@ class Process(object):
             # It is sufficient if just one rank checks all this.
             if self.mpi_rank == 0:
                 print('Working on {} ranks via MPI'.format(self.mpi_size))
-
-            # Ensure that the file is opened in the correct comm or something
-            if h5_main.file.driver != 'mpio':
-                raise TypeError('The HDF5 file should have been opened with driver="mpio". Current driver = "{}"'
-                                ''.format(h5_main.file.driver))
 
             if verbose and self.mpi_rank == 0:
                 print('Finished getting all necessary MPI information')
