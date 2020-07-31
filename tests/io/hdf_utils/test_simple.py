@@ -36,23 +36,6 @@ class TestSimple(unittest.TestCase):
                           data_utils.relaxation_path]:
             data_utils.delete_existing_file(file_path)
 
-    def test_copy_region_refs(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        data = np.random.rand(11, 7)
-        with h5py.File(file_path, mode='w') as h5_f:
-            h5_dset_source = h5_f.create_dataset('Source', data=data)
-            h5_dset_dest = h5_f.create_dataset('Target', data=data)
-            source_ref = h5_dset_source.regionref[0:-1:2]
-            h5_dset_source.attrs['regref'] = source_ref
-
-            hdf_utils.copy_region_refs(h5_dset_source, h5_dset_dest)
-
-            self.assertTrue(np.allclose(h5_dset_source[h5_dset_source.attrs['regref']],
-                                        h5_dset_dest[h5_dset_dest.attrs['regref']]))
-
-        os.remove(file_path)
-
 
 class TestCheckIfMain(TestSimple):
 
@@ -303,10 +286,6 @@ class TestWriteReducedAncDsets(TestSimple):
                 self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
-                # assert region references
-                for dim_ind, curr_name in enumerate(dim_names):
-                    self.assertTrue(np.allclose(np.squeeze(ref_data[dim_ind]),
-                                                np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
 
         os.remove(duplicate_path)
 
@@ -339,10 +318,6 @@ class TestWriteReducedAncDsets(TestSimple):
                     self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
                     self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
                     self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
-                    # assert region references
-                    for dim_ind, curr_name in enumerate(dim_names):
-                        self.assertTrue(np.allclose(np.squeeze(ref_data[dim_ind]),
-                                                    np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
 
         os.remove(new_file_path)
 
@@ -374,10 +349,6 @@ class TestWriteReducedAncDsets(TestSimple):
                 self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
-                # assert region references
-                for dim_ind, curr_name in enumerate(dim_names):
-                    self.assertTrue(np.allclose(np.squeeze(ref_data[dim_ind]),
-                                                np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
 
         os.remove(duplicate_path)
 
@@ -413,10 +384,6 @@ class TestWriteReducedAncDsets(TestSimple):
                 self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
-                # assert region references
-                for dim_ind, curr_name in enumerate(dim_names):
-                    self.assertTrue(np.allclose(np.squeeze(ref_data[:, dim_ind]),
-                                                np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
 
         os.remove(duplicate_path)
 
@@ -453,10 +420,6 @@ class TestWriteReducedAncDsets(TestSimple):
                 self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
-                # assert region references
-                for dim_ind, curr_name in enumerate(dim_names):
-                    self.assertTrue(np.allclose(np.squeeze(ref_data[dim_ind]),
-                                                np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
 
         os.remove(duplicate_path)
 
@@ -493,10 +456,6 @@ class TestWriteReducedAncDsets(TestSimple):
                 self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
-                # assert region references
-                for dim_ind, curr_name in enumerate(dim_names):
-                    self.assertTrue(np.allclose(np.squeeze(ref_data[dim_ind]),
-                                                np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
 
         os.remove(duplicate_path)
 
@@ -533,10 +492,6 @@ class TestWriteReducedAncDsets(TestSimple):
                 self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
-                # assert region references
-                for dim_ind, curr_name in enumerate(dim_names):
-                    self.assertTrue(np.allclose(np.squeeze(ref_data[dim_ind]),
-                                                np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
 
         os.remove(duplicate_path)
 
@@ -583,10 +538,6 @@ class TestWriteReducedAncDsets(TestSimple):
                 self.assertTrue(np.all([_ in h5_dset.attrs.keys() for _ in ['labels', 'units']]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_names, hdf_utils.get_attr(h5_dset, 'labels'))]))
                 self.assertTrue(np.all([x == y for x, y in zip(dim_units, hdf_utils.get_attr(h5_dset, 'units'))]))
-                # assert region references
-                for dim_ind, curr_name in enumerate(dim_names):
-                    self.assertTrue(np.allclose(np.squeeze(ref_data[dim_ind]),
-                                                np.squeeze(h5_dset[h5_dset.attrs[curr_name]])))
 
         os.remove(duplicate_path)
 
@@ -1203,103 +1154,6 @@ class TestCopyAttributes(unittest.TestCase):
                 self.assertTrue(np.all([x == y for x, y in zip(val, h5_dset.attrs[key])]))
         os.remove(file_path)
 
-    def test_dset_w_reg_ref_group_but_skipped(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        data = np.random.rand(5, 7)
-        easy_attrs = {'1_string': 'Current', '1_number': 35.23}
-        with h5py.File(file_path, mode='w') as h5_f:
-            h5_dset_source = h5_f.create_dataset('Source', data=data)
-            h5_dset_source.attrs.update(easy_attrs)
-            h5_dset_sink = h5_f.create_dataset('Sink', data=data)
-            reg_refs = {'even_rows': (slice(0, None, 2), slice(None)),
-                        'odd_rows': (slice(1, None, 2), slice(None))}
-            for reg_ref_name, reg_ref_tuple in reg_refs.items():
-                h5_dset_source.attrs[reg_ref_name] = h5_dset_source.regionref[reg_ref_tuple]
-
-            hdf_utils.copy_attributes(h5_dset_source, h5_dset_sink, skip_refs=True)
-
-            self.assertEqual(len(h5_dset_sink.attrs), len(easy_attrs))
-            for key, val in easy_attrs.items():
-                self.assertEqual(val, h5_dset_sink.attrs[key])
-
-        os.remove(file_path)
-
-    def test_dset_w_reg_ref_group_to_file(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        data = np.random.rand(5, 7)
-        easy_attrs = {'1_string': 'Current', '1_number': 35.23}
-        with h5py.File(file_path, mode='w') as h5_f:
-            h5_dset_source = h5_f.create_dataset('Source', data=data)
-            h5_dset_source.attrs.update(easy_attrs)
-            reg_refs = {'even_rows': (slice(None), slice(0, None, 2)),
-                        'odd_rows': (slice(None), slice(1, None, 2))}
-            for reg_ref_name, reg_ref_tuple in reg_refs.items():
-                h5_dset_source.attrs[reg_ref_name] = h5_dset_source.regionref[reg_ref_tuple]
-
-            if sys.version_info.major == 3:
-                with self.assertWarns(UserWarning):
-                    hdf_utils.copy_attributes(h5_dset_source, h5_f, skip_refs=False)
-            else:
-                hdf_utils.copy_attributes(h5_dset_source, h5_f, skip_refs=False)
-
-            self.assertEqual(len(h5_f.attrs), len(easy_attrs))
-            for key, val in easy_attrs.items():
-                self.assertEqual(val, h5_f.attrs[key])
-
-        os.remove(file_path)
-
-    def test_dset_w_reg_ref_group(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        data = np.random.rand(5, 7)
-        easy_attrs = {'1_string': 'Current', '1_number': 35.23}
-        with h5py.File(file_path, mode='w') as h5_f:
-            h5_dset_source = h5_f.create_dataset('Source', data=data)
-            h5_dset_source.attrs.update(easy_attrs)
-            h5_dset_sink = h5_f.create_dataset('Sink', data=data)
-            reg_refs = {'even_rows': (slice(0, None, 2), slice(None)),
-                        'odd_rows': (slice(1, None, 2), slice(None))}
-            for reg_ref_name, reg_ref_tuple in reg_refs.items():
-                h5_dset_source.attrs[reg_ref_name] = h5_dset_source.regionref[reg_ref_tuple]
-
-            hdf_utils.copy_attributes(h5_dset_source, h5_dset_sink, skip_refs=False)
-
-            self.assertEqual(len(h5_dset_sink.attrs), len(reg_refs) + len(easy_attrs))
-            for key, val in easy_attrs.items():
-                self.assertEqual(val, h5_dset_sink.attrs[key])
-
-            self.assertTrue('labels' not in h5_dset_sink.attrs.keys())
-
-            expected_data = [data[0:None:2, :], data[1:None:2, :]]
-            written_data = [h5_dset_sink[h5_dset_sink.attrs['even_rows']],
-                            h5_dset_sink[h5_dset_sink.attrs['odd_rows']]]
-
-            for exp, act in zip(expected_data, written_data):
-                self.assertTrue(np.allclose(exp, act))
-
-        os.remove(file_path)
-
-    def test_illegal_to_from_reg_ref(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        data = np.random.rand(5, 7)
-        with h5py.File(file_path, mode='w') as h5_f:
-            h5_dset_source = h5_f.create_dataset('Source', data=data)
-            h5_dset_dest = h5_f.create_dataset('Sink', data=data[:-1, :-1])
-            reg_refs = {'even_rows': (slice(0, None, 2), slice(None)),
-                        'odd_rows': (slice(1, None, 2), slice(None))}
-            for reg_ref_name, reg_ref_tuple in reg_refs.items():
-                h5_dset_source.attrs[reg_ref_name] = h5_dset_source.regionref[reg_ref_tuple]
-
-            if sys.version_info.major == 3:
-                with self.assertWarns(UserWarning):
-                    hdf_utils.copy_attributes(h5_dset_source, h5_dset_dest, skip_refs=False)
-            else:
-                hdf_utils.copy_attributes(h5_dset_source, h5_dset_dest, skip_refs=False)
-
-
 class TestCopyMainAttributes(unittest.TestCase):
 
     def test_valid(self):
@@ -1460,29 +1314,6 @@ class TestCreateEmptyDataset(unittest.TestCase):
                 self.assertEqual(val, h5_duplicate.attrs[key])
             for key, val in existing_attrs.items():
                 self.assertEqual(val, h5_duplicate.attrs[key])
-
-        os.remove(file_path)
-
-    def test_w_region_refs(self):
-        file_path = 'test.h5'
-        data_utils.delete_existing_file(file_path)
-        data = np.random.rand(5, 7)
-        main_attrs = {'quantity': 'Current', 'units': 'nA'}
-        with h5py.File(file_path, mode='w') as h5_f:
-            h5_dset_source = h5_f.create_dataset('Source', data=data)
-            h5_dset_source.attrs.update(main_attrs)
-            reg_refs = {'even_rows': (slice(0, None, 2), slice(None)),
-                        'odd_rows': (slice(1, None, 2), slice(None))}
-
-            for reg_ref_name, reg_ref_tuple in reg_refs.items():
-                h5_dset_source.attrs[reg_ref_name] = h5_dset_source.regionref[reg_ref_tuple]
-
-            h5_copy = hdf_utils.create_empty_dataset(h5_dset_source, np.float16, 'Existing')
-
-            for reg_ref_name in reg_refs.keys():
-                self.assertTrue(isinstance(h5_copy.attrs[reg_ref_name], h5py.RegionReference))
-                self.assertTrue(h5_dset_source[h5_dset_source.attrs[reg_ref_name]].shape == h5_copy[
-                    h5_copy.attrs[reg_ref_name]].shape)
 
         os.remove(file_path)
 
@@ -2071,6 +1902,10 @@ class TestCopyDataset(TestSimple):
                 self.assertEqual(h5_f[actual], exp_val)
         os.remove(file_path)
 """
+class TestValidateAncDsetAttrs(TestSimple):
+
+    def test_blah(self):
+        pass
 
 
 if __name__ == '__main__':

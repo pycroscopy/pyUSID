@@ -14,13 +14,12 @@ import h5py
 import numpy as np
 import dask.array as da
 
-from ..dtype_utils import validate_dtype, validate_single_string_arg, validate_list_of_strings, contains_integers, lazy_load_array
-from ..reg_ref import write_region_references, simple_region_ref_copy, copy_reg_ref_reduced_dim, \
-    create_region_reference, copy_all_region_refs
-from ..write_utils import clean_string_att, build_ind_val_matrices, get_aux_dset_slicing, INDICES_DTYPE, \
-    VALUES_DTYPE, Dimension, DimType
+from ..dtype_utils import validate_dtype, validate_single_string_arg, \
+    validate_list_of_strings, contains_integers, lazy_load_array
+from ..write_utils import clean_string_att, build_ind_val_matrices, \
+    INDICES_DTYPE, VALUES_DTYPE, Dimension, DimType
 from .base import get_auxiliary_datasets, link_h5_obj_as_alias, get_attr, \
-    link_h5_objects_as_attrs, write_book_keeping_attrs, write_simple_attrs, \
+    write_book_keeping_attrs, write_simple_attrs, \
     is_editable_h5, validate_h5_objs_in_same_h5_file
 
 if sys.version_info.major == 3:
@@ -261,7 +260,7 @@ def copy_attributes(source, dest, skip_refs=True, verbose=False):
     dest : h5py.Dataset, :class:`h5py.Group`, or :class:`h5py.File`
         Object to which the attributes need to be copied to
     skip_refs : bool, optional. default = True
-        Whether or not the references (dataset and region) should be skipped
+        Whether or not the dataset references should be skipped
     verbose : bool, optional. Defualt = False
         Whether or not to print logs for debugging
 
@@ -291,9 +290,6 @@ def copy_attributes(source, dest, skip_refs=True, verbose=False):
                 if verbose:
                     print('dset ref copying ' + att_name)
                 dest.attrs[att_name] = att_val
-        elif isinstance(att_val, h5py.RegionReference):
-            # handled in dedicated if condition below
-            continue
         else:
             # everything else
             if verbose:
@@ -301,17 +297,9 @@ def copy_attributes(source, dest, skip_refs=True, verbose=False):
             dest.attrs[att_name] = clean_string_att(att_val)
 
     if not skip_refs:
-        # This can be copied across files without problems
-        mesg = 'Could not copy region references to {}.'.format(dest.name)
-        if isinstance(dest, h5py.Dataset):
-            try:
-                if verbose:
-                    print('requested reg ref copy')
-                copy_region_refs(source, dest)
-            except TypeError:
-                warn(mesg)
-        else:
-            warn('Cannot copy region references to {}'.format(type(dest)))
+        warn('pyUSID.io.hdf_utils.simple.copy_attributes no longer copies '
+             'region references. Please use pyUSID.io.reg_ref.copy_region_refs'
+             ' to copy references manually')
 
     return dest
 
@@ -523,8 +511,70 @@ def check_if_main(h5_main, verbose=False):
                   'dataset: {}'.format(h5_spec_inds.shape, h5_spec_vals.shape, h5_main.shape))
         return False
 
+    try:
+        validate_anc_dset_attrs(h5_pos_inds, h5_pos_vals, is_spec=False)
+    except ValueError:
+        if verbose:
+            print('Attributes of Position datasets did not match')
+        return False
+    try:
+        validate_anc_dset_attrs(h5_spec_inds, h5_spec_vals, is_spec=True)
+    except ValueError:
+        if verbose:
+            print('Attributes of Spectroscopic datasets did not match')
+        return False
+
     return success
 
+
+def validate_anc_dset_attrs(h5_inds, h5_vals, is_spec=True):
+    """
+    Validates the attributes of a pair of indices and values datasets.
+    Throws ValueErrors if any rule is not satisfied
+
+    Parameters
+    ----------
+    h5_inds : h5py.Dataset
+        Indices dataset
+    h5_vals : h5py.Dataset
+        Values Dataset
+    is_spec : bool, optional. Default = True
+        Set to True if spectroscopic. Else - Position datasets
+    """
+    def lists_match(left, right):
+        if len(left) != len(right):
+            return False
+        return all([l_it == r_it for l_it, r_it in zip(left, right)])
+
+    v_names = get_attr(h5_vals, 'labels')
+    v_units = get_attr(h5_vals, 'units')
+    i_names = get_attr(h5_inds, 'labels')
+    i_units = get_attr(h5_inds, 'units')
+
+    for names, units, dset_type in zip([v_names, i_names], [v_units, i_units],
+                                       ['Values', 'Indices']):
+        if len(names) != len(units):
+            raise ValueError('Length of labels: {} and units: {} for the {} '
+                             'dataset do not match'
+                             ''.format(len(names), len(units), dset_type))
+    for i_item, v_item, prop in zip([i_names, i_units], [v_names, v_units],
+                                       ['labels', 'units']):
+        if not lists_match(i_item, v_item):
+            raise ValueError('The "{}" values of the Indices: {} and Values: '
+                             '{} datasets do not match'.format(prop, i_item,
+                                                               v_item))
+
+    # Now check the rows / cols nums against size of any attr:
+    if h5_inds.shape != h5_vals.shape:
+        raise ValueError('Shape of Indices: {} and Values: {} datasets do '
+                         'not match'.format(h5_inds.shape, h5_vals.shape))
+    dim_ind = 1
+    if is_spec:
+        dim_ind = 0
+    if h5_inds.shape[dim_ind] != len(v_names):
+        raise ValueError('Length of mandatory attributes: {} did not match '
+                         'dimension: {} of the ancillary dataset of shape: {}'
+                         ''.format(len(v_names), dim_ind, h5_inds.shape))
 
 def link_as_main(h5_main, h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals):
     """
@@ -831,9 +881,11 @@ def copy_main_attributes(h5_main, h5_new):
         h5_new.attrs[att_name] = clean_string_att(val)
 
 
-def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs=None, skip_refs=False):
+def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None,
+                         new_attrs=None, skip_refs=False):
     """
-    Creates an empty dataset in the h5 file based on the provided dataset in the same or specified group
+    Creates an empty dataset in the h5 file based on the provided dataset in
+    the same or specified group
 
     Parameters
     ----------
@@ -848,7 +900,7 @@ def create_empty_dataset(source_dset, dtype, dset_name, h5_group=None, new_attrs
     new_attrs : dictionary (Optional)
         Any new attributes that need to be written to the dataset
     skip_refs : boolean, optional
-        Should ObjectReferences and RegionReferences be skipped when copying attributes from the
+        Should ObjectReferences be skipped when copying attributes from the
         `source_dset`
 
     Returns
@@ -1099,6 +1151,7 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
             dimensions = dimensions[::-1]
         indices, values = build_ind_val_matrices([dim.values for dim in dimensions],
                                                  is_spectral=is_spectral)
+
         # At this point, dimensions and unit values are arranged from fastest to slowest
         # We want dimensions to be arranged from slowest to fastest:
         rev_func = np.flipud if is_spectral else np.fliplr
@@ -1126,17 +1179,18 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
         print('Values:')
         print(values)
 
-    # Create the slices that will define the labels
-    region_slices = get_aux_dset_slicing([x.name for x in dimensions], is_spectroscopic=is_spectral)
-
     # Create the Datasets for both Indices and Values
     h5_indices = h5_parent_group.create_dataset(base_name + 'Indices', data=INDICES_DTYPE(indices), dtype=INDICES_DTYPE)
     h5_values = h5_parent_group.create_dataset(base_name + 'Values', data=VALUES_DTYPE(values), dtype=VALUES_DTYPE)
 
     for h5_dset in [h5_indices, h5_values]:
-        write_region_references(h5_dset, region_slices, verbose=verbose)
         write_simple_attrs(h5_dset, {'units': [x.units for x in dimensions], 'labels': [x.name for x in dimensions],
                                      'type': [dim.mode.value for dim in dimensions]})
+
+    warn('pyUSID.io.hdf_utils.simple.write_ind_val_dsets no longer creates'
+         'region references for each dimension. Please use '
+         'pyUSID.io.reg_ref.write_region_references to manually create region '
+         'references')
 
     return h5_indices, h5_values
 
@@ -1225,7 +1279,10 @@ def copy_dataset(h5_orig_dset, h5_dest_grp, alias=None, verbose=False):
               'destination dataset: {}'.format(h5_orig_dset, h5_new_dset))
 
     copy_attributes(h5_orig_dset, h5_new_dset, skip_refs=True)
-    copy_all_region_refs(h5_orig_dset, h5_new_dset)
+
+    warn('pyUSID.io.hdf_utils.simple.copy_dataset no longer copies region'
+         'references. Please use pyUSID.io.reg_ref.copy_all_region_refs to '
+         'copy region references manually')
 
     return h5_new_dset
 
@@ -1317,73 +1374,6 @@ def copy_linked_objects(h5_source, h5_dest, verbose=False):
                     raise NotImplementedError('Unable to copy {} objects yet'
                                               '. Contact developer if you need'
                                               ' this'.format(type(h5_orig_obj)))
-
-
-def copy_region_refs(h5_source, h5_target):
-    """
-    Check the input dataset for plot groups, copy them if they exist
-    Also make references in the Spectroscopic Values and Indices tables
-
-    Parameters
-    ----------
-    h5_source : HDF5 Dataset
-            source dataset to copy references from
-    h5_target : HDF5 Dataset
-            target dataset the references from h5_source are copied to
-
-    """
-    '''
-    Check both h5_source and h5_target to ensure that are Main
-    '''
-    # TODO: Move this vestige to pycroscopy. Use copy_all_region_refs instead
-    are_main = all([check_if_main(h5_source), check_if_main(h5_target)])
-    if not all([isinstance(h5_source, h5py.Dataset), isinstance(h5_target, h5py.Dataset)]):
-        raise TypeError('Inputs to copy_region_refs must be HDF5 Datasets')
-
-    # It is OK if objects are in different files
-
-    if are_main:
-        h5_source_inds = h5_source.file[h5_source.attrs['Spectroscopic_Indices']]
-
-        h5_spec_inds = h5_target.file[h5_target.attrs['Spectroscopic_Indices']]
-        h5_spec_vals = h5_target.file[h5_target.attrs['Spectroscopic_Values']]
-
-    for key in h5_source.attrs.keys():
-        if not isinstance(h5_source.attrs[key], h5py.RegionReference):
-            continue
-
-        if are_main:
-            if h5_source_inds.shape[0] == h5_spec_inds.shape[0]:
-                '''
-                Spectroscopic dimensions are identical.
-                Do direct copy.
-                '''
-                ref_inds = simple_region_ref_copy(h5_source, h5_target, key)
-
-            else:
-                '''
-                Spectroscopic dimensions are different.
-                Do the dimension reducing copy.
-                '''
-                ref_inds = copy_reg_ref_reduced_dim(h5_source, h5_target, h5_source_inds, h5_spec_inds, key)
-
-            '''
-            Create references for Spectroscopic Indices and Values
-            Set the end-point of each hyperslab in the position dimension to the number of
-            rows in the index array
-            '''
-
-            ref_inds[:, 1, 0][ref_inds[:, 1, 0] > h5_spec_inds.shape[0]] = h5_spec_inds.shape[0] - 1
-            spec_inds_ref = create_region_reference(h5_spec_inds, ref_inds)
-            h5_spec_inds.attrs[key] = spec_inds_ref
-            spec_vals_ref = create_region_reference(h5_spec_vals, ref_inds)
-            h5_spec_vals.attrs[key] = spec_vals_ref
-
-        else:
-            '''
-            If not main datasets, then only simple copy can be used.
-            '''
-            simple_region_ref_copy(h5_source, h5_target, key)
 
 
 def write_reduced_anc_dsets(h5_parent_group, h5_inds, h5_vals, dim_name, basename=None, is_spec=None,
@@ -1518,20 +1508,9 @@ def write_reduced_anc_dsets(h5_parent_group, h5_inds, h5_vals, dim_name, basenam
         # Extracting the labels from the original spectroscopic data sets
         labels = h5_inds.attrs['labels'][keep_dim]
         # Creating the dimension slices for the new spectroscopic data sets
-        reg_ref_slices = dict()
-        for row_ind, row_name in enumerate(labels):
-            # Not necessary anymore but still.....
-            if is_spec:
-                reg_ref_slices[row_name] = (slice(row_ind, row_ind + 1), slice(None))
-            else:
-                reg_ref_slices[row_name] = (slice(None), slice(row_ind, row_ind + 1))
-
-            if verbose:
-                print(reg_ref_slices)
 
         # Adding the labels and units to the new spectroscopic data sets
         for dset in [h5_inds_new, h5_vals_new]:
-            write_region_references(dset, reg_ref_slices, verbose=False)
             write_simple_attrs(dset, {'labels': labels, 'units': h5_inds.attrs['units'][keep_dim]})
 
     else:
@@ -1539,10 +1518,30 @@ def write_reduced_anc_dsets(h5_parent_group, h5_inds, h5_vals, dim_name, basenam
         h5_inds_new = h5_parent_group.create_dataset(basename + '_Indices', data=np.array([[0]]), dtype=INDICES_DTYPE)
         h5_vals_new = h5_parent_group.create_dataset(basename + '_Values', data=np.array([[0]]), dtype=VALUES_DTYPE)
 
-        reg_ref_slices = {'Single_Step': (slice(0, None), slice(None))}
-
         for dset in [h5_inds_new, h5_vals_new]:
-            write_region_references(dset, reg_ref_slices, verbose=False)
             write_simple_attrs(dset, {'labels': ['Single_Step'], 'units': ['a. u.']})
 
     return h5_inds_new, h5_vals_new
+
+
+def copy_region_refs(h5_source, h5_target):
+    """
+    Check the input dataset for plot groups, copy them if they exist
+    Also make references in the Spectroscopic Values and Indices tables
+
+    Parameters
+    ----------
+    h5_source : HDF5 Dataset
+            source dataset to copy references from
+    h5_target : HDF5 Dataset
+            target dataset the references from h5_source are copied to
+
+    """
+    '''
+    Check both h5_source and h5_target to ensure that are Main
+    '''
+    warn('pyUSID.io.hdf_utils.simple.copy_region_refs has been moved to '
+         'pyUSID.io.reg_ref. This alias will be removed in a future version. '
+         'Please update your import statements accordingly', FutureWarning)
+    from ..reg_ref import copy_region_refs
+    return copy_region_refs(h5_source, h5_target)

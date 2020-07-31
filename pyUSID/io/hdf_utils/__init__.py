@@ -16,4 +16,3 @@ Submodules
 from .base import *
 from .simple import *
 from .model import *
-from .deprecated import *
