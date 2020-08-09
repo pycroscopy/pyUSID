@@ -8,24 +8,15 @@ Created on Tue Nov  3 21:14:25 2015
 """
 
 from __future__ import division, print_function, absolute_import, unicode_literals
-import os
-import sys
-from numbers import Number
-from time import strftime
 from warnings import warn
-import numpy as np
-if sys.version_info.major == 3:
-    from collections.abc import Iterable
-else:
-    from collections import Iterable
 
-from .dtype_utils import validate_list_of_strings, validate_string_args
 
-if sys.version_info.major == 3:
-    unicode = str
+from sidpy.io import interface_utils as iut
+from sidpy.base import string_utils as sut
 
-__all__ = ['get_time_stamp', 'file_dialog', 'format_quantity', 'format_time', 'format_size',
-           'get_available_memory', 'get_available_memory']
+
+__all__ = ['get_time_stamp', 'file_dialog', 'format_quantity', 'format_time',
+           'format_size']
 
 
 def check_ssh():
@@ -37,7 +28,11 @@ def check_ssh():
     output : bool
         Whether or not the kernel is running over SSH (remote machine)
     """
-    return 'SSH_CLIENT' in os.environ or 'SSH_TTY' in os.environ
+    warn('pyUSID.io.io_utils.check_ssh has been moved to '
+         'sidpy.io.interface_utils.check_ssh. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return iut.check_ssh()
 
 
 def file_dialog(file_filter='H5 file (*.h5)', caption='Select File'):
@@ -57,44 +52,11 @@ def file_dialog(file_filter='H5 file (*.h5)', caption='Select File'):
     file_path : String
         Absolute path of the chosen file
     """
-    for param in [file_filter, caption]:
-        if param is not None:
-            if not isinstance(param, (str, unicode)):
-                raise TypeError('param must be a string')
-
-    # Only try to use the GUI options if not over an SSH connection.
-    if not check_ssh():
-        try:
-            from PyQt5 import QtWidgets
-        except ImportError:
-            warn('The required package PyQt5 could not be imported.\n',
-                 'The code will check for PyQt4.')
-
-        else:
-            app = QtWidgets.QApplication([])
-            path = QtWidgets.QFileDialog.getOpenFileName(caption=caption, filter=file_filter)[0]
-            app.closeAllWindows()
-            app.exit()
-            del app
-
-            return str(path)
-
-        try:
-            from PyQt4 import QtGui
-        except ImportError:
-            warn('PyQt4 also not found.  Will use standard text input.')
-
-        else:
-            app = QtGui.QApplication([])
-            path = QtGui.QFileDialog.getOpenFileName(caption=caption, filter=file_filter)
-            app.exit()
-            del app
-
-            return str(path)
-
-    path = input('Enter path to datafile.  Raw Data (*.txt, *.mat, *.xls, *.xlsx) or Translated file (*.h5)')
-
-    return str(path)
+    warn('pyUSID.io.io_utils.file_dialog has been moved to '
+         'sidpy.io.interface_utils.file_dialog. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return iut.file_dialog(file_filter=file_filter, caption=caption)
 
 
 def get_time_stamp():
@@ -109,7 +71,11 @@ def get_time_stamp():
     -------
     String
     """
-    return strftime('%Y_%m_%d-%H_%M_%S')
+    warn('pyUSID.io.io_utils.get_time_stamp has been moved to '
+         'sidpy.base.string_utils.get_time_stamp. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sut.get_time_stamp()
 
 
 def format_quantity(value, unit_names, factors, decimals=2):
@@ -132,24 +98,11 @@ def format_quantity(value, unit_names, factors, decimals=2):
     str
         String with value formatted correctly
     """
-    # assert isinstance(value, (int, float))
-    if not isinstance(unit_names, Iterable):
-        raise TypeError('unit_names must an Iterable')
-    if not isinstance(factors, Iterable):
-        raise TypeError('factors must be an Iterable')
-    if len(unit_names) != len(factors):
-        raise ValueError('unit_names and factors must be of the same length')
-    unit_names = validate_list_of_strings(unit_names, 'unit_names')
-    index = None
-
-    for index, val in enumerate(factors):
-        if value < val:
-            index -= 1
-            break
-
-    index = max(0, index)  # handles sub msec
-
-    return '{} {}'.format(np.round(value / factors[index], decimals), unit_names[index])
+    warn('pyUSID.io.io_utils.format_quantity has been moved to '
+         'sidpy.base.string_utils.format_quantity. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sut.format_quantity(value, unit_names, factors, decimals=decimals)
 
 
 def format_time(time_in_seconds, decimals=2):
@@ -168,9 +121,11 @@ def format_time(time_in_seconds, decimals=2):
     str
         String with time formatted correctly
     """
-    units = ['msec', 'sec', 'mins', 'hours']
-    factors = [0.001, 1, 60, 3600]
-    return format_quantity(time_in_seconds, units, factors, decimals=decimals)
+    warn('pyUSID.io.io_utils.format_time has been moved to '
+         'sidpy.base.string_utils.format_time. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sut.format_time(time_in_seconds, decimals=decimals)
 
 
 def format_size(size_in_bytes, decimals=2):
@@ -189,12 +144,15 @@ def format_size(size_in_bytes, decimals=2):
     str
         String with size formatted correctly
     """
-    units = ['bytes', 'kB', 'MB', 'GB', 'TB']
-    factors = 1024 ** np.arange(len(units), dtype=np.int64)
-    return format_quantity(size_in_bytes, units, factors, decimals=decimals)
+    warn('pyUSID.io.io_utils.format_size has been moved to '
+         'sidpy.base.string_utils.format_size. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sut.format_size(size_in_bytes, decimals=decimals)
 
 
-def formatted_str_to_number(str_val, magnitude_names, magnitude_values, separator=' '):
+def formatted_str_to_number(str_val, magnitude_names, magnitude_values,
+                            separator=' '):
     """
     Takes a formatted string like '4.32 MHz' to 4.32 E+6
 
@@ -205,7 +163,8 @@ def formatted_str_to_number(str_val, magnitude_names, magnitude_values, separato
     magnitude_names : Iterable
         List of names of units like ['seconds', 'minutes', 'hours']
     magnitude_values : Iterable
-        List of values (corresponding to magnitude_names) that scale the numeric value. Example [1, 60, 3600]
+        List of values (corresponding to magnitude_names) that scale the
+        numeric value. Example [1, 60, 3600]
     separator : str / unicode, optional. Default = ' ' (space)
         The text that separates the numeric value and the units.
 
@@ -214,23 +173,9 @@ def formatted_str_to_number(str_val, magnitude_names, magnitude_values, separato
     number
         Numeric value of the string
     """
-    [str_val] = validate_string_args(str_val, 'str_val')
-    magnitude_names = validate_list_of_strings(magnitude_names, 'magnitude_names')
-
-    if not isinstance(separator, (str, unicode)):
-        raise TypeError('separator must be a string')
-    if not isinstance(magnitude_values, (list, tuple)):
-        raise TypeError('magnitude_values must be an Iterable')
-    if not np.all([isinstance(_, Number) for _ in magnitude_values]):
-        raise TypeError('magnitude_values should contain numbers')
-    if len(magnitude_names) != len(magnitude_values):
-        raise ValueError('magnitude_names and magnitude_values should be of the same length')
-
-    components = str_val.split(separator)
-    if len(components) != 2:
-        raise ValueError('String value should be of format "123.45<separator>Unit')
-
-    for unit_name, scaling in zip(magnitude_names, magnitude_values):
-        if unit_name == components[1]:
-            # Let it raise an exception. Don't catch
-            return scaling * float(components[0])
+    warn('pyUSID.io.io_utils.formatted_str_to_number has been moved to '
+         'sidpy.base.string_utils.formatted_str_to_number. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sut.formatted_str_to_number(str_val, magnitude_names,
+                                       magnitude_values, separator=separator)
