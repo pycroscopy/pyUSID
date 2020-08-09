@@ -11,9 +11,7 @@ Created on Tue Nov  3 21:14:25 2015
 """
 
 from __future__ import division, absolute_import, unicode_literals, print_function
-import sys
 from warnings import warn
-import h5py
 import sidpy
 
 __all__ = ['flatten_complex_to_real', 'get_compound_sub_dtypes', 'flatten_compound_to_real', 'check_dtype',
