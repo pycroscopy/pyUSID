@@ -14,13 +14,7 @@ from __future__ import division, absolute_import, unicode_literals, print_functi
 import sys
 from warnings import warn
 import h5py
-import numpy as np
-import dask.array as da
-from itertools import groupby
-if sys.version_info.major == 3:
-    from collections.abc import Iterable
-else:
-    from collections import Iterable
+import sidpy
 
 __all__ = ['flatten_complex_to_real', 'get_compound_sub_dtypes', 'flatten_compound_to_real', 'check_dtype',
            'stack_real_to_complex', 'validate_dtype', 'integers_to_slices', 'get_exponent', 'is_complex_dtype',
@@ -46,16 +40,11 @@ def lazy_load_array(dataset):
     :class:`dask.array.core.Array`
         Dask array with appropriate chunks
     """
-    if isinstance(dataset, da.core.Array):
-        return dataset
-    elif not isinstance(dataset, (h5py.Dataset, np.ndarray)):
-        raise TypeError('Expected one of h5py.Dataset, dask.array.core.Array, or numpy.ndarray'
-                        'objects. Provided object was of type: {}'.format(type(dataset)))
-    # Cannot pass 'auto' for chunks for python 2!
-    chunks = "auto" if sys.version_info.major == 3 else dataset.shape
-    if isinstance(dataset, h5py.Dataset):
-        chunks = chunks if dataset.chunks is None else dataset.chunks
-    return da.from_array(dataset, chunks=chunks)
+    warn('pyUSID.io.dtype_utils.lazy_load_array has been moved to '
+         'sidpy.hdf.hdf_utils.lazy_load_array. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.hdf.hdf_utils.lazy_load_array(dataset)
 
 
 def contains_integers(iter_int, min_val=None):
@@ -75,24 +64,11 @@ def contains_integers(iter_int, min_val=None):
     bool
         Whether or not the provided object is an iterable of integers
     """
-    if not isinstance(iter_int, Iterable):
-        raise TypeError('iter_int should be an Iterable')
-    if len(iter_int) == 0:
-        return False
-
-    if min_val is not None:
-        if not isinstance(min_val, (int, float)):
-            raise TypeError('min_val should be an integer. Provided object was of type: {}'.format(type(min_val)))
-        if min_val % 1 != 0:
-            raise ValueError('min_val should be an integer')
-
-    try:
-        if min_val is not None:
-            return np.all([x % 1 == 0 and x >= min_val for x in iter_int])
-        else:
-            return np.all([x % 1 == 0 for x in iter_int])
-    except TypeError:
-        return False
+    warn('pyUSID.io.dtype_utils.contains_integers has been moved to '
+         'sidpy.base.num_utils.contains_integers. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.base.num_utils.contains_integers(iter_int, min_val=min_val)
 
 
 def flatten_complex_to_real(dataset, lazy=False):
@@ -112,24 +88,11 @@ def flatten_complex_to_real(dataset, lazy=False):
     retval : :class:`numpy.ndarray`, or :class:`dask.array.core.Array`
         real valued dataset
     """
-    if not isinstance(dataset, (h5py.Dataset, np.ndarray, da.core.Array)):
-        raise TypeError('dataset should either be a h5py.Dataset or numpy / dask array')
-    if not is_complex_dtype(dataset.dtype):
-        raise TypeError("Expected a complex valued dataset")
-
-    if isinstance(dataset, da.core.Array):
-        lazy = True
-
-    xp = np
-    if lazy:
-        dataset = lazy_load_array(dataset)
-        xp = da
-
-    axis = xp.array(dataset).ndim - 1
-    if axis == -1:
-        return xp.hstack([xp.real(dataset), xp.imag(dataset)])
-    else:  # along the last axis
-        return xp.concatenate([xp.real(dataset), xp.imag(dataset)], axis=axis)
+    warn('pyUSID.io.dtype_utils.flatten_complex_to_real has been moved to '
+         'sidpy.hdf.dtype_utils.flatten_complex_to_real. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.hdf.dtype_utils.flatten_complex_to_real(dataset, lazy=lazy)
 
 
 def flatten_compound_to_real(dataset, lazy=False):
@@ -152,38 +115,11 @@ def flatten_compound_to_real(dataset, lazy=False):
     retval : :class:`numpy.ndarray`, or :class:`dask.array.core.Array`
         real valued dataset
     """
-    if isinstance(dataset, h5py.Dataset):
-        if len(dataset.dtype) == 0:
-            raise TypeError("Expected compound h5py dataset")
-
-        if lazy:
-            xp = da
-            dataset = lazy_load_array(dataset)
-        else:
-            xp = np
-            warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
-
-        return xp.concatenate([xp.array(dataset[name]) for name in dataset.dtype.names], axis=len(dataset.shape) - 1)
-
-    elif isinstance(dataset, (np.ndarray, da.core.Array)):
-        if isinstance(dataset, da.core.Array):
-            lazy = True
-
-        xp = np
-        if lazy:
-            dataset = lazy_load_array(dataset)
-            xp = da
-
-        if len(dataset.dtype) == 0:
-            raise TypeError("Expected structured array")
-        if dataset.ndim > 0:
-            return xp.concatenate([dataset[name] for name in dataset.dtype.names], axis=dataset.ndim - 1)
-        else:
-            return xp.hstack([dataset[name] for name in dataset.dtype.names])
-    elif isinstance(dataset, np.void):
-        return np.hstack([dataset[name] for name in dataset.dtype.names])
-    else:
-        raise TypeError('Datatype {} not supported'.format(type(dataset)))
+    warn('pyUSID.io.dtype_utils.flatten_compound_to_real has been moved to '
+         'sidpy.hdf.dtype_utils.flatten_compound_to_real. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.hdf.dtype_utils.flatten_compound_to_real(dataset, lazy=lazy)
 
 
 def flatten_to_real(ds_main, lazy=False):
@@ -202,14 +138,11 @@ def flatten_to_real(ds_main, lazy=False):
     ds_main : :class:`numpy.ndarray`, or :class:`dask.array.core.Array`
         Array raveled to a float data type
     """
-    if not isinstance(ds_main, (h5py.Dataset, np.ndarray, da.core.Array)):
-        ds_main = np.array(ds_main)
-    if is_complex_dtype(ds_main.dtype):
-        return flatten_complex_to_real(ds_main, lazy=lazy)
-    elif len(ds_main.dtype) > 0:
-        return flatten_compound_to_real(ds_main, lazy=lazy)
-    else:
-        return ds_main
+    warn('pyUSID.io.dtype_utils.flatten_to_real has been moved to '
+         'sidpy.hdf.dtype_utils.flatten_to_real. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.hdf.dtype_utils.flatten_to_real(ds_main, lazy=lazy)
 
 
 def get_compound_sub_dtypes(struct_dtype):
@@ -226,12 +159,11 @@ def get_compound_sub_dtypes(struct_dtype):
     dtypes : dict
         Dictionary whose keys are the field names and values are the corresponding dtypes
     """
-    if not isinstance(struct_dtype, np.dtype):
-        raise TypeError('Provided object must be a structured array dtype')
-    dtypes = dict()
-    for field_name in struct_dtype.fields:
-        dtypes[field_name] = struct_dtype.fields[field_name][0]
-    return dtypes
+    warn('pyUSID.io.dtype_utils.get_compound_sub_dtypes has been moved to '
+         'sidpy.hdf.dtype_utils.get_compound_sub_dtypes. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.hdf.dtype_utils.get_compound_sub_dtypes(struct_dtype)
 
 
 def check_dtype(h5_dset):
@@ -258,41 +190,11 @@ def check_dtype(h5_dset):
         multiplier that converts from the typesize of the input :class:`~numpy.dtype` to the
         typesize of the data after func is run on it
     """
-    if not isinstance(h5_dset, h5py.Dataset):
-        raise TypeError('h5_dset should be a h5py.Dataset object')
-    is_complex = False
-    is_compound = False
-    in_dtype = h5_dset.dtype
-    # TODO: avoid assuming 2d shape - why does one even need n_samples!? We only care about the last dimension!
-    n_features = h5_dset.shape[-1]
-    if is_complex_dtype(h5_dset.dtype):
-        is_complex = True
-        new_dtype = np.real(h5_dset[0, 0]).dtype
-        type_mult = new_dtype.itemsize * 2
-        func = flatten_complex_to_real
-        n_features *= 2
-    elif len(h5_dset.dtype) > 0:
-        """
-        Some form of structured numpy is in use
-        We only support real scalars for the component types at the current time
-        """
-        is_compound = True
-        # TODO: Avoid hard-coding to float32
-        new_dtype = np.float32
-        type_mult = len(in_dtype) * new_dtype(0).itemsize
-        func = flatten_compound_to_real
-        n_features *= len(in_dtype)
-    else:
-        if h5_dset.dtype not in [np.float32, np.float64]:
-            new_dtype = np.float32
-        else:
-            new_dtype = h5_dset.dtype.type
-
-        type_mult = new_dtype(0).itemsize
-
-        func = new_dtype
-
-    return func, is_complex, is_compound, n_features, type_mult
+    warn('pyUSID.io.dtype_utils.check_dtype has been moved to '
+         'sidpy.hdf.dtype_utils.check_dtype. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.hdf.dtype_utils.check_dtype(h5_dset)
 
 
 def stack_real_to_complex(ds_real, lazy=False):
@@ -313,26 +215,11 @@ def stack_real_to_complex(ds_real, lazy=False):
     ds_compound : :class:`numpy.ndarray` or :class:`dask.array.core.Array`
         2D complex array arranged as [sample, features]
     """
-    if not isinstance(ds_real, (np.ndarray, da.core.Array, h5py.Dataset)):
-        if not isinstance(ds_real, (tuple, list)):
-            raise TypeError("Expected at least an iterable like a list or tuple")
-        ds_real = np.array(ds_real)
-    if len(ds_real.dtype) > 0:
-        raise TypeError("Array cannot have a compound dtype")
-    if is_complex_dtype(ds_real.dtype):
-        raise TypeError("Array cannot have complex dtype")
-
-    if ds_real.shape[-1] / 2 != ds_real.shape[-1] // 2:
-        raise ValueError("Last dimension must be even sized")
-    half_point = ds_real.shape[-1] // 2
-
-    if isinstance(ds_real, da.core.Array):
-        lazy = True
-
-    if lazy and not isinstance(ds_real, da.core.Array):
-        ds_real = lazy_load_array(ds_real)
-
-    return ds_real[..., :half_point] + 1j * ds_real[..., half_point:]
+    warn('pyUSID.io.dtype_utils.stack_real_to_complex has been moved to '
+         'sidpy.hdf.dtype_utils.stack_real_to_complex. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.hdf.dtype_utils.stack_real_to_complex(ds_real, lazy=lazy)
 
 
 def stack_real_to_compound(ds_real, compound_type, lazy=False):
@@ -353,47 +240,12 @@ def stack_real_to_compound(ds_real, compound_type, lazy=False):
     ds_compound : :class:`numpy.ndarray` or :class:`dask.array.core.Array`
         N-dimensional complex-valued array arranged as [sample, features]
     """
-    if lazy or isinstance(ds_real, da.core.Array):
-        raise NotImplementedError('Lazy operation not available due to absence of Dask support')
-    if not isinstance(ds_real, (np.ndarray, h5py.Dataset)):
-        if not isinstance(ds_real, (list, tuple)):
-            raise TypeError("Expected at least an iterable like a list or tuple")
-        ds_real = np.array(ds_real)
-    if len(ds_real.dtype) > 0:
-        raise TypeError("Array cannot have a compound dtype")
-    elif is_complex_dtype(ds_real.dtype):
-        raise TypeError("Array cannot have complex dtype")
-    if not isinstance(compound_type, np.dtype):
-        raise TypeError('Provided object must be a structured array dtype')
-
-    new_spec_length = ds_real.shape[-1] / len(compound_type)
-    if new_spec_length % 1:
-        raise ValueError('Provided compound type was not compatible by number of elements')
-
-    new_spec_length = int(new_spec_length)
-    new_shape = list(ds_real.shape)  # Make mutable
-    new_shape[-1] = new_spec_length
-
-    xp = np
-    kwargs = {}
-    """
-    if isinstance(ds_real, h5py.Dataset) and not lazy:
-        warn('HDF5 datasets will be loaded as Dask arrays in the future. ie - kwarg lazy will default to True in future releases of pyUSID')
-    if isinstance(ds_real, da.core.Array):
-        lazy = True    
-    if lazy:
-        xp = da
-        ds_real = lazy_load_array(ds_real)
-        kwargs = {'chunks': 'auto'}
-    """
-
-    ds_compound = xp.empty(new_shape, dtype=compound_type, **kwargs)
-    for name_ind, name in enumerate(compound_type.names):
-        i_start = name_ind * new_spec_length
-        i_end = (name_ind + 1) * new_spec_length
-        ds_compound[name] = ds_real[..., i_start:i_end]
-
-    return ds_compound.squeeze()
+    warn('pyUSID.io.dtype_utils.stack_real_to_compound has been moved to '
+         'sidpy.hdf.dtype_utils.stack_real_to_compound. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.hdf.dtype_utils.stack_real_to_compound(ds_real, compound_type,
+                                                        lazy=lazy)
 
 
 def stack_real_to_target_dtype(ds_real, new_dtype, lazy=False):
@@ -412,16 +264,12 @@ def stack_real_to_target_dtype(ds_real, new_dtype, lazy=False):
     ret_val :  :class:`numpy.ndarray` or :class:`dask.array.core.Array`
         N-dimensional array of the target data-type
     """
-    if is_complex_dtype(new_dtype):
-        return stack_real_to_complex(ds_real, lazy=lazy)
-    try:
-        if len(new_dtype) > 0:
-            return stack_real_to_compound(ds_real, new_dtype, lazy=lazy)
-    except TypeError:
-        return new_dtype(ds_real)
-
-    # catching all other cases, such as np.dtype('<f4')
-    return new_dtype.type(ds_real)
+    warn('pyUSID.io.dtype_utils.stack_real_to_target_dtype has been moved to '
+         'sidpy.hdf.dtype_utils.stack_real_to_target_dtype. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.hdf.dtype_utils.stack_real_to_target_dtype(ds_real, new_dtype,
+                                                            lazy=lazy)
 
 
 def validate_dtype(dtype):
@@ -439,14 +287,11 @@ def validate_dtype(dtype):
     status : bool
         True if the object was a valid data-type
     """
-    if isinstance(dtype, (h5py.Datatype, np.dtype)):
-        pass
-    elif isinstance(np.dtype(dtype), np.dtype):
-        # This should catch all those instances when dtype is something familiar like - np.float32
-        pass
-    else:
-        raise TypeError('dtype should either be a numpy or h5py dtype')
-    return True
+    warn('pyUSID.io.dtype_utils.validate_dtype has been moved to '
+         'sidpy.hdf.dtype_utils.validate_dtype. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.hdf.dtype_utils.validate_dtype(dtype)
 
 
 def validate_single_string_arg(value, name):
@@ -466,12 +311,11 @@ def validate_single_string_arg(value, name):
     str
         Cleaned string value of the parameter
     """
-    if not isinstance(value, (str, unicode)):
-        raise TypeError(name + ' should be a string')
-    value = value.strip()
-    if len(value) <= 0:
-        raise ValueError(name + ' should not be an empty string')
-    return value
+    warn('pyUSID.io.dtype_utils.validate_single_string_arg has been moved to '
+         'sidpy.base.string_utils.validate_single_string_arg. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.base.string_utils.validate_single_string_arg(value, name)
 
 
 def validate_list_of_strings(str_list, parm_name='parameter'):
@@ -492,13 +336,11 @@ def validate_list_of_strings(str_list, parm_name='parameter'):
         List of trimmed and validated strings when ALL objects within the list are found to be valid strings
     """
 
-    if isinstance(str_list, (str, unicode)):
-        return [validate_single_string_arg(str_list, parm_name)]
-
-    if not isinstance(str_list, (list, tuple)):
-        raise TypeError(parm_name + ' should be a string or list / tuple of strings')
-
-    return [validate_single_string_arg(x, parm_name) for x in str_list]
+    warn('pyUSID.io.dtype_utils.validate_list_of_strings has been moved to '
+         'sidpy.base.string_utils.validate_list_of_strings. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.base.string_utils.validate_list_of_strings(str_list, parm_name=parm_name)
 
 
 def validate_string_args(arg_list, arg_names):
@@ -518,18 +360,11 @@ def validate_string_args(arg_list, arg_names):
     array-like
         List of str objects that signify the value for a position argument in a function with spaces on ends removed
     """
-    if isinstance(arg_list, (str, unicode)):
-        arg_list = [arg_list]
-    if isinstance(arg_names, (str, unicode)):
-        arg_names = [arg_names]
-    cleaned_args = []
-    if not isinstance(arg_list, (tuple, list)):
-        raise TypeError('arg_list should be a tuple or a list or a string')
-    if not isinstance(arg_names, (tuple, list)):
-        raise TypeError('arg_names should be a tuple or a list or a string')
-    for arg, arg_name in zip(arg_list, arg_names):
-        cleaned_args.append(validate_single_string_arg(arg, arg_name))
-    return cleaned_args
+    warn('pyUSID.io.dtype_utils.validate_string_args has been moved to '
+         'sidpy.base.string_utils.validate_string_args. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.base.string_utils.validate_string_args(arg_list, arg_names)
 
 
 def is_complex_dtype(dtype):
@@ -546,10 +381,11 @@ def is_complex_dtype(dtype):
     is_complex : bool
         True if the dtype was a complex dtype. Else returns False
     """
-    validate_dtype(dtype)
-    if dtype in [np.complex, np.complex64, np.complex128]:
-        return True
-    return False
+    warn('pyUSID.io.dtype_utils.is_complex_dtype has been moved to '
+         'sidpy.hdf.dtype_utils.is_complex_dtype. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.hdf.dtype_utils.is_complex_dtype(dtype)
 
 
 def integers_to_slices(int_array):
@@ -566,37 +402,11 @@ def integers_to_slices(int_array):
     sequences : list
         List of :class:`slice` objects each denoting sequences of consecutive numbers
     """
-    if not contains_integers(int_array):
-        raise ValueError('Expected a list, tuple, or numpy array of integers')
-
-    def integers_to_consecutive_sections(integer_array):
-        """
-        Converts a sequence of iterables to tuples with start and stop bounds
-
-        @author: @juanchopanza and @luca from stackoverflow
-
-        Parameters
-        ----------
-        integer_array : :class:`collections.Iterable`
-            iterable object like a :class:`list`
-
-        Returns
-        -------
-        iterable : :class:`generator`
-            Cast to list or similar to use
-
-        Note
-        ----
-        From https://stackoverflow.com/questions/4628333/converting-a-list-of-integers-into-range-in-python
-        """
-        integer_array = sorted(set(integer_array))
-        for key, group in groupby(enumerate(integer_array),
-                                  lambda t: t[1] - t[0]):
-            group = list(group)
-            yield group[0][1], group[-1][1]
-
-    sequences = [slice(item[0], item[1] + 1) for item in integers_to_consecutive_sections(int_array)]
-    return sequences
+    warn('pyUSID.io.dtype_utils.integers_to_slices has been moved to '
+         'sidpy.base.num_utils.integers_to_slices. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.base.num_utils.integers_to_slices(int_array)
 
 
 def get_exponent(vector):
@@ -614,11 +424,8 @@ def get_exponent(vector):
     exponent : int
         Scale / exponent for the given vector
     """
-    if not isinstance(vector, np.ndarray):
-        raise TypeError('vector should be of type numpy.ndarray. Provided object of type: {}'.format(type(vector)))
-    if np.max(np.abs(vector)) == np.max(vector):
-        exponent = np.log10(np.max(vector))
-    else:
-        # negative values
-        exponent = np.log10(np.max(np.abs(vector)))
-    return int(np.floor(exponent))
+    warn('pyUSID.io.dtype_utils.get_exponent has been moved to '
+         'sidpy.base.num_utils.get_exponent. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sidpy.base.num_utils.get_exponent(vector)
