@@ -16,7 +16,7 @@ import sys
 import h5py
 import numpy as np
 import dask.array as da
-from .translator import Translator
+from sidpy.sid.translator import Translator
 from .dtype_utils import validate_string_args
 from .hdf_utils import write_main_dataset, write_simple_attrs, \
     create_indexed_group, write_book_keeping_attrs, \
