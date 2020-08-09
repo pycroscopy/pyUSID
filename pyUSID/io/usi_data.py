@@ -17,14 +17,18 @@ import numpy as np
 import dask.array as da
 import matplotlib.pyplot as plt
 
-from .hdf_utils import check_if_main, get_attr, create_results_group, write_reduced_anc_dsets, link_as_main, \
+from sidpy.base.string_utils import validate_single_string_arg, \
+    validate_list_of_strings
+from sidpy.base.num_utils import contains_integers, get_exponent
+from sidpy.hdf.hdf_utils import get_attr, lazy_load_array
+from sidpy.hdf.dtype_utils import flatten_to_real, is_complex_dtype
+from sidpy.viz.jupyter_utils import simple_ndim_visualizer
+from sidpy.viz.plot_utils import plot_map, get_plot_grid_size
+
+from .hdf_utils import check_if_main, create_results_group, write_reduced_anc_dsets, link_as_main, \
     get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset, reshape_from_n_dims, \
     copy_attributes
-from .dtype_utils import flatten_to_real, contains_integers, get_exponent, is_complex_dtype, \
-    validate_single_string_arg, validate_list_of_strings, lazy_load_array
 from .write_utils import Dimension
-from ..viz.jupyter_utils import simple_ndim_visualizer
-from ..viz.plot_utils import plot_map, get_plot_grid_size
 
 if sys.version_info.major == 3:
     unicode = str

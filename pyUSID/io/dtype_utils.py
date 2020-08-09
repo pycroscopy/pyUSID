@@ -22,9 +22,6 @@ __all__ = ['flatten_complex_to_real', 'get_compound_sub_dtypes', 'flatten_compou
            'validate_single_string_arg', 'validate_string_args', 'validate_list_of_strings',
            'lazy_load_array']
 
-if sys.version_info.major == 3:
-    unicode = str
-
 
 def lazy_load_array(dataset):
     """
