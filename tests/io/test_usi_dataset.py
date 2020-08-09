@@ -14,8 +14,11 @@ import dask.array as da
 import matplotlib as mpl
 # Attempting to get things to work for all versions of python on Travis
 mpl.use('Agg')
+from sidpy.hdf.hdf_utils import get_attr
+
 sys.path.append("../../pyUSID/")
-from pyUSID.io import USIDataset, hdf_utils
+from pyUSID.io import USIDataset
+from pyUSID.io.hdf_utils.model import reshape_to_n_dims, get_dimensionality
 from pyUSID.io.write_utils import Dimension
 
 from . import data_utils
@@ -45,12 +48,12 @@ class TestBEPS(unittest.TestCase):
         self.spec_dims=[]
 
         for dim_name, dim_units in zip(self.h5_source.pos_dim_labels,
-                                       hdf_utils.get_attr(self.h5_source.h5_pos_inds, 'units')):
+                                       get_attr(self.h5_source.h5_pos_inds, 'units')):
             self.pos_dims.append(
                 Dimension(dim_name, dim_units, h5_grp[dim_name][()]))
 
         for dim_name, dim_units in zip(self.h5_source.spec_dim_labels,
-                                       hdf_utils.get_attr(self.h5_source.h5_spec_inds, 'units')):
+                                       get_attr(self.h5_source.h5_spec_inds, 'units')):
             self.spec_dims.append(
                 Dimension(dim_name, dim_units, h5_grp[dim_name][()]))
 
@@ -99,10 +102,10 @@ class TestStringRepr(TestBEPS):
         expected = list()
         expected.append(h5_main.__repr__())
         expected.append(h5_main.name)
-        expected.append(hdf_utils.get_attr(h5_main, "quantity") + " (" + hdf_utils.get_attr(h5_main, "units") + ")")
+        expected.append(get_attr(h5_main, "quantity") + " (" + get_attr(h5_main, "units") + ")")
         for h5_inds in [usi_dset.h5_pos_inds, usi_dset.h5_spec_inds]:
-            for dim_name, dim_size in zip(hdf_utils.get_attr(h5_inds, "labels"),
-                                          hdf_utils.get_dimensionality(h5_inds)):
+            for dim_name, dim_size in zip(get_attr(h5_inds, "labels"),
+                                          get_dimensionality(h5_inds)):
                 expected.append(dim_name + ' - size: ' + str(dim_size))
         self.assertTrue(np.all([x == y for x, y in zip(actual, expected)]))
 
@@ -149,7 +152,7 @@ class TestGetNDimFormExistsReal(TestUSIDatasetReal):
             actual_f2s = usi_dset.get_n_dim_form(lazy=False)
             self.assertTrue(np.allclose(nd_fast_to_slow, actual_f2s))
 
-            nd_form, success = hdf_utils.reshape_to_n_dims(usi_dset, sort_dims=True)
+            nd_form, success = reshape_to_n_dims(usi_dset, sort_dims=True)
             print(nd_form.shape)
 
             usi_dset.toggle_sorting()
@@ -625,11 +628,11 @@ class TestGetDimsForSliceReal(TestUSIDatasetReal):
             h5_raw_grp = h5_f['Raw_Measurement']
             usi_main = USIDataset(h5_raw_grp['source_main'])
             for dim_name, dim_units in zip(usi_main.pos_dim_labels,
-                                           hdf_utils.get_attr(usi_main.h5_pos_inds, 'units')):
+                                           get_attr(usi_main.h5_pos_inds, 'units')):
                 pos_dims.append(Dimension(dim_name, dim_units, h5_raw_grp[dim_name][()]))
 
             for dim_name, dim_units in zip(usi_main.spec_dim_labels,
-                                           hdf_utils.get_attr(
+                                           get_attr(
                                                usi_main.h5_spec_inds, 'units')):
                 spec_dims.append(Dimension(dim_name, dim_units, h5_raw_grp[dim_name][()]))
 

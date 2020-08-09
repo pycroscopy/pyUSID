@@ -13,7 +13,7 @@ import numpy as np
 import shutil
 
 sys.path.append("../../pyUSID/")
-from pyUSID.io import hdf_utils, write_utils, USIDataset
+from pyUSID.io import hdf_utils, Dimension, USIDataset
 
 from .. import data_utils
 
@@ -167,7 +167,7 @@ class TestWriteIndValDsets(TestSimple):
 
         descriptor = []
         for length, name, units in zip(sizes, dim_names, dim_units):
-            descriptor.append(write_utils.Dimension(name, units, np.arange(length)))
+            descriptor.append(Dimension(name, units, np.arange(length)))
 
         inds_data = np.vstack((np.tile(np.arange(num_cols), num_rows),
                               np.repeat(np.arange(num_rows), num_cols)))\
@@ -215,7 +215,7 @@ class TestWriteIndValDsets(TestSimple):
         descriptor = []
         for length, name, units, step, initial in zip([num_cols, num_rows], dim_names, dim_units,
                                                       [col_step, row_step], [col_initial, row_initial]):
-            descriptor.append(write_utils.Dimension(name, units, initial + step * np.arange(length)))
+            descriptor.append(Dimension(name, units, initial + step * np.arange(length)))
 
         new_base_name = 'Overriden'
         # Sending in Fast to Slow but what comes out is slow to fast
@@ -241,7 +241,7 @@ class TestWriteIndValDsets(TestSimple):
 
         descriptor = []
         for length, name, units in zip(sizes, dim_names, dim_units):
-            descriptor.append(write_utils.Dimension(name, units, np.arange(length)))
+            descriptor.append(Dimension(name, units, np.arange(length)))
 
         file_path = 'test_write_ind_val_dsets.h5'
         data_utils.delete_existing_file(file_path)
@@ -328,7 +328,7 @@ class TestWriteReducedAncDsets(TestSimple):
         with h5py.File(duplicate_path, mode='w') as h5_f:
 
             h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f,
-                                                                                 write_utils.Dimension('Bias', 'V', 10),
+                                                                                 Dimension('Bias', 'V', 10),
                                                                                  is_spectral=True)
             new_base_name = 'Blah'
             h5_spec_inds_new, h5_spec_vals_new = hdf_utils.write_reduced_anc_dsets(h5_f, h5_spec_inds_orig,
@@ -358,9 +358,9 @@ class TestWriteReducedAncDsets(TestSimple):
 
         with h5py.File(duplicate_path, mode='w') as h5_f:
 
-            dims = [write_utils.Dimension('X', 'nm', np.linspace(300, 350, 5)),
-                    write_utils.Dimension('Y', 'um', [-2, 4, 10]),
-                    write_utils.Dimension('Z', 'm', 2)]
+            dims = [Dimension('X', 'nm', np.linspace(300, 350, 5)),
+                    Dimension('Y', 'um', [-2, 4, 10]),
+                    Dimension('Z', 'm', 2)]
 
             h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f, dims, is_spectral=False)
             new_base_name = 'Position'
@@ -393,9 +393,9 @@ class TestWriteReducedAncDsets(TestSimple):
 
         with h5py.File(duplicate_path, mode='w') as h5_f:
 
-            dims = [write_utils.Dimension('Freq', 'Hz', np.linspace(300, 350, 5)),
-                    write_utils.Dimension('Bias', 'V', [-2, 4, 10]),
-                    write_utils.Dimension('Cycle', 'a.u.', 2)]
+            dims = [Dimension('Freq', 'Hz', np.linspace(300, 350, 5)),
+                    Dimension('Bias', 'V', [-2, 4, 10]),
+                    Dimension('Cycle', 'a.u.', 2)]
 
             h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f, dims, is_spectral=True)
             new_base_name = 'Blah'
@@ -429,9 +429,9 @@ class TestWriteReducedAncDsets(TestSimple):
 
         with h5py.File(duplicate_path, mode='w') as h5_f:
 
-            dims = [write_utils.Dimension('Freq', 'Hz', np.linspace(300, 350, 5)),
-                    write_utils.Dimension('Bias', 'V', [-2, 4, 10]),
-                    write_utils.Dimension('Cycle', 'a.u.', 2)]
+            dims = [Dimension('Freq', 'Hz', np.linspace(300, 350, 5)),
+                    Dimension('Bias', 'V', [-2, 4, 10]),
+                    Dimension('Cycle', 'a.u.', 2)]
 
             h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f, dims, is_spectral=True)
             new_base_name = 'Blah'
@@ -465,9 +465,9 @@ class TestWriteReducedAncDsets(TestSimple):
 
         with h5py.File(duplicate_path, mode='w') as h5_f:
 
-            dims = [write_utils.Dimension('Freq', 'Hz', np.linspace(300, 350, 5)),
-                    write_utils.Dimension('Bias', 'V', [-2, 4, 10]),
-                    write_utils.Dimension('Cycle', 'a.u.', 2)]
+            dims = [Dimension('Freq', 'Hz', np.linspace(300, 350, 5)),
+                    Dimension('Bias', 'V', [-2, 4, 10]),
+                    Dimension('Cycle', 'a.u.', 2)]
 
             h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f, dims, is_spectral=True)
             new_base_name = 'Blah'
@@ -501,9 +501,9 @@ class TestWriteReducedAncDsets(TestSimple):
 
         with h5py.File(duplicate_path, mode='w') as h5_f:
 
-            dims = [write_utils.Dimension('Freq', 'Hz', np.linspace(300, 350, 5)),
-                    write_utils.Dimension('Bias', 'V', [-2, 4, 10]),
-                    write_utils.Dimension('Cycle', 'a.u.', 2)]
+            dims = [Dimension('Freq', 'Hz', np.linspace(300, 350, 5)),
+                    Dimension('Bias', 'V', [-2, 4, 10]),
+                    Dimension('Cycle', 'a.u.', 2)]
 
             h5_spec_inds_orig, h5_spec_vals_orig = hdf_utils.write_ind_val_dsets(h5_f, dims, is_spectral=True,
                                                                                  slow_to_fast=False)
@@ -1589,45 +1589,45 @@ class TestValidateDimsAgainstMAin(unittest.TestCase):
 
     def test_single_dim(self):
         func = hdf_utils.validate_dims_against_main
-        func((1, 5), write_utils.Dimension('blah', 'meh', np.arange(5)),
+        func((1, 5), Dimension('blah', 'meh', np.arange(5)),
              is_spectroscopic=True)
-        func((5, 1), [write_utils.Dimension('blah', 'meh', np.arange(5))],
+        func((5, 1), [Dimension('blah', 'meh', np.arange(5))],
              is_spectroscopic=False)
 
     def test_multi_dims(self):
         func = hdf_utils.validate_dims_against_main
-        func((1, 15), [write_utils.Dimension('a', 'b', 5),
-                       write_utils.Dimension('a', 'b', 3)],
+        func((1, 15), [Dimension('a', 'b', 5),
+                       Dimension('a', 'b', 3)],
              is_spectroscopic=True)
-        func((15, 5), [write_utils.Dimension('a', 'b', 5),
-                       write_utils.Dimension('a', 'b', 3)],
+        func((15, 5), [Dimension('a', 'b', 5),
+                       Dimension('a', 'b', 3)],
              is_spectroscopic=False)
 
     def test_invalid_dims(self):
         func = hdf_utils.validate_dims_against_main
         with self.assertRaises(ValueError):
-            func((1, 25), [write_utils.Dimension('a', 'b', 5),
-                           write_utils.Dimension('a', 'b', 3)],
+            func((1, 25), [Dimension('a', 'b', 5),
+                           Dimension('a', 'b', 3)],
                  is_spectroscopic=True)
         with self.assertRaises(ValueError):
-            func((25, 5), [write_utils.Dimension('a', 'b', 5)],
+            func((25, 5), [Dimension('a', 'b', 5)],
                  is_spectroscopic=False)
 
     def test_invalid_dtypes(self):
         func = hdf_utils.validate_dims_against_main
         with self.assertRaises(TypeError):
-            func('hello', write_utils.Dimension('a', 'b', 5))
+            func('hello', Dimension('a', 'b', 5))
         with self.assertRaises(TypeError):
             func((25, 5), "Dimension")
 
     def test_invalid_main_shape(self):
         func = hdf_utils.validate_dims_against_main
         with self.assertRaises(ValueError):
-            func([-5, 1], write_utils.Dimension('a', 'b', 5))
+            func([-5, 1], Dimension('a', 'b', 5))
         with self.assertRaises(ValueError):
-            func([5], write_utils.Dimension('a', 'b', 5))
+            func([5], Dimension('a', 'b', 5))
         with self.assertRaises(ValueError):
-            func([1, 2, 5], write_utils.Dimension('a', 'b', 5))
+            func([1, 2, 5], Dimension('a', 'b', 5))
 
 
 class TestCopyLinkedObjects(TestSimple):

@@ -12,11 +12,12 @@ import sys
 import h5py
 import numpy as np
 from dask import array as da
+from sidpy.hdf.hdf_utils import get_attr, write_simple_attrs, is_editable_h5
 
 from ..dtype_utils import contains_integers, validate_dtype, validate_single_string_arg, validate_string_args, \
     validate_list_of_strings, lazy_load_array
 
-from .base import get_attr, write_simple_attrs, is_editable_h5, write_book_keeping_attrs
+from .base import write_book_keeping_attrs
 from .simple import link_as_main, check_if_main, write_ind_val_dsets, validate_dims_against_main, validate_anc_h5_dsets, copy_dataset
 from pyUSID.io.write_utils import validate_dimensions
 from ..write_utils import INDICES_DTYPE, make_indices_matrix

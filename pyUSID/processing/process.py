@@ -17,13 +17,15 @@ from warnings import warn
 from numbers import Number
 from multiprocessing import cpu_count
 
-from .comp_utils import parallel_compute, get_MPI, group_ranks_by_socket, \
-    get_available_memory
-from ..io.hdf_utils import check_if_main, check_for_old, write_simple_attrs
+from sidpy.proc.comp_utils import parallel_compute, get_MPI, \
+    group_ranks_by_socket, get_available_memory
+from sidpy.base.num_utils import integers_to_slices
+from sidpy.base.string_utils import validate_single_string_arg, format_time, \
+    format_size
+from sidpy.hdf.hdf_utils import write_simple_attrs, lazy_load_array
+
+from ..io.hdf_utils import check_if_main, check_for_old
 from ..io.usi_data import USIDataset
-from ..io.dtype_utils import integers_to_slices, lazy_load_array, \
-    validate_single_string_arg
-from ..io.io_utils import format_time, format_size
 
 # TODO: internalize as many attributes as possible. Expose only those that will be required by the user
 
