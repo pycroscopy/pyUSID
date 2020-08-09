@@ -10,7 +10,6 @@ import sys
 
 sys.path.append("../../pyUSID/")
 from pyUSID.io import io_utils
-from pyUSID.processing import comp_utils
 
 
 class TestFormattedStrToNum(unittest.TestCase):
@@ -91,21 +90,6 @@ class TestTimeSizeFormatting(unittest.TestCase):
         self.assertEqual(ret_val, '15.23 bytes')
         ret_val = io_utils.format_size(5830418104.32)
         self.assertEqual(ret_val, '5.43 GB')
-
-
-class TestIOUtils(unittest.TestCase):
-
-    def test_get_available_memory_rerouting(self):
-        if sys.version_info.major == 3:
-            with self.assertWarns(FutureWarning):
-                _ = io_utils.get_available_memory()
-        self.assertEqual(comp_utils.get_available_memory(), io_utils.get_available_memory())
-
-    def test_recommend_cpu_cores_rerouting(self):
-        if sys.version_info.major == 3:
-            with self.assertWarns(FutureWarning):
-                _ = io_utils.recommend_cpu_cores(140)
-        self.assertEqual(comp_utils.recommend_cpu_cores(140), io_utils.recommend_cpu_cores(140))
 
 
 if __name__ == '__main__':
