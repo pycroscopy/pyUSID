@@ -51,7 +51,7 @@ setup(
         'Programming Language :: Python :: Implementation :: CPython',
         'Topic :: Scientific/Engineering :: Information Analysis'],
     keywords=['imaging', 'spectra', 'multidimensional', 'data format', 'universal', 'hdf5'],
-    packages=find_packages(exclude='tests'),
+    packages=find_packages(exclude=['tests', '*.tests', '*.tests.*']),
     url='https://pycroscopy.github.io/pyUSID/about.html',
     license='MIT',
     author='S. Somnath, C. R. Smith, and contributors',
