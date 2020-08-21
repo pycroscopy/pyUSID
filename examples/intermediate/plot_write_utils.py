@@ -253,20 +253,3 @@ unit_chunks = (3, 7)
 max_mem = 50000
 ret_val = usid.write_utils.calc_chunks(dimensions, dtype_bytesize, unit_chunks=unit_chunks, max_chunk_mem=max_mem)
 print(ret_val)
-
-########################################################################################################################
-# clean_string_att()
-# -------------------
-# As mentioned in our `HDF5 and h5py primer <../beginner/plot_h5py.html>`_,
-# the ``h5py`` package used for reading and manipulating HDF5 files has issues which necessitate the encoding of
-# attributes whose values are lists of strings. The ``clean_string_att()`` encodes lists of
-# strings correctly so that they can directly be written to HDF5 without causing any errors. All other kinds of simple
-# attributes - single strings, numbers, lists of numbers are unmodified by this function.
-
-expected = ['a', 'bc', 'def']
-returned = usid.write_utils.clean_string_att(expected)
-print('List of strings value: {} encoded to: {}'.format(expected, returned))
-
-expected = [1, 2, 3.456]
-returned = usid.write_utils.clean_string_att(expected)
-print('List of numbers value: {} returned as is: {}'.format(expected, returned))
