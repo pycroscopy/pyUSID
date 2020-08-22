@@ -20,6 +20,7 @@ Recommended pre-requisite reading
 * `Crash course on HDF5 and h5py <./plot_h5py.html>`_
 """
 
+import sidpy
 import pyUSID as usid
 import numpy as np
 import h5py
@@ -45,8 +46,8 @@ for x in np.arange(0,100):
         for c in np.arange(data.shape[1]):
             data[r,c,x] = amp[r][c] * np.sin(2*np.pi * 2*x/100 + phase[r][c]) 
 
-# To visualize a 3D stack, there's a handy built-in function
-usid.plot_utils.plot_map_stack(data, num_comps=4, fig_mult=(2,10), pad_mult=(0.01,.4))
+# To visualize a 3D stack, there's a handy function in sidpy
+_ = sidpy.plot_utils.plot_map_stack(data, num_comps=4, fig_mult=(2,10), pad_mult=(0.01,.4));
 
 ########################################################################################################################
 # Instead of being 3D, we need it to be (10x10, 100) in 2D for USID. 
@@ -89,14 +90,14 @@ tran.translate(h5_path, 'data', data_reshape, 'Height', 'm',
 # Now that our cookbook_data is full of delicious data, let's crack it open.
 #
 # We can open the file by using the h5py command
-h5_file = h5py.File(h5_path)
+h5_file = h5py.File(h5_path, mode='r+')
 
 ########################################################################################################################
-# Print_tree shows all the contents in this HDF5 file
-usid.hdf_utils.print_tree(h5_file, rel_paths=True)
+# ``print_tree`` shows all the contents in this HDF5 file
+sidpy.hdf_utils.print_tree(h5_file, rel_paths=True)
 
 ########################################################################################################################
-# Our data are in the 'Raw_Data' dataset. How do we extract our data?
+# Our data are in the ``Raw_Data`` dataset. How do we extract our data?
 # First let's print all the Main datasets
 
 print(usid.hdf_utils.get_all_main(h5_file))
@@ -114,7 +115,14 @@ data_usid = usid.hdf_utils.get_all_main(h5_file)[0]
 data_usid = h5_file['Measurement_000/Channel_000/Raw_Data']
 
 ########################################################################################################################
-# Lastly, let's upgrade from h5py Dataset to a USID Dataset
+# Note that reading the dataset in this manual manner only gives us the
+# standard ``h5py.Dataset``:
+
+print(data_usid)
+
+########################################################################################################################
+# Lastly, let's upgrade from ``h5py.Dataset`` to a ``USIDataset``
+
 data_usid = usid.USIDataset(data_usid)
 print(data_usid) 
 
@@ -132,40 +140,52 @@ _, _ = data_usid.visualize(slice_dict={'Rows': 5, 'Cols': 3})
 _, _ = data_usid.visualize(slice_dict={'Time': 30})
 
 ########################################################################################################################
-# To access our data directly, we use the [()] shortcut
-data_usid[()]
+# To access our data in the HDF5 dataset directly, we can use the ``[()]`` shortcut
+two_dim_form = data_usid[()]
+print(type(two_dim_form))
+print(two_dim_form.shape)
 
 ########################################################################################################################
-# Reconstruct the original form of (10,10,100)
-data_usid.get_n_dim_form()
+# Given that we are working on 3D dataset, we want reshape the flattened data
+# present in the HDF5 dataset back to the original form of (10,10,100)
+
+n_dim_form = data_usid.get_n_dim_form()
+print(type(n_dim_form))
+print(n_dim_form.shape)
 
 ########################################################################################################################
 # What are the properties of our data?
-print('Rows=',data_usid.get_pos_values('Rows'))
-print('Cols=',data_usid.get_pos_values('Cols'))
-print('Times=',data_usid.get_spec_values('Time'))
+print('Rows = \n{}'.format(data_usid.get_pos_values('Rows')))
+print('Cols = \n{}'.format(data_usid.get_pos_values('Cols')))
+print('Time = \n{}'.format(data_usid.get_spec_values('Time')))
 
+########################################################################################################################
 # Attributes of the data when it was written
-print(usid.hdf_utils.get_attributes(data_usid))
+print(sidpy.hdf_utils.get_attributes(data_usid))
 
+########################################################################################################################
 # To get the path of the Main dataset within the HDF5 file
 print(data_usid.name)
 
+########################################################################################################################
 # And to get the parent folder of this Dataset, you use
 print(data_usid.parent.name)
 
 ########################################################################################################################
 # Adding some new data
-# ===================
+# ====================
 #
 # Let's say we process our data using some method and want to save that process.
 # For the sake of argument, we'll just make a matrix that's the  magnitude^2
 
 data_proc = np.array(data_usid[()]**2)
 
+########################################################################################################################
 # Let's create a new group within this file to store our results
 result_group = usid.hdf_utils.create_indexed_group(h5_file[data_usid.parent.name], 'Magnitude')
+print(result_group)
 
+########################################################################################################################
 # The "indexed" part means it appends 000, 001, etc if we do this many times
 # Many built-in pyUSID and pycroscopy command do this so we don't overwrite old
 # results. Because of the power of HDF5 we can go back to old processing and see!
@@ -173,13 +193,13 @@ result_group = usid.hdf_utils.create_indexed_group(h5_file[data_usid.parent.name
 # There's an analogous command create_results_group if you'd like
 #
 # Anyway let's print our tree out for good measure
-usid.hdf_utils.print_tree(h5_file, rel_paths=True)
+sidpy.hdf_utils.print_tree(h5_file, rel_paths=True)
 
 ########################################################################################################################
 # Now we want to add our data. But we want to add some attributes as well to describe
 # what we've done to our data. Attributes are a dictionary, so let's create one.
 attrs = {'Method': 'Magnitude_Squared', 'units': 'm^2'}
-usid.hdf_utils.write_simple_attrs(result_group, attrs) 
+sidpy.hdf_utils.write_simple_attrs(result_group, attrs)
 
 ########################################################################################################################
 # Now, let's write a new main dataset
@@ -192,16 +212,20 @@ data_result = usid.hdf_utils.write_main_dataset(result_group,
 
 ########################################################################################################################
 # This populates our new folder with the new data! Let's look for the Magnitude folder in our tree:
-usid.hdf_utils.print_tree(h5_file, rel_paths=True)
+sidpy.hdf_utils.print_tree(h5_file, rel_paths=True)
 
 ########################################################################################################################
 # If we get all the Main datasets, we see a new dataset pop up in our list.
 print(usid.hdf_utils.get_all_main(h5_file))
 
 ########################################################################################################################
-# And to verify the attributes for the data and the data_group.
-print(usid.hdf_utils.get_attributes(data_result))
-print(usid.hdf_utils.get_attributes(data_result.parent))
+# And to verify the attributes for the data:
+print(sidpy.hdf_utils.get_attributes(data_result))
 
+########################################################################################################################
+# ... and the data_group:
+print(sidpy.hdf_utils.get_attributes(data_result.parent))
+
+########################################################################################################################
 # Lastly, to verify this dataset is a Main dataset (with position and spectral dimensions)
-print(usid.hdf_utils.get_attributes(data_result))
+print(sidpy.hdf_utils.get_attributes(data_result))

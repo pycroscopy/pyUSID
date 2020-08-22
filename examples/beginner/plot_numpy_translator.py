@@ -108,6 +108,15 @@ import h5py
 # Packages for plotting:
 import matplotlib.pyplot as plt
 
+# import sidpy - supporting package for pyUSID:
+try:
+    import sidpy
+except ImportError:
+    warn('sidpy not found.  Will install with pip.')
+    import pip
+    install('sidpy')
+    import sidpy
+
 # Finally import pyUSID:
 try:
     import pyUSID as usid
@@ -309,7 +318,7 @@ main_units = 'nA'
 # ============================
 # Here is a visualization of the current-voltage spectra at a few locations:
 
-fig, axes = usid.plot_utils.plot_curves(bias_vec, raw_data_2d, num_plots=9,
+fig, axes = sidpy.plot_utils.plot_curves(bias_vec, raw_data_2d, num_plots=9,
                                         x_label=bias_qty + '(' + bias_units + ')',
                                         y_label=main_qty + '(' + main_units + ')',
                                         title='Current-Voltage Spectra at different locations',
@@ -318,7 +327,7 @@ fig, axes = usid.plot_utils.plot_curves(bias_vec, raw_data_2d, num_plots=9,
 ####################################################################################
 # Here is a visualization of spatial maps at different bias values
 
-fig, axes = usid.plot_utils.plot_map_stack(raw_data_3d, reverse_dims=True, pad_mult=(0.15, 0.15),
+fig, axes = sidpy.plot_utils.plot_map_stack(raw_data_3d, reverse_dims=True, pad_mult=(0.15, 0.15),
                                            title='Spatial maps of current at different bias', stdevs=2,
                                            color_bar_mode='single', num_ticks=3, x_vec=x_vec, y_vec=y_vec,
                                            evenly_spaced=True, fig_mult=(3, 3), title_yoffset=0.95)
@@ -416,7 +425,7 @@ with h5py.File(h5_path_1, mode='r') as h5_file:
     # See if a tree has been created within the hdf5 file:
     print('Contents of the h5USID file:')
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-    usid.hdf_utils.print_tree(h5_file)
+    sidpy.hdf_utils.print_tree(h5_file)
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     print('Comprehensive information about the Main dataset:')
     print('-------------------------------------------------')
@@ -426,7 +435,7 @@ with h5py.File(h5_path_1, mode='r') as h5_file:
     print('Verification plots:')
     fig, axes = plt.subplots(ncols=2, figsize=(11, 5))
     spat_map = np.reshape(h5_main[:, 100], (100, 100))
-    usid.plot_utils.plot_map(axes[0], spat_map, origin='lower')
+    sidpy.plot_utils.plot_map(axes[0], spat_map, origin='lower')
     axes[0].set_title('Spatial map')
     axes[0].set_xlabel('X')
     axes[0].set_ylabel('Y')
@@ -630,7 +639,7 @@ with h5py.File(h5_path_2, mode='r') as h5_file:
     # See if a tree has been created within the hdf5 file:
     print('Contents of the h5USID file:')
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-    usid.hdf_utils.print_tree(h5_file)
+    sidpy.hdf_utils.print_tree(h5_file)
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     print('Comprehensive information about the Main dataset:')
     print('-------------------------------------------------')
@@ -640,7 +649,7 @@ with h5py.File(h5_path_2, mode='r') as h5_file:
     print('Verification plots:')
     fig, axes = plt.subplots(ncols=2, figsize=(11, 5))
     spat_map = np.reshape(h5_main[:, 100], (100, 100))
-    usid.plot_utils.plot_map(axes[0], spat_map, origin='lower')
+    sidpy.plot_utils.plot_map(axes[0], spat_map, origin='lower')
     axes[0].set_title('Spatial map')
     axes[0].set_xlabel('X')
     axes[0].set_ylabel('Y')

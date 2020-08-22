@@ -144,6 +144,15 @@ import sys
 sys.path.append('./supporting_docs/')
 from peak_finding import find_all_peaks
 
+# import sidpy - supporting package for pyUSID:
+try:
+    import sidpy
+except ImportError:
+    warn('sidpy not found.  Will install with pip.')
+    import pip
+    install('sidpy')
+    import sidpy
+
 # Finally import pyUSID:
 try:
     import pyUSID as usid
@@ -271,7 +280,7 @@ class PeakFinder(usid.Process):
         self.h5_results_grp = usid.hdf_utils.create_results_group(self.h5_main, self.process_name)
 
         # 2. Write relevant metadata to the group
-        usid.hdf_utils.write_simple_attrs(self.h5_results_grp, self.parms_dict)
+        sidpy.hdf_utils.write_simple_attrs(self.h5_results_grp, self.parms_dict)
 
         # Explicitly stating all the inputs to write_main_dataset
         # The process will reduce the spectra at each position to a single value
@@ -381,7 +390,7 @@ _ = wget.download(url, h5_path, bar=None)
 
 h5_file = h5py.File(h5_path, mode='r+')
 print('File contents:\n')
-usid.hdf_utils.print_tree(h5_file)
+sidpy.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # The focus of this example is not on the data storage or formatting but rather on demonstrating our new Process class
@@ -450,7 +459,7 @@ print(h5_results_grp)
 # three datasets within the group. Among the datasets is ``Peak_Response`` that contains the peak amplitudes we are
 # interested in.
 
-usid.hdf_utils.print_tree(h5_file)
+sidpy.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # Lets look at this ``Peak_Response`` dataset:
