@@ -12,21 +12,14 @@ with open(os.path.join(here, 'pyUSID/__version__.py')) as f:
 
 # TODO: Move requirements to requirements.txt
 requirements = ['numpy>=1.10',
-                'toolz', # dask installation failing without this
-                'cytoolz', # dask installation failing without this
+                'toolz',  # dask installation failing without this
+                'cytoolz',  # dask installation failing without this
                 'dask>=0.10',
                 'h5py>=2.6.0',
-                'pillow',
-                'matplotlib>=2.0.0',
-
+                'pillow',  # Remove once ImageReader is in ScopeReaders
                 'psutil',
                 'six',
-                'joblib>=0.11.0',
-
-                'ipywidgets>=5.2.2',
-                'ipython>=5.1.0,<6;python_version<"3.3"',  # IPython 6.0+ does not support Python 2.6, 2.7, 3.0, 3.1, or 3.2
-                'ipython>=6.0;python_version>="3.3"',  # Beginning with IPython 6.0, Python 3.3 and above is required.
-                'sidpy>=0.0.1'
+                'sidpy>=0.0.2'
                 ]
 
 setup(
@@ -69,7 +62,6 @@ setup(
     # https://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-dependencies
     extras_require={
         'MPI':  ["mpi4py"],
-        'File_Widgets': ['pyqt5'],
     },
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
