@@ -16,12 +16,13 @@ import sys
 import h5py
 import numpy as np
 import dask.array as da
-from .translator import Translator
-from .dtype_utils import validate_string_args
-from .hdf_utils import write_main_dataset, write_simple_attrs, \
-    create_indexed_group, write_book_keeping_attrs, \
-    validate_dims_against_main, validate_main_dset
-from pyUSID.io.write_utils import validate_dimensions
+from sidpy.hdf.hdf_utils import write_simple_attrs
+from sidpy.sid.translator import Translator
+from sidpy.base.string_utils import validate_string_args
+from .hdf_utils.base import write_book_keeping_attrs
+from .hdf_utils.simple import create_indexed_group, validate_main_dset
+from .hdf_utils.model import write_main_dataset, validate_dims_against_main
+from .write_utils import validate_dimensions
 
 if sys.version_info.major == 3:
     unicode = str

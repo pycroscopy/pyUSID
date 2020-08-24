@@ -13,14 +13,16 @@ import sys
 import h5py
 import numpy as np
 import dask.array as da
+from sidpy.hdf.hdf_utils import get_auxiliary_datasets, link_h5_obj_as_alias, \
+    write_simple_attrs, is_editable_h5, validate_h5_objs_in_same_h5_file, \
+    get_attr
+
 
 from ..dtype_utils import validate_dtype, validate_single_string_arg, \
     validate_list_of_strings, contains_integers, lazy_load_array
 from ..write_utils import clean_string_att, build_ind_val_matrices, \
     INDICES_DTYPE, VALUES_DTYPE, Dimension, DimType
-from .base import get_auxiliary_datasets, link_h5_obj_as_alias, get_attr, \
-    write_book_keeping_attrs, write_simple_attrs, \
-    is_editable_h5, validate_h5_objs_in_same_h5_file
+from .base import write_book_keeping_attrs
 
 if sys.version_info.major == 3:
     unicode = str

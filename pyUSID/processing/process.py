@@ -13,16 +13,19 @@ import numpy as np
 import psutil
 import time as tm
 import h5py
+from warnings import warn
 from numbers import Number
 from multiprocessing import cpu_count
 
-from .comp_utils import parallel_compute, get_MPI, group_ranks_by_socket, \
-    get_available_memory
-from ..io.hdf_utils import check_if_main, check_for_old, write_simple_attrs
+from sidpy.proc.comp_utils import parallel_compute, get_MPI, \
+    group_ranks_by_socket, get_available_memory
+from sidpy.base.num_utils import integers_to_slices
+from sidpy.base.string_utils import validate_single_string_arg, format_time, \
+    format_size
+from sidpy.hdf.hdf_utils import write_simple_attrs, lazy_load_array
+
+from ..io.hdf_utils import check_if_main, check_for_old
 from ..io.usi_data import USIDataset
-from ..io.dtype_utils import integers_to_slices, lazy_load_array, \
-    validate_single_string_arg
-from ..io.io_utils import format_time, format_size
 
 # TODO: internalize as many attributes as possible. Expose only those that will be required by the user
 
@@ -142,6 +145,13 @@ class Process(object):
 
         MPI = get_MPI()
 
+        # Ensure that the file is opened in the correct comm or something
+        if MPI is not None and h5_main.file.driver != 'mpio':
+            warn('Code was called in MPI context but HDF5 file was not opened '
+                 'with the "mpio" driver. JobLib will be used instead of MPI '
+                 'for parallel computation')
+            MPI = None
+
         if MPI is not None:
             # If we came here then, the user has intentionally asked for multi-node computation
             comm = MPI.COMM_WORLD
@@ -160,11 +170,6 @@ class Process(object):
             # It is sufficient if just one rank checks all this.
             if self.mpi_rank == 0:
                 print('Working on {} ranks via MPI'.format(self.mpi_size))
-
-            # Ensure that the file is opened in the correct comm or something
-            if h5_main.file.driver != 'mpio':
-                raise TypeError('The HDF5 file should have been opened with driver="mpio". Current driver = "{}"'
-                                ''.format(h5_main.file.driver))
 
             if verbose and self.mpi_rank == 0:
                 print('Finished getting all necessary MPI information')

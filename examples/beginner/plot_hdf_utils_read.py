@@ -1,6 +1,6 @@
 """
 ================================================================================
-05. Utilities for reading h5USID files
+04. Utilities for reading h5USID files
 ================================================================================
 
 **Suhas Somnath**
@@ -69,6 +69,16 @@ except ImportError:
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
+
+# import sidpy - supporting package for pyUSID:
+try:
+    import sidpy
+except ImportError:
+    warn('sidpy not found.  Will install with pip.')
+    import pip
+    install('sidpy')
+    import sidpy
+
 # Finally import pyUSID.
 try:
     import pyUSID as usid
@@ -135,7 +145,7 @@ h5_f = h5py.File(h5_path, mode='r')
 # ``print_tree()`` to quickly visualize all the datasets and groups within the file within python.
 
 print('Contents of the H5 file:')
-usid.hdf_utils.print_tree(h5_f)
+sidpy.hdf_utils.print_tree(h5_f)
 
 ########################################################################################################################
 # By default, ``print_tree()`` presents a clean tree view of the contents of the group. In this mode, only the group names
@@ -145,13 +155,13 @@ usid.hdf_utils.print_tree(h5_f)
 # file as we have done above. Lets configure it to print the relative paths of all objects within the ``Channel_000``
 # group:
 
-usid.hdf_utils.print_tree(h5_f['/Measurement_000/Channel_000/'], rel_paths=True)
+sidpy.hdf_utils.print_tree(h5_f['/Measurement_000/Channel_000/'], rel_paths=True)
 
 ########################################################################################################################
 # Finally, ``print_tree()`` can also be configured to only print USID Main datasets besides Group objects using the
 # ``main_dsets_only`` option
 
-usid.hdf_utils.print_tree(h5_f, main_dsets_only=True)
+sidpy.hdf_utils.print_tree(h5_f, main_dsets_only=True)
 
 ########################################################################################################################
 # Accessing Attributes
@@ -173,14 +183,14 @@ usid.hdf_utils.print_tree(h5_f, main_dsets_only=True)
 # ``get_attributes()`` is a very handy function that returns all or a specified set of attributes in an HDF5 object. If no
 # attributes are explicitly requested, all attributes in the object are returned:
 
-for key, val in usid.hdf_utils.get_attributes(h5_f).items():
+for key, val in sidpy.hdf_utils.get_attributes(h5_f).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
 # ``get_attributes()`` is also great for only getting selected attributes. For example, if we only cared about the user
 # and project related attributes, we could manually request for any that we wanted:
 
-proj_attrs = usid.hdf_utils.get_attributes(h5_f, ['project_name', 'project_id', 'user_name'])
+proj_attrs = sidpy.hdf_utils.get_attributes(h5_f, ['project_name', 'project_id', 'user_name'])
 for key, val in proj_attrs.items():
     print('{} : {}'.format(key, val))
 
@@ -191,7 +201,7 @@ for key, val in proj_attrs.items():
 # If we are sure that we only wanted a specific attribute, we could instead use ``get_attr()`` as:
 
 
-print(usid.hdf_utils.get_attr(h5_f, 'user_name'))
+print(sidpy.hdf_utils.get_attr(h5_f, 'user_name'))
 
 ########################################################################################################################
 # check_for_matching_attrs()
@@ -319,7 +329,7 @@ print(h5_sho_group_list)
 # take a look at the attributes stored in the existing results groups:
 
 print('Parameters already used for computing SHO_Fit on Raw_Data in the file:')
-for key, val in usid.hdf_utils.get_attributes(h5_chan_group['Raw_Data-SHO_Fit_000']).items():
+for key, val in sidpy.hdf_utils.get_attributes(h5_chan_group['Raw_Data-SHO_Fit_000']).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
@@ -373,7 +383,7 @@ print(h5_source_dset)
 # For example, the ``Raw_Data`` dataset appears to contain several attributes whose keys / names match the names of
 # datasets we see above and values all appear to be HDF5 object references:
 
-for key, val in usid.hdf_utils.get_attributes(h5_raw).items():
+for key, val in sidpy.hdf_utils.get_attributes(h5_raw).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
@@ -384,7 +394,7 @@ for key, val in usid.hdf_utils.get_attributes(h5_raw).items():
 # ``get_auxiliary_datasets()`` simplifies this process by directly retrieving the actual Dataset / Group associated with
 # the attribute. Thus, we would be able to get a reference to the ``Bin_Frequencies`` Dataset via:
 
-h5_obj = usid.hdf_utils.get_auxiliary_datasets(h5_raw, 'Bin_Frequencies')[0]
+h5_obj = sidpy.hdf_utils.get_auxiliary_datasets(h5_raw, 'Bin_Frequencies')[0]
 print(h5_obj)
 # Lets prove that this object is the same as the 'Bin_Frequencies' object that can be directly addressed:
 print(h5_obj == h5_f['/Measurement_000/Channel_000/Bin_Frequencies'])
@@ -399,7 +409,7 @@ print(h5_obj == h5_f['/Measurement_000/Channel_000/Bin_Frequencies'])
 # Before we demonstrate the several useful functions in hdf_utils, lets access the position and spectroscopic ancillary
 # datasets using the ``get_auxiliary_datasets()`` function we used above:
 
-dset_list = usid.hdf_utils.get_auxiliary_datasets(h5_raw, ['Position_Indices', 'Position_Values',
+dset_list = sidpy.hdf_utils.get_auxiliary_datasets(h5_raw, ['Position_Indices', 'Position_Values',
                                                          'Spectroscopic_Indices', 'Spectroscopic_Values'])
 h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals = dset_list
 
@@ -415,8 +425,8 @@ h5_pos_inds, h5_pos_vals, h5_spec_inds, h5_spec_vals = dset_list
 
 pos_dim_sizes = usid.hdf_utils.get_dimensionality(h5_pos_inds)
 spec_dim_sizes = usid.hdf_utils.get_dimensionality(h5_spec_inds)
-pos_dim_names = usid.hdf_utils.get_attr(h5_pos_inds, 'labels')
-spec_dim_names = usid.hdf_utils.get_attr(h5_spec_inds, 'labels')
+pos_dim_names = sidpy.hdf_utils.get_attr(h5_pos_inds, 'labels')
+spec_dim_names = sidpy.hdf_utils.get_attr(h5_spec_inds, 'labels')
 
 print('Size of each Position dimension:')
 for name, length in zip(pos_dim_names, pos_dim_sizes):

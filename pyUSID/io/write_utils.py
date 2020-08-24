@@ -11,13 +11,12 @@ from __future__ import division, print_function, unicode_literals, absolute_impo
 import sys
 from warnings import warn
 from enum import Enum
-from itertools import groupby
 import numpy as np
-from .dtype_utils import contains_integers, validate_list_of_strings, validate_single_string_arg
-if sys.version_info.major == 3:
-    from collections.abc import Iterable
-else:
-    from collections import Iterable
+from sidpy.base.num_utils import contains_integers
+from sidpy.base.string_utils import validate_list_of_strings, \
+    validate_single_string_arg
+from sidpy.base import num_utils as nut
+from sidpy.base import string_utils as sut
 
 __all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE', 'get_slope',
            'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions', 'DimType',
@@ -254,17 +253,11 @@ def clean_string_att(att_val):
     att_val : object
         Attribute object
     """
-    try:
-        if isinstance(att_val, Iterable):
-            if type(att_val) in [unicode, str]:
-                return att_val
-            elif np.any([type(x) in [str, unicode, bytes, np.str_] for x in att_val]):
-                return np.array(att_val, dtype='S')
-        if type(att_val) == np.str_:
-            return str(att_val)
-        return att_val
-    except TypeError:
-        raise TypeError('Failed to clean: {}'.format(att_val))
+    warn('pyUSID.io.write_utils.clean_string_att has been moved to '
+         'sidpy.base.string_utils.clean_string_att. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return sut.clean_string_att(att_val)
 
 
 def build_ind_val_matrices(unit_values, is_spectral=True):
@@ -470,20 +463,11 @@ def get_slope(values, tol=1E-3):
     float
         Slope of the line
     """
-    if not isinstance(tol, float):
-        raise TypeError('tol should be a float << 1')
-    step_size = np.unique(np.diff(values))
-    if len(step_size) > 1:
-        # often we end up here. In most cases,
-        step_avg = step_size.max()
-        step_size -= step_avg
-        var = np.mean(np.abs(step_size))
-        if var / step_avg < tol:
-            step_size = [step_avg]
-        else:
-            # Non-linear dimension! - see notes above
-            raise ValueError('Provided values cannot be expressed as a linear trend')
-    return step_size[0]
+    warn('pyUSID.io.write_utils.get_slope has been moved to '
+         'sidpy.base.num_utils.get_slope. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return nut.get_slope(values, tol=tol)
 
 
 def to_ranges(iterable):
@@ -504,11 +488,9 @@ def to_ranges(iterable):
     iterable : generator object
         Cast to list or similar to use
     """
-    iterable = sorted(set(iterable))
-    for key, group in groupby(enumerate(iterable), lambda t: t[1] - t[0]):
-        group = list(group)
-        if sys.version_info.major == 3:
-            yield range(group[0][1], group[-1][1]+1)
-        else:
-            yield xrange(group[0][1], group[-1][1]+1)
+    warn('pyUSID.io.write_utils.to_ranges has been moved to '
+         'sidpy.base.num_utils.to_ranges. This copy in pyUSID will'
+         'be removed in future release. Please update your import statements',
+         FutureWarning)
+    return nut.to_ranges(iterable)
 

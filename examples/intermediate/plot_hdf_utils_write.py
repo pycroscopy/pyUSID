@@ -1,6 +1,6 @@
 """
 ================================================================================
-09. Utilities for writing h5USID files
+06. Utilities for writing h5USID files
 ================================================================================
 
 **Suhas Somnath**
@@ -58,7 +58,16 @@ import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Finally import pyUSID.
+# import sidpy - supporting package for pyUSID:
+try:
+    import sidpy
+except ImportError:
+    warn('sidpy not found.  Will install with pip.')
+    import pip
+    install('sidpy')
+    import sidpy
+
+# Finally import pyUSID:
 try:
     import pyUSID as usid
 except ImportError:
@@ -126,7 +135,7 @@ print(usid.hdf_utils.assign_group_index(h5_file, 'Measurement'))
 # Now lets look at datasets and groups in the created file:
 
 print('Contents within the file so far:')
-usid.hdf_utils.print_tree(h5_file)
+sidpy.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # Clearly, we have the ``Measurement_000`` Group at the same level as a group named ``Some_Group``. The group ``Some_Group``
@@ -152,7 +161,7 @@ usid.hdf_utils.print_tree(h5_file)
 # and posterity. Note that we are using pyUSID's ``get_attributes()`` function instead of the base h5py capability
 
 print('Attributes contained within {}'.format(h5_meas_group))
-for key, val in usid.hdf_utils.get_attributes(h5_meas_group).items():
+for key, val in sidpy.hdf_utils.get_attributes(h5_meas_group).items():
     print('\t%s : %s' % (key, val))
 
 ########################################################################################################################
@@ -160,7 +169,7 @@ for key, val in usid.hdf_utils.get_attributes(h5_meas_group).items():
 # ``create_group()`` function to create a regular group.
 
 print('Attributes contained in the basic group created using h5py: {}'.format(h5_some_group))
-print(usid.hdf_utils.get_attributes(h5_some_group))
+print(sidpy.hdf_utils.get_attributes(h5_some_group))
 
 ########################################################################################################################
 # write_book_keeping_attrs()
@@ -171,7 +180,7 @@ print(usid.hdf_utils.get_attributes(h5_some_group))
 
 usid.hdf_utils.write_book_keeping_attrs(h5_some_group)
 print('Attributes contained in the basic group after calling write_book_keeping_attrs():')
-for key, val in usid.hdf_utils.get_attributes(h5_some_group).items():
+for key, val in sidpy.hdf_utils.get_attributes(h5_some_group).items():
     print('\t%s : %s' % (key, val))
 
 ########################################################################################################################
@@ -180,7 +189,7 @@ for key, val in usid.hdf_utils.get_attributes(h5_some_group).items():
 # Due to the problems in h5py, we use the ``write_simple_attrs()`` function to add / modify additional attributes to the
 # group:
 
-usid.hdf_utils.write_simple_attrs(h5_meas_group, {'Instrument': 'Atomic Force Microscope',
+sidpy.hdf_utils.write_simple_attrs(h5_meas_group, {'Instrument': 'Atomic Force Microscope',
                                                 'User': 'Joe Smith',
                                                 'Room Temperature [C]': 23})
 
@@ -192,12 +201,12 @@ usid.hdf_utils.write_simple_attrs(h5_meas_group, {'Instrument': 'Atomic Force Mi
 # ``h5_meas_group`` to ``h5_some_dataset``:
 
 print('Attributes in {} before copying attributes:'.format(h5_some_dataset))
-for key, val in usid.hdf_utils.get_attributes(h5_some_dataset).items():
+for key, val in sidpy.hdf_utils.get_attributes(h5_some_dataset).items():
     print('\t%s : %s' % (key, val))
 print('\n------------- COPYING ATTRIBUTES ----------------------------\n')
 usid.hdf_utils.copy_attributes(h5_meas_group, h5_some_dataset)
 print('Attributes in {}:'.format(h5_some_dataset))
-for key, val in usid.hdf_utils.get_attributes(h5_some_dataset).items():
+for key, val in sidpy.hdf_utils.get_attributes(h5_some_dataset).items():
     print('\t%s : %s' % (key, val))
 
 ########################################################################################################################
@@ -311,7 +320,7 @@ print(h5_raw)
 #
 # The underline below ``Measurement_000`` indicates that this is a HDF5 Group
 
-usid.hdf_utils.print_tree(h5_file)
+sidpy.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # As mentioned in our `document about the USID
@@ -363,21 +372,21 @@ print(h5_raw[5])
 #
 # Again, we can use the ``get_attributes()`` function to see if and how these attributes are stored:
 
-for key, val in usid.hdf_utils.get_attributes(h5_raw).items():
+for key, val in sidpy.hdf_utils.get_attributes(h5_raw).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
 # While it is straightforward to read simple attributes like ``quantity`` or ``units``, the values for ``Position_Values`` or
 # ``Spectroscopic_Indices`` attributes seem cryptic. These are just references or links to other datasets.
 
-print(usid.hdf_utils.get_attr(h5_raw, 'Position_Indices'))
+print(sidpy.hdf_utils.get_attr(h5_raw, 'Position_Indices'))
 
 ########################################################################################################################
 # Object references as attributes
 # ================================
 # We can get access to linked datasets using ``get_auxiliary_datasets()``:
 
-print(usid.hdf_utils.get_auxiliary_datasets(h5_raw, 'Position_Indices'))
+print(sidpy.hdf_utils.get_auxiliary_datasets(h5_raw, 'Position_Indices'))
 
 ########################################################################################################################
 # Given that ``h5_raw`` is a ``Main`` dataset, and`` Position_Indices`` is one of the four essential components of a ``Main``
@@ -403,17 +412,17 @@ h5_other = h5_meas_group.create_dataset('Other', np.random.rand(5))
 # ``link_h5_objects_as_attrs()`` makes it easy to link a dataset or group to any other dataset or group. In this example
 # we will link the ``Other`` dataset to the ``Raw_Data`` dataset:
 
-usid.hdf_utils.link_h5_objects_as_attrs(h5_raw, h5_other)
+sidpy.hdf_utils.link_h5_objects_as_attrs(h5_raw, h5_other)
 
-for key, val in usid.hdf_utils.get_attributes(h5_raw).items():
+for key, val in sidpy.hdf_utils.get_attributes(h5_raw).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
 # In the same way, we can even link a group to the ``Other`` dataset:
 
-usid.hdf_utils.link_h5_objects_as_attrs(h5_other, h5_some_group)
+sidpy.hdf_utils.link_h5_objects_as_attrs(h5_other, h5_some_group)
 
-for key, val in usid.hdf_utils.get_attributes(h5_other).items():
+for key, val in sidpy.hdf_utils.get_attributes(h5_other).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
@@ -431,16 +440,16 @@ for key, val in usid.hdf_utils.get_attributes(h5_other).items():
 # ``link_h5_obj_as_alias()`` is handy in this scenario since it allows a dataset or group to be linked with a name
 # different from its actual name. For example, we can link the ``Raw_Data`` dataset to the ``Other`` dataset with an alias:
 
-usid.hdf_utils.link_h5_obj_as_alias(h5_other, h5_raw, 'Mysterious_Dataset')
+sidpy.hdf_utils.link_h5_obj_as_alias(h5_other, h5_raw, 'Mysterious_Dataset')
 
-for key, val in usid.hdf_utils.get_attributes(h5_other).items():
+for key, val in sidpy.hdf_utils.get_attributes(h5_other).items():
     print('{} : {}'.format(key, val))
 
 ########################################################################################################################
 # The dataset named ``Other`` has a new attribute named ``Mysterious_Dataset``. Let us show that this dataset is none other
 # than ``Raw_Data``:
 
-h5_myst_dset = usid.hdf_utils.get_auxiliary_datasets(h5_other, 'Mysterious_Dataset')[0]
+h5_myst_dset = sidpy.hdf_utils.get_auxiliary_datasets(h5_other, 'Mysterious_Dataset')[0]
 print(h5_myst_dset == h5_raw)
 
 ########################################################################################################################
@@ -495,7 +504,7 @@ print(h5_norm)
 # ``Raw_Data-Normalization_000`` only contains the ``Normalized_Data`` dataset and none of the supporting ancillary datasets
 # since it is sharing the same ones created for ``Raw_Data``
 
-usid.hdf_utils.print_tree(h5_file)
+sidpy.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # Shared ancillary datasets
@@ -504,9 +513,9 @@ usid.hdf_utils.print_tree(h5_file)
 
 for anc_name in ['Position_Indices', 'Position_Values', 'Spectroscopic_Indices', 'Spectroscopic_Values']:
     # get the handle to the ancillary dataset linked to 'Raw_Data'
-    raw_anc = usid.hdf_utils.get_auxiliary_datasets(h5_raw, anc_name)[0]
+    raw_anc = sidpy.hdf_utils.get_auxiliary_datasets(h5_raw, anc_name)[0]
     # get the handle to the ancillary dataset linked to 'Normalized_Data'
-    norm_anc = usid.hdf_utils.get_auxiliary_datasets(h5_norm, anc_name)[0]
+    norm_anc = sidpy.hdf_utils.get_auxiliary_datasets(h5_norm, anc_name)[0]
     # Show that these are indeed the same dataset
     print('Sharing {}: {}'.format(anc_name, raw_anc == norm_anc))
 
@@ -563,7 +572,7 @@ h5_analysis_group = usid.hdf_utils.create_results_group(h5_norm, 'Fitting')
 # Let us take a look at the contents of the HDF5 file again. Clearly, we do not have any new datasets underneath
 # ``Normalized_Data-Fitting_000``
 
-usid.hdf_utils.print_tree(h5_file)
+sidpy.hdf_utils.print_tree(h5_file)
 
 ########################################################################################################################
 # write_reduced_anc_dsets()
@@ -582,7 +591,7 @@ print(h5_spec_inds)
 # Let us take a look at the contents only inside h5_analysis_group now. Clearly, we have created two new spectroscopic
 # ancillary datasets.
 
-usid.hdf_utils.print_tree(h5_analysis_group)
+sidpy.hdf_utils.print_tree(h5_analysis_group)
 
 ########################################################################################################################
 # write_ind_val_dsets()
@@ -615,7 +624,7 @@ h5_pos_inds, h5_pos_vals = usid.hdf_utils.write_ind_val_dsets(h5_analysis_group,
 # Looking at the contents of ``Normalized_Data-Fitting_000`` now reveals that we have added the ``Position`` datasets as
 # well. However, we still do not have the ``Main dataset``.
 
-usid.hdf_utils.print_tree(h5_analysis_group)
+sidpy.hdf_utils.print_tree(h5_analysis_group)
 
 ########################################################################################################################
 # Finally, we can create and write a Main dataset with some results using the trusty write_main_dataset function. Since
@@ -671,7 +680,7 @@ print(h5_cap_2)
 #
 # Now, let us look at the contents of the group: ``Normalized_Data-Fitting_000`` to verify this:
 
-usid.hdf_utils.print_tree(h5_analysis_group)
+sidpy.hdf_utils.print_tree(h5_analysis_group)
 
 ########################################################################################################################
 # File status
@@ -682,19 +691,19 @@ usid.hdf_utils.print_tree(h5_analysis_group)
 # make sure that it is indeed possible to write the new data to the file. ``is_editable_h5()`` is a handy function for
 # this very purpose:
 
-print('Is the file editable?: {}'.format(usid.hdf_utils.is_editable_h5(h5_file)))
+print('Is the file editable?: {}'.format(sidpy.hdf_utils.is_editable_h5(h5_file)))
 
 ########################################################################################################################
 # If we close the file and try again we should expect runtime and Value errors. You can try this by yourself if you like
 
 h5_file.close()
-# print('Is the file editable?: {}'.format(usid.hdf_utils.is_editable_h5(h5_file)))
+# print('Is the file editable?: {}'.format(sidpy.hdf_utils.is_editable_h5(h5_file)))
 
 ########################################################################################################################
 # Let us try again by opening this file in read-only mode. We should see that the file will not be editable:
 
 h5_file = h5py.File('test.h5', mode='r')
-print('Is the file editable?: {}'.format(usid.hdf_utils.is_editable_h5(h5_file)))
+print('Is the file editable?: {}'.format(sidpy.hdf_utils.is_editable_h5(h5_file)))
 
 
 ########################################################################################################################

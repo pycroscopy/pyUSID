@@ -26,6 +26,7 @@ requirements = ['numpy>=1.10',
                 'ipywidgets>=5.2.2',
                 'ipython>=5.1.0,<6;python_version<"3.3"',  # IPython 6.0+ does not support Python 2.6, 2.7, 3.0, 3.1, or 3.2
                 'ipython>=6.0;python_version>="3.3"',  # Beginning with IPython 6.0, Python 3.3 and above is required.
+                'sidpy>=0.0.1'
                 ]
 
 setup(
@@ -47,17 +48,18 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: Implementation :: CPython',
         'Topic :: Scientific/Engineering :: Information Analysis'],
     keywords=['imaging', 'spectra', 'multidimensional', 'data format', 'universal', 'hdf5'],
-    packages=find_packages(exclude='tests'),
+    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     url='https://pycroscopy.github.io/pyUSID/about.html',
     license='MIT',
     author='S. Somnath, C. R. Smith, and contributors',
     author_email='pycroscopy@gmail.com',
     install_requires=requirements,
     setup_requires=['pytest-runner'],
-    tests_require=['unittest2;python_version<"3.0"', 'pytest', 'Nose'],
+    tests_require=['unittest2;python_version<"3.0"', 'pytest'],
     platforms=['Linux', 'Mac OSX', 'Windows 10/8.1/8/7'],
     # package_data={'sample':['dataset_1.dat']}
     test_suite='pytest',

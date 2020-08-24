@@ -7,12 +7,13 @@ import h5py
 import numpy as np
 from io import StringIO
 from contextlib import contextmanager
-from pyUSID import __version__
 from platform import platform
 
+from sidpy.hdf.hdf_utils import get_attr
+from sidpy.base.string_utils import get_time_stamp
+
 sys.path.append("../../pyUSID/")
-from pyUSID.io.hdf_utils import get_attr
-from pyUSID.io.io_utils import get_time_stamp
+from pyUSID import __version__
 from pyUSID.io.write_utils import INDICES_DTYPE, VALUES_DTYPE
 
 std_beps_path = 'test_hdf_utils.h5'
