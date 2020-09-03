@@ -13,10 +13,10 @@ from warnings import warn
 from enum import Enum
 import numpy as np
 from sidpy.base.num_utils import contains_integers
-from sidpy.base.string_utils import validate_list_of_strings, \
-    validate_single_string_arg
+from sidpy.base.string_utils import validate_list_of_strings
 from sidpy.base import num_utils as nut
 from sidpy.base import string_utils as sut
+from sidpy.sid import Dimension as SIDimension
 
 __all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE', 'get_slope',
            'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions', 'DimType',
@@ -53,12 +53,13 @@ class DimType(Enum):
         return self.value == other.value
 
 
-class Dimension(object):
+class Dimension(SIDimension):
     """
     ..autoclass::Dimension
     """
 
-    def __init__(self, name, units, values, mode=DimType.DEFAULT):
+    def __init__(self, name, units, values, quantity='generic',
+                 dimension_type='generic', mode=DimType.DEFAULT):
         """
         Simple object that describes a dimension in a dataset by its name, units, and values
 
@@ -79,44 +80,42 @@ class Dimension(object):
                 dimensions. Examples include spiral scans, sparse sampling, aborted measurements
             DimType.DEPENDENT - Values in this dimension were varied as a function of another (independent) dimension.
         """
-        name = validate_single_string_arg(name, 'name')
-
-        if not isinstance(units, (str, unicode)):
-            raise TypeError('units should be a string')
-        units = units.strip()
-
-        if isinstance(values, int):
-            if values < 1:
-                raise ValueError('values should at least be specified as a positive integer')
-            values = np.arange(values)
-        if not isinstance(values, (np.ndarray, list, tuple)):
-            raise TypeError('values should be array-like')
-
-        if not isinstance(mode, DimType):
-            raise TypeError('mode must be of type pyUSID.DimType. Provided object was of type: {}'.format(type(mode)))
-
-        self.name = name
-        self.units = units
-        self.values = values
+        super(Dimension, self).__init__(name, values, quantity=quantity,
+                                        units=units,
+                                        dimension_type=dimension_type)
         self.mode = mode
+
+    @property
+    def mode(self):
+        return self._mode
+
+    @mode.setter
+    def mode(self, value):
+        if not isinstance(value, DimType):
+            raise TypeError('mode must be of type pyUSID.DimType. Provided '
+                            'object was of type: {}'.format(type(value)))
+        self._mode = value
+
+    @property
+    def units(self):
+        return self._units
+
+    # pyUSID allows empty values for units unlike sid.Dimension
+    @units.setter
+    def units(self, value):
+        if not isinstance(value, (str, unicode)):
+            raise TypeError('units should be a string')
+        self._units = value.strip()
 
     def __repr__(self):
         return '{} ({}) mode:{} : {}'.format(self.name, self.units, self.mode, self.values)
 
     def __eq__(self, other):
-        if isinstance(other, Dimension):
-            if self.name != other.name:
-                return False
-            if self.units != other.units:
-                return False
-            if self.mode != other.mode:
-                return False
-            if len(self.values) != len(other.values):
-                return False
-            if not np.allclose(self.values, other.values):
-                return False
-
-        return True
+        upper = super(Dimension, self).__eq__(other)
+        if not upper:
+            return upper
+        else:
+            return self.mode == other.mode
 
 
 def validate_dimensions(dimensions, dim_type='Position'):
