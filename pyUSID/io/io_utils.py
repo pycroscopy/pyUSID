@@ -56,7 +56,8 @@ def file_dialog(file_filter='H5 file (*.h5)', caption='Select File'):
          'sidpy.io.interface_utils.file_dialog. This copy in pyUSID will'
          'be removed in future release. Please update your import statements',
          FutureWarning)
-    return iut.file_dialog(file_filter=file_filter, caption=caption)
+    #return iut.file_dialog(file_filter=file_filter, caption=caption)
+    return iut.openfile_dialog(file_types=file_filter, caption=caption)
 
 
 def get_time_stamp():
