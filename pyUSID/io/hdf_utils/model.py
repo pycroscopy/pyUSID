@@ -14,8 +14,13 @@ import numpy as np
 from dask import array as da
 from sidpy.hdf.hdf_utils import get_attr, write_simple_attrs, is_editable_h5
 
-from ..dtype_utils import contains_integers, validate_dtype, validate_single_string_arg, validate_string_args, \
-    validate_list_of_strings, lazy_load_array
+from sidpy.base.num_utils import contains_integers
+from sidpy.base.string_utils import (validate_single_string_arg,
+                                     validate_list_of_strings,
+                                     validate_string_args)
+from sidpy.hdf.hdf_utils import lazy_load_array
+
+from ..dtype_utils import validate_dtype
 
 from .base import write_book_keeping_attrs
 from .simple import link_as_main, check_if_main, write_ind_val_dsets, validate_dims_against_main, validate_anc_h5_dsets, copy_dataset
@@ -208,7 +213,7 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
 
     """
     Now we reshape the dataset based on those dimensions
-    numpy reshapes correctly when the dimensions are arranged from slowest to fastest. 
+    numpy reshapes correctly when the dimensions are arranged from slowest to fastest.
     Since the sort orders we have are from fastest to slowest, we need to reverse the orders
     for both the position and spectroscopic dimensions
     """

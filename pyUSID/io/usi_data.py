@@ -1255,7 +1255,7 @@ class USIDataset(h5py.Dataset):
 
         """
         Create the spectral and position labels for the dataset in string form then
-        create the position value array in string form, right-strip the last comma from the 
+        create the position value array in string form, right-strip the last comma from the
         string to deliver the correct number of values, append all of the labels and values together,
         save the data and header to a temporary csv output
         """
