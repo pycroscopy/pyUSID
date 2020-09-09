@@ -204,7 +204,7 @@ print('Attributes in {} before copying attributes:'.format(h5_some_dataset))
 for key, val in sidpy.hdf_utils.get_attributes(h5_some_dataset).items():
     print('\t%s : %s' % (key, val))
 print('\n------------- COPYING ATTRIBUTES ----------------------------\n')
-usid.hdf_utils.copy_attributes(h5_meas_group, h5_some_dataset)
+sidpy.hdf.hdf_utils.copy_attributes(h5_meas_group, h5_some_dataset)
 print('Attributes in {}:'.format(h5_some_dataset))
 for key, val in sidpy.hdf_utils.get_attributes(h5_some_dataset).items():
     print('\t%s : %s' % (key, val))

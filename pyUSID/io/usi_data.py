@@ -20,14 +20,13 @@ import matplotlib.pyplot as plt
 from sidpy.base.string_utils import validate_single_string_arg, \
     validate_list_of_strings
 from sidpy.base.num_utils import contains_integers, get_exponent
-from sidpy.hdf.hdf_utils import get_attr, lazy_load_array
+from sidpy.hdf.hdf_utils import get_attr, lazy_load_array, copy_attributes
 from sidpy.hdf.dtype_utils import flatten_to_real, is_complex_dtype
 from sidpy.viz.jupyter_utils import simple_ndim_visualizer
 from sidpy.viz.plot_utils import plot_map, get_plot_grid_size
 
 from .hdf_utils import check_if_main, create_results_group, write_reduced_anc_dsets, link_as_main, \
-    get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset, reshape_from_n_dims, \
-    copy_attributes
+    get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset, reshape_from_n_dims
 from .write_utils import Dimension
 
 if sys.version_info.major == 3:

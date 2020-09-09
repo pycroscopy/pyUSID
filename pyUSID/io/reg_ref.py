@@ -11,9 +11,9 @@ from collections import Iterable
 from warnings import warn
 import h5py
 import numpy as np
+from sidpy.base.string_utils import clean_string_att
 
 from .hdf_utils import check_if_main
-from .write_utils import clean_string_att
 
 if sys.version_info.major == 3:
     unicode = str
@@ -510,7 +510,7 @@ def write_region_references(h5_dset, reg_ref_dict, add_labels_attr=True, verbose
 
     '''
     Next, write these label names as an attribute called labels
-    Now make an attribute called 'labels' that is a list of strings 
+    Now make an attribute called 'labels' that is a list of strings
     First ascertain the dimension of the slicing:
     '''
     if add_labels_attr:

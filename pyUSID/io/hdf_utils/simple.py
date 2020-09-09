@@ -20,9 +20,10 @@ from sidpy.hdf.dtype_utils import validate_dtype
 from sidpy.hdf import hdf_utils as hut
 from sidpy.base.string_utils import validate_single_string_arg, validate_list_of_strings
 from sidpy.base.num_utils import contains_integers
+from sidpy.base.string_utils import clean_string_att
 
-from ..write_utils import clean_string_att, build_ind_val_matrices, \
-    INDICES_DTYPE, VALUES_DTYPE, Dimension, DimType
+from ..write_utils import build_ind_val_matrices, INDICES_DTYPE, VALUES_DTYPE, \
+    Dimension, DimType
 from .base import write_book_keeping_attrs
 
 if sys.version_info.major == 3:
