@@ -16,13 +16,14 @@ import dask.array as da
 from sidpy.hdf.hdf_utils import get_auxiliary_datasets, link_h5_obj_as_alias, \
     write_simple_attrs, is_editable_h5, validate_h5_objs_in_same_h5_file, \
     get_attr
+from sidpy.hdf.dtype_utils import validate_dtype
 from sidpy.hdf import hdf_utils as hut
+from sidpy.base.string_utils import validate_single_string_arg, validate_list_of_strings
+from sidpy.base.num_utils import contains_integers
+from sidpy.base.string_utils import clean_string_att
 
-
-from ..dtype_utils import validate_dtype, validate_single_string_arg, \
-    validate_list_of_strings, contains_integers, lazy_load_array
-from ..write_utils import clean_string_att, build_ind_val_matrices, \
-    INDICES_DTYPE, VALUES_DTYPE, Dimension, DimType
+from ..write_utils import build_ind_val_matrices, INDICES_DTYPE, VALUES_DTYPE, \
+    Dimension, DimType
 from .base import write_book_keeping_attrs
 
 if sys.version_info.major == 3:
@@ -1193,8 +1194,8 @@ def copy_linked_objects(h5_source, h5_dest, verbose=False):
     """
     Recursively copies datasets linked to the source h5 object to the
     destination h5 object that are be in different HDF5 files.
-    
-    This is for copying ancillary datasets to a target dataset that is 
+
+    This is for copying ancillary datasets to a target dataset that is
     missing ancillary datasets. It is not meant for copying to a Group,
     but that is supported.
 
