@@ -58,8 +58,8 @@ class Dimension(SIDimension):
     ..autoclass::Dimension
     """
 
-    def __init__(self, name, units, values, quantity='generic',
-                 dimension_type='generic', mode=DimType.DEFAULT):
+    def __new__(cls, name, units, values, quantity='generic',
+                dimension_type='unknown', mode=DimType.DEFAULT):
         """
         Simple object that describes a dimension in a dataset by its name, units, and values
 
@@ -79,11 +79,15 @@ class Dimension(SIDimension):
             DimType.INCOMPLETE - Data not present for all combinations of values in this dimension and all other
                 dimensions. Examples include spiral scans, sparse sampling, aborted measurements
             DimType.DEPENDENT - Values in this dimension were varied as a function of another (independent) dimension.
+        quantity : str or unicode
+            Physical quantity such as Length
+        dimension_type : str or sidpy.DimensionTypes
+            Type of dimension. such as spectral, spatial, etc.
         """
-        super(Dimension, self).__init__(values, name=name, quantity=quantity,
-                                        units=units,
-                                        dimension_type=dimension_type)
+        self = SIDimension.__new__(cls, values, name=name, quantity=quantity,
+                                   units=units, dimension_type=dimension_type)
         self.mode = mode
+        return self
 
     @property
     def mode(self):
