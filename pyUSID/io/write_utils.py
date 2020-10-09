@@ -80,7 +80,7 @@ class Dimension(SIDimension):
                 dimensions. Examples include spiral scans, sparse sampling, aborted measurements
             DimType.DEPENDENT - Values in this dimension were varied as a function of another (independent) dimension.
         """
-        super(Dimension, self).__init__(name, values, quantity=quantity,
+        super(Dimension, self).__init__(values, name=name, quantity=quantity,
                                         units=units,
                                         dimension_type=dimension_type)
         self.mode = mode
