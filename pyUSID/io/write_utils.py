@@ -84,6 +84,10 @@ class Dimension(SIDimension):
         dimension_type : str or sidpy.DimensionTypes
             Type of dimension. such as spectral, spatial, etc.
         """
+        if isinstance(values, int):
+            if values < 1:
+                raise ValueError('values must be a whole number. {} provided'
+                                 ''.format(values))
         self = SIDimension.__new__(cls, values, name=name, quantity=quantity,
                                    units=units, dimension_type=dimension_type)
         self.mode = mode
@@ -112,14 +116,31 @@ class Dimension(SIDimension):
         self._units = value.strip()
 
     def __repr__(self):
-        return '{} ({}) mode:{} : {}'.format(self.name, self.units, self.mode, self.values)
+        return '{}: {} ({}) mode:{} : {}' \
+               ''.format(self.name, self.quantity, self.units, self.mode,
+                         self.values)
+
+    def __str__(self):
+        return '{}: {} ({}) mode:{} : {}' \
+               ''.format(self.name, self.quantity, self.units, self.mode,
+                         self.values)
 
     def __eq__(self, other):
-        upper = super(Dimension, self).__eq__(other)
-        if not upper:
-            return upper
-        else:
-            return self.mode == other.mode
+        # Since __eq__ has not been implemented in sidpy.Dimension:
+        if not isinstance(other, Dimension):
+            raise TypeError('Cannot compare against object type: {}'
+                            ''.format(type(other)))
+        if self._name != other._name:
+            return False
+        if self._quantity != other._quantity:
+            return False
+        if self.mode != other._mode:
+            return False
+        if self._units != other._units:
+            return False
+        if len(self) != len(other):
+            return False
+        return np.allclose(self, other)
 
 
 def validate_dimensions(dimensions, dim_type='Position'):
