@@ -14,7 +14,6 @@ with open(os.path.join(here, 'pyUSID/__version__.py')) as f:
 requirements = ['numpy>=1.10',
                 'toolz',  # dask installation failing without this
                 'cytoolz',  # dask installation failing without this
-                'functoolz', # dask installation failing without this
                 'dask>=0.10',
                 'h5py>=2.6.0',
                 'pillow',  # Remove once ImageReader is in ScopeReaders
@@ -36,9 +35,7 @@ setup(
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'Programming Language :: Cython',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
