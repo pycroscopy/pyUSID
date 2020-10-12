@@ -111,12 +111,14 @@ class TestDimension(unittest.TestCase):
 
     def test_repr(self):
         name = 'Bias'
+        quantity = 'generic'
         units = 'V'
-        values = np.arange(5)
+        values = np.arange(5, dtype=np.float)
 
         descriptor = write_utils.Dimension(name, units, len(values))
+        print(type(descriptor))
         actual = '{}'.format(descriptor)
-        expected = '{} ({}) mode:{} : {}'.format(name, units, descriptor.mode, values)
+        expected = '{}: {} ({}) mode:{} : {}'.format(name, quantity, units, descriptor.mode, values)
         self.assertEqual(actual, expected)
 
     def test_equality(self):
@@ -130,23 +132,28 @@ class TestDimension(unittest.TestCase):
     def test_inequality(self):
         name = 'Bias'
         units = 'V'
+        values = [0, 1, 2, 3]
 
-        self.assertNotEqual(write_utils.Dimension(name, units, [0, 1, 2, 3]),
-                            write_utils.Dimension(name, units, [0, 1, 2, 4]))
+        left = write_utils.Dimension(name, units, values)
+        right = write_utils.Dimension(name, units, [0, 1, 2, 4])
+        self.assertFalse(left == right)
 
-        self.assertNotEqual(write_utils.Dimension('fdfd', units, [0, 1, 2, 3]),
-                            write_utils.Dimension(name, units, [0, 1, 2, 3]))
+        left = write_utils.Dimension(name, units, [0, 1, 2])
+        right = write_utils.Dimension(name, units, values)
+        self.assertFalse(left == right)
 
-        self.assertNotEqual(write_utils.Dimension(name, 'fdfd', [0, 1, 2, 3]),
-                            write_utils.Dimension(name, units, [0, 1, 2, 3]))
+        left = write_utils.Dimension('name', units, values)
+        right = write_utils.Dimension(name, units, values)
+        self.assertFalse(left == right)
 
-        self.assertNotEqual(write_utils.Dimension(name, units, [0, 1, 2, 3],
-                                                  mode=write_utils.DimType.DEPENDENT),
-                            write_utils.Dimension(name, units, [0, 1, 2, 3],
-                                                  mode=write_utils.DimType.INCOMPLETE))
+        left = write_utils.Dimension(name, 'units', values)
+        right = write_utils.Dimension(name, units, values)
+        self.assertFalse(left == right)
 
-        self.assertNotEqual(write_utils.Dimension(name, units, [0, 1, 2]),
-                            write_utils.Dimension(name, units, [0, 1, 2, 3]))
+        left = write_utils.Dimension(name, units, values,
+                                     mode=write_utils.DimType.DEPENDENT)
+        right = write_utils.Dimension(name, units, values)
+        self.assertFalse(left == right)
 
     def test_invalid_mode(self):
         with self.assertRaises(TypeError):
