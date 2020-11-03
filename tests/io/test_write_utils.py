@@ -22,13 +22,28 @@ class TestMakeIndicesMatrix(unittest.TestCase):
         with self.assertRaises(ValueError):
             _ = write_utils.make_indices_matrix([1, 2, 3])
 
+    def test_just_size_of_one_dim(self):
+        expected = np.expand_dims(np.arange(4), axis=0)
+        ret_val = write_utils.make_indices_matrix(4, is_position=False)
+        self.assertTrue(np.allclose(expected, ret_val))
+
+    def test_empty_list(self):
+        with self.assertRaises(ValueError):
+            _ = write_utils.make_indices_matrix([])
+
+    def test_single_value_dimension_int_input(self):
+        expected = np.expand_dims(np.arange(1), axis=0)
+        ret_val = write_utils.make_indices_matrix(1, is_position=False)
+        self.assertTrue(np.allclose(expected, ret_val))
+
+    def test_single_value_dimension_list_input(self):
+        expected = np.expand_dims(np.arange(1), axis=0)
+        ret_val = write_utils.make_indices_matrix([1], is_position=False)
+        self.assertTrue(np.allclose(expected, ret_val))
+
     def test_non_int_dim_sizes(self):
         with self.assertRaises(ValueError):
             _ = write_utils.make_indices_matrix([1.233, 2.4, 3])
-
-    def test_not_list(self):
-        with self.assertRaises(TypeError):
-            _ = write_utils.make_indices_matrix(1)
 
     def test_weird_inputs(self):
         with self.assertRaises(ValueError):
