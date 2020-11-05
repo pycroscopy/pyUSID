@@ -339,7 +339,8 @@ class TestSliceReal(TestUSIDatasetReal):
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual, success = usi_main.slice(slice_dict,
                                              ndim_form=result_as_nd,
-                                             lazy=lazy_result)
+                                             lazy=lazy_result,
+                                             verbose=verbose)
             if verbose:
                 print('Status: {}, actual.shape: {}, actual.dtype: {}, '
                       'type(actual): {}'.format(success, actual.shape,
