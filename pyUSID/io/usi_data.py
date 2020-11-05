@@ -488,8 +488,8 @@ class USIDataset(h5py.Dataset):
         if verbose:
             print('data_slice of shape: {} after squeezing'.format(data_slice.shape))
 
-        pos_inds = self.h5_pos_inds[pos_slice, :]
-        spec_inds = self.h5_spec_inds[:, spec_slice].reshape([self.h5_spec_inds.shape[0], -1])
+        pos_inds = self.h5_pos_inds[pos_slice.ravel(), :]
+        spec_inds = self.h5_spec_inds[:, spec_slice.ravel()].reshape([self.h5_spec_inds.shape[0], -1])
         if verbose:
             print('Sliced position indices:')
             print(pos_inds)
