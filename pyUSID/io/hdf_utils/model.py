@@ -18,10 +18,12 @@ from sidpy.base.num_utils import contains_integers
 from sidpy.base.string_utils import validate_single_string_arg, \
     validate_list_of_strings, validate_string_args
 from sidpy.hdf.dtype_utils import validate_dtype
+import sidpy.sid.dataset
 
 from .base import write_book_keeping_attrs
 from .simple import link_as_main, check_if_main, write_ind_val_dsets, validate_dims_against_main, validate_anc_h5_dsets
 from pyUSID.io.write_utils import validate_dimensions
+from pyUSID.io.write_utils import Dimension
 from ..write_utils import INDICES_DTYPE, make_indices_matrix
 
 if sys.version_info.major == 3:
@@ -1014,3 +1016,72 @@ def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
         cart_data = interpolate(ds_pos_vals, ds_main, grid_shape, method=mode)
 
     return cart_data
+
+
+def usid_writer(sidpy_dataset, h5parent_group, main_dataset_name = 'abcd',
+                verbose = False, **kwargs):
+    """Takes a sidpy dataset and writes it as USID dataset under the give h5 parent group
+    
+    Parameters
+    ----------
+    sidpy_dataset: sidpy.Dataset
+        Dataset to be written to HDF5 in NSID format
+    h5_group : class:`h5py.Group`
+        Parent group under which the datasets will be created
+    main_data_name : String / Unicode
+        Name to give to the main dataset. This cannot contain the '-' character
+        Use this to provide better context about the dataset in the HDF5 file
+    verbose : bool, Optional. Default = False
+        Whether or not to write logs to standard out
+    kwargs: dict
+        additional keyword arguments passed on to h5py when writing data
+    
+    Returns
+    ------
+    h5_main : USIDataset
+        Reference to the main dataset
+    """
+    
+    if not isinstance(sidpy_dataset, sidpy.Dataset):
+        raise TypeError('Data to write is not a sidpy dataset')
+
+    main_dataset = da.asarray(np.array(sidpy_dataset))
+    spatial_dims, spectral_dims,  spatial_size, spectral_size = [],[],1.0,1.0
+    for i, dime in (sidpy_dataset._axes.items()):
+        if (dime._dimension_type == sidpy.sid.dimension.DimensionType.SPATIAL):
+            spatial_dims.append(Dimension(dime._name,dime._units, dime.values, 
+                                          dime._quantity, dime._dimension_type))
+                                                
+    
+        
+            spatial_size *= np.size(dime.values)
+        
+        elif (dime._dimension_type == sidpy.sid.dimension.DimensionType.SPECTRAL):
+            spectral_dims.append(Dimension(dime._name,dime._units, dime.values, 
+                                           dime._quantity, dime._dimension_type ))
+                                                
+    
+            spectral_size *= np.size(dime.values)
+        
+        
+        
+    main_dataset = da.reshape(main_dataset,[spatial_size, spectral_size]) 
+    
+    main_dset_attr = {}
+    for attr_name in dir(sidpy_dataset):
+        attr_val = getattr(sidpy_dataset, attr_name)
+        if isinstance(attr_val, dict):
+            main_dset_attr.update(attr_val)
+    
+   
+    h5_main = write_main_dataset(h5_parent_group = h5parent_group, 
+                                      main_data = main_dataset, 
+                                      main_data_name = main_dataset_name,
+                                      quantity = sidpy_dataset.quantity,
+                                      units = sidpy_dataset.units,
+                                      pos_dims = spatial_dims, spec_dims = spectral_dims,
+                                      main_dset_attrs = sidpy.base.dict_utils.flatten_dict(main_dset_attr), 
+                                      verbose = verbose)
+                              
+    
+    return h5_main
