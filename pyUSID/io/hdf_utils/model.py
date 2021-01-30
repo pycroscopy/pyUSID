@@ -15,10 +15,11 @@ from dask import array as da
 from sidpy.hdf.hdf_utils import get_attr, write_simple_attrs, is_editable_h5, \
     copy_dataset, lazy_load_array
 from sidpy.base.num_utils import contains_integers
+from sidpy.base.dict_utils import flatten_dict
 from sidpy.base.string_utils import validate_single_string_arg, \
     validate_list_of_strings, validate_string_args
 from sidpy.hdf.dtype_utils import validate_dtype
-import sidpy.sid.dataset
+from sidpy import sid
 
 from .base import write_book_keeping_attrs
 from .simple import link_as_main, check_if_main, write_ind_val_dsets, validate_dims_against_main, validate_anc_h5_dsets
@@ -1018,19 +1019,18 @@ def map_grid_to_cartesian(h5_main, grid_shape, mode='histogram', **kwargs):
     return cart_data
 
 
-def usid_writer(sidpy_dataset, h5parent_group, main_dataset_name = 'abcd',
-                verbose = False, **kwargs):
-    """Takes a sidpy dataset and writes it as USID dataset under the give h5 parent group
+def write_sidpy_dataset(si_dset, h5_parent_group, verbose=False,
+                        **kwargs):
+    """
+    Writes a sidpy.Dataset as a USID dataset in the provided HDF5 Group.
+    Please see notes about dimension types
     
     Parameters
     ----------
-    sidpy_dataset: sidpy.Dataset
+    si_dset: sidpy.Dataset
         Dataset to be written to HDF5 in NSID format
-    h5_group : class:`h5py.Group`
+    h5_parent_group : class:`h5py.Group`
         Parent group under which the datasets will be created
-    main_data_name : String / Unicode
-        Name to give to the main dataset. This cannot contain the '-' character
-        Use this to provide better context about the dataset in the HDF5 file
     verbose : bool, Optional. Default = False
         Whether or not to write logs to standard out
     kwargs: dict
@@ -1040,48 +1040,63 @@ def usid_writer(sidpy_dataset, h5parent_group, main_dataset_name = 'abcd',
     ------
     h5_main : USIDataset
         Reference to the main dataset
+
+    Notes
+    -----
+    USID only has two dimension types - Position and Spectroscopic.
+    Consider changing the types of dimensions of all other dimensions to either
+    "SPATIAL" or "SPECTRAL".
     """
     
-    if not isinstance(sidpy_dataset, sidpy.Dataset):
+    if not isinstance(si_dset, sid.Dataset):
         raise TypeError('Data to write is not a sidpy dataset')
+    if not isinstance(h5_parent_group, (h5py.File, h5py.Group)):
+        raise TypeError('h5_parent_group is not a h5py.File or '
+                        'h5py.Group object')
 
-    main_dataset = da.asarray(np.array(sidpy_dataset))
-    spatial_dims, spectral_dims,  spatial_size, spectral_size = [],[],1.0,1.0
-    for i, dime in (sidpy_dataset._axes.items()):
-        if (dime._dimension_type == sidpy.sid.dimension.DimensionType.SPATIAL):
-            spatial_dims.append(Dimension(dime._name,dime._units, dime.values, 
-                                          dime._quantity, dime._dimension_type))
-                                                
-    
-        
+    spatial_dims, spectral_dims,  spatial_size, spectral_size = [], [], 1, 1
+    for dim_ind, dime in si_dset._axes.items():
+        if dime._dimension_type == sid.DimensionType.SPATIAL:
+            spatial_dims.append(Dimension(dime._name,
+                                          dime._units,
+                                          dime.values,
+                                          dime._quantity,
+                                          dime._dimension_type))
+
             spatial_size *= np.size(dime.values)
         
-        elif (dime._dimension_type == sidpy.sid.dimension.DimensionType.SPECTRAL):
-            spectral_dims.append(Dimension(dime._name,dime._units, dime.values, 
-                                           dime._quantity, dime._dimension_type ))
-                                                
-    
+        else:
+            if not dime._dimension_type == sid.DimensionType.SPECTRAL:
+                warn('Will consider dimension: {} of type: {} as a '
+                     'spectroscopic dimension'.format(dime._name,
+                                                      dime._dimension_type))
+            spectral_dims.append(Dimension(dime._name,
+                                           dime._units,
+                                           dime.values,
+                                           dime._quantity,
+                                           dime._dimension_type))
+
             spectral_size *= np.size(dime.values)
-        
-        
-        
-    main_dataset = da.reshape(main_dataset,[spatial_size, spectral_size]) 
-    
+
+    main_dataset = da.reshape(si_dset, [spatial_size, spectral_size])
+
+    # TODO : Consider writing this out as a separate group
     main_dset_attr = {}
-    for attr_name in dir(sidpy_dataset):
-        attr_val = getattr(sidpy_dataset, attr_name)
+    for attr_name in dir(si_dset):
+        attr_val = getattr(si_dset, attr_name)
         if isinstance(attr_val, dict):
             main_dset_attr.update(attr_val)
-    
-   
-    h5_main = write_main_dataset(h5_parent_group = h5parent_group, 
-                                      main_data = main_dataset, 
-                                      main_data_name = main_dataset_name,
-                                      quantity = sidpy_dataset.quantity,
-                                      units = sidpy_dataset.units,
-                                      pos_dims = spatial_dims, spec_dims = spectral_dims,
-                                      main_dset_attrs = sidpy.base.dict_utils.flatten_dict(main_dset_attr), 
-                                      verbose = verbose)
-                              
-    
+
+    h5_main = write_main_dataset(h5_parent_group=h5_parent_group,
+                                 main_data=main_dataset,
+                                 main_data_name=si_dset.name,
+                                 quantity=si_dset.quantity,
+                                 units=si_dset.units,
+                                 pos_dims=spatial_dims,
+                                 spec_dims=spectral_dims,
+                                 main_dset_attrs=flatten_dict(main_dset_attr),
+                                 slow_to_fast=True,
+                                 verbose=verbose,
+                                 **kwargs)
+
     return h5_main
