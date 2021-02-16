@@ -11,12 +11,11 @@ Jump to our `GitHub project page <https://github.com/pycroscopy/pyUSID>`_
 
 Documentation Index
 -------------------
-.. currentmodule:: index
-
-.. autosummary::
-   :template: module.rst
-
 .. toctree::
+   :glob:
+   :maxdepth: 1
+   :caption: pyUSID
+
     about
     getting_started
     install
@@ -30,12 +29,22 @@ Documentation Index
     whats_new
     matlab_to_python
     scale_to_hpc
-    api
 
 
-Indices and tables
-==================
+Source code API
+---------------
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-module-template.rst
+   :recursive:
 
-* :ref:`genindex`
+   pyUSID
+
 * :ref:`modindex`
-* :ref:`search`
+
+.. toctree::
+   :glob:
+   :maxdepth: 2
+   :caption: Examples
+
+   notebooks/**/index
