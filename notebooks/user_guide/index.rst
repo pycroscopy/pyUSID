@@ -3,8 +3,8 @@ User Guide
 
 This folder contains notebooks for creating, manipulating and visualizing Datasets.
 
-* `USIDataset <./create_dataset.ipynb>`_
-* `Numpy Translator <./plot_dataset.ipynb>`_ - Writing data and metadata into USID formatted HDF5 files easily
+* `USIDataset <./usi_dataset.ipynb>`_
+* `Numpy Translator <./numpy_translator.ipynb>`_ - Writing data and metadata into USID formatted HDF5 files easily
 * `Utilities <./write_utils.ipynb>`_ that assist in writing USID data
 * Utilities for `writing h5USID <./hdf_utils_write.ipynb>`_ files
 * Formalizing data processing using the `Process class <./process.ipynb>`_
