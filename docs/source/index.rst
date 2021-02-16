@@ -19,15 +19,9 @@ Documentation Index
     about
     getting_started
     install
-    external_guides
-    auto_examples/index
-    data_format
-    contribution_guidelines
     faq
     contact
     credits
-    whats_new
-    matlab_to_python
     scale_to_hpc
 
 

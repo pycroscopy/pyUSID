@@ -45,8 +45,8 @@ for root, dirs, files in os.walk(examples_source):
 # -- Project information -----------------------------------------------------
 
 project = 'pyUSID'
-copyright = '2018, Suhas Somnath, Chris R. Smith, Stephen Jesse'
-author = 'Suhas Somnath, Chris R. Smith, Stephen Jesse'
+copyright = '2018, Suhas Somnath and Chris R. Smith'
+author = 'Suhas Somnath and Chris R. Smith'
 
 # The short X.Y version
 version = pyusid_version
