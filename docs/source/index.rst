@@ -9,8 +9,6 @@ Welcome to pyUSID's documentation!
 
 Jump to our `GitHub project page <https://github.com/pycroscopy/pyUSID>`_
 
-Documentation Index
--------------------
 .. toctree::
    :glob:
    :maxdepth: 1
