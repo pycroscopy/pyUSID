@@ -22,7 +22,7 @@ matplotlib.use('agg')
 import sphinx
 import sphinx_rtd_theme
 import sphinx_gallery
-sys.path.append(os.path.abspath('../'))
+sys.path.append(os.path.abspath('../../'))
 import pyUSID
 
 # -- Project information -----------------------------------------------------
@@ -417,6 +417,6 @@ sphinx_gallery_conf = dict(examples_dirs=['../examples'],
                                               scipy='https://docs.scipy.org/doc/scipy/reference',
                                               h5py='http://docs.h5py.org/en/latest/'),
                            # directory where function granular galleries are stored
-                           backreferences_dir='_autosummary/backreferences',
+                           backreferences_dir='../_autosummary/backreferences',
                            # Modules for which function level galleries are created.
                            doc_module='pyUSID')
