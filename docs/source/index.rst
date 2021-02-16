@@ -14,14 +14,14 @@ Jump to our `GitHub project page <https://github.com/pycroscopy/pyUSID>`_
    :maxdepth: 1
    :caption: pyUSID
 
-    about
-    getting_started
-    install
-    faq
-    contact
-    credits
-    scale_to_hpc
-
+   about
+   getting_started
+   install
+   faq
+   contact
+   credits
+   cpu_to_gpu
+   scale_to_hpc
 
 Source code API
 ---------------
