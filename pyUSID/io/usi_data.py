@@ -919,7 +919,7 @@ class USIDataset(h5py.Dataset):
                 fig, axes = plt.subplots(nrows=2, **fig_args)
                 for axis, ufunc, comp_name in zip(axes.flat, [np.abs, np.angle], ['Magnitude', 'Phase']):
                     axis.plot(ref_dims[0].values, ufunc(np.squeeze(curve)), **kwargs)
-                    if comp_name is 'Magnitude':
+                    if comp_name == 'Magnitude':
                         axis.set_title(self.name + '\n(' + comp_name + ')', pad=15)
                         axis.set_ylabel(self.data_descriptor)
                     else:
@@ -970,7 +970,7 @@ class USIDataset(h5py.Dataset):
                 fig, axes = plt.subplots(nrows=2, **fig_args)
                 for axis, ufunc, comp_name in zip(axes.flat, [np.abs, np.angle], ['Magnitude', 'Phase']):
                     cbar_label = self.data_descriptor
-                    if comp_name is 'Phase':
+                    if comp_name == 'Phase':
                         cbar_label = 'Phase (rad)'
                     plot_map(axis, ufunc(np.squeeze(img)), show_xy_ticks=True, show_cbar=True,
                              cbar_label=cbar_label, x_vec=ref_dims[1].values, y_vec=ref_dims[0].values,
