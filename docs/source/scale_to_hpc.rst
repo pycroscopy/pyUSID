@@ -1,6 +1,6 @@
 Scaling to High-Performance-Computing Clusters
 ==============================================
-:Author: Suhas Somnath, Emily Costa
+:Author: Emily Costa and Suhas Somnath
 :Created on: 08/20/2019
 
 **Here we provide instructions and advice on scaling computations based on pyUSID.Process
@@ -20,7 +20,7 @@ As a consequence, it may not be feasible to run large / lengthy computations on 
 In such cases and when available, it is recommended that such computations be run on a university / national lab
 compute cluster for timely processing of the data.
 
-The `pyUSID.Process <./auto_examples/intermediate/plot_process.html#sphx-glr-auto-examples-intermediate-plot-process-py>`_
+The `pyUSID.Process <./user_guide/process.html>`_
 class facilitates the formalization of data processing that needs
 to be performed routinely or by  multiple researchers in a repeatable and systematic manner.
 ``pyUSID.Process`` has built-in mechanisms to automatically detect when it is
