@@ -1,17 +1,17 @@
 pyUSID
 ======
 
-.. image:: https://travis-ci.com/pycroscopy/pyUSID.svg?branch=master
-    :target: https://travis-ci.com/pycroscopy/pyUSID
+.. image:: https://github.com/pycroscopy/pyUSID/workflows/build/badge.svg?branch=master
+    :target: https://github.com/pycroscopy/pyUSID/actions?query=workflow%3Abuild
     :alt: TravisCI
 
 .. image:: https://img.shields.io/pypi/v/pyUSID.svg
     :target: https://pypi.org/project/pyUSID/
     :alt: PyPI
 
-.. image:: https://coveralls.io/repos/github/pycroscopy/pyUSID/badge.svg?branch=master
-    :target: https://coveralls.io/github/pycroscopy/pyUSID?branch=master
-    :alt: coverage
+.. image:: https://codecov.io/gh/pycroscopy/pyUSID/branch/master/graph/badge.svg?token=HO16T99GJO
+    :target: https://codecov.io/gh/pycroscopy/pyUSID
+    :alt: codecov
     
 .. image:: https://img.shields.io/pypi/l/pyUSID.svg
     :target: https://pypi.org/project/pyUSID/
