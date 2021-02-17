@@ -10,6 +10,7 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 
 import os
 import sys
+from warnings import warn
 import h5py
 import numpy as np
 from PIL import Image
@@ -32,6 +33,8 @@ class ImageTranslator(ArrayTranslator):
 
     def __init__(self, *args, **kwargs):
         super(ImageTranslator, self).__init__(*args, **kwargs)
+        warn("pyUSID.ImageTranslator will be removed shortly. Consider using "
+             "SciFiReaders.ImageReader instead", FutureWarning)
 
     @staticmethod
     def _parse_file_path(image_path, h5_path=None):
