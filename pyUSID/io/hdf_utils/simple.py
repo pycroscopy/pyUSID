@@ -22,8 +22,8 @@ from sidpy.base.string_utils import validate_single_string_arg, validate_list_of
 from sidpy.base.num_utils import contains_integers
 from sidpy.base.string_utils import clean_string_att
 
-from ..write_utils import build_ind_val_matrices, INDICES_DTYPE, VALUES_DTYPE, \
-    Dimension, DimType
+from ..write_utils import build_ind_val_matrices, INDICES_DTYPE, VALUES_DTYPE
+from ..dimension import DimType, Dimension
 from .base import write_book_keeping_attrs
 
 if sys.version_info.major == 3:
@@ -241,30 +241,6 @@ def check_and_link_ancillary(h5_dset, anc_names, h5_main=None, anc_refs=None):
             __check_and_link_single(None, name)
 
     h5_dset.file.flush()
-
-
-def copy_attributes(source, dest, skip_refs=True, verbose=False):
-    """
-    Copy attributes from one h5object to another
-
-    Parameters
-    ----------
-    source : h5py.Dataset, :class:`h5py.Group`, or :class:`h5py.File`
-        Object containing the desired attributes
-    dest : h5py.Dataset, :class:`h5py.Group`, or :class:`h5py.File`
-        Object to which the attributes need to be copied to
-    skip_refs : bool, optional. default = True
-        Whether or not the dataset references should be skipped
-    verbose : bool, optional. Defualt = False
-        Whether or not to print logs for debugging
-
-    """
-    warn(
-        'pyUSID.io.hdf_utils.copy_attributes has been moved to '
-        'sidpy.hdf.hdf_utils.copy_attributes. This copy in pyUSID will'
-        'be removed in future release. Please update your import statements')
-    return hut.copy_attributes(source, dest, skip_refs=skip_refs,
-                               verbose=verbose)
 
 
 def validate_main_dset(h5_main, must_be_h5):
@@ -1158,66 +1134,6 @@ def write_ind_val_dsets(h5_parent_group, dimensions, is_spectral=True, verbose=F
     return h5_indices, h5_values
 
 
-def copy_dataset(h5_orig_dset, h5_dest_grp, alias=None, verbose=False):
-    """
-    Copies the provided HDF5 dataset to the provided destination. This function
-    is handy when needing to make copies of datasets to a different HDF5 file.
-
-    Notes
-    -----
-    This function does NOT copy all linked objects such as ancillary
-    datasets. Call `copy_linked_objects` to accomplish that goal.
-
-    Parameters
-    ----------
-    h5_orig_dset : h5py.Dataset
-
-    h5_dest_grp : h5py.Group or h5py.File object :
-        Destination where the duplicate dataset will be created
-    alias : str, optional. Default = name from `h5_orig_dset`:
-        Name to be assigned to the copied dataset
-    verbose : bool, optional. Default = False
-        Whether or not to print logs to assist in debugging
-
-    Returns
-    -------
-
-    """
-    warn('pyUSID.io.hdf_utils.copy_dataset has been moved to '
-         'sidpy.hdf.hdf_utils.copy_dataset. This copy in pyUSID will'
-         'be removed in future release. Please update your import statements')
-    return hut.copy_dataset(h5_orig_dset, h5_dest_grp, alias=alias,
-                            verbose=verbose)
-
-
-def copy_linked_objects(h5_source, h5_dest, verbose=False):
-    """
-    Recursively copies datasets linked to the source h5 object to the
-    destination h5 object that are be in different HDF5 files.
-
-    This is for copying ancillary datasets to a target dataset that is
-    missing ancillary datasets. It is not meant for copying to a Group,
-    but that is supported.
-
-    Notes
-    -----
-    We anticipate this function being used to copy over ancillary datasets
-
-    Parameters
-    ----------
-    h5_source : h5py.Dataset or h5py.Group object
-        Source object
-    h5_dest : h5py.Dataset or h5py.Group object
-        Destination object
-    verbose : bool, optional. Default: False
-        Whether or not to print logs for debugging purposes
-    """
-    warn('pyUSID.io.hdf_utils.copy_linked_objects has been moved to '
-         'sidpy.hdf.hdf_utils.copy_linked_objects. This copy in pyUSID will'
-         'be removed in future release. Please update your import statements')
-    hut.copy_linked_objects(h5_source, h5_dest, verbose=verbose)
-
-
 def write_reduced_anc_dsets(h5_parent_group, h5_inds, h5_vals, dim_name, basename=None, is_spec=None,
                             verbose=False):
     """
@@ -1364,26 +1280,3 @@ def write_reduced_anc_dsets(h5_parent_group, h5_inds, h5_vals, dim_name, basenam
             write_simple_attrs(dset, {'labels': ['Single_Step'], 'units': ['a. u.']})
 
     return h5_inds_new, h5_vals_new
-
-
-def copy_region_refs(h5_source, h5_target):
-    """
-    Check the input dataset for plot groups, copy them if they exist
-    Also make references in the Spectroscopic Values and Indices tables
-
-    Parameters
-    ----------
-    h5_source : HDF5 Dataset
-            source dataset to copy references from
-    h5_target : HDF5 Dataset
-            target dataset the references from h5_source are copied to
-
-    """
-    '''
-    Check both h5_source and h5_target to ensure that are Main
-    '''
-    warn('pyUSID.io.hdf_utils.simple.copy_region_refs has been moved to '
-         'pyUSID.io.reg_ref. This alias will be removed in a future version. '
-         'Please update your import statements accordingly', FutureWarning)
-    from ..reg_ref import copy_region_refs
-    return copy_region_refs(h5_source, h5_target)

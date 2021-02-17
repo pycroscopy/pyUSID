@@ -17,9 +17,8 @@ mpl.use('Agg')
 from sidpy.hdf.hdf_utils import get_attr
 
 sys.path.append("../../pyUSID/")
-from pyUSID.io import USIDataset
+from pyUSID.io import USIDataset, Dimension
 from pyUSID.io.hdf_utils.model import reshape_to_n_dims, get_dimensionality
-from pyUSID.io.write_utils import Dimension
 
 from . import data_utils
 

@@ -10,13 +10,14 @@ from __future__ import division, print_function, absolute_import, unicode_litera
 
 import os
 import sys
+from warnings import warn
 import h5py
 import numpy as np
 from PIL import Image
 from sidpy.base.num_utils import contains_integers
 from sidpy.hdf.hdf_utils import write_simple_attrs
-from .numpy_translator import ArrayTranslator
-from .write_utils import Dimension
+from .array_translator import ArrayTranslator
+from .dimension import Dimension
 
 if sys.version_info.major == 3:
     unicode = str
@@ -32,6 +33,8 @@ class ImageTranslator(ArrayTranslator):
 
     def __init__(self, *args, **kwargs):
         super(ImageTranslator, self).__init__(*args, **kwargs)
+        warn("pyUSID.ImageTranslator will be removed shortly. Consider using "
+             "SciFiReaders.ImageReader instead", FutureWarning)
 
     @staticmethod
     def _parse_file_path(image_path, h5_path=None):
