@@ -14,13 +14,12 @@ from enum import Enum
 import numpy as np
 from sidpy.base.num_utils import contains_integers
 from sidpy.base.string_utils import validate_list_of_strings
-from sidpy.base import num_utils as nut
-from sidpy.base import string_utils as sut
 from sidpy.sid import Dimension as SIDimension
 
-__all__ = ['clean_string_att', 'get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE', 'VALUES_DTYPE', 'get_slope',
-           'Dimension', 'build_ind_val_matrices', 'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions', 'DimType',
-           'to_ranges']
+__all__ = ['get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE',
+           'VALUES_DTYPE', 'Dimension', 'build_ind_val_matrices',
+           'calc_chunks', 'create_spec_inds_from_vals', 'validate_dimensions',
+           'DimType',]
 
 if sys.version_info.major == 3:
     unicode = str
@@ -271,28 +270,6 @@ def make_indices_matrix(num_steps, is_position=True):
     return indices_matrix
 
 
-def clean_string_att(att_val):
-    """
-    Replaces any unicode objects within lists with their string counterparts to ensure compatibility with python 3.
-    If the attribute is indeed a list of unicodes, the changes will be made in-place
-
-    Parameters
-    ----------
-    att_val : object
-        Attribute object
-
-    Returns
-    -------
-    att_val : object
-        Attribute object
-    """
-    warn('pyUSID.io.write_utils.clean_string_att has been moved to '
-         'sidpy.base.string_utils.clean_string_att. This copy in pyUSID will'
-         'be removed in future release. Please update your import statements',
-         FutureWarning)
-    return sut.clean_string_att(att_val)
-
-
 def build_ind_val_matrices(unit_values, is_spectral=True):
     """
     Builds indices and values matrices using given unit values for each dimension.
@@ -477,53 +454,3 @@ def calc_chunks(dimensions, dtype_byte_size, unit_chunks=None, max_chunk_mem=102
     chunking = tuple(unit_chunks)
 
     return chunking
-
-
-def get_slope(values, tol=1E-3):
-    """
-    Attempts to get the slope of the provided values. This function will be handy
-    for checking if a dimension has been varied linearly or not.
-    If the values vary non-linearly, a ValueError will be raised
-
-    Parameters
-    ----------
-    values : array-like
-        List of numbers
-    tol : float, optional. Default = 1E-3
-        Tolerance in the variation of the slopes.
-    Returns
-    -------
-    float
-        Slope of the line
-    """
-    warn('pyUSID.io.write_utils.get_slope has been moved to '
-         'sidpy.base.num_utils.get_slope. This copy in pyUSID will'
-         'be removed in future release. Please update your import statements',
-         FutureWarning)
-    return nut.get_slope(values, tol=tol)
-
-
-def to_ranges(iterable):
-    """
-    Converts a sequence of iterables to range tuples
-
-    From https://stackoverflow.com/questions/4628333/converting-a-list-of-integers-into-range-in-python
-
-    Credits: @juanchopanza and @luca
-
-    Parameters
-    ----------
-    iterable : collections.Iterable object
-        iterable object like a list
-
-    Returns
-    -------
-    iterable : generator object
-        Cast to list or similar to use
-    """
-    warn('pyUSID.io.write_utils.to_ranges has been moved to '
-         'sidpy.base.num_utils.to_ranges. This copy in pyUSID will'
-         'be removed in future release. Please update your import statements',
-         FutureWarning)
-    return nut.to_ranges(iterable)
-
