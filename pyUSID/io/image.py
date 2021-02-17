@@ -15,7 +15,7 @@ import numpy as np
 from PIL import Image
 from sidpy.base.num_utils import contains_integers
 from sidpy.hdf.hdf_utils import write_simple_attrs
-from .numpy_translator import ArrayTranslator
+from .array_translator import ArrayTranslator
 from .write_utils import Dimension
 
 if sys.version_info.major == 3:
