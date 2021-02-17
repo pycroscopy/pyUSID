@@ -12,10 +12,11 @@ import sys
 import numpy as np
 from sidpy.base.num_utils import contains_integers
 from sidpy.base.string_utils import validate_list_of_strings
+from .dimension import Dimension, DimType
 
 __all__ = ['get_aux_dset_slicing', 'make_indices_matrix', 'INDICES_DTYPE',
-           'VALUES_DTYPE', 'build_ind_val_matrices',
-           'calc_chunks', 'create_spec_inds_from_vals', ]
+           'VALUES_DTYPE', 'build_ind_val_matrices', 'calc_chunks',
+           'create_spec_inds_from_vals', 'Dimension', 'DimType']
 
 if sys.version_info.major == 3:
     unicode = str
