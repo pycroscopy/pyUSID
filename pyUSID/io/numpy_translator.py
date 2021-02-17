@@ -27,7 +27,7 @@ from .write_utils import validate_dimensions
 if sys.version_info.major == 3:
     unicode = str
 
-__all__ = ['ArrayTranslator', 'NumpyTranslator']
+__all__ = ['ArrayTranslator']
 
 
 class ArrayTranslator(Translator):
@@ -139,7 +139,3 @@ class ArrayTranslator(Translator):
                     chan_grp.create_dataset(key.strip(), data=val)
 
         return h5_path
-
-
-class NumpyTranslator(ArrayTranslator):
-    pass

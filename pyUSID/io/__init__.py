@@ -26,10 +26,10 @@ from . import dtype_utils
 from . import write_utils
 
 from .usi_data import USIDataset
-from .numpy_translator import NumpyTranslator, ArrayTranslator
+from .numpy_translator import ArrayTranslator
 from .image import ImageTranslator
 from .write_utils import Dimension, DimType
 
 
-__all__ = ['USIDataset', 'hdf_utils', 'io_utils', 'dtype_utils', 'NumpyTranslator', 'write_utils',
+__all__ = ['USIDataset', 'hdf_utils', 'io_utils', 'dtype_utils', 'write_utils',
            'ImageTranslator', 'Dimension', 'DimType', 'ArrayTranslator', 'Translator']
