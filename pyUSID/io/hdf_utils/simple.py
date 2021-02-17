@@ -22,8 +22,8 @@ from sidpy.base.string_utils import validate_single_string_arg, validate_list_of
 from sidpy.base.num_utils import contains_integers
 from sidpy.base.string_utils import clean_string_att
 
-from ..write_utils import build_ind_val_matrices, INDICES_DTYPE, VALUES_DTYPE, \
-    Dimension, DimType
+from ..write_utils import build_ind_val_matrices, INDICES_DTYPE, VALUES_DTYPE
+from ..dimension import DimType, Dimension
 from .base import write_book_keeping_attrs
 
 if sys.version_info.major == 3:

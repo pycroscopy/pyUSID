@@ -22,7 +22,7 @@ from sidpy.base.string_utils import validate_string_args
 from .hdf_utils.base import write_book_keeping_attrs
 from .hdf_utils.simple import create_indexed_group, validate_main_dset
 from .hdf_utils.model import write_main_dataset, validate_dims_against_main
-from .write_utils import validate_dimensions
+from .dimension import validate_dimensions
 
 if sys.version_info.major == 3:
     unicode = str

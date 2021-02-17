@@ -27,7 +27,7 @@ from sidpy.viz.plot_utils import plot_map, get_plot_grid_size
 
 from .hdf_utils import check_if_main, create_results_group, write_reduced_anc_dsets, link_as_main, \
     get_dimensionality, get_sort_order, get_unit_values, reshape_to_n_dims, write_main_dataset, reshape_from_n_dims
-from .write_utils import Dimension
+from .dimension import Dimension
 
 if sys.version_info.major == 3:
     unicode = str

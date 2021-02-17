@@ -17,7 +17,7 @@ from PIL import Image
 from sidpy.base.num_utils import contains_integers
 from sidpy.hdf.hdf_utils import write_simple_attrs
 from .array_translator import ArrayTranslator
-from .write_utils import Dimension
+from .dimension import Dimension
 
 if sys.version_info.major == 3:
     unicode = str
