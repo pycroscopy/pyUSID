@@ -4,12 +4,9 @@ Created on: Jul 19, 2019
 Author: Emily Costa
 """
 
-import pyUSID as usid
-from pyUSID.io import dtype_utils, hdf_utils
 import h5py
 from pyUSID.processing.process import Process
 import numpy as np
-import os
 from pyUSID import hdf_utils
 import matplotlib.pyplot as plt
 
