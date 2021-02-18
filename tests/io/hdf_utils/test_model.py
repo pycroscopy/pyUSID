@@ -14,7 +14,7 @@ import dask.array as da
 import shutil
 
 sys.path.append("../../pyUSID/")
-from pyUSID.io import hdf_utils, write_utils, USIDataset
+from pyUSID.io import hdf_utils, Dimension, USIDataset
 
 from tests.io import data_utils
 
@@ -881,7 +881,7 @@ class TestWriteMainDataset(TestModel):
 
         pos_dims = []
         for length, name, units in zip(pos_sizes, pos_names, pos_units):
-            pos_dims.append(write_utils.Dimension(name, units, np.arange(length)))
+            pos_dims.append(Dimension(name, units, np.arange(length)))
         pos_data = np.vstack((np.tile(np.arange(5), 3),
                               np.repeat(np.arange(3), 5))).T
 
@@ -890,7 +890,7 @@ class TestWriteMainDataset(TestModel):
         spec_units = ['V', '']
         spec_dims = []
         for length, name, units in zip(spec_sizes, spec_names, spec_units):
-            spec_dims.append(write_utils.Dimension(name, units, np.arange(length)))
+            spec_dims.append(Dimension(name, units, np.arange(length)))
         spec_data = np.vstack((np.tile(np.arange(7), 2),
                               np.repeat(np.arange(2), 7)))
 
@@ -981,14 +981,14 @@ class TestWriteMainDataset(TestModel):
         pos_units = ['nm', 'um']
         pos_dims = []
         for length, name, units in zip(pos_sizes, pos_names, pos_units):
-            pos_dims.append(write_utils.Dimension(name, units, np.arange(length)))
+            pos_dims.append(Dimension(name, units, np.arange(length)))
 
         spec_sizes = [7, 2]
         spec_names = ['Bias', 'Cycle']
         spec_units = ['V', '']
         spec_dims = []
         for length, name, units in zip(spec_sizes, spec_names, spec_units):
-            spec_dims.append(write_utils.Dimension(name, units, np.arange(length)))
+            spec_dims.append(Dimension(name, units, np.arange(length)))
 
         with h5py.File(file_path, mode='w') as h5_f:
             with self.assertRaises(ValueError):

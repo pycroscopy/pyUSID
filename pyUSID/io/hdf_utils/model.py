@@ -24,7 +24,7 @@ from sidpy import sid
 from .base import write_book_keeping_attrs
 from .simple import link_as_main, check_if_main, write_ind_val_dsets, validate_dims_against_main, validate_anc_h5_dsets
 from ..dimension import Dimension, validate_dimensions
-from ..write_utils import INDICES_DTYPE, make_indices_matrix
+from ..anc_build_utils import INDICES_DTYPE, make_indices_matrix
 
 if sys.version_info.major == 3:
     unicode = str

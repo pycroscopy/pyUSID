@@ -21,7 +21,7 @@ def _create_results_grp_dsets(h5_main, process_name, parms_dict,
 
     usid.hdf_utils.write_simple_attrs(h5_results_grp, parms_dict)
 
-    spec_dims = usid.write_utils.Dimension('Empty', 'a. u.', 1)
+    spec_dims = usid.Dimension('Empty', 'a. u.', 1)
 
     # 3. Create an empty results dataset that will hold all the results
     h5_results = usid.hdf_utils.write_main_dataset(
