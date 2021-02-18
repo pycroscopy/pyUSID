@@ -14,15 +14,12 @@ from sidpy.base.string_utils import get_time_stamp
 
 sys.path.append("../../pyUSID/")
 from pyUSID import __version__
-from pyUSID.io.write_utils import INDICES_DTYPE, VALUES_DTYPE
+from pyUSID.io.anc_build_utils import INDICES_DTYPE, VALUES_DTYPE, build_ind_val_matrices
 
 std_beps_path = 'test_hdf_utils.h5'
 sparse_sampling_path = 'sparse_sampling.h5'
 incomplete_measurement_path = 'incomplete_measurement.h5'
 relaxation_path = 'relaxation.h5'
-
-sys.path.append("../../pyUSID/")
-from pyUSID.io.write_utils import build_ind_val_matrices
 
 if sys.version_info.major == 3:
     unicode = str

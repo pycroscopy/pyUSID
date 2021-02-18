@@ -5,7 +5,7 @@ This folder contains notebooks for creating, manipulating and visualizing Datase
 
 * `USIDataset <./usi_dataset.ipynb>`_
 * `ArrayTranslator <./array_translator.ipynb>`_ - Writing data and metadata into USID formatted HDF5 files easily
-* `Utilities <./write_utils.ipynb>`_ that assist in writing USID data
+* Utilities that help `manually build ancillary USID datasets <./anc_build_utils.ipynb>`_
 * Utilities for `writing h5USID <./hdf_utils_write.ipynb>`_ files
 * Formalizing data processing using the `Process class <./process.ipynb>`_
 
@@ -15,7 +15,7 @@ This folder contains notebooks for creating, manipulating and visualizing Datase
 
    usi_dataset.ipynb
    array_translator.ipynb
-   write_utils.ipynb
+   anc_build_utils.ipynb
    hdf_utils_write.ipynb
    process.ipynb
 
