@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Utilities that assist in writing USID related data to HDF5 files
+Utilities that assist in building ancillary USID datasets manually.
+Formerly known as "write_utils"
 
 Created on Thu Sep  7 21:14:25 2017
 
