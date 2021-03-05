@@ -28,6 +28,7 @@ from .array_translator import ArrayTranslator
 from .image import ImageTranslator
 from .dimension import DimType, Dimension
 
+# For legacy reasons
 write_utils = anc_build_utils
 
 __all__ = ['USIDataset', 'hdf_utils', 'write_utils', 'Dimension', 'DimType',
