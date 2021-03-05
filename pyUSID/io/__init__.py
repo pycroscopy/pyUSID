@@ -30,7 +30,10 @@ from .dimension import DimType, Dimension
 
 # For legacy reasons
 write_utils = anc_build_utils
+numpy_translator = array_translator
+NumpyTranslator = ArrayTranslator
 
 __all__ = ['USIDataset', 'hdf_utils', 'write_utils', 'Dimension', 'DimType',
            'ImageTranslator', 'ArrayTranslator', 'Translator',
-           'anc_build_utils']
+           'anc_build_utils',
+           'write_utils', 'numpy_translator', 'NumpyTranslator']
