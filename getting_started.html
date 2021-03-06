@@ -1,0 +1,313 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Getting Started &mdash; pyUSID 0.0.10 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.0/dist/embed-amd.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="install.html" />
+    <link rel="prev" title="pyUSID" href="about.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> pyUSID
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.10
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">pyUSID</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="about.html">pyUSID</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#guide-for-python-novices">Guide for python novices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tips-and-pitfalls">Tips and pitfalls</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cpu_to_gpu.html">GPU Array Computing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scale_to_hpc.html">Scaling to High-Performance-Computing Clusters</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="_autosummary/pyUSID.html">pyUSID</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/user_guide/index.html">User Guide</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pyUSID</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Getting Started</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/getting_started.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p>Follow <a class="reference external" href="./install.html">these instructions</a> to install pyUSID</p></li>
+<li><p>We have compiled a list of <a class="reference external" href="./external_guides.html">handy tutorials</a> on basic / prerequisite topics such as programming in python, hdf5 handling, etc.</p></li>
+<li><p>See our <a class="reference external" href="./auto_examples/index.html">examples</a> to get started on using and writing your own pyUSID functions.</p>
+<ul>
+<li><p>Please see this <a class="reference external" href="https://github.com/pycroscopy/pyUSID_Tutorial">pyUSID tutorial for beginners</a> based on the examples on this project.</p></li>
+</ul>
+</li>
+<li><p>Details regarding the definition, implementation, and guidelines for Universal Spectroscopy and Imaging Data (USID) and its implementation in HDF5 (h5USID) are available in <a class="reference external" href="./data_format.html">this document</a>.</p></li>
+<li><p>If you are interested in contributing your code to pyUSID, please look at our <a class="reference external" href="./contribution_guidelines.html">guidelines</a></p></li>
+<li><p>We also have a handy document for converting your <a class="reference external" href="./matlab_to_python.html">matlab code to python</a>.</p></li>
+<li><p>If you need detailed documentation on what is where and why, all our classes, functions, etc., please visit our <a class="reference external" href="./api.html">API</a></p></li>
+<li><p>For a concise change-log, please see the <a class="reference external" href="https://github.com/pycroscopy/pyUSID/releases">release history</a>.</p></li>
+<li><p>Please <a class="reference external" href="./contact.html">get in touch</a> if you would like to use USID and pyUSID for other new or mature scientific packages.</p></li>
+<li><p>Have questions? See our <a class="reference external" href="./faq.html">FAQ</a> to see if we have already answered them.</p></li>
+<li><p>Need more information? Please see our <a class="reference external" href="https://arxiv.org/abs/1903.09515">Arxiv</a> paper.</p></li>
+<li><p>Need help or need to get in touch with us? See our <a class="reference external" href="./contact.html">contact</a> information.</p></li>
+</ul>
+<div class="section" id="guide-for-python-novices">
+<h2>Guide for python novices<a class="headerlink" href="#guide-for-python-novices" title="Permalink to this headline">¶</a></h2>
+<p>For the python novices by a python novice - <strong>Nick Mostovych, Brown University</strong></p>
+<ol class="arabic simple">
+<li><p>Learn about the <a class="reference external" href="./about.html">philosophy, purpose, etc. of pyUSID</a>.</p></li>
+<li><p>Get an idea of the different resources available by reading the <a class="reference external" href="./getting_started.html">getting started</a> section</p></li>
+<li><p>Watch the video on <a class="reference external" href="https://www.youtube.com/watch?v=YJC6ldI3hWk">installing Anaconda</a> from the <a class="reference external" href="./external_guides.html">Tutorials on Basics</a> page</p></li>
+<li><p>Follow instructions on the <a class="reference external" href="./install.html">installation</a> page to install Anaconda.</p></li>
+<li><p>Watch the <a class="reference external" href="https://www.youtube.com/watch?v=HW29067qVWk">video tutorial</a> from the <code class="docutils literal notranslate"><span class="pre">Jupyter</span> <span class="pre">Notebooks</span></code> section in <a class="reference external" href="./external_guides.html">the Tutorials on Basics</a> page</p></li>
+<li><p>Read the whole <a class="reference external" href="./external_guides.html">Tutorial on Basics page</a>. Do NOT proceed unless you are familiar with basic python programming and usage.</p></li>
+<li><p>Read <a class="reference external" href="./data_format.html">the document on the USID model and h5USID</a>. This is very important and highlights the advantages of using USID. New users should not jump to the examples until they have a good understanding of the data format.</p></li>
+<li><p>Depending on your needs, go through the <a class="reference external" href="./auto_examples/index.html">recommended sequence of tutorials and examples</a></p></li>
+</ol>
+</div>
+<div class="section" id="tips-and-pitfalls">
+<h2>Tips and pitfalls<a class="headerlink" href="#tips-and-pitfalls" title="Permalink to this headline">¶</a></h2>
+<p>For the python novices by a python novice - <strong>Nick Mostovych, Brown University</strong></p>
+<ul class="simple">
+<li><p>Documentation and examples on this website are for the <strong>latest</strong> version of pyUSID. If something does not work as shown on this website,
+chances are that you may be using an older version of pyUSID. Follow the instructions to <a class="reference external" href="./install.html#updating-pyUSID">update pyUSID to the latest version</a></p></li>
+<li><p>pyUSID has excellent documentation (+ examples too) for all functions. If you are ever confused with the usage of a
+function or class, you can get help in numerous ways:</p>
+<ul>
+<li><p>If you are using jupyter notebooks, just hit the <code class="docutils literal notranslate"><span class="pre">Shift+Tab</span></code> keys after typing the name of your function.
+See <a class="reference external" href="https://www.youtube.com/watch?v=TgqMK1SG7XI">this quick video</a> for a demo.
+E.g. - type <code class="docutils literal notranslate"><span class="pre">px.USIDataset(</span></code>. Hit <code class="docutils literal notranslate"><span class="pre">Shift+Tab</span></code> twice or four times. You should be able to see the documentation for the
+class / function to learn how to supply inputs / extract outputs</p></li>
+<li><p>Use the search function and reference the source code in the <a class="reference external" href="./api.html">API section</a> for detailed comments.
+Most detailed questions are answered there.</p></li>
+</ul>
+</li>
+<li><p>Use the <a class="reference external" href="./auto_examples/beginner/plot_usi_dataset.html">USIDataset</a> everywhere possible to simplify your tasks.</p></li>
+<li><p>Many functions in pyUSID have a <code class="docutils literal notranslate"><span class="pre">verbose</span></code> keyword argument that can be set to <code class="docutils literal notranslate"><span class="pre">True</span></code> to get detailed print logs of intermediate steps in the function.
+This is <strong>very</strong> handy for debugging code</p></li>
+</ul>
+<p>If there are tips or pitfalls you would like to add to this list, please <a class="reference external" href="./contact.html">get in touch to us</a></p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="install.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="about.html" class="btn btn-neutral float-left" title="pyUSID" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2018, Suhas Somnath and Chris R. Smith.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

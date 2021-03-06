@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.link\_as\_main
+==========================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: link_as_main

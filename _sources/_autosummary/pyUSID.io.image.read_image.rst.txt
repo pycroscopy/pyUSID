@@ -1,0 +1,6 @@
+pyUSID.io.image.read\_image
+===========================
+
+.. currentmodule:: pyUSID.io.image
+
+.. autofunction:: read_image

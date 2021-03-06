@@ -1,0 +1,41 @@
+pyUSID.io.dimension
+===================
+
+.. automodule:: pyUSID.io.dimension
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      validate_dimensions
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      DimType
+      Dimension
+   
+   
+
+   
+   
+   
+
+
+

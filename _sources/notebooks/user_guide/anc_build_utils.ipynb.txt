@@ -1,0 +1,371 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%matplotlib inline"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "\n",
+    "# Utilities that assist in building USID Ancillary datasets manually\n",
+    "\n",
+    "**Suhas Somnath**\n",
+    "\n",
+    "4/18/2018\n",
+    "\n",
+    "**This document illustrates certain helper functions that simplify building ancillary Universal Spectroscopy and Imaging Data (USID) datasets manually**\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Introduction\n",
+    "The USID model takes a unique approach towards towards storing scientific observational data. Several helper\n",
+    "functions are necessary to simplify the actual file writing process. In some circunstances, the data does not have an N-dimensonal form and we therefore cannot use the ``pyUSID.Dimension`` objects to define the ancillary Datasets. ``pyUSID.anc_build_utils`` is home for those utilities that assist in manually building ancillary USID datasets but do not directly interact with HDF5 files (as in ``pyUSID.hdf_utils``).\n",
+    "\n",
+    "**Note that most of these are low-level functions that are used by popular high level functions in\n",
+    "pyUSID.hdf_utils to simplify the writing of datasets.**\n",
+    "\n",
+    "### Recommended pre-requisite reading\n",
+    "* [Universal Spectroscopic and Imaging Data (USID) model](https://pycroscopy.github.io/USID/usid_model.html)\n",
+    "\n",
+    "### What to read after this\n",
+    "* [Crash course on HDF5 and h5py](./h5py_primer.html)\n",
+    "* Utilities for [reading](./hdf_utils_read.html) and [writing](./hdf_utils_write.html)\n",
+    "  h5USID files using pyUSID\n",
+    "\n",
+    "### Import necessary packages\n",
+    "We only need a handful of packages besides pyUSID to illustrate the functions in ``pyUSID.anc_build_utils``:\n",
+    "\n",
+    "* ``numpy`` - for numerical operations on arrays in memory\n",
+    "* ``matplotlib`` - basic visualization of data\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from __future__ import print_function, division, unicode_literals\n",
+    "# Warning package in case something goes wrong\n",
+    "from warnings import warn\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "import subprocess\n",
+    "import sys\n",
+    "\n",
+    "\n",
+    "def install(package):\n",
+    "    subprocess.call([sys.executable, \"-m\", \"pip\", \"install\", package])\n",
+    "# Package for downloading online files:\n",
+    "# Finally import pyUSID.\n",
+    "try:\n",
+    "    import pyUSID as usid\n",
+    "except ImportError:\n",
+    "    warn('pyUSID not found.  Will install with pip.')\n",
+    "    import pip\n",
+    "    install('pyUSID')\n",
+    "    import pyUSID as usid"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Building Ancillary datasets\n",
+    "The USID model uses pairs of ``ancillary matrices`` to support the instrument-agnostic and compact representation of\n",
+    "multidimensional datasets. While the creation of ``ancillary datasets`` is straightforward when the number of position\n",
+    "and spectroscopic dimensions are relatively small (0-2), one needs to be careful when building these\n",
+    "``ancillary datasets`` for datasets with large number of position / spectroscopic dimensions (> 2). The main challenge\n",
+    "involves the careful tiling and repetition of unit vectors for each dimension with respect to the sizes of all other\n",
+    "dimensions. Fortunately, ``pyUSID.anc_build_utils`` has many handy functions that solve this problem.\n",
+    "\n",
+    "In order to demonstrate the functions, lets say that we are working on an example ``Main dataset`` that has three\n",
+    "spectroscopic dimensions (``Bias``, ``Field``, ``Cycle``). The Bias dimension varies as a bi-polar triangular waveform. This\n",
+    "waveform is repeated for two Fields over 3 Cycles meaning that the ``Field`` and ``Cycle`` dimensions are far simpler than\n",
+    "the ``Bias`` dimension in that they have linearly increasing / decreasing values.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "max_v = 4\n",
+    "half_pts = 8\n",
+    "bi_triang = np.roll(np.hstack((np.linspace(-max_v, max_v, half_pts, endpoint=False),\n",
+    "                               np.linspace(max_v, -max_v, half_pts, endpoint=False))), -half_pts // 2)\n",
+    "cycles = [0, 1, 2]\n",
+    "fields = [1, -1]\n",
+    "\n",
+    "dim_names = ['Bias', 'Field', 'Cycles']\n",
+    "\n",
+    "fig, axes = plt.subplots(ncols=3, figsize=(10, 3.5))\n",
+    "for axis, name, vec in zip(axes.flat, dim_names, [bi_triang, fields, cycles]):\n",
+    "    axis.plot(vec, 'o-')\n",
+    "    axis.set_title(name, fontsize=14)\n",
+    "fig.suptitle('Unit values for each dimension', fontsize=16, y=1.05)\n",
+    "fig.tight_layout()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### make_indices_matrix()\n",
+    "One half of the work for generating the ancillary datasets is generating the ``indices matrix``. The\n",
+    "``make_indices_matrix()`` function solves this problem. All one needs to do is supply a list with the lengths of each\n",
+    "dimension. The result is a 2D matrix of shape: (3 dimensions, points in ``Bias``[``16``] * points in ``Field``[``2``] * points\n",
+    "in ``Cycle``[``3``]) = ``(3, 96)``.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "inds = usid.anc_build_utils.make_indices_matrix([len(bi_triang), len(fields), len(cycles)], is_position=False)\n",
+    "print('Generated indices of shape: {}'.format(inds.shape))\n",
+    "\n",
+    "# The plots below show a visual representation of the indices for each dimension:\n",
+    "fig, axes = plt.subplots(ncols=3, figsize=(10, 3.5))\n",
+    "for axis, name, vec in zip(axes.flat, dim_names, inds):\n",
+    "    axis.plot(vec)\n",
+    "    axis.set_title(name, fontsize=14)\n",
+    "fig.suptitle('Indices for each dimension', fontsize=16, y=1.05)\n",
+    "fig.tight_layout()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### build_ind_val_matrices()\n",
+    "``make_indices_matrix()`` is a very handy function but it only solves one of the problems - the indices matrix. We also\n",
+    "need the matrix with the values tiled and repeated in the same manner. Perhaps one of the most useful functions is\n",
+    "``build_ind_val_matrices()`` which uses just the values over which each dimension is varied to automatically generate\n",
+    "the indices and values matrices that form the ancillary datasets.\n",
+    "\n",
+    "In order to generate the indices and values matrices, we would just need to provide the list of values over which\n",
+    "these dimensions are varied to ``build_ind_val_matrices()``. The results are two matrices - one for the indices and the\n",
+    "other for the values, of the same shape ``(3, 96)``.\n",
+    "\n",
+    "As mentioned in our document about the `data structuring <../../data_format.html>`_,\n",
+    "the ``Bias`` would be in the first row, followed by ``Field``, finally followed by ``Cycle``. The plots below illustrate\n",
+    "what the indices and values look like for each dimension. For example, notice how the bipolar triangular bias vector\n",
+    "has been repeated 2 (``Field``) * 3 (``Cycle``) times. Also note how the indices vector is a saw-tooth waveform that also\n",
+    "repeats in the same manner.  The repeated + tiled indices and values vectors for ``Cycle`` and ``Field`` look the same /\n",
+    "very similar since they were simple linearly increasing values to start with.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "inds, vals = usid.anc_build_utils.build_ind_val_matrices([bi_triang, fields, cycles], is_spectral=True)\n",
+    "print('Indices and values of shape: {}'.format(inds.shape))\n",
+    "\n",
+    "fig, axes = plt.subplots(ncols=3, figsize=(10, 3.5))\n",
+    "for axis, name, vec in zip(axes.flat, dim_names, inds):\n",
+    "    axis.plot(vec)\n",
+    "    axis.set_title(name, fontsize=14)\n",
+    "fig.suptitle('Indices for each dimension', fontsize=16, y=1.05)\n",
+    "fig.tight_layout()\n",
+    "\n",
+    "fig, axes = plt.subplots(ncols=3, figsize=(10, 3.5))\n",
+    "for axis, name, vec in zip(axes.flat, dim_names, vals):\n",
+    "    axis.plot(vec)\n",
+    "    axis.set_title(name, fontsize=14)\n",
+    "fig.suptitle('Values for each dimension', fontsize=16, y=1.05)\n",
+    "fig.tight_layout()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### create_spec_inds_from_vals()\n",
+    "When writing analysis functions or classes wherein one or more (typically spectroscopic) dimensions are dropped as a\n",
+    "consequence of dimensionality reduction, new ancillary spectroscopic datasets need to be generated when writing the\n",
+    "reduced data back to the file. ``create_spec_inds_from_vals()`` is a handy function when we need to generate the indices\n",
+    "matrix that corresponds to a values matrix. For this example, lets assume that we only have the values matrix but need\n",
+    "to generate the indices matrix from this:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "inds = usid.anc_build_utils.create_spec_inds_from_vals(vals)\n",
+    "\n",
+    "fig, axes = plt.subplots(ncols=3, figsize=(10, 3.5))\n",
+    "for axis, name, vec in zip(axes.flat, dim_names, inds):\n",
+    "    axis.plot(vec)\n",
+    "    axis.set_title(name, fontsize=14)\n",
+    "fig.suptitle('Indices for each dimension', fontsize=16, y=1.05)\n",
+    "fig.tight_layout()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### get_aux_dset_slicing()\n",
+    "``Region references`` are a handy feature in HDF5 that allow users to refer to a certain section of data within a\n",
+    "dataset by name rather than the indices that define the region of interest.\n",
+    "\n",
+    "In USID, we use region references to define the row or column in the ``ancillary dataset`` that corresponds to\n",
+    "each dimension by its name. In other words, if we only wanted the ``Field`` dimension we could directly get the data\n",
+    "corresponding to this dimension without having to remember or figure out the index in which this dimension exists.\n",
+    "\n",
+    "Let's take the example of the Field dimension which occurs at index 1 in the ``(3, 96)`` shaped spectroscopic index /\n",
+    "values matrix. We could extract the ``Field`` dimension from the 2D matrix by slicing each dimension using slice objects\n",
+    ". We need the second row so the first dimension would be sliced as ``slice(start=1, stop=2)``. We need all the colummns\n",
+    "in the second dimension so we would slice as ``slice(start=None, stop=None)`` meaning that we need all the columns.\n",
+    "Doing this by hand for each dimension is clearly tedious.\n",
+    "\n",
+    "``get_aux_dset_slicing()`` helps generate the instructions for region references for each dimension in an ancillary\n",
+    "dataset. The instructions for each region reference in ``h5py`` are defined by tuples of slice objects. Lets see the\n",
+    "region-reference instructions that this function provides for our aforementioned example dataset with the three\n",
+    "spectroscopic dimensions.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print('Region references slicing instructions for Spectroscopic dimensions:')\n",
+    "ret_val = usid.anc_build_utils.get_aux_dset_slicing(dim_names, is_spectroscopic=True)\n",
+    "for key, val in ret_val.items():\n",
+    "    print('{} : {}'.format(key, val))\n",
+    "\n",
+    "print('\\nRegion references slicing instructions for Position dimensions:')\n",
+    "ret_val = usid.anc_build_utils.get_aux_dset_slicing(['X', 'Y'], is_spectroscopic=False)\n",
+    "for key, val in ret_val.items():\n",
+    "    print('{} : {}'.format(key, val))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Dimension\n",
+    "In USID, ``position`` and ``spectroscopic dimensions`` are defined using some basic information that will be\n",
+    "incorporated in ``Dimension`` objects that contain three vital pieces of information:\n",
+    "\n",
+    "* ``name`` of the dimension\n",
+    "* ``units`` for the dimension\n",
+    "* ``values``:\n",
+    "    * These can be the actual values over which the dimension was varied\n",
+    "    * or number of steps in case of linearly varying dimensions such as 'Cycle' below\n",
+    "\n",
+    "These objects will be heavily used for creating ``Main`` or ``ancillary datasets`` in ``pyUSID.hdf_utils`` and even to\n",
+    "set up interactive jupyter Visualizers in ``pyUSID.USIDataset``.\n",
+    "\n",
+    "Note that the ``Dimension`` objects in the lists for ``Position`` and ``Spectroscopic`` must be arranged from fastest\n",
+    "varying to slowest varying to mimic how the data is actually arranged. For example, in this example, there are\n",
+    "multiple bias points per field and multiple fields per cycle. Thus, the bias changes faster than the field and the\n",
+    "field changes faster than the cycle. Therefore, the ``Bias`` must precede ``Field`` which will precede ``Cycle``. Let's\n",
+    "assume that we were describing the spectroscopic dimensions for this example dataset to some other pyUSID function\n",
+    ", we would describe the spectroscopic dimensions as:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "spec_dims = [usid.Dimension('Bias', 'V', bi_triang),\n",
+    "             usid.Dimension('Fields', '', fields),\n",
+    "             # for the sake of example, since we know that cycles is linearly increasing from 0 with a step size of 1,\n",
+    "             # we can specify such a simply dimension via just the length of that dimension:\n",
+    "             usid.dimension.Dimension('Cycle', '', len(cycles))]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The application of the Dimension objects will be a lot more apparent in the document about the [writing functions in\n",
+    "pyUSID.hdf_utils](./hdf_utils_write.html).\n",
+    "\n",
+    "## Misc writing utilities\n",
+    "\n",
+    "### calc_chunks()\n",
+    "The ``h5py`` package automatically (virtually) breaks up HDF5 datasets into contiguous ``chunks`` to speed up reading and\n",
+    "writing of datasets. In certain situations the default mode of chunking may not result in the highest performance.\n",
+    "In such cases, it helps in chunking the dataset manually. The ``calc_chunks()`` function helps in calculating\n",
+    "appropriate chunk sizes for the dataset using some apriori knowledge about the way the data would be accessed, the\n",
+    "size of each element in the dataset, maximum size for a single chunk, etc. The examples below illustrate a few ways on\n",
+    "how to use this function:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "dimensions = (16384, 16384 * 4)\n",
+    "dtype_bytesize = 4\n",
+    "ret_val = usid.anc_build_utils.calc_chunks(dimensions, dtype_bytesize)\n",
+    "print(ret_val)\n",
+    "\n",
+    "dimensions = (16384, 16384 * 4)\n",
+    "dtype_bytesize = 4\n",
+    "unit_chunks = (3, 7)\n",
+    "max_mem = 50000\n",
+    "ret_val = usid.anc_build_utils.calc_chunks(dimensions, dtype_bytesize, unit_chunks=unit_chunks, max_chunk_mem=max_mem)\n",
+    "print(ret_val)"
+   ]
+  }
+ ],
+ "metadata": {
+  "anaconda-cloud": {},
+  "kernelspec": {
+   "display_name": "Python [default]",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.5.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 1
+}

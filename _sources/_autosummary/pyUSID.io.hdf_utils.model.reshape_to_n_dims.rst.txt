@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.model.reshape\_to\_n\_dims
+===============================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.model
+
+.. autofunction:: reshape_to_n_dims

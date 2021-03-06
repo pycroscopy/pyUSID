@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.model.get\_dimensionality
+==============================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.model
+
+.. autofunction:: get_dimensionality

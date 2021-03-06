@@ -1,0 +1,6 @@
+pyUSID.io.anc\_build\_utils.calc\_chunks
+========================================
+
+.. currentmodule:: pyUSID.io.anc_build_utils
+
+.. autofunction:: calc_chunks

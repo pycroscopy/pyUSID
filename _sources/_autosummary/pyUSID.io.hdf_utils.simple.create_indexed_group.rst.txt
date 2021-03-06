@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.create\_indexed\_group
+==================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: create_indexed_group

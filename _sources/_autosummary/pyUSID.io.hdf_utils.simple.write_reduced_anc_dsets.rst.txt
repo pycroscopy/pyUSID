@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.write\_reduced\_anc\_dsets
+======================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: write_reduced_anc_dsets

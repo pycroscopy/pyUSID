@@ -1,0 +1,6 @@
+pyUSID.io.reg\_ref.copy\_region\_refs
+=====================================
+
+.. currentmodule:: pyUSID.io.reg_ref
+
+.. autofunction:: copy_region_refs

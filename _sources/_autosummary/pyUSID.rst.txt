@@ -1,0 +1,32 @@
+﻿pyUSID
+======
+
+.. automodule:: pyUSID
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+      :template: custom-module-template.rst
+   :recursive:
+
+   pyUSID.io
+   pyUSID.processing
+   pyUSID.viz
+

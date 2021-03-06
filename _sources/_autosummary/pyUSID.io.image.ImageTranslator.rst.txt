@@ -1,0 +1,26 @@
+pyUSID.io.image.ImageTranslator
+===============================
+
+.. currentmodule:: pyUSID.io.image
+
+.. autoclass:: ImageTranslator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~ImageTranslator.is_valid_file
+      ~ImageTranslator.translate
+   
+   
+
+   
+   
+   

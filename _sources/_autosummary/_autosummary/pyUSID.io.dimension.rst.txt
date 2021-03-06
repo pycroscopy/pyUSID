@@ -1,0 +1,36 @@
+pyUSID.io.dimension
+===================
+
+.. automodule:: pyUSID.io.dimension
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      validate_dimensions
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      DimType
+      Dimension
+   
+   
+
+   
+   
+   
+
+
+
