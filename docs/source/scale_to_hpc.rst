@@ -1,5 +1,5 @@
-Scaling to High-Performance-Computing Clusters
-==============================================
+Scaling to Clusters
+===================
 :Author: Emily Costa and Suhas Somnath
 :Created on: 08/20/2019
 
@@ -30,7 +30,7 @@ The user does **not** need to write any new code or restructure existing code in
 that extend ``pyUSID.Process`` to take advantage of such capabilities.
 Two examples of such classes are the
 `pycroscopy.processing.SignalFilter <https://pycroscopy.github.io/pycroscopy/_autosummary/_autosummary/pycroscopy.processing.signal_filter.html#pycroscopy.processing.signal_filter.SignalFilter>`_
-and `pycroscopy.analysis.GIVBayesian <https://pycroscopy.github.io/pycroscopy/_autosummary/_autosummary/pycroscopy.analysis.giv_bayesian.html#pycroscopy.analysis.giv_bayesian.GIVBayesian>`_.
+and `BGlib.gmode.analysis.GIVBayesian <https://pycroscopy.github.io/BGlib/_autosummary/_autosummary/_autosummary/BGlib.gmode.analysis.GIVBayesian.html#BGlib.gmode.analysis.GIVBayesian>`_.
 
 HPCs are structured and operate in a manner that is different from a personal computer.
 As a consequence, running the computations on a (child of) ``pyUSID.Process`` on an HPC necessitate a few small scripts.

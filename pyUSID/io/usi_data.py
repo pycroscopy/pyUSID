@@ -911,7 +911,7 @@ class USIDataset(h5py.Dataset):
             x_suffix = ''
             x_exp = get_exponent(ref_dims[0].values)
             if x_exp < -2 or x_exp > 3:
-                ref_dims[0].values /= 10 ** x_exp
+                ref_dims[0] /= 10 ** x_exp
                 x_suffix = ' x $10^{' + str(x_exp) + '}$'
 
             if is_complex_dtype(curve.dtype):
@@ -961,7 +961,7 @@ class USIDataset(h5py.Dataset):
             for item, scale in zip(ref_dims, exponents):
                 curr_suff = ''
                 if scale < -1 or scale > 3:
-                    item.values /= 10 ** scale
+                    item /= 10 ** scale
                     curr_suff = ' x $10^{' + str(scale) + '}$'
                 suffix.append(curr_suff)
 
