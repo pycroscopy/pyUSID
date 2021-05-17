@@ -4,6 +4,13 @@ pyUSID
 
 **Python framework for storing and processing scientific data formatted according to the USID model**
 
+.. attention::
+
+    If your data has a clear N-dimensional form, consider using
+    `NSID <https://pycroscopy.github.io/pyNSID/nsid.html>`_ and
+    `pyNSID <https://pycroscopy.github.io/pyNSID/about.html>`_
+    as simpler and more user-friendly alternatives to USID and pyUSID.
+
 * The `Universal Spectroscopic and Imaging Data (USID) model <../USID/index.html>`_:
 
   * facilitates the representation of any spectroscopic or imaging data regardless of its origin, modality, size, or dimensionality.
@@ -16,7 +23,7 @@ pyUSID
      See `pycroscopy <../pycroscopy/about.html>`_ - a sister project that uses pyUSID for analysis of microscopy data.
 
 * pyUSID uses a data-centric approach wherein the raw data collected from the instrument, results from analysis
-  and processing routines are all written to the same h5USID file for traceability, reproducibility, and provenance.
+  and processing routines can all written to the same h5USID file for traceability and reproducibility.
 * Just as scipy uses numpy underneath, scientific packages like **pycroscopy** use **pyUSID** for all file-handling, data processing, and generating plots for journal publications
 * pyUSID uses popular packages such as numpy, h5py, joblib, matplotlib, etc. for most of the storage, computation, and visualization.
 * For more information, please see our recent `Arxiv <https://arxiv.org/abs/1903.09515>`_ **paper**
@@ -25,3 +32,4 @@ pyUSID
 * While pyUSID was originally a part of `pycroscopy <../pycroscopy/about.html>`_ up to 2017,
   it has since been serving as an independent, science-agnostic data handling package.
   pyUSID was born so that it can integrate with other existing mature packages in any domain. If you are interested in integrating our data model with your existing package, please `get in touch <./contact.html>`_ with us.
+* **Note** - As of 2020, pyUSID has transitioned to maintenance mode.
