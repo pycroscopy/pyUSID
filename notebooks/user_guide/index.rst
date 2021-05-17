@@ -3,7 +3,7 @@ User Guide
 
 This folder contains notebooks for creating, manipulating and visualizing Datasets.
 
-* `USIDataset <./usi_dataset.ipynb>`_
+* `USIDataset <./usi_dataset.ipynb>`_ - User-friendly interface to datasets stored according to USID in HDF5 files.
 * `ArrayTranslator <./array_translator.ipynb>`_ - Writing data and metadata into USID formatted HDF5 files easily
 * Utilities that help `manually build ancillary USID datasets <./anc_build_utils.ipynb>`_
 * Utilities for `writing h5USID <./hdf_utils_write.ipynb>`_ files
