@@ -9,10 +9,9 @@ pyUSID
   * facilitates the representation of any spectroscopic or imaging data regardless of its origin, modality, size, or dimensionality.
   * enables the development of instrument- and modality- agnostic data processing and analysis algorithms.
   * is just a definition or a blueprint rather than something tangible and readily usable.
-* pyUSID is a `python <http://www.python.org/>`_ package that currently provides three pieces of functionality:
+* pyUSID is a `python <http://www.python.org/>`_ package that currently provides two pieces of functionality:
 
   #. **io**: Primarily, it enables the storage and access of USID in **hierarchical data format** `(HDF5) <http://extremecomputingtraining.anl.gov/files/2015/03/HDF5-Intro-aug7-130.pdf>`_ files (referred to as h5USID files) using python
-  #. **viz**: It has handy tools for visualizing USID and general scientific data
   #. **processing**: It provides a framework for formulating scientific problems into computational problems.
      See `pycroscopy <../pycroscopy/about.html>`_ - a sister project that uses pyUSID for analysis of microscopy data.
 
