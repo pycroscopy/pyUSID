@@ -139,10 +139,6 @@ class Process(object):
         self.__pixels_in_batch : array-like
             The positions being computed on by the current compute worker
         """
-
-        if h5_main.file.mode != 'r+':
-            raise TypeError('Need to ensure that the file is in r+ mode to write results back to the file')
-
         MPI = get_MPI()
 
         # Ensure that the file is opened in the correct comm or something
@@ -205,6 +201,11 @@ class Process(object):
         else:
             h5_target_group = h5_main.parent
         self._h5_target_group = h5_target_group
+
+        if h5_target_group.file.mode == 'r':
+            raise IOError('the file meant to contain the results '
+                          '(h5_target_group) must not be in read-only mode to '
+                          'write results to the file')
 
         process_name = validate_single_string_arg(process_name, 'process_name')
 
