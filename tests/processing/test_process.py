@@ -103,17 +103,33 @@ class TestInvalidInitialization(unittest.TestCase):
 
         delete_existing_file(data_utils.std_beps_path)
 
-
-    def test_read_only_file(self):
+    def test_read_only_h5_main(self):
         delete_existing_file(data_utils.std_beps_path)
         data_utils.make_beps_file()
         self.h5_file = h5py.File(data_utils.std_beps_path, mode='r')
         self.h5_main = self.h5_file['Raw_Measurement/source_main']
         self.h5_main = usid.USIDataset(self.h5_main)
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(IOError):
             _ = AvgSpecUltraBasic(self.h5_main)
         delete_existing_file(data_utils.std_beps_path)
+
+    def test_read_only_h5_parent_group(self):
+        delete_existing_file(data_utils.std_beps_path)
+        data_utils.make_beps_file()
+        self.h5_file = h5py.File(data_utils.std_beps_path, mode='r+')
+        self.h5_main = self.h5_file['Raw_Measurement/source_main']
+        self.h5_main = usid.USIDataset(self.h5_main)
+
+        results_path = 'sep_results.h5'
+        with h5py.File(results_path, mode='w') as file_handle:
+            file_handle.create_group("Blah")
+        h5_f_new = h5py.File(results_path, mode='r')
+
+        with self.assertRaises(IOError):
+            _ = AvgSpecUltraBasic(self.h5_main, h5_target_group=h5_f_new)
+        delete_existing_file(data_utils.std_beps_path)
+        delete_existing_file(results_path)
 
     def test_not_main_dataset(self):
         delete_existing_file(data_utils.std_beps_path)
