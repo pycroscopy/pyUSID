@@ -187,7 +187,7 @@ class TestImageTranslator(TestImage):
                 self.assertTrue(np.all(hdf_utils.get_attr(h5_meas_grp, key) == expected_val))
 
             one_d_image = input_image.T.reshape(-1, 1)
-            self.assertTrue(np.allclose(one_d_image, usid_main[()]))
+            self.assertTrue(np.allclose(one_d_image, usid_main[()], rtol=1e-2))
             # self.assertTrue(np.allclose(rand_image, np.reshape(usid_main[()], rand_image.shape)))
 
             pos_data = np.vstack((np.tile(np.arange(input_image.shape[0]), input_image.shape[1]),
