@@ -210,6 +210,7 @@ class TestBinning(TestImageTranslator):
     def test_tuple_default_interp(self):
         self.main_translate(bin_factor=(1, 2))
 
+
     def test_too_many_dims(self):
         with self.assertRaises(ValueError):
             translator = ImageTranslator()

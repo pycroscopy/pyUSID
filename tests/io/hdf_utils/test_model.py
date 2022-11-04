@@ -937,6 +937,8 @@ class TestWriteMainDataset(TestModel):
             data_utils.validate_aux_dset_pair(self, targ_loc, usid_main.h5_spec_inds, usid_main.h5_spec_vals, spec_names, spec_units,
                                           spec_data, h5_main=usid_main, is_spectral=True, slow_to_fast=False)
 
+        h5_f.close()
+        h5_f_2.close()
         if to_new_file:
             os.remove(new_file_path)
         os.remove(file_path)
