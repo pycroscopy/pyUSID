@@ -184,6 +184,7 @@ class TestImageTranslator(TestImage):
 
             # check the attributes under this group
             for key, expected_val in image_parms.items():
+                print(np.all(hdf_utils.get_attr(h5_meas_grp, key)), expected_val)
                 self.assertTrue(np.all(hdf_utils.get_attr(h5_meas_grp, key) == expected_val))
 
             one_d_image = input_image.T.reshape(-1, 1)
