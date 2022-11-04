@@ -8,6 +8,8 @@ from __future__ import division, print_function, unicode_literals, absolute_impo
 import unittest
 import sys
 from PIL import Image
+import PIL
+
 import h5py
 import numpy as np
 from .data_utils import validate_aux_dset_pair, delete_existing_file
@@ -209,6 +211,8 @@ class TestBinning(TestImageTranslator):
 
     def test_single_default_interp(self):
         self.main_translate(bin_factor=2)
+        print('PIL version is')
+        print(PIL.__version__)
 
     def test_tuple_default_interp(self):
         self.main_translate(bin_factor=(1, 2))
