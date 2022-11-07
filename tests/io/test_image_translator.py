@@ -7,13 +7,27 @@ Created on Thu Apr 4 15:07:16 2017
 from __future__ import division, print_function, unicode_literals, absolute_import
 import unittest
 import sys
+from enum import Enum
 from PIL import Image
 import h5py
 import numpy as np
 from .data_utils import validate_aux_dset_pair, delete_existing_file
+
 sys.path.append("../../pyUSID/")
 from pyUSID.io import ImageTranslator, hdf_utils, USIDataset
 from pyUSID.io.image import read_image
+
+# The following code will be used to support both the old and new versions of pillow.
+# Pillow added a new enum class 'Resampling' in the newer version>=9.0.0
+if not hasattr(Image, 'Resampling'):  # pillow<9.0.0
+    Image.Resampling = Image
+
+resample_dict = {0: 'NEAREST',
+                 1: 'LANCOS',
+                 2: 'BILINEAR',
+                 3: 'BICUBIC',
+                 4: 'BOX',
+                 5: 'HAMMING'}
 
 if sys.version_info.major == 3:
     unicode = str
@@ -67,7 +81,7 @@ class TestReadImage(TestImage):
         delete_existing_file(img_path)
         txt_kwargs = {'delimiter': ',',
                       'newline': '\n',
-                      'header':  'cat, dog, cow'}
+                      'header': 'cat, dog, cow'}
         np.savetxt(img_path, img_data, **txt_kwargs)
         np_data = read_image(img_path, as_numpy_array=True, delimiter=',', skiprows=1)
         self.assertIsInstance(np_data, np.ndarray)
@@ -80,7 +94,7 @@ class TestReadImage(TestImage):
         delete_existing_file(img_path)
         txt_kwargs = {'delimiter': ',',
                       'newline': '\n',
-                      'header':  'cat, dog, cow'}
+                      'header': 'cat, dog, cow'}
         np.savetxt(img_path, img_data, **txt_kwargs)
         pillow_obj = read_image(img_path, as_grayscale=True, as_numpy_array=False,
                                 delimiter=',', skiprows=1)
@@ -153,10 +167,14 @@ class TestImageTranslator(TestImage):
             else:
                 if isinstance(bin_factor, int):
                     bin_factor = (bin_factor, bin_factor)
-                interp_func = kwargs.pop('interp_func', Image.BICUBIC)
+                interp_func = kwargs.pop('interp_func', Image.Resampling.BICUBIC)
+                if isinstance(interp_func, int):  #pillow<9.0.0
+                    interp_func_name = resample_dict[interp_func]
+                elif isinstance(interp_func, Enum):
+                    interp_func_name = interp_func.name
 
                 image_parms.update({'image_binning_size': np.array(bin_factor),
-                                    'image_PIL_resample_mode': interp_func})
+                                    'image_PIL_resample_mode': interp_func_name})
 
                 img_obj = Image.fromarray(input_image)
                 img_obj = img_obj.convert(mode="L")
@@ -184,6 +202,7 @@ class TestImageTranslator(TestImage):
 
             # check the attributes under this group
             for key, expected_val in image_parms.items():
+                print(hdf_utils.get_attr(h5_meas_grp, key), expected_val)
                 self.assertTrue(np.all(hdf_utils.get_attr(h5_meas_grp, key) == expected_val))
 
             one_d_image = input_image.T.reshape(-1, 1)
@@ -234,7 +253,7 @@ class TestBinning(TestImageTranslator):
         self.main_translate(bin_factor=2, interp_func=Image.NEAREST)
 
     def test_invalid_interp(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             translator = ImageTranslator()
             _ = translator.translate(image_path, bin_factor=2, interp_func='dsdsdsd')
 

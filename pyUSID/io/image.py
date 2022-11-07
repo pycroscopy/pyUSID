@@ -18,12 +18,24 @@ from sidpy.base.num_utils import contains_integers
 from sidpy.hdf.hdf_utils import write_simple_attrs
 from .array_translator import ArrayTranslator
 from .dimension import Dimension
+from enum import Enum
 
 if sys.version_info.major == 3:
     unicode = str
 else:
     FileExistsError = ValueError
     FileNotFoundError = ValueError
+
+# The following code will be used to support both the old and new versions of pillow.
+# Pillow added a new enum class 'Resampling' in the newer version>=9.0.0
+if not hasattr(Image, 'Resampling'):  # pillow<9.0.0
+    Image.Resampling = Image
+resample_dict = {0: 'NEAREST',
+                 1: 'LANCOS',
+                 2: 'BILINEAR',
+                 3: 'BICUBIC',
+                 4: 'BOX',
+                 5: 'HAMMING'}
 
 
 class ImageTranslator(ArrayTranslator):
@@ -78,8 +90,9 @@ class ImageTranslator(ArrayTranslator):
 
         return image_path, h5_path
 
-    def translate(self, image_path, h5_path=None, bin_factor=None, interp_func=Image.BICUBIC, normalize=False,
-                  **image_args):
+    def translate(self, image_path, h5_path=None, bin_factor=None, interp_func=Image.Resampling.BICUBIC,
+                  normalize=False, **image_args):
+
         """
         Translates the image in the provided file into a USID HDF5 file
 
@@ -93,7 +106,8 @@ class ImageTranslator(ArrayTranslator):
         bin_factor : uint or array-like of uint, optional
             Down-sampling factor for each dimension.  Default is None.
             If specifying different binning for each dimension, please specify as (height binning, width binning)
-        interp_func : int, optional. Default = :attr:`PIL.Image.BICUBIC`
+        interp_func : int, optional.
+            Default = :attr:`PIL.Image.BICUBIC` for pillow<9.0.0 or `PIL.Image.Resampling.BICUBIC` for pillow>9.0.0
             How the image will be interpolated to provide the down-sampled or binned image.
             For more information see instructions for the `resample` argument for :meth:`PIL.Image.resize`
         normalize : boolean, optional. Default = False
@@ -134,11 +148,30 @@ class ImageTranslator(ArrayTranslator):
             if np.min(bin_factor) < 0:
                 raise ValueError('bin_factor must consist of positive factors')
 
-            if interp_func not in [Image.NEAREST, Image.BILINEAR, Image.BICUBIC, Image.LANCZOS]:
-                raise ValueError("'interp_func' argument for ImageTranslator.translate must be one of "
-                                 "PIL.Image.NEAREST, PIL.Image.BILINEAR, PIL.Image.BICUBIC, PIL.Image.LANCZOS")
+            # pillow<9.0.0
+            if isinstance(interp_func, int):
+                if interp_func not in resample_dict.keys():
+                    raise ValueError("'interp_func' argument for ImageTranslator.translate must be one of "
+                                     "PIL.Image.NEAREST, PIL.Image.BILINEAR, PIL.Image.BICUBIC, PIL.Image.LANCZOS, "
+                                     "PIL.Image.BOX, PIL.Image.HAMMING")
+                else:
+                    interp_func_name = resample_dict[interp_func]
 
-            image_parms.update({'image_binning_size': bin_factor, 'image_PIL_resample_mode': interp_func})
+            # pillow>9.0.0
+            elif isinstance(interp_func, Enum):
+                if interp_func.value not in resample_dict.keys():
+                    raise ValueError("'interp_func' argument for ImageTranslator.translate must be one of "
+                                     "PIL.Image.Resampling.NEAREST, PIL.Image.Resampling.BILINEAR, "
+                                     "PIL.Image.Resampling.BICUBIC, PIL.Image.Resampling.LANCZOS, "
+                                     "PIL.Image.BOX, PIL.Image.HAMMING")
+                else:
+                    interp_func_name = interp_func.name
+
+            else:
+                raise TypeError('interp_func should be an int (pillow<9.0.0) or an enum (pillow>=9.0.0)'
+                                ' but received {}'.format(type(interp_func)))
+
+            image_parms.update({'image_binning_size': bin_factor, 'image_PIL_resample_mode': interp_func_name})
             usize = int(usize / bin_factor[0])
             vsize = int(vsize / bin_factor[1])
 
