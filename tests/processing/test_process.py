@@ -101,6 +101,7 @@ class TestInvalidInitialization(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             _ = proc.compute()
 
+        self.h5_file.close()
         delete_existing_file(data_utils.std_beps_path)
 
     def test_read_only_h5_main(self):
@@ -112,6 +113,7 @@ class TestInvalidInitialization(unittest.TestCase):
 
         with self.assertRaises(IOError):
             _ = AvgSpecUltraBasic(self.h5_main)
+        self.h5_file.close()
         delete_existing_file(data_utils.std_beps_path)
 
     def test_read_only_h5_parent_group(self):
@@ -128,6 +130,8 @@ class TestInvalidInitialization(unittest.TestCase):
 
         with self.assertRaises(IOError):
             _ = AvgSpecUltraBasic(self.h5_main, h5_target_group=h5_f_new)
+        self.h5_file.close()
+        h5_f_new.close()
         delete_existing_file(data_utils.std_beps_path)
         delete_existing_file(results_path)
 
@@ -139,6 +143,7 @@ class TestInvalidInitialization(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             _ = AvgSpecUltraBasic(self.h5_main)
+        self.h5_file.close()
         delete_existing_file(data_utils.std_beps_path)
 
     def test_invalid_process_name(self):
@@ -158,6 +163,7 @@ class TestInvalidInitialization(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             _ = TempProc(self.h5_main)
+        self.h5_file.close()
         delete_existing_file(data_utils.std_beps_path)
 
     def test_invalid_parms_dict(self):
@@ -176,6 +182,7 @@ class TestInvalidInitialization(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             _ = TempProc(self.h5_main)
+        self.h5_file.close()
         delete_existing_file(data_utils.std_beps_path)
 
     def test_none_parms_dict(self):
@@ -194,6 +201,7 @@ class TestInvalidInitialization(unittest.TestCase):
 
         proc = TempProc(self.h5_main)
         self.assertEqual(proc.parms_dict, dict())
+        self.h5_file.close()
         delete_existing_file(data_utils.std_beps_path)
 
 
@@ -215,6 +223,7 @@ class TestCoreProcessNoTest(unittest.TestCase):
             self.proc.test()
 
     def tearDown(self):
+        self.h5_file.close()
         delete_existing_file(data_utils.std_beps_path)
 
     def test_compute(self):
@@ -360,6 +369,7 @@ class TestCoreProcessWExistingResults(unittest.TestCase):
         self.assertEqual(self.fake_results_grp, h5_results_grp)
 
     def tearDown(self):
+        self.h5_file.close()
         delete_existing_file(data_utils.std_beps_path)
 
 
