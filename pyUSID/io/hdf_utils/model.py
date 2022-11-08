@@ -269,6 +269,9 @@ def reshape_to_n_dims(h5_main, h5_pos=None, h5_spec=None, get_labels=False, verb
 
     swap_axes = np.array(swap_axes)
 
+    #If there are empty arrays, remove them. 
+    swap_axes = np.array([ax for ax in swap_axes if ax.size>0])
+
     if verbose:
         print('Axes will permuted in this order:', swap_axes)
         print('New labels ordering:', all_labels[swap_axes])
