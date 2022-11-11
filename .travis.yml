@@ -33,7 +33,7 @@ deploy:
     github-token: $GITHUBTOKEN
     local_dir: docs/_build/html
     on:
-      branch: master
+      branch: main
       python: 3.7
 # Github releases deployment
   - provider: releases
@@ -43,7 +43,7 @@ deploy:
     file: dist/*
     on:
       tags: true
-      branch: master
+      branch: main
 # PyPi deployment
   - provider: pypi
     skip_cleanup: true
@@ -58,5 +58,5 @@ deploy:
       - dist/*.tar.gz
     on:
       tags: true
-      branch: master
+      branch: main
       python: 3.7
