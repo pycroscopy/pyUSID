@@ -25,6 +25,6 @@ pyUSID
    :target: https://zenodo.org/badge/latestdoi/138171750
    :alt: DOI
     
-Framework for storing, visualizing, and processing Universal Spectroscopic and Imaging Data (USID)
+A framework for storing, visualizing, and processing Universal Spectroscopic and Imaging Data (USID)
 
 Please see our `website <https://pycroscopy.github.io/pyUSID/about.html>`_ for more information.
