@@ -358,7 +358,7 @@ class USIDataset(h5py.Dataset):
                                'dimensions are {}.'.format(key,
                                                            self.n_dim_labels))
             if not isinstance(val, (slice, list, np.ndarray, tuple, int,
-                                    np.int, np.int64, np.int32, np.int16)):
+                                    np.int64, np.int32, np.int16)):
                 raise TypeError('The values for a slice must be a slice, list,'
                                 ' numpy array, a tuple, or an int. Provided '
                                 'value: {} for dimension: {} was of type: {}'
