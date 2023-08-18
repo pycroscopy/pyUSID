@@ -42,7 +42,7 @@ class TestDimension(unittest.TestCase):
         name = 'Bias'
         quantity = 'generic'
         units = 'V'
-        values = np.arange(5, dtype=np.float)
+        values = np.arange(5, dtype=float)
 
         descriptor = dimension.Dimension(name, units, len(values))
         print(type(descriptor))

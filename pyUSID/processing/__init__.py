@@ -10,7 +10,6 @@ Submodules
 """
 
 from .process import Process
-from sidpy.proc import comp_utils
-from sidpy.proc.comp_utils import parallel_compute
+from .comp_utils import *
 
-__all__ = ['Process', 'parallel_compute', 'comp_utils']
+__all__ = ['Process', 'comp_utils']

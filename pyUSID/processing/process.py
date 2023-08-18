@@ -17,7 +17,7 @@ from warnings import warn
 from numbers import Number
 from multiprocessing import cpu_count
 
-from sidpy.proc.comp_utils import parallel_compute, get_MPI, \
+from .comp_utils import parallel_compute, get_MPI, \
     group_ranks_by_socket, get_available_memory
 from sidpy.base.num_utils import integers_to_slices
 from sidpy.base.string_utils import validate_single_string_arg, format_time, \
