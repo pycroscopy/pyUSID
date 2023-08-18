@@ -11,7 +11,7 @@ with open(os.path.join(here, 'pyUSID/__version__.py')) as f:
     __version__ = f.read().split("'")[1]
 
 # TODO: Move requirements to requirements.txt
-requirements = ['numpy>=1.10',
+requirements = ['numpy>=1.20',
                 'toolz',  # dask installation failing without this
                 'cytoolz',  # dask installation failing without this
                 'dask>=0.10',
@@ -19,7 +19,7 @@ requirements = ['numpy>=1.10',
                 'pillow',  # Remove once ImageReader is in ScopeReaders
                 'psutil',
                 'six',
-                'sidpy>=0.0.2'
+                'sidpy>=0.10'
                 ]
 
 setup(
@@ -35,11 +35,9 @@ setup(
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'Programming Language :: Cython',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: Implementation :: CPython',
         'Topic :: Scientific/Engineering :: Information Analysis'],
     keywords=['imaging', 'spectra', 'multidimensional', 'data format', 'universal', 'hdf5'],
