@@ -7,7 +7,7 @@ Created on Tue Nov  3 21:14:25 2015
 @author: Suhas Somnath, Chris Smith
 """
 from __future__ import division, print_function, absolute_import, unicode_literals
-import collections
+import collections.abc as collections
 from warnings import warn
 import sys
 import h5py
