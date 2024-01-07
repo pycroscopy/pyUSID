@@ -199,8 +199,10 @@ class TestPosSpecSlicesReal(TestUSIDatasetReal):
             # orig_spec = np.vstack([np.tile(np.arange(7), 2), np.repeat(np.arange(2), 7)])
             actual_pos, actual_spec = usi_main._get_pos_spec_slices({'X': 3})
             # we want every fifth position starting from 3
-            expected_pos = np.expand_dims(np.arange(3, 15, 5), axis=1)
-            expected_spec = np.expand_dims(np.arange(14), axis=1)
+            # expected_pos = np.expand_dims(np.arange(3, 15, 5), axis=1)
+            expected_pos = np.arange(3, 15, 5)
+            # expected_spec = np.expand_dims(np.arange(14), axis=1)
+            expected_spec = np.arange(14)
             self.assertTrue(np.allclose(expected_spec, actual_spec))
             self.assertTrue(np.allclose(expected_pos, actual_pos))
 
@@ -213,8 +215,10 @@ class TestPosSpecSlicesReal(TestUSIDatasetReal):
             for row_ind in range(3):
                 for col_ind in range(1, 5, 2):
                     positions.append(5 * row_ind + col_ind)
-            expected_pos = np.expand_dims(positions, axis=1)
-            expected_spec = np.expand_dims(np.arange(14), axis=1)
+            # expected_pos = np.expand_dims(positions, axis=1)
+            expected_pos = positions
+            # expected_spec = np.expand_dims(np.arange(14), axis=1)
+            expected_spec = np.arange(14)
             self.assertTrue(np.allclose(expected_spec, actual_spec))
             self.assertTrue(np.allclose(expected_pos, actual_pos))
 
@@ -227,8 +231,10 @@ class TestPosSpecSlicesReal(TestUSIDatasetReal):
             for row_ind in range(1, 2):
                 for col_ind in range(1, 5, 2):
                     positions.append(5 * row_ind + col_ind)
-            expected_pos = np.expand_dims(positions, axis=1)
-            expected_spec = np.expand_dims(np.arange(14), axis=1)
+            # expected_pos = np.expand_dims(positions, axis=1)
+            # expected_spec = np.expand_dims(np.arange(14), axis=1)
+            expected_pos = positions
+            expected_spec = np.arange(14)
             self.assertTrue(np.allclose(expected_spec, actual_spec))
             self.assertTrue(np.allclose(expected_pos, actual_pos))
 
@@ -241,8 +247,10 @@ class TestPosSpecSlicesReal(TestUSIDatasetReal):
             for row_ind in range(1, 2):
                 for col_ind in [1, 2, 4]:
                     positions.append(5 * row_ind + col_ind)
-            expected_pos = np.expand_dims(positions, axis=1)
-            expected_spec = np.expand_dims(np.arange(14), axis=1)
+            # expected_pos = np.expand_dims(positions, axis=1)
+            # expected_spec = np.expand_dims(np.arange(14), axis=1)
+            expected_pos = positions
+            expected_spec = np.arange(14)
             self.assertTrue(np.allclose(expected_spec, actual_spec))
             self.assertTrue(np.allclose(expected_pos, actual_pos))
 
@@ -251,8 +259,10 @@ class TestPosSpecSlicesReal(TestUSIDatasetReal):
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual_pos, actual_spec = usi_main._get_pos_spec_slices({'X': 3, 'Y': 1})
             # we want every fifth position starting from 3
-            expected_pos = np.expand_dims([1 * 5 + 3], axis=1)
-            expected_spec = np.expand_dims(np.arange(14), axis=1)
+            # expected_pos = np.expand_dims([1 * 5 + 3], axis=1)
+            # expected_spec = np.expand_dims(np.arange(14), axis=1)
+            expected_pos = np.array([1 * 5 + 3])
+            expected_spec = np.arange(14)
             self.assertTrue(np.allclose(expected_spec, actual_spec))
             self.assertTrue(np.allclose(expected_pos, actual_pos))
 
@@ -269,10 +279,14 @@ class TestPosSpecSlicesReal(TestUSIDatasetReal):
             specs = []
             for bias_ind in range(1, 7, 3):
                 specs += np.argwhere(h5_spec_inds[h5_spec_inds.attrs['Bias']] == bias_ind)[:, 1].tolist()
-            expected_pos = np.expand_dims(positions, axis=1)
-            expected_spec = np.expand_dims(specs, axis=1)
-            expected_pos.sort(axis=0)
-            expected_spec.sort(axis=0)
+            # expected_pos = np.expand_dims(positions, axis=1)
+            expected_pos = positions
+            # expected_spec = np.expand_dims(specs, axis=1)
+            expected_spec = specs
+            # expected_pos.sort(axis=0)
+            expected_pos.sort()
+            # expected_spec.sort(axis=0)
+            expected_spec.sort()
             self.assertTrue(np.allclose(expected_spec, actual_spec))
             self.assertTrue(np.allclose(expected_pos, actual_pos))
 

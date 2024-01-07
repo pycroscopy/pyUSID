@@ -468,14 +468,14 @@ class USIDataset(h5py.Dataset):
                   ''.format(raw_2d.shape, type(raw_2d)))
 
         if lazy:
-            data_slice = raw_2d[pos_slice[:, 0], :][:, spec_slice[:, 0]]
+            data_slice = raw_2d[pos_slice, :][:, spec_slice]
         else:
             if len(pos_slice) <= len(spec_slice):
                 # Fewer final positions than spectra
-                data_slice = np.atleast_2d(raw_2d[pos_slice[:, 0], :])[:, spec_slice[:, 0]]
+                data_slice = np.atleast_2d(raw_2d[pos_slice, :])[:, spec_slice]
             else:
                 # Fewer final spectral points compared to positions
-                data_slice = np.atleast_2d(raw_2d[:, spec_slice[:, 0]])[pos_slice[:, 0], :]
+                data_slice = np.atleast_2d(raw_2d[:, spec_slice])[pos_slice, :]
 
         if verbose:
             print('data_slice of shape: {} and type: {} after slicing'
@@ -549,6 +549,7 @@ class USIDataset(h5py.Dataset):
             Position indices included in the slice
         spec_slice : list of unsigned int
             Spectroscopic indices included in the slice
+        Mani was here =D
         """
         if slice_dict is None:
             slice_dict = dict()
@@ -620,7 +621,8 @@ class USIDataset(h5py.Dataset):
         spec_slice = np.argwhere(spec_slice)
 
         # TODO: Shouldn't we simply squeeze before returning?
-        return pos_slice.squeeze(), spec_slice.squeeze()
+        # return pos_slice, spec_slice
+        return pos_slice.squeeze(axis=1), spec_slice.squeeze(axis=1)
 
     def _get_dims_for_slice(self, slice_dict=None, verbose=False):
         """
