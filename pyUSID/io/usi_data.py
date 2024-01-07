@@ -620,7 +620,7 @@ class USIDataset(h5py.Dataset):
         spec_slice = np.argwhere(spec_slice)
 
         # TODO: Shouldn't we simply squeeze before returning?
-        return pos_slice, spec_slice
+        return pos_slice.squeeze(), spec_slice.squeeze()
 
     def _get_dims_for_slice(self, slice_dict=None, verbose=False):
         """
