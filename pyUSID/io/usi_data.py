@@ -622,8 +622,8 @@ class USIDataset(h5py.Dataset):
 
         # TODO: Shouldn't we simply squeeze before returning?
         print("Suhas' code")
-        return pos_slice, spec_slice
-        # return pos_slice.squeeze(axis=1), spec_slice.squeeze(axis=1)
+        # return pos_slice, spec_slice
+        return pos_slice.squeeze(axis=1), spec_slice.squeeze(axis=1)
 
     def _get_dims_for_slice(self, slice_dict=None, verbose=False):
         """
