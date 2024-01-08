@@ -559,7 +559,7 @@ class USIDataset(h5py.Dataset):
         if len(slice_dict) == 0:
             pos_slice = np.expand_dims(np.arange(self.shape[0]), axis=1)
             spec_slice = np.expand_dims(np.arange(self.shape[1]), axis=1)
-            return pos_slice, spec_slice
+            return pos_slice.squeeze(axis=1), spec_slice.squeeze(axis=1)
 
         # Create default slices that include the entire dimension
         n_dim_slices = dict()
@@ -621,8 +621,9 @@ class USIDataset(h5py.Dataset):
         spec_slice = np.argwhere(spec_slice)
 
         # TODO: Shouldn't we simply squeeze before returning?
-        # return pos_slice, spec_slice
-        return pos_slice.squeeze(axis=1), spec_slice.squeeze(axis=1)
+        print("Suhas' code")
+        return pos_slice, spec_slice
+        # return pos_slice.squeeze(axis=1), spec_slice.squeeze(axis=1)
 
     def _get_dims_for_slice(self, slice_dict=None, verbose=False):
         """
