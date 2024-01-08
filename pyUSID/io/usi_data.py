@@ -549,7 +549,6 @@ class USIDataset(h5py.Dataset):
             Position indices included in the slice
         spec_slice : list of unsigned int
             Spectroscopic indices included in the slice
-        Mani was here =D
         """
         if slice_dict is None:
             slice_dict = dict()
@@ -620,8 +619,7 @@ class USIDataset(h5py.Dataset):
                 spec_slice = np.logical_and(spec_slice, n_dim_slices[spec_lab])
         spec_slice = np.argwhere(spec_slice)
 
-        # TODO: Shouldn't we simply squeeze before returning?
-        print("Suhas' code")
+        # TODO: Shouldn't we simply squeeze before returning? Mani took care of the squeezing
         # return pos_slice, spec_slice
         return pos_slice.squeeze(axis=1), spec_slice.squeeze(axis=1)
 

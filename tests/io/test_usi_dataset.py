@@ -165,8 +165,10 @@ class TestPosSpecSlicesReal(TestUSIDatasetReal):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
             usi_main = USIDataset(h5_f['/Raw_Measurement/source_main'])
             actual_pos, actual_spec = usi_main._get_pos_spec_slices({})
-            self.assertTrue(np.allclose(np.expand_dims(np.arange(14), axis=1), actual_spec))
-            self.assertTrue(np.allclose(np.expand_dims(np.arange(15), axis=1), actual_pos))
+            # self.assertTrue(np.allclose(np.expand_dims(np.arange(14), axis=1), actual_spec))
+            # self.assertTrue(np.allclose(np.expand_dims(np.arange(15), axis=1), actual_pos))
+            self.assertTrue(np.allclose(np.arange(14), actual_spec))
+            self.assertTrue(np.allclose(np.arange(15), actual_pos))
 
     def test_non_existent_dim(self):
         with h5py.File(test_h5_file_path, mode='r') as h5_f:
