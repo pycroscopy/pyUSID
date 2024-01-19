@@ -1,7 +1,7 @@
 pyUSID
 ======
 
-.. image:: https://github.com/pycroscopy/pyUSID/workflows/build/badge.svg?branch=master
+.. image:: https://github.com/pycroscopy/pyUSID/workflows/build/badge.svg?branch=main
     :target: https://github.com/pycroscopy/pyUSID/actions?query=workflow%3Abuild
     :alt: TravisCI
 
@@ -9,12 +9,12 @@ pyUSID
     :target: https://pypi.org/project/pyUSID/
     :alt: PyPI
 
-.. image:: https://codecov.io/gh/pycroscopy/pyUSID/branch/master/graph/badge.svg?token=HO16T99GJO
+.. image:: https://codecov.io/gh/pycroscopy/pyUSID/graph/badge.svg?token=HO16T99GJO
     :target: https://codecov.io/gh/pycroscopy/pyUSID
     :alt: codecov
     
 .. image:: https://img.shields.io/pypi/l/pyUSID.svg
-    :target: https://pypi.org/project/pyUSID/
+    :target: https://codecov.io/gh/pycroscopy/pyUSID
     :alt: License
     
 .. image:: http://pepy.tech/badge/pyUSID
