@@ -14,7 +14,7 @@ pyUSID
     :alt: codecov
     
 .. image:: https://img.shields.io/pypi/l/pyUSID.svg
-    :target: https://codecov.io/gh/pycroscopy/pyUSID
+    :target: https://pypi.org/project/pyUSID/
     :alt: License
     
 .. image:: http://pepy.tech/badge/pyUSID
