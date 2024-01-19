@@ -1,0 +1,35 @@
+pyUSID.io.anc\_build\_utils
+===========================
+
+.. automodule:: pyUSID.io.anc_build_utils
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      build_ind_val_matrices
+      calc_chunks
+      create_spec_inds_from_vals
+      get_aux_dset_slicing
+      make_indices_matrix
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.copy\_main\_attributes
+==================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: copy_main_attributes

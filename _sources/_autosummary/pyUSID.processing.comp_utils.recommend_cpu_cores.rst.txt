@@ -1,0 +1,6 @@
+pyUSID.processing.comp\_utils.recommend\_cpu\_cores
+===================================================
+
+.. currentmodule:: pyUSID.processing.comp_utils
+
+.. autofunction:: recommend_cpu_cores

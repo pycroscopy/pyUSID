@@ -1,0 +1,35 @@
+pyUSID.processing.comp\_utils
+=============================
+
+.. automodule:: pyUSID.processing.comp_utils
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      get_MPI
+      get_available_memory
+      group_ranks_by_socket
+      parallel_compute
+      recommend_cpu_cores
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

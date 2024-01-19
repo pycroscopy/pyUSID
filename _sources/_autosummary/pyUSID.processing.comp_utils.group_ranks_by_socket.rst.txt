@@ -1,0 +1,6 @@
+pyUSID.processing.comp\_utils.group\_ranks\_by\_socket
+======================================================
+
+.. currentmodule:: pyUSID.processing.comp_utils
+
+.. autofunction:: group_ranks_by_socket

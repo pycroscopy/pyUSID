@@ -1,0 +1,32 @@
+pyUSID.io.array\_translator
+===========================
+
+.. automodule:: pyUSID.io.array_translator
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      ArrayTranslator
+   
+   
+
+   
+   
+   
+
+
+

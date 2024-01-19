@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.check\_if\_main
+===========================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: check_if_main

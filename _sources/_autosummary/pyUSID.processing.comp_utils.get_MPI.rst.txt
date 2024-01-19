@@ -1,0 +1,6 @@
+pyUSID.processing.comp\_utils.get\_MPI
+======================================
+
+.. currentmodule:: pyUSID.processing.comp_utils
+
+.. autofunction:: get_MPI

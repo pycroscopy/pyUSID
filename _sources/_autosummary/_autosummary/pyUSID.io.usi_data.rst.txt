@@ -1,0 +1,29 @@
+pyUSID.io.usi\_data
+===================
+
+.. automodule:: pyUSID.io.usi_data
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      USIDataset
+   
+   
+
+   
+   
+   
+
+
+

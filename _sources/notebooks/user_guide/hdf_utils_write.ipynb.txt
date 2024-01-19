@@ -1,0 +1,1352 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%matplotlib inline"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "\n",
+    "# Utilities for writing h5USID files\n",
+    "\n",
+    "**Suhas Somnath**\n",
+    "\n",
+    "4/18/2018\n",
+    "\n",
+    "**This document illustrates the many handy functions in pyUSID.hdf_utils that significantly simplify writing data\n",
+    "and information into Universal Spectroscopy and Imaging Data (USID) HDF5 files (h5USID files)**\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<span style=\"color:red\">**Note**: Most of the functions demonstrated in this notebook have been moved out of ``pyUSID.hdf_utils`` and into ``sidpy.hdf``</span>\n",
+    "<br>\n",
+    "## Introduction\n",
+    "The USID model uses a data-centric approach to data analysis and processing meaning that results from all data analysis\n",
+    "and processing are written to the same h5 file that contains the recorded measurements. The Hierarchical Data Format\n",
+    "(HDF5) allows data, whether it is raw measured data or results of analysis, to be stored in multiple datasets within\n",
+    "the same file in a tree-like manner. Certain rules and considerations have been made in pyUSID to ensure\n",
+    "consistent and easy access to any data.\n",
+    "\n",
+    "The h5py python package provides great functions to create, read, and manage data in HDF5 files. In\n",
+    "``pyUSID.hdf_utils``, we have added functions that facilitate scientifically relevant, or pyUSID specific\n",
+    "functionality such as easy creation of USID Main datasets, creation of automatically indexed groups to hold\n",
+    "results of an analysis, etc. Due to the wide breadth of the functions in ``hdf_utils``, the guide for hdf_utils will be\n",
+    "split in two parts - one that focuses on functions that facilitate reading and one that facilitate writing of data.\n",
+    "The following guide provides examples of how, and more importantly when, to use functions in pyUSID.hdf_utils for\n",
+    "various scenarios starting from recording data from instruments to storing analysis data.\n",
+    "\n",
+    "## Recommended pre-requisite reading\n",
+    "* [Universal Spectroscopic and Imaging Data (USID) model](https://pycroscopy.github.io/USID/usid_model.html)\n",
+    "* [Crash course on HDF5 and h5py](./h5py_primer.html)\n",
+    "* Utilities for [reading](./hdf_utils_read.html) h5USID files using pyUSID\n",
+    "\n",
+    "\n",
+    "## Import all necessary packages\n",
+    "Before we begin demonstrating the numerous functions in pyUSID.hdf_utils, we need to import the necessary\n",
+    "packages. Here are a list of packages besides pyUSID that will be used in this example:\n",
+    "\n",
+    "* ``h5py`` - to open and close the file\n",
+    "* ``numpy`` - for numerical operations on arrays in memory\n",
+    "* ``matplotlib`` - basic visualization of data\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from __future__ import print_function, division, unicode_literals\n",
+    "import subprocess\n",
+    "import sys\n",
+    "def install(package):\n",
+    "    subprocess.call([sys.executable, \"-m\", \"pip\", \"install\", package])\n",
+    "\n",
+    "import os\n",
+    "# Warning package in case something goes wrong\n",
+    "from warnings import warn\n",
+    "import h5py\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "\n",
+    "# import sidpy - supporting package for pyUSID:\n",
+    "try:\n",
+    "    import sidpy\n",
+    "except ImportError:\n",
+    "    warn('sidpy not found.  Will install with pip.')\n",
+    "    import pip\n",
+    "    install('sidpy')\n",
+    "    import sidpy\n",
+    "\n",
+    "# Finally import pyUSID:\n",
+    "try:\n",
+    "    import pyUSID as usid\n",
+    "except ImportError:\n",
+    "    warn('pyUSID not found.  Will install with pip.')\n",
+    "    import pip\n",
+    "    install('pyUSID')\n",
+    "    import pyUSID as usid"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Create a HDF5 file\n",
+    "We will be using the h5py functionality to do basic operations on HDF5 files\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "file_path = 'test.h5'\n",
+    "h5_file = h5py.File(file_path, mode='w')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## HDF_Utils works with (and uses) h5py\n",
+    "\n",
+    "``sidpy`` and ``hdf_utils`` do not preclude the creation of groups and datasets using the ``h5py`` package. However, the\n",
+    "many functions in ``hdf_utils`` are present to make it easier to handle the reading and writing of multidimensional\n",
+    "scientific data formatted according to the USID model.\n",
+    "\n",
+    "We can always use the ``h5py`` functionality to **create a HDF5 group** as shown below:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_some_group = h5_file.create_group('Some_Group')\n",
+    "print(h5_some_group)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "In the same way, we can also continue to **create HDF5 datasets** using h5py:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_some_dataset = h5_some_group.create_dataset('Some_Dataset', np.arange(5))\n",
+    "print(h5_some_dataset)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Create Groups\n",
+    "create_indexed_group()\n",
+    "----------------------\n",
+    "In order to accommodate the iterative nature of data recording (multiple sequential and related measurements) and\n",
+    "analysis (same analysis performed with different parameters) we add an index as a suffix to HDF5 Group names.\n",
+    "\n",
+    "Let us first create a HDF5 group to store some data recorded from an instrument. The below function will automatically\n",
+    "create a group with an index as a suffix and write certain book-keeping attributes to the group. We will see how this\n",
+    "and similar functions handle situations when similarly named groups already exist.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_meas_group = sidpy.prov_utils.create_indexed_group(h5_file, 'Measurement')\n",
+    "print(h5_meas_group)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Since there were no other groups whose name started with ``Measurement``, the function assigned the lowest index - ``000``\n",
+    "as a suffix to the requested group name.\n",
+    "Note that the ``-`` character is not allowed in the names of the groups since it will be used as the separator character\n",
+    "in other functions. This will be made clear when discussing the ``create_results_group()`` function later.\n",
+    "\n",
+    "``create_indexed_group()`` calls another handy function called ``assign_group_index(`` to get the suffix before creating a\n",
+    "HDF5 group. Should we want to create another new indexed group called ``Measurement``, ``assign_group_index()`` will\n",
+    "notice that a group named ``Measurement_000`` already exists and will assign the next index (``001``) to the new group -\n",
+    "see below. Note that ``assign_group_index()`` does not create the group; it only assigns a non-conflicting string name\n",
+    "for the group.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(sidpy.prov_utils.assign_group_index(h5_file, 'Measurement'))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Now lets look at datasets and groups in the created file:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print('Contents within the file so far:')\n",
+    "sidpy.hdf_utils.print_tree(h5_file)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Clearly, we have the ``Measurement_000`` Group at the same level as a group named ``Some_Group``. The group ``Some_Group``\n",
+    "contains a dataset named ``Some_Dataset`` under it.\n",
+    "\n",
+    "Both, ``Measurement_000`` and ``Some_Group`` have an underline below their name to indicate that they are groups unlike\n",
+    "the ``Some_Dataset`` Dataset\n",
+    "\n",
+    "### Writing attributes\n",
+    "HDF5 datasets and groups can also store metadata such as experimental parameters. These metadata can be text,\n",
+    "numbers, small lists of numbers or text etc. These metadata can be very important for understanding the datasets\n",
+    "and guide the analysis routines.\n",
+    "\n",
+    "While one could use the basic h5py functionality to write and access attributes, one would encounter a lot of problems\n",
+    "when attempting to encode or decode attributes whose values were strings or lists of strings due to some issues in\n",
+    "h5py. This problem has been demonstrated in our\n",
+    "`primer to HDF5 <../beginner/plot_h5py.html>`. Instead of using\n",
+    "the basic functionality of ``h5py``, we recommend always using the functions in pyUSID that **work reliably and\n",
+    "consistently** for any kind of attribute for any version of python:\n",
+    "\n",
+    "Here's a look at the (self-explanatory), default attributes that will be written to the indexed group for traceability\n",
+    "and posterity. Note that we are using pyUSID's ``get_attributes()`` function instead of the base h5py capability\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print('Attributes contained within {}'.format(h5_meas_group))\n",
+    "for key, val in sidpy.hdf_utils.get_attributes(h5_meas_group).items():\n",
+    "    print('\\t%s : %s' % (key, val))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Note that these book-keeping attributes written by ``create_indexed_group()`` are not written when using h5py's\n",
+    "``create_group()`` function to create a regular group.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print('Attributes contained in the basic group created using h5py: {}'.format(h5_some_group))\n",
+    "print(sidpy.hdf_utils.get_attributes(h5_some_group))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## write_book_keeping_attrs()\n",
+    "However, you can always manually add these basic attributes after creating the group using the\n",
+    "``write_book_keeping_attrs()``. Note that we can add these basic attributes to Datasets as well as Groups using this\n",
+    "function.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sidpy.hdf_utils.write_book_keeping_attrs(h5_some_group)\n",
+    "print('Attributes contained in the basic group after calling write_book_keeping_attrs():')\n",
+    "for key, val in sidpy.hdf_utils.get_attributes(h5_some_group).items():\n",
+    "    print('\\t%s : %s' % (key, val))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## write_simple_attrs()\n",
+    "Due to the problems in h5py, we use the ``write_simple_attrs()`` function to add / modify additional attributes to the\n",
+    "group:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sidpy.hdf_utils.write_simple_attrs(h5_meas_group, {'Instrument': 'Atomic Force Microscope',\n",
+    "                                                'User': 'Joe Smith',\n",
+    "                                                'Room Temperature [C]': 23})"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## copy_attributes()\n",
+    "``hdf_utils.copy_attributes()`` is another handy function that simplifies the process of copying attributes from one\n",
+    "HDF5 object to another like a Dataset or Group or the file itself. To illustrate, let us copy the attributes from\n",
+    "``h5_meas_group`` to ``h5_some_dataset``:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print('Attributes in {} before copying attributes:'.format(h5_some_dataset))\n",
+    "for key, val in sidpy.hdf_utils.get_attributes(h5_some_dataset).items():\n",
+    "    print('\\t%s : %s' % (key, val))\n",
+    "print('\\n------------- COPYING ATTRIBUTES ----------------------------\\n')\n",
+    "sidpy.hdf.hdf_utils.copy_attributes(h5_meas_group, h5_some_dataset)\n",
+    "print('Attributes in {}:'.format(h5_some_dataset))\n",
+    "for key, val in sidpy.hdf_utils.get_attributes(h5_some_dataset).items():\n",
+    "    print('\\t%s : %s' % (key, val))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Writing Main datasets\n",
+    "\n",
+    "## Set up a toy problem\n",
+    "Let's set up a toy four-dimensional dataset that has:\n",
+    "\n",
+    "* two position dimensions:\n",
+    "    * columns - X\n",
+    "    * rows - Y\n",
+    "* and two spectroscopic dimensions:\n",
+    "    * (sinusoidal) probing bias waveform\n",
+    "    * cycles over which this bias waveform is repeated\n",
+    "\n",
+    "For simplicity, we will keep the size of each dimension small.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "num_rows = 3\n",
+    "num_cols = 5\n",
+    "num_cycles = 2\n",
+    "bias_pts = 7"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Specify position and spectroscopic dimensions\n",
+    "Next, let us determine how each of the position and spectroscopic dimensions are varied\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "rows_vals = np.arange(-0.1, 0.15, 0.1)\n",
+    "cols_vals = np.arange(400, 900, 100)\n",
+    "bias_vals = 2.5 * np.sin(np.linspace(0, 2*np.pi, bias_pts, endpoint=False))\n",
+    "cycle_vals = np.arange(num_cycles)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "For better understanding of this dataset, let us take a look at the different values these dimensions can take\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "fig, axes = plt.subplots(ncols=2, nrows=2, figsize=(7, 7))\n",
+    "for axis, vals, dim_name in zip(axes.flat, [rows_vals, cols_vals, bias_vals, cycle_vals],\n",
+    "                                ['Rows', 'Cols', 'Bias', 'Cycle']):\n",
+    "    axis.set_title(dim_name, fontsize=15)\n",
+    "    axis.plot(vals, 'o-')\n",
+    "fig.tight_layout()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "In the USID model, position and spectroscopic dimensions are defined using some basic information that will be\n",
+    "incorporated in **Dimension** objects that contain three vial pieces of information:\n",
+    "\n",
+    "* Name of the dimension\n",
+    "* units for the dimension\n",
+    "* values:\n",
+    "    * These can be the actual values over which the dimension was varied\n",
+    "    * or number of steps in case of linearly varying dimensions such as ``Cycle`` below\n",
+    "\n",
+    "Note that the Dimension objects in the lists for Positions and Spectroscopic must be arranged from fastest varying to\n",
+    "slowest varying to mimic how the data is actually arranged. For example, in this example, there are multiple\n",
+    "bias points per cycle and multiple columns per row of data. Thus, the ``Bias`` changes faster than the ``Cycle`` and\n",
+    "the columns change faster than the rows. Therefore, the  ``Cols`` must come before the ``Rows`` and ``Bias`` must precede\n",
+    "the ``Cycle`` dimension:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pos_dims = [usid.Dimension('Cols', 'nm', cols_vals),\n",
+    "            usid.Dimension('Rows', 'um', rows_vals)]\n",
+    "spec_dims = [usid.Dimension('Bias', 'V', bias_vals),\n",
+    "             usid.Dimension('Cycle', '', num_cycles)]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## write_main_dataset()\n",
+    "\n",
+    "Often, data is is recorded (from instruments) or generated (as a result of some analysis) in chunks (for example - one\n",
+    "position at a time). Therefore, it makes sense to first create an empty dataset and then fill in the data as it is\n",
+    "generated / recorded.\n",
+    "\n",
+    "We will only create an empty dataset first by specifying how large the dataset should be and of what data type\n",
+    "(specified using the ``dtype`` keyword argument). Later, we will go over examples where the whole data is available when\n",
+    "creating the HDF5 dataset. The ``write_main_dataset()`` is **one of the most important and popularly used functions** in\n",
+    "``hdf_utils`` since it handles:\n",
+    "\n",
+    "* thorough validation of all inputs\n",
+    "* the creation of the central dataset\n",
+    "* the creation of the ancillary datasets (if necessary)\n",
+    "* linking the ancillary datasets such that the central dataset becomes a ``Main`` dataset\n",
+    "* writing attributes\n",
+    "\n",
+    "By default h5py does not appear to compress datasets and datasets (especially ``Main`` datasets) can balloon in size\n",
+    "if they are not compressed. Therefore, it is recommended that the compression keyword argument is passed as well.\n",
+    "``gzip`` is the compression algorithm that is always available with h5py and it does a great job, so we will use this.\n",
+    "\n",
+    "We could use the ``write_simple_attrs()`` function to write attributes to ``Raw_Data`` at a later stage but we can always\n",
+    "pass these attributes to be written at the time of dataset creation if they are already known\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_raw = usid.hdf_utils.write_main_dataset(h5_meas_group,  # parent HDF5 group\n",
+    "                                           (num_rows * num_cols, bias_pts * num_cycles),  # shape of Main dataset\n",
+    "                                           'Raw_Data',  # Name of main dataset\n",
+    "                                           'Current',  # Physical quantity contained in Main dataset\n",
+    "                                           'nA',  # Units for the physical quantity\n",
+    "                                           pos_dims,  # Position dimensions\n",
+    "                                           spec_dims,  # Spectroscopic dimensions\n",
+    "                                           dtype=np.float32,  # data type / precision\n",
+    "                                           compression='gzip',\n",
+    "                                           main_dset_attrs={'IO_rate': 4E+6, 'Amplifier_Gain': 9})\n",
+    "print(h5_raw)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Let us take a look at the contents of the file again using the ``print_tree()`` function. What we see is that five new\n",
+    "datasets have been created:\n",
+    "\n",
+    "* ``Raw_Data`` was created to contain the 4D measurement we are interested in storing.\n",
+    "* ``Spectroscopic_Indices`` and Spectroscopic_Values`` contain the information about the spectroscopic dimensions\n",
+    "* ``Position_Indices`` and ``Position_Values`` contain the position related information\n",
+    "\n",
+    "The underline below ``Measurement_000`` indicates that this is a HDF5 Group\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sidpy.hdf_utils.print_tree(h5_file)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "As mentioned in our `document about the USID\n",
+    "model <../../data_format.html>`, the four supporting datasets (``Indices`` and\n",
+    "``Values`` datasets for ``Position`` and ``Spectroscopic``) help provide meaning to each element in ``Raw_Data`` such as\n",
+    "dimensionality, etc.\n",
+    "\n",
+    "Only ``Raw_Data`` is a ``USID Main dataset`` while all other datasets are just supporting datasets. We can\n",
+    "verify whether a dataset is a Main dataset or not using the ``check_if_main()`` function:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "for dset in [h5_raw, h5_raw.h5_spec_inds, h5_raw.h5_pos_vals]:\n",
+    "    print('Is {} is a Main dataset?: {}'.format(dset.name, usid.hdf_utils.check_if_main(dset)))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Populating the Dataset:\n",
+    "\n",
+    "Note that h5_main still does not contain the values we are interested in filling it in with:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(h5_raw[5])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Let us simulate a situation where we are recording the data a pixel at a time and writing it to the h5_main dataset:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "source_main_data = np.random.rand(num_rows * num_cols, bias_pts * num_cycles)\n",
+    "\n",
+    "for pixel_ind, pixel_data in enumerate(source_main_data):\n",
+    "    h5_raw[pixel_ind] = pixel_data\n",
+    "\n",
+    "# Make sure to ``flush`` the file (write anything in the buffer into the file)\n",
+    "h5_file.flush()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Note that we were only simulating a (realistic) situation where all the data was not present at once to write into\n",
+    "``Raw_Data`` dataset. Let us check the contents at a particular position in the dataset now:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(h5_raw[5])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Exploring attributes in Main datasets:\n",
+    "\n",
+    "Some of the main requirements for promoting a regular dataset to a Main dataset are some mandatory attributes attached\n",
+    "to the dataset:\n",
+    "\n",
+    "* quantity - What the stored data contains - for example: current, temperature, voltage, strain etc.\n",
+    "* units - the units for the quantity, such as Amperes, meters, etc.\n",
+    "* links to each of the four ancillary datasets\n",
+    "\n",
+    "Again, we can use the ``get_attributes()`` function to see if and how these attributes are stored:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "for key, val in sidpy.hdf_utils.get_attributes(h5_raw).items():\n",
+    "    print('{} : {}'.format(key, val))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "While it is straightforward to read simple attributes like ``quantity`` or ``units``, the values for ``Position_Values`` or\n",
+    "``Spectroscopic_Indices`` attributes seem cryptic. These are just references or links to other datasets.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(sidpy.hdf_utils.get_attr(h5_raw, 'Position_Indices'))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Object references as attributes\n",
+    "We can get access to linked datasets using ``get_auxiliary_datasets()``:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(sidpy.hdf_utils.get_auxiliary_datasets(h5_raw, 'Position_Indices'))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Given that ``h5_raw`` is a ``Main`` dataset, and`` Position_Indices`` is one of the four essential components of a ``Main``\n",
+    "dataset, the ``USIdataset`` object makes it far easier to access the ``ancillary datasets`` without needing to call a\n",
+    "function as above.\n",
+    "`The USIDataset class <./plot_usi_dataset.html>`_\n",
+    "has been discussed in greater detail in a separate document.\n",
+    "\n",
+    "What do we do if we need to store some other supporting information regarding some measurement? If such supporting\n",
+    "datasets do not need to be ``USID Main datasets``, we could simply use the basic functionality of ``h5py`` to create\n",
+    "the dataset\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_other = h5_meas_group.create_dataset('Other', np.random.rand(5))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "h5USID files tend to have a fair number of datasets in them and the most important ones are ``Main datasets`` and\n",
+    "users tend to \"walk\" or \"hop\" through the file by stepping only on the ``Main datasets``. Thus, we often want to link\n",
+    "supporting datasets to the relevant ``Main datasets``. This way, such supporting datasets can be accessed via an\n",
+    "attribute of the ``Main dataset`` instead of having to manually specify the path of the supporting dataset.\n",
+    "\n",
+    "## link_h5_objects_as_attrs()\n",
+    "``link_h5_objects_as_attrs()`` makes it easy to link a dataset or group to any other dataset or group. In this example\n",
+    "we will link the ``Other`` dataset to the ``Raw_Data`` dataset:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sidpy.hdf_utils.link_h5_objects_as_attrs(h5_raw, h5_other)\n",
+    "\n",
+    "for key, val in sidpy.hdf_utils.get_attributes(h5_raw).items():\n",
+    "    print('{} : {}'.format(key, val))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "In the same way, we can even link a group to the ``Other`` dataset:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sidpy.hdf_utils.link_h5_objects_as_attrs(h5_other, h5_some_group)\n",
+    "\n",
+    "for key, val in sidpy.hdf_utils.get_attributes(h5_other).items():\n",
+    "    print('{} : {}'.format(key, val))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "What we see above is that 'Other' is now an attribute of the 'Raw_Data' dataset.\n",
+    "\n",
+    "One common scenario in scientific workflows is the storage of multiple ``Main Datasets`` within the same group. The\n",
+    "first ``Main dataset`` can be stored along with its four ``ancillary datasets`` without any problems. However, if the\n",
+    "second ``Main dataset`` also requires the storage of ``Position`` and ``Spectroscopic`` datasets, these datasets would need\n",
+    "to be named differently to avoid conflicts with existing datasets (associated with the first ``Main dataset``). Moreover\n",
+    ", these ``ancillary datasets`` would need to be linked to the second ``Main dataset`` with the standard ``Position_..`` and\n",
+    "``Spectroscopic_..`` names for the attributes.\n",
+    "\n",
+    "## link_h5_obj_as_alias()\n",
+    "``link_h5_obj_as_alias()`` is handy in this scenario since it allows a dataset or group to be linked with a name\n",
+    "different from its actual name. For example, we can link the ``Raw_Data`` dataset to the ``Other`` dataset with an alias:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sidpy.hdf_utils.link_h5_obj_as_alias(h5_other, h5_raw, 'Mysterious_Dataset')\n",
+    "\n",
+    "for key, val in sidpy.hdf_utils.get_attributes(h5_other).items():\n",
+    "    print('{} : {}'.format(key, val))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The dataset named ``Other`` has a new attribute named ``Mysterious_Dataset``. Let us show that this dataset is none other\n",
+    "than ``Raw_Data``:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_myst_dset = sidpy.hdf_utils.get_auxiliary_datasets(h5_other, 'Mysterious_Dataset')[0]\n",
+    "print(h5_myst_dset == h5_raw)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Processing on Datasets\n",
+    "Lets assume that we are normalizing the data in some way and we need to write the results back to the file. As far\n",
+    "as the data shapes and dimensionality are concerned, let us assume that the data still remains a 4D dataset.\n",
+    "\n",
+    "## create_results_group()\n",
+    "Let us first start off with creation of a HDF5 Group that will contain the results. If you recall, groups that contain\n",
+    "the results of some processing / analysis on a source dataset are named as ``Source_Dataset_name-Process_Name_00x``\n",
+    "where the index of the group. The ``create_results_group()`` function makes it very easy to create a group with such\n",
+    "nomenclature and indexing:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_results_group_1 = sidpy.prov_utils.create_results_group(h5_raw, 'Normalization')\n",
+    "print(h5_results_group_1)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Let us make up some (random) data which is the result of some Normalization on the ``Raw_Data``:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "norm_data = np.random.rand(num_rows * num_cols, bias_pts * num_cycles)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Writing the main dataset\n",
+    "In this scenario we will demonstrate how one might write a ``Main dataset`` when having the complete processed (in this\n",
+    "case some normalization) data is available before even creating the dataset.\n",
+    "\n",
+    "One more important point to remember here is that the normalized data is of the same shape and dimensionality as\n",
+    "``Raw_Data``. Therefore, we need not unnecessarily create ancillary datasets - we can simply refer to the ones that\n",
+    "support ``Raw_Data``. During the creation of ``Raw_Data``, we passed the ``pos_dims`` and ``spec_dims`` parameters for the\n",
+    "creation of new ``Ancillary datasets``. In this case, we will show how we can ask ``write_main_dataset()`` to reuse\n",
+    "existing ancillary datasets:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_norm = usid.hdf_utils.write_main_dataset(h5_results_group_1,  # parent group\n",
+    "                                            norm_data,  # data to be written\n",
+    "                                            'Normalized_Data',  # Name of the main dataset\n",
+    "                                            'Current',  # quantity\n",
+    "                                            'nA',  # units\n",
+    "                                            None,  # position dimensions\n",
+    "                                            None,  # spectroscopic dimensions\n",
+    "                                            h5_pos_inds=h5_raw.h5_pos_inds,\n",
+    "                                            h5_pos_vals=h5_raw.h5_pos_vals,\n",
+    "                                            h5_spec_inds=h5_raw.h5_spec_inds,\n",
+    "                                            h5_spec_vals=h5_raw.h5_spec_vals,\n",
+    "                                            compression='gzip')\n",
+    "print(h5_norm)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "When we look at the contents of hte file again, what we see below is that the newly created group\n",
+    "``Raw_Data-Normalization_000`` only contains the ``Normalized_Data`` dataset and none of the supporting ancillary datasets\n",
+    "since it is sharing the same ones created for ``Raw_Data``\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sidpy.hdf_utils.print_tree(h5_file)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Shared ancillary datasets\n",
+    "Let us verify that ``Raw_Data`` and ``Normalized_Data`` share the same ancillary datasets:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "for anc_name in ['Position_Indices', 'Position_Values', 'Spectroscopic_Indices', 'Spectroscopic_Values']:\n",
+    "    # get the handle to the ancillary dataset linked to 'Raw_Data'\n",
+    "    raw_anc = sidpy.hdf_utils.get_auxiliary_datasets(h5_raw, anc_name)[0]\n",
+    "    # get the handle to the ancillary dataset linked to 'Normalized_Data'\n",
+    "    norm_anc = sidpy.hdf_utils.get_auxiliary_datasets(h5_norm, anc_name)[0]\n",
+    "    # Show that these are indeed the same dataset\n",
+    "    print('Sharing {}: {}'.format(anc_name, raw_anc == norm_anc))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Unlike last time with ``Raw_Data``, we wrote the data to the file when creating ``Normalized_Data``, so let us check to\n",
+    "make sure that we did in fact write data to disk:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(h5_norm[5])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Duplicating Datasets\n",
+    "\n",
+    "## create_empty_dataset()\n",
+    "Let us say that we are interested in writing out another dataset that is again of the same shape and dimensionality as\n",
+    "``Raw_Data`` or ``Normalized_Data``. There is another way to create an empty dataset identical to an existing dataset,\n",
+    "and then fill it in. This approach is an alternative to the approach used for ``Normalized_Data``:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_offsets = usid.hdf_utils.create_empty_dataset(h5_norm, np.float32, 'Offsets')\n",
+    "print(h5_offsets)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "In this very specific scenario, we duplicated practically all aspects of ``Normalized_Data``, including its links to the\n",
+    "ancillary datasets. Thus, this ``h5_offsets`` automatically also becomes a ``Main dataset``.\n",
+    "\n",
+    "However, it is empty and needs to be populated\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(h5_offsets[6])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Since this is an example, we will populate the dataset using same data prepare for ``norm_data``\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_offsets[()] = norm_data\n",
+    "print(h5_offsets[6])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Creating Ancillary datasets\n",
+    "Often, certain processing of data involves the removal of one or more dimensions (typically ``Spectroscopic``). This\n",
+    "necessitates careful generation of ``indices`` and ``values`` datasets. In our example, we will remove the spectroscopic\n",
+    "dimension - ``Bias`` and leave the position dimensions as is. While we could simply regenerate the spectroscopic indices\n",
+    "from scratch knowing that the only remaining spectroscopic dimension is ``Cycle``, this is not feasible when writing\n",
+    "robust code where we have minimal control or knowledge about the other dimensions. This is especially true when there\n",
+    "are 3 or more spectroscopic dimensions and we do not know relationships between the spectroscopic dimensions or the\n",
+    "rates of change in these spectroscopic dimensions. Fortunately, ``hdf_utils.write_reduced_spec_dsets()`` substantially\n",
+    "simplifies this problem as shown below.\n",
+    "\n",
+    "First, we still need to create the results HDF5 group to hold the results:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_analysis_group = sidpy.prov_utils.create_results_group(h5_norm, 'Fitting')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Let us take a look at the contents of the HDF5 file again. Clearly, we do not have any new datasets underneath\n",
+    "``Normalized_Data-Fitting_000``\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sidpy.hdf_utils.print_tree(h5_file)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## write_reduced_anc_dsets()\n",
+    "Now we make the new spectroscopic indices and values datasets while removing the ``Bias`` dimension using the\n",
+    "``write_reduced_anc_dsets()`` function. This is especially useful when performing dimensionality reduction\n",
+    "statistically (machine learning / simpler methods such as averaging) or by fitting a dimension to some functional form\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_spec_inds, h5_spec_vals = usid.hdf_utils.write_reduced_anc_dsets(h5_analysis_group,\n",
+    "                                                                    h5_norm.h5_spec_inds,\n",
+    "                                                                    h5_norm.h5_spec_vals,\n",
+    "                                                                    'Bias', is_spec=True)\n",
+    "print(h5_spec_inds)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Let us take a look at the contents only inside h5_analysis_group now. Clearly, we have created two new spectroscopic\n",
+    "ancillary datasets.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sidpy.hdf_utils.print_tree(h5_analysis_group)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## write_ind_val_dsets()\n",
+    "Similar to ``write_reduced_spec_dsets()``, ``hdf_utils`` also has another function called ``write_ind_val_dsets()`` that is\n",
+    "handy when one needs to create the ancillary datasets before ``write_main_dataset()`` is called. For example, consider a\n",
+    "data processing algorithm that may or may not change the position dimensions. You may need to structure your code this\n",
+    "way:\n",
+    "\n",
+    ".. code-block:: python\n",
+    "\n",
+    "    if position dimensions are unchanged:\n",
+    "      # get links to datasets from the source dataset\n",
+    "      h5_pos_inds, h5_pos_vals = h5_source.h5_pos_inds, h5_source.h5_pos_vals\n",
+    "    else:\n",
+    "      # Need to create fresh HDF5 datasets\n",
+    "      h5_pos_inds, h5_pos_vals = write_ind_val_dsets()\n",
+    "\n",
+    "    # At this point, it does not matter how we got h5_pos_inds, h5_pos_vals. We can simply link them when we\n",
+    "    # create the main dataset.\n",
+    "    h5_new_main = write_main_dataset(...., h5_pos_inds=h5_pos_inds, h5_pos_vals=h5_pos_vals)\n",
+    "\n",
+    "Even though we already decided that we would not be changing the position dimensions for this particular example, we\n",
+    "will demonstrate the usage of ``write_ind_val_dsets()`` to make ``position indices`` and ``values`` HDF5 datasets (that are\n",
+    "identical to the ones already linked to ``h5_norm``)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_pos_inds, h5_pos_vals = usid.hdf_utils.write_ind_val_dsets(h5_analysis_group, pos_dims, is_spectral=False)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Looking at the contents of ``Normalized_Data-Fitting_000`` now reveals that we have added the ``Position`` datasets as\n",
+    "well. However, we still do not have the ``Main dataset``.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sidpy.hdf_utils.print_tree(h5_analysis_group)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Finally, we can create and write a Main dataset with some results using the trusty write_main_dataset function. Since\n",
+    "we have created both the Spectroscopic and Position HDF5 dataset pairs, we simply ask write_main_dataset() to re-use\n",
+    "+ link them. This is why the ``pos_dims`` and ``spec_dims`` arguments are None (we don't want to create new datasets).\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "reduced_main = np.random.rand(num_rows * num_cols, num_cycles)\n",
+    "h5_cap_1 = usid.hdf_utils.write_main_dataset(h5_analysis_group,  # parent HDF5 group\n",
+    "                                           reduced_main,  # data for Main dataset\n",
+    "                                           'Capacitance',  # Name of Main dataset\n",
+    "                                           'Capacitance',  # Quantity\n",
+    "                                           'pF',  # units\n",
+    "                                           None,  # position dimensions\n",
+    "                                           None,  # spectroscopic dimensions\n",
+    "                                           h5_spec_inds=h5_spec_inds,\n",
+    "                                           h5_spec_vals=h5_spec_vals,\n",
+    "                                           h5_pos_inds=h5_pos_inds,\n",
+    "                                           h5_pos_vals=h5_pos_vals,\n",
+    "                                             compression='gzip')\n",
+    "print(h5_cap_1)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Multiple Main Datasets\n",
+    "Let's say that we need to create a new ``Main dataset`` within the same folder as ``Capacitance`` called\n",
+    "``Mean_Capacitance``. ``Mean_Capacitance`` would just be a spatial map with average capacitance, so it would not even have\n",
+    "the ``Cycle`` spectroscopic dimension. This means that we can reuse the newly created ``Position ancillary datasets`` but\n",
+    "we would need to create new ``Spectroscopic_Indices`` and ``Spectroscopic_Values`` datasets in the same folder to express\n",
+    "the 0 dimensions in the spectroscopic axis for this new dataset. However, we already have datasets of this name that\n",
+    "we created above using the ``write_reduced_spec_dsets()`` function. Recall, that the criterion for a ``Main dataset`` is\n",
+    "that it should have attributes of name ``Spectroscopic_Indices`` and ``Spectroscopic_Values``. **It does not matter what\n",
+    "the actual name of the linked datasets are**. Coming back to the current example, we could simply ask\n",
+    "``write_main_dataset()`` to name the spectroscopic datasets with a different prefix - ``Empty_Spec`` instead of\n",
+    "``Spectroscopic`` (which is the default) via the ``aux_spec_prefix`` keyword argument (last line). This allows the\n",
+    "creation of the new Main Dataset without any name clashes with existing datasets:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_cap_2 = usid.hdf_utils.write_main_dataset(h5_analysis_group,  # Parent HDF5 group\n",
+    "                                           np.random.rand(num_rows * num_cols, 1),  # Main Data\n",
+    "                                           'Mean_Capacitance',  # Name of Main Dataset\n",
+    "                                           'Capacitance',  # Physical quantity\n",
+    "                                           'pF',  # Units\n",
+    "                                           None,  # Position dimensions\n",
+    "                                           usid.Dimension('Capacitance', 'pF', 1),  # Spectroscopic dimensions\n",
+    "                                           h5_pos_inds=h5_pos_inds,\n",
+    "                                           h5_pos_vals=h5_pos_vals,\n",
+    "                                           aux_spec_prefix='Empty_Spec')\n",
+    "print(h5_cap_2)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "The ``compression`` argument need not be specified for small datasets such as ``Mean Capacitance``.\n",
+    "Clearly, ``Mean_Capacitance`` and ``Capacitance`` are two ``Main datasets`` that coexist in the same HDF5 group along\n",
+    "with their necessary ancillary datasets.\n",
+    "\n",
+    "Now, let us look at the contents of the group: ``Normalized_Data-Fitting_000`` to verify this:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sidpy.hdf_utils.print_tree(h5_analysis_group)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### File status\n",
+    "is_editable_h5()\n",
+    "------------------\n",
+    "When writing a class or a function that modifies or adds data to an existing HDF5 file, it is a good idea to check to\n",
+    "make sure that it is indeed possible to write the new data to the file. ``is_editable_h5()`` is a handy function for\n",
+    "this very purpose:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print('Is the file editable?: {}'.format(sidpy.hdf_utils.is_editable_h5(h5_file)))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "If we close the file and try again we should expect runtime and Value errors. You can try this by yourself if you like\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_file.close()\n",
+    "# print('Is the file editable?: {}'.format(sidpy.hdf_utils.is_editable_h5(h5_file)))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Let us try again by opening this file in read-only mode. We should see that the file will not be editable:\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_file = h5py.File('test.h5', mode='r')\n",
+    "print('Is the file editable?: {}'.format(sidpy.hdf_utils.is_editable_h5(h5_file)))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Closing and deleting the file\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "h5_file.close()\n",
+    "os.remove(file_path)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python [default]",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.5.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 1
+}

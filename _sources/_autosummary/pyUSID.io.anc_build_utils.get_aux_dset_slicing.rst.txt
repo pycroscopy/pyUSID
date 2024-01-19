@@ -1,0 +1,6 @@
+pyUSID.io.anc\_build\_utils.get\_aux\_dset\_slicing
+===================================================
+
+.. currentmodule:: pyUSID.io.anc_build_utils
+
+.. autofunction:: get_aux_dset_slicing

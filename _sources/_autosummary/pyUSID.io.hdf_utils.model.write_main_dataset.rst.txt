@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.model.write\_main\_dataset
+===============================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.model
+
+.. autofunction:: write_main_dataset
