@@ -18,7 +18,6 @@ requirements = ['numpy>=1.20',
                 'h5py>=2.6.0',
                 'pillow',  # Remove once ImageReader is in ScopeReaders
                 'psutil',
-                'six',
                 'sidpy>=0.10'
                 ]
 
