@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.validate\_anc\_h5\_dsets
+====================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: validate_anc_h5_dsets

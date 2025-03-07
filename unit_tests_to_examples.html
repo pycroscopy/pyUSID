@@ -1,0 +1,439 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Converting Unit Tests to Examples &mdash; pyUSID 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pyUSID
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pyUSID</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="about.html">pyUSID</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scale_to_hpc.html">Scaling to Clusters</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="_autosummary/pyUSID.html">pyUSID</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/user_guide/index.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pyUSID</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Converting Unit Tests to Examples</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/unit_tests_to_examples.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="converting-unit-tests-to-examples">
+<h1><a class="toc-backref" href="#id1" role="doc-backlink">Converting Unit Tests to Examples</a><a class="headerlink" href="#converting-unit-tests-to-examples" title="Link to this heading">¶</a></h1>
+<p><strong>Suhas Somnath</strong></p>
+<p><strong>This document is under construction!</strong></p>
+<nav class="contents" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#converting-unit-tests-to-examples" id="id1">Converting Unit Tests to Examples</a></p>
+<ul>
+<li><p><a class="reference internal" href="#introduction" id="id2">Introduction</a></p></li>
+<li><p><a class="reference internal" href="#notes" id="id3">Notes</a></p></li>
+<li><p><a class="reference internal" href="#case-1-simple-unit-test" id="id4">Case 1 - Simple unit test</a></p>
+<ul>
+<li><p><a class="reference internal" href="#the-unit-test" id="id5">The unit test</a></p></li>
+<li><p><a class="reference internal" href="#the-example" id="id6">The example</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#case-2-failure-test" id="id7">Case 2 - Failure test</a></p></li>
+<li><p><a class="reference internal" href="#case-3-realistic-example" id="id8">Case 3 - Realistic example</a></p></li>
+<li><p><a class="reference internal" href="#formatting-the-example" id="id9">Formatting the example</a></p>
+<ul>
+<li><p><a class="reference internal" href="#creating-text-cells" id="id10">Creating Text Cells</a></p></li>
+<li><p><a class="reference internal" href="#headings" id="id11">Headings</a></p></li>
+<li><p><a class="reference internal" href="#bullets" id="id12">Bullets</a></p></li>
+<li><p><a class="reference internal" href="#emphasis" id="id13">Emphasis</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+<section id="introduction">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Introduction</a><a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>It takes time to write <a class="reference external" href="https://pycroscopy.github.io/pyUSID/auto_examples/index.html">examples</a> and even more time to write ones that work</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Unit</span> <span class="pre">Tests</span></code> show how a function should be used and how it behaves using examples. Does this sound familiar (above)?</p></li>
+<li><p>In a unit test, we assert that a function behaves in a certain way. In an example, we simply need to show how the function behaves either by printing the output or by plotting some curves, etc. Thus, it is indeed rather straightforward to convert a unit test to an example.</p>
+<ul>
+<li><p>Typically, one may write several unit tests for a single function to cover as many use cases as possible. More coverage = more robust code.</p></li>
+<li><p>We do not need to translate every single unit test to an example, just the ones that best illustrate a function.</p></li>
+</ul>
+</li>
+<li><p>This guide will show you how to convert existing unit tests to examples for cookbooks</p></li>
+</ul>
+</section>
+<section id="notes">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Notes</a><a class="headerlink" href="#notes" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>The unit tests may not have comments for every set of lines as presented here however it is a good idea to add a few helpful comments wherever possible.</p></li>
+<li><p>If the purpose of the function is not immediately clear, please consider reading the <code class="docutils literal notranslate"><span class="pre">doctoring</span></code> of the function in the source code.</p>
+<ul>
+<li><p>We have tried to be as meticulous as possible to explain the purpose of each function and each of the parameters in the docstring</p></li>
+<li><p>If you are using Jupyter to test and write examples, you can press the <code class="docutils literal notranslate"><span class="pre">Tab</span></code> key four times to get a separate window explaining the function and its inputs</p></li>
+<li><p>If the docstring and the unit tests are still confusing contact Suhas / Chris.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="case-1-simple-unit-test">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Case 1 - Simple unit test</a><a class="headerlink" href="#case-1-simple-unit-test" title="Link to this heading">¶</a></h2>
+<p>As a simple example, we will consider tests for <code class="docutils literal notranslate"><span class="pre">recommend_cpu_cores()</span></code> present in <code class="docutils literal notranslate"><span class="pre">pyUSID.io.io_utils.py</span></code>. As the name suggests, the function recommends the number of CPU cores to use for a specific parallel computation (for example fitting N spectra to a function).</p>
+<section id="the-unit-test">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">The unit test</a><a class="headerlink" href="#the-unit-test" title="Link to this heading">¶</a></h3>
+<p>While it makes sense in theory to use all available CPU cores to solve an embarrassingly parallel problem quickly, there is a time overhead associated with starting up each CPU core and this time loss can outweigh the speedup that can be gained when using multiple cores. Below is an unit test for this very specific scenario. Essentially, we want the function to recommend using a single core when we tell the function that the operation needs to be performed only a few times. You can find this function in lines 30-36 of <code class="docutils literal notranslate"><span class="pre">pyUSID/tests/io/test_io_utils.py</span></code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_reccomend_cores_few_small_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">num_jobs</span> <span class="o">=</span> <span class="mi">13</span>
+    <span class="n">ret_val</span> <span class="o">=</span> <span class="n">io_utils</span><span class="o">.</span><span class="n">recommend_cpu_cores</span><span class="p">(</span><span class="n">num_jobs</span><span class="p">,</span> <span class="n">lengthy_computation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">ret_val</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ret_val</span> <span class="o">=</span> <span class="n">io_utils</span><span class="o">.</span><span class="n">recommend_cpu_cores</span><span class="p">(</span><span class="n">num_jobs</span><span class="p">,</span> <span class="n">requested_cores</span><span class="o">=</span><span class="n">MAX_CPU_CORES</span><span class="p">,</span> <span class="n">lengthy_computation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">ret_val</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Since this function accepts a few optional keyword arguments, one can simulate multiple ways in wich this function may be called for this scenario. Here, we will break down what happens in each line of a unit test.</p>
+<p>We first set the number of times the operation needs to be performed (<code class="docutils literal notranslate"><span class="pre">num_jobs</span></code>) to something relatively small ~ 13.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">num_jobs</span> <span class="o">=</span> <span class="mi">13</span>
+</pre></div>
+</div>
+<p>In the first test we only tell the function the number of times the operation needs to be performed (<code class="docutils literal notranslate"><span class="pre">num_jobs</span></code>) and that each job is relatively short (<code class="docutils literal notranslate"><span class="pre">lengthy_computation=False</span></code>).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ret_val</span> <span class="o">=</span> <span class="n">io_utils</span><span class="o">.</span><span class="n">recommend_cpu_cores</span><span class="p">(</span><span class="n">num_jobs</span><span class="p">,</span> <span class="n">lengthy_computation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We expect the function to behave a certain way. In this case we expect the function to return an integer value that is equal to 1. So, we will then test to make sure (or in programming-speak we <code class="docutils literal notranslate"><span class="pre">assert</span></code>) that the returned value from the function (<code class="docutils literal notranslate"><span class="pre">ret_val</span></code>) is indeed equal to what we expect (<code class="docutils literal notranslate"><span class="pre">1</span></code>):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">ret_val</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The second test is a slight variation of the aforementioned test where we assume that the user also requests the use of all available CPU cores (<code class="docutils literal notranslate"><span class="pre">requested_cores=MAX_CPU_CORES</span></code>). In this case as well, we expect the function to ignore the user’s request and recommend the usage of a single core:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ret_val</span> <span class="o">=</span> <span class="n">io_utils</span><span class="o">.</span><span class="n">recommend_cpu_cores</span><span class="p">(</span><span class="n">num_jobs</span><span class="p">,</span> <span class="n">requested_cores</span><span class="o">=</span><span class="n">MAX_CPU_CORES</span><span class="p">,</span> <span class="n">lengthy_computation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">ret_val</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Since the two tests are actually very similar to each other, we clubbed both tests under one unit test function.</p>
+</section>
+<section id="the-example">
+<h3><a class="toc-backref" href="#id6" role="doc-backlink">The example</a><a class="headerlink" href="#the-example" title="Link to this heading">¶</a></h3>
+<p>Recall that the translation of a unit test to an example only requires that the behavior of the function be shown via a print statement or a plot. When translating this specific unit test, all we need to do is print the returned value from the function instead of asserting that it would be equal to a certain value. In every other way, it is literally copy pasting code. This specific unit test has already been translated to an example <a class="reference external" href="./auto_examples/intermediate/plot_io_utils.html">in this example python script</a> but here the excerpt specific to this unit test:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Case 3. Far fewer independent and fast computations, and the function is asked if 3 cores is OK. In this case, configuring</span>
+<span class="c1"># multiple cores for parallel computations will probably be slower than serial computation with a single core. Hence,</span>
+<span class="c1"># the function will recommend the use of only one core in this case.</span>
+<span class="n">requested_cores</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">num_jobs</span> <span class="o">=</span> <span class="mi">13</span>
+<span class="n">recommeded_cores</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">io_utils</span><span class="o">.</span><span class="n">recommend_cpu_cores</span><span class="p">(</span><span class="n">num_jobs</span><span class="p">,</span> <span class="n">requested_cores</span><span class="o">=</span><span class="n">requested_cores</span><span class="p">,</span> <span class="n">lengthy_computation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Recommended number of CPU cores for </span><span class="si">{}</span><span class="s1"> independent, FAST, and parallel &#39;</span>
+      <span class="s1">&#39;computations using the requested </span><span class="si">{}</span><span class="s1"> CPU cores is </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_jobs</span><span class="p">,</span> <span class="n">requested_cores</span><span class="p">,</span> <span class="n">recommeded_cores</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="case-2-failure-test">
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">Case 2 - Failure test</a><a class="headerlink" href="#case-2-failure-test" title="Link to this heading">¶</a></h2>
+<p>A major portion of writing unit tests involves writing tests to assert how the function should handle invalid inputs such as providing a string where an integer was expected, etc. It is not necessary to translate such unit tests into examples but it is important to identify and differentiate “success” unit tests (that are worth translating to examples), like the one above, from “failure” test cases, like the one below. In the example below, we intend to test the function: <code class="docutils literal notranslate"><span class="pre">px.hdf_utils.get_unit_values()</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_get_unit_values_illegal_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">__ensure_test_h5_file</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">test_h5_file_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">h5_f</span><span class="p">:</span>
+        <span class="n">h5_inds</span> <span class="o">=</span> <span class="n">h5_f</span><span class="p">[</span><span class="s1">&#39;/Raw_Measurement/Spectroscopic_Indices&#39;</span><span class="p">]</span>
+        <span class="n">h5_vals</span> <span class="o">=</span> <span class="n">h5_f</span><span class="p">[</span><span class="s1">&#39;/Raw_Measurement/Spectroscopic_Values&#39;</span><span class="p">]</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">):</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="n">hdf_utils</span><span class="o">.</span><span class="n">get_unit_values</span><span class="p">(</span><span class="n">h5_inds</span><span class="p">,</span> <span class="n">h5_vals</span><span class="p">,</span> <span class="n">dim_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Cycle&#39;</span><span class="p">,</span> <span class="s1">&#39;Does not exist&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Knowing the inner workings of the specific function are not relevant for this discussion. In the above example, <code class="docutils literal notranslate"><span class="pre">'Does</span> <span class="pre">not</span> <span class="pre">exist'</span></code> is clearly meant to signify an invalid input. The <code class="docutils literal notranslate"><span class="pre">self.assertRaises(KeyError):</span></code> only states that we assert that passing such invalid inputs causes the function to throw a <code class="docutils literal notranslate"><span class="pre">KeyError</span></code>. Should you encounter such a “failure” test case, you may want to ignore it.</p>
+</section>
+<section id="case-3-realistic-example">
+<h2><a class="toc-backref" href="#id8" role="doc-backlink">Case 3 - Realistic example</a><a class="headerlink" href="#case-3-realistic-example" title="Link to this heading">¶</a></h2>
+<p>Most unit tests will not look as simple as that in Case 1. However, the unit test is likely to have the same components -</p>
+<ul class="simple">
+<li><p>some set up code to call the function (case 1 did not have much of this)</p></li>
+<li><p>calling the function</p></li>
+<li><p>asserting different things about the returned values / created file / plot etc.</p></li>
+</ul>
+<p>The following unit test tests the <cite>pyUSID.io.hdf_utils.link_as_main()</cite> function which aims to link a dataset with four ancillary datasets to make it a <cite>Main</cite> dataset. You will see that the example is actually fairly similar to the unit test despite its complexity.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_link_as_main</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="s1">&#39;link_as_main.h5&#39;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">__delete_existing_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">h5_f</span><span class="p">:</span>
+        <span class="n">h5_raw_grp</span> <span class="o">=</span> <span class="n">h5_f</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s1">&#39;Raw_Measurement&#39;</span><span class="p">)</span>
+
+        <span class="n">num_rows</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="n">num_cols</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="n">num_cycles</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">num_cycle_pts</span> <span class="o">=</span> <span class="mi">7</span>
+
+        <span class="n">source_dset_name</span> <span class="o">=</span> <span class="s1">&#39;source_main&#39;</span>
+
+        <span class="n">source_pos_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_cols</span><span class="p">),</span> <span class="n">num_rows</span><span class="p">),</span>
+                                     <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_rows</span><span class="p">),</span> <span class="n">num_cols</span><span class="p">)))</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">pos_attrs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;nm&#39;</span><span class="p">,</span> <span class="s1">&#39;um&#39;</span><span class="p">],</span> <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">]}</span>
+
+        <span class="n">h5_pos_inds</span> <span class="o">=</span> <span class="n">h5_raw_grp</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;Position_Indices&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">source_pos_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
+        <span class="n">TestHDFUtils</span><span class="o">.</span><span class="n">__write_aux_reg_ref</span><span class="p">(</span><span class="n">h5_pos_inds</span><span class="p">,</span> <span class="n">pos_attrs</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">],</span> <span class="n">is_spec</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">TestHDFUtils</span><span class="o">.</span><span class="n">__write_string_list_as_attr</span><span class="p">(</span><span class="n">h5_pos_inds</span><span class="p">,</span> <span class="n">pos_attrs</span><span class="p">)</span>
+
+        <span class="n">h5_pos_vals</span> <span class="o">=</span> <span class="n">h5_raw_grp</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;Position_Values&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">source_pos_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">TestHDFUtils</span><span class="o">.</span><span class="n">__write_aux_reg_ref</span><span class="p">(</span><span class="n">h5_pos_vals</span><span class="p">,</span> <span class="n">pos_attrs</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">],</span> <span class="n">is_spec</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">TestHDFUtils</span><span class="o">.</span><span class="n">__write_string_list_as_attr</span><span class="p">(</span><span class="n">h5_pos_vals</span><span class="p">,</span> <span class="n">pos_attrs</span><span class="p">)</span>
+
+        <span class="n">source_spec_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_cycle_pts</span><span class="p">),</span> <span class="n">num_cycles</span><span class="p">),</span>
+                                      <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_cycles</span><span class="p">),</span> <span class="n">num_cycle_pts</span><span class="p">)))</span>
+        <span class="n">source_spec_attrs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">],</span> <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Bias&#39;</span><span class="p">,</span> <span class="s1">&#39;Cycle&#39;</span><span class="p">]}</span>
+
+        <span class="n">h5_source_spec_inds</span> <span class="o">=</span> <span class="n">h5_raw_grp</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;Spectroscopic_Indices&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">source_spec_data</span><span class="p">,</span>
+                                                        <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
+        <span class="n">TestHDFUtils</span><span class="o">.</span><span class="n">__write_aux_reg_ref</span><span class="p">(</span><span class="n">h5_source_spec_inds</span><span class="p">,</span> <span class="n">source_spec_attrs</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">],</span> <span class="n">is_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">TestHDFUtils</span><span class="o">.</span><span class="n">__write_string_list_as_attr</span><span class="p">(</span><span class="n">h5_source_spec_inds</span><span class="p">,</span> <span class="n">source_spec_attrs</span><span class="p">)</span>
+
+        <span class="n">h5_source_spec_vals</span> <span class="o">=</span> <span class="n">h5_raw_grp</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;Spectroscopic_Values&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">source_spec_data</span><span class="p">,</span>
+                                                        <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">TestHDFUtils</span><span class="o">.</span><span class="n">__write_aux_reg_ref</span><span class="p">(</span><span class="n">h5_source_spec_vals</span><span class="p">,</span> <span class="n">source_spec_attrs</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">],</span> <span class="n">is_spec</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">TestHDFUtils</span><span class="o">.</span><span class="n">__write_string_list_as_attr</span><span class="p">(</span><span class="n">h5_source_spec_vals</span><span class="p">,</span> <span class="n">source_spec_attrs</span><span class="p">)</span>
+
+        <span class="n">source_main_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">num_rows</span> <span class="o">*</span> <span class="n">num_cols</span><span class="p">,</span> <span class="n">num_cycle_pts</span> <span class="o">*</span> <span class="n">num_cycles</span><span class="p">)</span>
+        <span class="n">h5_source_main</span> <span class="o">=</span> <span class="n">h5_raw_grp</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">source_dset_name</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">source_main_data</span><span class="p">)</span>
+        <span class="n">TestHDFUtils</span><span class="o">.</span><span class="n">__write_safe_attrs</span><span class="p">(</span><span class="n">h5_source_main</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;quantity&#39;</span><span class="p">:</span> <span class="s1">&#39;Current&#39;</span><span class="p">})</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">check_if_main</span><span class="p">(</span><span class="n">h5_source_main</span><span class="p">))</span>
+
+        <span class="c1"># Now need to link as main!</span>
+        <span class="n">hdf_utils</span><span class="o">.</span><span class="n">link_as_main</span><span class="p">(</span><span class="n">h5_source_main</span><span class="p">,</span> <span class="n">h5_pos_inds</span><span class="p">,</span> <span class="n">h5_pos_vals</span><span class="p">,</span> <span class="n">h5_source_spec_inds</span><span class="p">,</span> <span class="n">h5_source_spec_vals</span><span class="p">)</span>
+
+        <span class="c1"># Finally:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">check_if_main</span><span class="p">(</span><span class="n">h5_source_main</span><span class="p">))</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Though it is not absolutely necessary to understand the intricacies of the entire unit test in order to translate this to an example, here is a breakdown of what is happening in the function:</p>
+<p>This unit test requires the creation of a HDF5 file. So, the first thing we do is delete the file if it already exists to avoid conflicts.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">file_path</span> <span class="o">=</span> <span class="s1">&#39;link_as_main.h5&#39;</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">__delete_existing_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next, we create the file and open it:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">h5_f</span><span class="p">:</span>
+</pre></div>
+</div>
+<p>In this case, the main dataset is a 4D dataset (<cite>X</cite>, <cite>Y</cite> dimensions in positions and <cite>Bias</cite>, <cite>Cycle</cite> spectroscopic dimensions).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">num_rows</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">num_cols</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">num_cycles</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">num_cycle_pts</span> <span class="o">=</span> <span class="mi">7</span>
+</pre></div>
+</div>
+<p>First we create the <cite>Position</cite> <cite>Indices</cite> and <cite>Values</cite> datasets</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">source_pos_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_cols</span><span class="p">),</span> <span class="n">num_rows</span><span class="p">),</span>
+                             <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_rows</span><span class="p">),</span> <span class="n">num_cols</span><span class="p">)))</span><span class="o">.</span><span class="n">T</span>
+<span class="n">pos_attrs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;nm&#39;</span><span class="p">,</span> <span class="s1">&#39;um&#39;</span><span class="p">],</span>
+             <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;X&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span> <span class="s1">&#39;Y&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))}}</span>
+<span class="n">dset_source_pos_inds</span> <span class="o">=</span> <span class="n">VirtualDataset</span><span class="p">(</span><span class="s1">&#39;PosIndices&#39;</span><span class="p">,</span> <span class="n">source_pos_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="n">pos_attrs</span><span class="p">)</span>
+<span class="n">dset_source_pos_vals</span> <span class="o">=</span> <span class="n">VirtualDataset</span><span class="p">(</span><span class="s1">&#39;PosValues&#39;</span><span class="p">,</span> <span class="n">source_pos_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="n">pos_attrs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next, we prepare the (random) data that will be contained in the Main dataset. To ensure that advanced features such as <cite>region references</cite> are retained, we add two simple region references: <cite>even_rows</cite> and <cite>odd_rows</cite> that separate data by even and odd positions (no physical relevance)</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">source_main_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">num_rows</span> <span class="o">*</span> <span class="n">num_cols</span><span class="p">,</span> <span class="n">num_cycle_pts</span> <span class="o">*</span> <span class="n">num_cycles</span><span class="p">)</span>
+<span class="n">dset_source_main</span> <span class="o">=</span> <span class="n">VirtualDataset</span><span class="p">(</span><span class="s1">&#39;source_main&#39;</span><span class="p">,</span> <span class="n">source_main_data</span><span class="p">,</span>
+                                  <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;quantity&#39;</span><span class="p">:</span> <span class="s1">&#39;Current&#39;</span><span class="p">,</span>
+                                         <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;even_rows&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)),</span>
+                                                    <span class="s1">&#39;odd_rows&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">))}</span>
+                                         <span class="p">})</span>
+</pre></div>
+</div>
+<p>We follow the same procedure that was followed for the <cite>Position</cite> datasets to create the equivalent <cite>Spectroscopic</cite> <cite>Indices</cite> and <cite>Values</cite> datasets:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">source_spec_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_cycle_pts</span><span class="p">),</span> <span class="n">num_cycles</span><span class="p">),</span>
+                                        <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_cycles</span><span class="p">),</span> <span class="n">num_cycle_pts</span><span class="p">)))</span>
+<span class="n">source_spec_attrs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">],</span>
+                     <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;Bias&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)),</span> <span class="s1">&#39;Cycle&#39;</span><span class="p">:</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">))}}</span>
+<span class="n">dset_source_spec_inds</span> <span class="o">=</span> <span class="n">VirtualDataset</span><span class="p">(</span><span class="s1">&#39;SpecIndices&#39;</span><span class="p">,</span> <span class="n">source_spec_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">,</span>
+                                       <span class="n">attrs</span><span class="o">=</span><span class="n">source_spec_attrs</span><span class="p">)</span>
+<span class="n">dset_source_spec_vals</span> <span class="o">=</span> <span class="n">VirtualDataset</span><span class="p">(</span><span class="s1">&#39;SpecValues&#39;</span><span class="p">,</span> <span class="n">source_spec_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span>
+                                       <span class="n">attrs</span><span class="o">=</span><span class="n">source_spec_attrs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>With the (Virtual) datasets prepared, we can write these to a real HDF5 file using the <cite>HDFWriter</cite></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">writer</span> <span class="o">=</span> <span class="n">HDFwriter</span><span class="p">(</span><span class="n">h5_f</span><span class="p">)</span>
+<span class="n">h5_main</span> <span class="o">=</span> <span class="n">writer</span><span class="o">.</span><span class="n">_create_dataset</span><span class="p">(</span><span class="n">h5_f</span><span class="p">,</span> <span class="n">dset_source_main</span><span class="p">)</span>
+<span class="n">h5_pos_inds</span> <span class="o">=</span> <span class="n">writer</span><span class="o">.</span><span class="n">_create_dataset</span><span class="p">(</span><span class="n">h5_f</span><span class="p">,</span> <span class="n">dset_source_pos_inds</span><span class="p">)</span>
+<span class="n">h5_pos_vals</span> <span class="o">=</span> <span class="n">writer</span><span class="o">.</span><span class="n">_create_dataset</span><span class="p">(</span><span class="n">h5_f</span><span class="p">,</span> <span class="n">dset_source_pos_vals</span><span class="p">)</span>
+<span class="n">h5_spec_inds</span> <span class="o">=</span> <span class="n">writer</span><span class="o">.</span><span class="n">_create_dataset</span><span class="p">(</span><span class="n">h5_f</span><span class="p">,</span> <span class="n">dset_source_spec_inds</span><span class="p">)</span>
+<span class="n">h5_spec_vals</span> <span class="o">=</span> <span class="n">writer</span><span class="o">.</span><span class="n">_create_dataset</span><span class="p">(</span><span class="n">h5_f</span><span class="p">,</span> <span class="n">dset_source_spec_vals</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, we arrive at the assertion portion of the unit test and this is the only section that will need to be changed. The following line proves that the dataset <cite>h5_main</cite> cannot pass the test of being a USID <cite>Main</cite> dataset since it has not yet been linked to the ancillary datasets</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">check_if_main</span><span class="p">(</span><span class="n">h5_main</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>For the example, this line could be turned into a simple print statement as:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Before linking to ancillary datasets, h5_main is a main dataset? : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">check_if_main</span><span class="p">(</span><span class="n">h5_main</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>This is the call to the function that we want to test:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Now need to link as main!</span>
+<span class="n">hdf_utils</span><span class="o">.</span><span class="n">link_as_main</span><span class="p">(</span><span class="n">h5_main</span><span class="p">,</span> <span class="n">h5_pos_inds</span><span class="p">,</span> <span class="n">h5_pos_vals</span><span class="p">,</span> <span class="n">h5_spec_inds</span><span class="p">,</span> <span class="n">h5_spec_vals</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When we check to see if the dataset is now <cite>Main</cite>, we expect it to be true.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Finally:</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">check_if_main</span><span class="p">(</span><span class="n">h5_main</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Again, this assertion statement can easily be turned into a print statement:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;After linking to ancillary datasets, h5_main is a main dataset? : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">check_if_main</span><span class="p">(</span><span class="n">h5_main</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In addition, one could also show that if a dataset is a <code class="docutils literal notranslate"><span class="pre">Main</span></code> dataset, we can use it as a <code class="docutils literal notranslate"><span class="pre">USIDataset</span></code>. The below print statement should print the complete details regarding h5_main:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">px</span><span class="o">.</span><span class="n">USIDataset</span><span class="p">(</span><span class="n">h5_main</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="formatting-the-example">
+<h2><a class="toc-backref" href="#id9" role="doc-backlink">Formatting the example</a><a class="headerlink" href="#formatting-the-example" title="Link to this heading">¶</a></h2>
+<p>The current tool (Sphynx) requires that all examples be written in a python file formatted in a specific manner in order for the result to look like a beautiful Jupyter notebook-like documents. The code aspect of such example files is straightforward enough but here are some guidelines for formatting the text in such python scripts:</p>
+<section id="creating-text-cells">
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">Creating Text Cells</a><a class="headerlink" href="#creating-text-cells" title="Link to this heading">¶</a></h3>
+<p>Text cells (like in Jupyter) must start with a giant line of #####</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">####################################################################################</span>
+<span class="c1"># Some text here</span>
+<span class="c1"># Next line here.</span>
+<span class="c1">#</span>
+<span class="c1"># Empty line above signifying the end of a paragraph. Note that the previous line still</span>
+<span class="c1"># needs to have a &#39;#&#39; otherwise, the cell will be broken into two parts</span>
+</pre></div>
+</div>
+</section>
+<section id="headings">
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">Headings</a><a class="headerlink" href="#headings" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">####################################################################################</span>
+<span class="c1"># ======================================================================================</span>
+<span class="c1"># H1 - Heading of the highest level</span>
+<span class="c1"># ======================================================================================</span>
+<span class="c1"># Note that the lines containing the &#39;=&#39; or &#39;~&#39; or &#39;-&#39; characters need to be at least as long as the text above the line</span>
+<span class="c1">#</span>
+
+<span class="c1">####################################################################################</span>
+<span class="c1"># H2 Heading for new cell</span>
+<span class="c1"># ===========================</span>
+<span class="c1"># Conventional text below a heading -</span>
+<span class="c1">#</span>
+<span class="c1"># You can have empty lines to signify a new paragraph</span>
+<span class="c1"># All this text is going to be part of a single text cell</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hello World!&#39;</span><span class="p">)</span>
+
+<span class="c1">####################################################################################</span>
+<span class="c1"># Text cell without any heading</span>
+<span class="c1"># done with text cell</span>
+
+<span class="c1"># a regular python comment</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Next line of code!&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="bullets">
+<h3><a class="toc-backref" href="#id12" role="doc-backlink">Bullets</a><a class="headerlink" href="#bullets" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">####################################################################################</span>
+<span class="c1"># * bullet point 1</span>
+<span class="c1"># * bullet point 2</span>
+</pre></div>
+</div>
+</section>
+<section id="emphasis">
+<h3><a class="toc-backref" href="#id13" role="doc-backlink">Emphasis</a><a class="headerlink" href="#emphasis" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># **some text in bold**</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2018, Suhas Somnath and Chris R. Smith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

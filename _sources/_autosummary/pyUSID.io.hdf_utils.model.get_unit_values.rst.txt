@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.model.get\_unit\_values
+============================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.model
+
+.. autofunction:: get_unit_values

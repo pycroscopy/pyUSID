@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.model.map\_grid\_to\_cartesian
+===================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.model
+
+.. autofunction:: map_grid_to_cartesian

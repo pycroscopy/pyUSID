@@ -1,0 +1,385 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyUSID.io.image &mdash; pyUSID 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pyUSID
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pyUSID</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../about.html">pyUSID</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contact.html">Contact us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scale_to_hpc.html">Scaling to Clusters</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../_autosummary/pyUSID.html">pyUSID</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/user_guide/index.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pyUSID</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pyUSID.io.image</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pyUSID.io.image</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">:class:`~pyUSID.io.image.ImageTranslator` class that translates conventional 2D images to USID HDF5 files</span>
+
+<span class="sd">Created on Feb 9, 2016</span>
+
+<span class="sd">@author: Suhas Somnath, Chris Smith</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">unicode_literals</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sidpy.base.num_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">contains_integers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sidpy.hdf.hdf_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_simple_attrs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.array_translator</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayTranslator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.dimension</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dimension</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="n">unicode</span> <span class="o">=</span> <span class="nb">str</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="ne">FileExistsError</span> <span class="o">=</span> <span class="ne">ValueError</span>
+    <span class="ne">FileNotFoundError</span> <span class="o">=</span> <span class="ne">ValueError</span>
+
+<span class="c1"># The following code will be used to support both the old and new versions of pillow.</span>
+<span class="c1"># Pillow added a new enum class &#39;Resampling&#39; in the newer version&gt;=9.0.0</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">Image</span><span class="p">,</span> <span class="s1">&#39;Resampling&#39;</span><span class="p">):</span>  <span class="c1"># pillow&lt;9.0.0</span>
+    <span class="n">Image</span><span class="o">.</span><span class="n">Resampling</span> <span class="o">=</span> <span class="n">Image</span>
+<span class="n">resample_dict</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s1">&#39;NEAREST&#39;</span><span class="p">,</span>
+                 <span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;LANCOS&#39;</span><span class="p">,</span>
+                 <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;BILINEAR&#39;</span><span class="p">,</span>
+                 <span class="mi">3</span><span class="p">:</span> <span class="s1">&#39;BICUBIC&#39;</span><span class="p">,</span>
+                 <span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;BOX&#39;</span><span class="p">,</span>
+                 <span class="mi">5</span><span class="p">:</span> <span class="s1">&#39;HAMMING&#39;</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="ImageTranslator">
+<a class="viewcode-back" href="../../../_autosummary/pyUSID.io.image.ImageTranslator.html#pyUSID.io.image.ImageTranslator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ImageTranslator</span><span class="p">(</span><span class="n">ArrayTranslator</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Translates data from an image file to an HDF5 file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ImageTranslator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;pyUSID.ImageTranslator will be removed shortly. Consider using &quot;</span>
+             <span class="s2">&quot;SciFiReaders.ImageReader instead&quot;</span><span class="p">,</span> <span class="ne">FutureWarning</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_file_path</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">h5_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a list of all files in the directory given by path</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ---------------</span>
+<span class="sd">        image_path : str</span>
+<span class="sd">            absolute path to the image file</span>
+<span class="sd">        h5_path : str, optional</span>
+<span class="sd">            absolute path to the desired output HDF5 file. If nothing is provided, a valid file path will be provided</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        image_path : str</span>
+<span class="sd">            Absolute file path to the image</span>
+<span class="sd">        h5_path : str</span>
+<span class="sd">            absolute path to the desired output HDF5 file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">unicode</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;image_path&#39; argument for ImageTranslator should be a str or unicode&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">image_path</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s1">&#39;Specified image does not exist.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">image_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">h5_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_path</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">unicode</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;&#39;h5_path&#39; argument for ImageTranslator should be a str or unicode (if provided)&quot;</span><span class="p">)</span>
+            <span class="c1"># NOT checking the extension of the file path for simplicity</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">base_name</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+            <span class="n">h5_name</span> <span class="o">=</span> <span class="n">base_name</span> <span class="o">+</span> <span class="s1">&#39;.h5&#39;</span>
+            <span class="n">h5_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">h5_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">h5_path</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span><span class="s2">&quot;ImageTranslator: There is already a valid (output HDF5) file at:</span><span class="se">\n</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                                  <span class="s2">&quot;Please consider providing an alternate path or deleting the &quot;</span>
+                                  <span class="s2">&quot;specified file&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">h5_path</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">image_path</span><span class="p">,</span> <span class="n">h5_path</span>
+
+<div class="viewcode-block" id="ImageTranslator.translate">
+<a class="viewcode-back" href="../../../_autosummary/pyUSID.io.image.ImageTranslator.html#pyUSID.io.image.ImageTranslator.translate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">translate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_path</span><span class="p">,</span> <span class="n">h5_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bin_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">interp_func</span><span class="o">=</span><span class="n">Image</span><span class="o">.</span><span class="n">Resampling</span><span class="o">.</span><span class="n">BICUBIC</span><span class="p">,</span>
+                  <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">image_args</span><span class="p">):</span>
+
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Translates the image in the provided file into a USID HDF5 file</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------------</span>
+<span class="sd">        image_path : str</span>
+<span class="sd">            Absolute path to folder holding the image files</span>
+<span class="sd">        h5_path : str, optional</span>
+<span class="sd">            Absolute path to where the HDF5 file should be located.</span>
+<span class="sd">            Default is None</span>
+<span class="sd">        bin_factor : uint or array-like of uint, optional</span>
+<span class="sd">            Down-sampling factor for each dimension.  Default is None.</span>
+<span class="sd">            If specifying different binning for each dimension, please specify as (height binning, width binning)</span>
+<span class="sd">        interp_func : int, optional.</span>
+<span class="sd">            Default = :attr:`PIL.Image.BICUBIC` for pillow&lt;9.0.0 or `PIL.Image.Resampling.BICUBIC` for pillow&gt;9.0.0</span>
+<span class="sd">            How the image will be interpolated to provide the down-sampled or binned image.</span>
+<span class="sd">            For more information see instructions for the `resample` argument for :meth:`PIL.Image.resize`</span>
+<span class="sd">        normalize : boolean, optional. Default = False</span>
+<span class="sd">            Should the raw image be normalized between the values of 0 and 1</span>
+<span class="sd">        image_args : dict</span>
+<span class="sd">            Arguments to be passed to read_image.  Arguments depend on the type of image.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        h5_main : h5py.Dataset</span>
+<span class="sd">            HDF5 Dataset object that contains the flattened images</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">image_path</span><span class="p">,</span> <span class="n">h5_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_file_path</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">h5_path</span><span class="o">=</span><span class="n">h5_path</span><span class="p">)</span>
+
+        <span class="n">image</span> <span class="o">=</span> <span class="n">read_image</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="o">**</span><span class="n">image_args</span><span class="p">)</span>
+        <span class="n">image_parms</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">usize</span><span class="p">,</span> <span class="n">vsize</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Check if a bin_factor is given.  Set up binning objects if it is.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">bin_factor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bin_factor</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">contains_integers</span><span class="p">(</span><span class="n">bin_factor</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;bin_factor should contain positive whole integers&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bin_factor</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">bin_factor</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">bin_factor</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Input parameter `bin_factor` must be a length 2 array-like or an integer.</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span>
+                                     <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> was given.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bin_factor</span><span class="p">))</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bin_factor</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">bin_factor</span> <span class="o">=</span> <span class="p">(</span><span class="n">bin_factor</span><span class="p">,</span> <span class="n">bin_factor</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;bin_factor should either be an integer or an iterable of positive integers&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">bin_factor</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;bin_factor must consist of positive factors&#39;</span><span class="p">)</span>
+
+            <span class="c1"># pillow&lt;9.0.0</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">interp_func</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">interp_func</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">resample_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;interp_func&#39; argument for ImageTranslator.translate must be one of &quot;</span>
+                                     <span class="s2">&quot;PIL.Image.NEAREST, PIL.Image.BILINEAR, PIL.Image.BICUBIC, PIL.Image.LANCZOS, &quot;</span>
+                                     <span class="s2">&quot;PIL.Image.BOX, PIL.Image.HAMMING&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">interp_func_name</span> <span class="o">=</span> <span class="n">resample_dict</span><span class="p">[</span><span class="n">interp_func</span><span class="p">]</span>
+
+            <span class="c1"># pillow&gt;9.0.0</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">interp_func</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">interp_func</span><span class="o">.</span><span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">resample_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;interp_func&#39; argument for ImageTranslator.translate must be one of &quot;</span>
+                                     <span class="s2">&quot;PIL.Image.Resampling.NEAREST, PIL.Image.Resampling.BILINEAR, &quot;</span>
+                                     <span class="s2">&quot;PIL.Image.Resampling.BICUBIC, PIL.Image.Resampling.LANCZOS, &quot;</span>
+                                     <span class="s2">&quot;PIL.Image.BOX, PIL.Image.HAMMING&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">interp_func_name</span> <span class="o">=</span> <span class="n">interp_func</span><span class="o">.</span><span class="n">name</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;interp_func should be an int (pillow&lt;9.0.0) or an enum (pillow&gt;=9.0.0)&#39;</span>
+                                <span class="s1">&#39; but received </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">interp_func</span><span class="p">)))</span>
+
+            <span class="n">image_parms</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;image_binning_size&#39;</span><span class="p">:</span> <span class="n">bin_factor</span><span class="p">,</span> <span class="s1">&#39;image_PIL_resample_mode&#39;</span><span class="p">:</span> <span class="n">interp_func_name</span><span class="p">})</span>
+            <span class="n">usize</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">usize</span> <span class="o">/</span> <span class="n">bin_factor</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">vsize</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">vsize</span> <span class="o">/</span> <span class="n">bin_factor</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="c1"># Unfortunately, we need to make a round-trip through PIL for the interpolation. Not possible with numpy</span>
+            <span class="n">img_obj</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+            <span class="n">img_obj</span> <span class="o">=</span> <span class="n">img_obj</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">vsize</span><span class="p">,</span> <span class="n">usize</span><span class="p">),</span> <span class="n">resample</span><span class="o">=</span><span class="n">interp_func</span><span class="p">)</span>
+            <span class="n">image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">img_obj</span><span class="p">)</span>
+
+        <span class="c1"># Working around occasional &quot;cannot modify read-only array&quot; error</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Normalize Raw Image</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">normalize</span><span class="p">:</span>
+            <span class="n">image</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+            <span class="n">image</span> <span class="o">=</span> <span class="n">image</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">image</span><span class="p">))</span>
+
+        <span class="n">image_parms</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;normalized&#39;</span><span class="p">:</span> <span class="n">normalize</span><span class="p">,</span>
+                            <span class="s1">&#39;image_min&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">image</span><span class="p">),</span> <span class="s1">&#39;image_max&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">image</span><span class="p">)})</span>
+
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enable the line below if there is a need make the image &quot;look&quot; the right side up. This would be manipulation</span>
+<span class="sd">        # of the original data. Therefore it remains commented</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># image = np.flipud(image)</span>
+
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Ready to write to h5</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">pos_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;a.u.&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">usize</span><span class="p">)),</span> <span class="n">Dimension</span><span class="p">(</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;a.u.&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">vsize</span><span class="p">))]</span>
+        <span class="n">spec_dims</span> <span class="o">=</span> <span class="n">Dimension</span><span class="p">(</span><span class="s1">&#39;arb&#39;</span><span class="p">,</span> <span class="s1">&#39;a.u.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Need to transpose to for correct reshaping</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+        <span class="n">h5_path</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ImageTranslator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">h5_path</span><span class="p">,</span> <span class="s1">&#39;Raw_Data&#39;</span><span class="p">,</span> <span class="n">image</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+                                                         <span class="s1">&#39;Intensity&#39;</span><span class="p">,</span> <span class="s1">&#39;a.u.&#39;</span><span class="p">,</span> <span class="n">pos_dims</span><span class="p">,</span> <span class="n">spec_dims</span><span class="p">,</span>
+                                                         <span class="n">translator_name</span><span class="o">=</span><span class="s1">&#39;ImageTranslator&#39;</span><span class="p">,</span> <span class="n">parm_dict</span><span class="o">=</span><span class="n">image_parms</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">h5_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r+&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">h5_f</span><span class="p">:</span>
+
+            <span class="c1"># For legacy reasons:</span>
+            <span class="n">write_simple_attrs</span><span class="p">(</span><span class="n">h5_f</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;data_type&#39;</span><span class="p">:</span> <span class="s1">&#39;ImageData&#39;</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">h5_path</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="read_image">
+<a class="viewcode-back" href="../../../_autosummary/pyUSID.io.image.read_image.html#pyUSID.io.image.read_image">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_image</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">as_grayscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">as_numpy_array</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Read the image file at `image_path` into a numpy array either via numpy (.txt) or via pillow (.jpg, .tif, etc.)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    image_path : str</span>
+<span class="sd">        Path to the image file</span>
+<span class="sd">    as_grayscale : bool, optional. Default = True</span>
+<span class="sd">        Whether or not to read the image as a grayscale image</span>
+<span class="sd">    as_numpy_array : bool, optional. Default = True</span>
+<span class="sd">        If set to True, the image is read into a numpy array. If not, it is returned as a pillow Image</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    image : :class:`numpy.ndarray` or :class:`PIL.Image.Image`</span>
+<span class="sd">        if `as_numpy_array` is set to True - Array containing the image from the file `image_path`.</span>
+<span class="sd">        If `as_numpy_array` is set to False - PIL.Image object containing the image within the file - `image_path`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">image_path</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;.csv&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s1">&#39;.csv&#39;</span> <span class="ow">and</span> <span class="s1">&#39;delimiter&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;delimiter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span>
+        <span class="n">img_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">as_numpy_array</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">img_data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">img_obj</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">img_data</span><span class="p">)</span>
+            <span class="n">img_obj</span> <span class="o">=</span> <span class="n">img_obj</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;L&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">img_obj</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">img_obj</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">as_grayscale</span><span class="p">:</span>
+            <span class="n">img_obj</span> <span class="o">=</span> <span class="n">img_obj</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;L&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">as_numpy_array</span><span class="p">:</span>
+            <span class="c1"># Open the image as a numpy array</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">img_obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">img_obj</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2018, Suhas Somnath and Chris R. Smith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

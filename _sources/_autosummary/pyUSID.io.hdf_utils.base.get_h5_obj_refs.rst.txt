@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.base.get\_h5\_obj\_refs
+============================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.base
+
+.. autofunction:: get_h5_obj_refs

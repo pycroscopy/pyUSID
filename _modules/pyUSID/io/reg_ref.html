@@ -1,0 +1,199 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyUSID.io.reg_ref &mdash; pyUSID 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pyUSID
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pyUSID</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../about.html">pyUSID</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contact.html">Contact us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scale_to_hpc.html">Scaling to Clusters</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../_autosummary/pyUSID.html">pyUSID</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks/user_guide/index.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pyUSID</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pyUSID.io.reg_ref</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pyUSID.io.reg_ref</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Tue Nov  3 21:14:25 2015</span>
+
+<span class="sd">@author: Chris Smith, Suhas Somnath</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">unicode_literals</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sidpy.hdf.reg_ref</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.hdf_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_if_main</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="n">unicode</span> <span class="o">=</span> <span class="nb">str</span>
+
+
+<div class="viewcode-block" id="copy_region_refs">
+<a class="viewcode-back" href="../../../_autosummary/pyUSID.io.reg_ref.copy_region_refs.html#pyUSID.io.reg_ref.copy_region_refs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">copy_region_refs</span><span class="p">(</span><span class="n">h5_source</span><span class="p">,</span> <span class="n">h5_target</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check the input dataset for plot groups, copy them if they exist</span>
+<span class="sd">    Also make references in the Spectroscopic Values and Indices tables</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    h5_source : HDF5 Dataset</span>
+<span class="sd">            source dataset to copy references from</span>
+<span class="sd">    h5_target : HDF5 Dataset</span>
+<span class="sd">            target dataset the references from h5_source are copied to</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Check both h5_source and h5_target to ensure that are Main</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">are_main</span> <span class="o">=</span> <span class="nb">all</span><span class="p">([</span><span class="n">check_if_main</span><span class="p">(</span><span class="n">h5_source</span><span class="p">),</span> <span class="n">check_if_main</span><span class="p">(</span><span class="n">h5_target</span><span class="p">)])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_source</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">),</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_target</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)]):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Inputs to copy_region_refs must be HDF5 Datasets&#39;</span><span class="p">)</span>
+
+    <span class="c1"># It is OK if objects are in different files</span>
+
+    <span class="k">if</span> <span class="n">are_main</span><span class="p">:</span>
+        <span class="n">h5_source_inds</span> <span class="o">=</span> <span class="n">h5_source</span><span class="o">.</span><span class="n">file</span><span class="p">[</span><span class="n">h5_source</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;Spectroscopic_Indices&#39;</span><span class="p">]]</span>
+
+        <span class="n">h5_spec_inds</span> <span class="o">=</span> <span class="n">h5_target</span><span class="o">.</span><span class="n">file</span><span class="p">[</span><span class="n">h5_target</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;Spectroscopic_Indices&#39;</span><span class="p">]]</span>
+        <span class="n">h5_spec_vals</span> <span class="o">=</span> <span class="n">h5_target</span><span class="o">.</span><span class="n">file</span><span class="p">[</span><span class="n">h5_target</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;Spectroscopic_Values&#39;</span><span class="p">]]</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">h5_source</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_source</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">h5py</span><span class="o">.</span><span class="n">RegionReference</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">are_main</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">h5_source_inds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">h5_spec_inds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+<span class="w">                </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Spectroscopic dimensions are identical.</span>
+<span class="sd">                Do direct copy.</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+                <span class="n">ref_inds</span> <span class="o">=</span> <span class="n">simple_region_ref_copy</span><span class="p">(</span><span class="n">h5_source</span><span class="p">,</span> <span class="n">h5_target</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+<span class="w">                </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Spectroscopic dimensions are different.</span>
+<span class="sd">                Do the dimension reducing copy.</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+                <span class="n">ref_inds</span> <span class="o">=</span> <span class="n">copy_reg_ref_reduced_dim</span><span class="p">(</span><span class="n">h5_source</span><span class="p">,</span> <span class="n">h5_target</span><span class="p">,</span> <span class="n">h5_source_inds</span><span class="p">,</span> <span class="n">h5_spec_inds</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+<span class="w">            </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Create references for Spectroscopic Indices and Values</span>
+<span class="sd">            Set the end-point of each hyperslab in the position dimension to the number of</span>
+<span class="sd">            rows in the index array</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+
+            <span class="n">ref_inds</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">][</span><span class="n">ref_inds</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">h5_spec_inds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">h5_spec_inds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">spec_inds_ref</span> <span class="o">=</span> <span class="n">create_region_reference</span><span class="p">(</span><span class="n">h5_spec_inds</span><span class="p">,</span> <span class="n">ref_inds</span><span class="p">)</span>
+            <span class="n">h5_spec_inds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">spec_inds_ref</span>
+            <span class="n">spec_vals_ref</span> <span class="o">=</span> <span class="n">create_region_reference</span><span class="p">(</span><span class="n">h5_spec_vals</span><span class="p">,</span> <span class="n">ref_inds</span><span class="p">)</span>
+            <span class="n">h5_spec_vals</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">spec_vals_ref</span>
+
+        <span class="k">else</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            If not main datasets, then only simple copy can be used.</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="n">simple_region_ref_copy</span><span class="p">(</span><span class="n">h5_source</span><span class="p">,</span> <span class="n">h5_target</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2018, Suhas Somnath and Chris R. Smith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

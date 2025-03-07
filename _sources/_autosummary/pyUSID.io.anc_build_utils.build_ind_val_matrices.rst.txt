@@ -1,0 +1,6 @@
+pyUSID.io.anc\_build\_utils.build\_ind\_val\_matrices
+=====================================================
+
+.. currentmodule:: pyUSID.io.anc_build_utils
+
+.. autofunction:: build_ind_val_matrices

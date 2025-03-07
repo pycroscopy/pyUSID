@@ -1,0 +1,38 @@
+pyUSID.io.hdf\_utils.model
+==========================
+
+.. automodule:: pyUSID.io.hdf_utils.model
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      get_dimensionality
+      get_sort_order
+      get_unit_values
+      map_grid_to_cartesian
+      reshape_from_n_dims
+      reshape_to_n_dims
+      write_main_dataset
+      write_sidpy_dataset
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

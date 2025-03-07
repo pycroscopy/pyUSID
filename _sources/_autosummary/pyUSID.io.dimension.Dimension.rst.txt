@@ -1,0 +1,110 @@
+pyUSID.io.dimension.Dimension
+=============================
+
+.. currentmodule:: pyUSID.io.dimension
+
+.. autoclass:: Dimension
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~Dimension.all
+      ~Dimension.any
+      ~Dimension.argmax
+      ~Dimension.argmin
+      ~Dimension.argpartition
+      ~Dimension.argsort
+      ~Dimension.astype
+      ~Dimension.byteswap
+      ~Dimension.choose
+      ~Dimension.clip
+      ~Dimension.compress
+      ~Dimension.conj
+      ~Dimension.conjugate
+      ~Dimension.copy
+      ~Dimension.cumprod
+      ~Dimension.cumsum
+      ~Dimension.diagonal
+      ~Dimension.dot
+      ~Dimension.dump
+      ~Dimension.dumps
+      ~Dimension.fill
+      ~Dimension.flatten
+      ~Dimension.getfield
+      ~Dimension.item
+      ~Dimension.max
+      ~Dimension.mean
+      ~Dimension.min
+      ~Dimension.nonzero
+      ~Dimension.partition
+      ~Dimension.prod
+      ~Dimension.put
+      ~Dimension.ravel
+      ~Dimension.repeat
+      ~Dimension.reshape
+      ~Dimension.resize
+      ~Dimension.round
+      ~Dimension.searchsorted
+      ~Dimension.setfield
+      ~Dimension.setflags
+      ~Dimension.sort
+      ~Dimension.squeeze
+      ~Dimension.std
+      ~Dimension.sum
+      ~Dimension.swapaxes
+      ~Dimension.take
+      ~Dimension.to_device
+      ~Dimension.tobytes
+      ~Dimension.tofile
+      ~Dimension.tolist
+      ~Dimension.tostring
+      ~Dimension.trace
+      ~Dimension.transpose
+      ~Dimension.var
+      ~Dimension.view
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Dimension.T
+      ~Dimension.base
+      ~Dimension.ctypes
+      ~Dimension.data
+      ~Dimension.device
+      ~Dimension.dimension_type
+      ~Dimension.dtype
+      ~Dimension.flags
+      ~Dimension.flat
+      ~Dimension.imag
+      ~Dimension.info
+      ~Dimension.itemset
+      ~Dimension.itemsize
+      ~Dimension.mT
+      ~Dimension.mode
+      ~Dimension.name
+      ~Dimension.nbytes
+      ~Dimension.ndim
+      ~Dimension.newbyteorder
+      ~Dimension.ptp
+      ~Dimension.quantity
+      ~Dimension.real
+      ~Dimension.shape
+      ~Dimension.size
+      ~Dimension.strides
+      ~Dimension.units
+      ~Dimension.values
+   
+   

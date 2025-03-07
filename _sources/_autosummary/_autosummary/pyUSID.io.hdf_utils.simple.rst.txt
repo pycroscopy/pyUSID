@@ -1,0 +1,31 @@
+pyUSID.io.hdf\_utils.simple
+===========================
+
+.. automodule:: pyUSID.io.hdf_utils.simple
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      assign_group_index
+      check_and_link_ancillary
+      check_for_matching_attrs
+      check_for_old
+      check_if_main
+      copy_main_attributes
+      create_empty_dataset
+      create_indexed_group
+      create_results_group
+      find_dataset
+      find_results_groups
+      get_all_main
+      get_source_dataset
+      link_as_main
+      validate_anc_dset_attrs
+      validate_anc_h5_dsets
+      validate_dims_against_main
+      validate_main_dset
+      write_ind_val_dsets
+      write_reduced_anc_dsets
+   

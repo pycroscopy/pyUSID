@@ -1,0 +1,6 @@
+pyUSID.io.anc\_build\_utils.make\_indices\_matrix
+=================================================
+
+.. currentmodule:: pyUSID.io.anc_build_utils
+
+.. autofunction:: make_indices_matrix

@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.validate\_anc\_dset\_attrs
+======================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: validate_anc_dset_attrs

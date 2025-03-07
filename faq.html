@@ -1,0 +1,318 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frequently asked questions &mdash; pyUSID 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Contact us" href="contact.html" />
+    <link rel="prev" title="Installation" href="install.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pyUSID
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pyUSID</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="about.html">pyUSID</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Frequently asked questions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pyusid-philosophy">pyUSID philosophy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-is-pyusid-different-from-h5py">How is pyUSID different from h5py?</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#is-pyusid-specific-to-any-communities">Is pyUSID specific to any communities?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#who-uses-pyusid">Who uses pyUSID?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#why-is-pyusid-written-in-python-and-not-c-fortran-julia">Why is pyUSID written in python and not C / Fortran / Julia?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#why-not-implement-dask-as-a-backend-to-pyusid">Why not implement Dask as a backend to pyUSID?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#why-not-just-use-the-base-hdf-libraries-or-h5py-instead">Why not just use the base HDF libraries or h5py instead?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyusid-is-written-in-python-so-it-is-going-to-be-slow-since-it-cannot-use-all-the-cores-on-my-cpu-right">pyUSID is written in python, so it is going to be slow since it cannot use all the cores on my CPU, right?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#using-pyusid">Using pyUSID</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#i-don-t-know-programming-does-this-preclude-me-from-using-pyusid">I don’t know programming. Does this preclude me from using pyUSID?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-sort-of-computer-do-i-need-to-run-pyusid">What sort of computer do I need to run pyUSID?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#i-am-not-able-to-find-an-example-on-topic-x-i-find-tutorial-y-confusing-i-need-help">I am not able to find an example on topic X / I find tutorial Y confusing / I need help!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-do-i-do-when-something-is-broken">What do I do when something is broken?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-can-i-reference-pyusid">How can I reference pyUSID?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#becoming-a-part-of-the-effort">Becoming a part of the effort</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#i-don-t-know-python-i-don-t-think-i-write-great-python-code-does-this-preclude-me-from-contributing-to-pyusid">I don’t know python / I don’t think I write great python code. Does this preclude me from contributing to pyUSID?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#i-would-like-to-help-but-i-don-t-know-programming">I would like to help but I don’t know programming</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#i-would-like-to-help-and-i-am-ok-at-programming">I would like to help and I am OK at programming</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#can-you-add-my-code-to-pyusid">Can you add my code to pyUSID?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scale_to_hpc.html">Scaling to Clusters</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="_autosummary/pyUSID.html">pyUSID</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/user_guide/index.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pyUSID</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Frequently asked questions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/faq.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="frequently-asked-questions">
+<h1><a class="toc-backref" href="#id2" role="doc-backlink">Frequently asked questions</a><a class="headerlink" href="#frequently-asked-questions" title="Link to this heading">¶</a></h1>
+<nav class="contents" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#frequently-asked-questions" id="id2">Frequently asked questions</a></p>
+<ul>
+<li><p><a class="reference internal" href="#pyusid-philosophy" id="id3">pyUSID philosophy</a></p></li>
+<li><p><a class="reference internal" href="#how-is-pyusid-different-from-h5py" id="id4">How is pyUSID different from h5py?</a></p>
+<ul>
+<li><p><a class="reference internal" href="#is-pyusid-specific-to-any-communities" id="id5">Is pyUSID specific to any communities?</a></p></li>
+<li><p><a class="reference internal" href="#who-uses-pyusid" id="id6">Who uses pyUSID?</a></p></li>
+<li><p><a class="reference internal" href="#why-is-pyusid-written-in-python-and-not-c-fortran-julia" id="id7">Why is pyUSID written in python and not C / Fortran / Julia?</a></p></li>
+<li><p><a class="reference internal" href="#why-not-implement-dask-as-a-backend-to-pyusid" id="id8">Why not implement Dask as a backend to pyUSID?</a></p></li>
+<li><p><a class="reference internal" href="#why-not-just-use-the-base-hdf-libraries-or-h5py-instead" id="id9">Why not just use the base HDF libraries or h5py instead?</a></p></li>
+<li><p><a class="reference internal" href="#pyusid-is-written-in-python-so-it-is-going-to-be-slow-since-it-cannot-use-all-the-cores-on-my-cpu-right" id="id10">pyUSID is written in python, so it is going to be slow since it cannot use all the cores on my CPU, right?</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#using-pyusid" id="id11">Using pyUSID</a></p>
+<ul>
+<li><p><a class="reference internal" href="#i-don-t-know-programming-does-this-preclude-me-from-using-pyusid" id="id12">I don’t know programming. Does this preclude me from using pyUSID?</a></p></li>
+<li><p><a class="reference internal" href="#what-sort-of-computer-do-i-need-to-run-pyusid" id="id13">What sort of computer do I need to run pyUSID?</a></p></li>
+<li><p><a class="reference internal" href="#i-am-not-able-to-find-an-example-on-topic-x-i-find-tutorial-y-confusing-i-need-help" id="id14">I am not able to find an example on topic X / I find tutorial Y confusing / I need help!</a></p></li>
+<li><p><a class="reference internal" href="#what-do-i-do-when-something-is-broken" id="id15">What do I do when something is broken?</a></p></li>
+<li><p><a class="reference internal" href="#how-can-i-reference-pyusid" id="id16">How can I reference pyUSID?</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#becoming-a-part-of-the-effort" id="id17">Becoming a part of the effort</a></p>
+<ul>
+<li><p><a class="reference internal" href="#i-don-t-know-python-i-don-t-think-i-write-great-python-code-does-this-preclude-me-from-contributing-to-pyusid" id="id18">I don’t know python / I don’t think I write great python code. Does this preclude me from contributing to pyUSID?</a></p></li>
+<li><p><a class="reference internal" href="#i-would-like-to-help-but-i-don-t-know-programming" id="id19">I would like to help but I don’t know programming</a></p></li>
+<li><p><a class="reference internal" href="#i-would-like-to-help-and-i-am-ok-at-programming" id="id20">I would like to help and I am OK at programming</a></p></li>
+<li><p><a class="reference internal" href="#can-you-add-my-code-to-pyusid" id="id21">Can you add my code to pyUSID?</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+<section id="pyusid-philosophy">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">pyUSID philosophy</a><a class="headerlink" href="#pyusid-philosophy" title="Link to this heading">¶</a></h2>
+</section>
+<section id="how-is-pyusid-different-from-h5py">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">How is pyUSID different from h5py?</a><a class="headerlink" href="#how-is-pyusid-different-from-h5py" title="Link to this heading">¶</a></h2>
+<p>Given that the vast majority of pyUSID’s capability is focused towards accessing and manipulating data in hierarchical
+data format (HDF5) files, it is only natural that comparisons may be drawn between <code class="docutils literal notranslate"><span class="pre">pyUSID</span></code> and <code class="docutils literal notranslate"><span class="pre">h5py</span></code> (the popular python
+package used by many for reading and writing to HDF5 files). <code class="docutils literal notranslate"><span class="pre">pyUSID</span></code> does indeed use <code class="docutils literal notranslate"><span class="pre">h5py</span></code> underneath and in no way
+is an alternative to <code class="docutils literal notranslate"><span class="pre">h5py</span></code>. Rather, <code class="docutils literal notranslate"><span class="pre">pyUSID</span></code> provides functions that greatly simplify the task of reading and writing
+to Universal Spectroscopy and Imaging Data (USID) formatted HDF5 files. In addition to file and data handling tools,
+pyUSID also provides data visualization tools and a framework for processing data.</p>
+<section id="is-pyusid-specific-to-any-communities">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Is pyUSID specific to any communities?</a><a class="headerlink" href="#is-pyusid-specific-to-any-communities" title="Link to this heading">¶</a></h3>
+<p><strong>Not at all</strong>. We have ensured that the basic data model, file formatting, and processing paradigm are general enough that they can be extended to any other scientific domain so long as each experiment involves <code class="docutils literal notranslate"><span class="pre">N</span></code> identical observations of <code class="docutils literal notranslate"><span class="pre">S</span></code> values.</p>
+<p>Also, please see our answer to ‘Who uses pyUSID’ below:</p>
+</section>
+<section id="who-uses-pyusid">
+<h3><a class="toc-backref" href="#id6" role="doc-backlink">Who uses pyUSID?</a><a class="headerlink" href="#who-uses-pyusid" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="http://ifim.ornl.gov">The Institute for Functional Imaging of Materials (IFIM)</a> at <a class="reference external" href="www.ornl.gov">Oak Ridge National Laboratory</a> uses <a class="reference external" href="../pycroscopy/about.html">pycroscopy</a> (built on pyUSID) exclusively for in-house research as well as supporting the numerous users who visit IFIM to use their state-of-art scanning probe microscopy techniques.</p></li>
+<li><p>Synchrotron Radiation Research at Lund University</p></li>
+<li><p>Nuclear Engineering and Health Physics, Idaho State University</p></li>
+<li><p>Prof. David Ginger’s group at Department of Chemistry, University of Washington</p></li>
+<li><p>Idaho National Laboratory</p></li>
+<li><p>Central Michigan University</p></li>
+<li><p>Iowa State University</p></li>
+<li><p>George Western University</p></li>
+<li><p>Brown University</p></li>
+<li><p>University of Mons</p></li>
+<li><p>and many more groups in universities and national labs.</p></li>
+<li><p>Please <a class="reference external" href="./contact.html">get in touch</a> with us if you would like your group / university to be added here.</p></li>
+</ul>
+</section>
+<section id="why-is-pyusid-written-in-python-and-not-c-fortran-julia">
+<h3><a class="toc-backref" href="#id7" role="doc-backlink">Why is pyUSID written in python and not C / Fortran / Julia?</a><a class="headerlink" href="#why-is-pyusid-written-in-python-and-not-c-fortran-julia" title="Link to this heading">¶</a></h3>
+<p>Here are some of the main reasons pyUSID is written in python:</p>
+<ul class="simple">
+<li><p><strong>Ease of use</strong>: One of the main objectives of pyUSID is to <strong>lower the barrier</strong> to advanced data analytics for domain scientists such as material scientists. A C++ / Fortran version of pyUSID would certainly have been more efficient than the current python code-base. However, the learning curve for writing efficient C code is far steeper compared to python / Julia / Matlab for the average domain scientist. Focusing on science is a big enough job for domain scientists and we want to make it as easy as possible to adopt pyUSID even for those who are novices at programming.</p></li>
+<li><p><strong>Optimized core packages</strong>: Furthermore, our code makes heavy use of highly efficient numerical and scientific libraries such as Numpy and Scipy that are comparable in speed to C so we do not expect our code to be substantially slower than C / Fortran.</p></li>
+<li><p><strong>Support</strong>: Julia is a (relatively) new language similar to python that promises to be as fast as C and as easy as python and purpose-built for efficient computing. However, as of this writing, Julia unfortunately still does not have open-source package ecosystem that is as large or diverse (think of the many packages necessary to read obscure proprietary file formats generated by instruments as an example) as python.</p></li>
+<li><p><strong>Industry standard</strong>: Furthermore, python’s unchallenged leadership in the data analytics / deep learning field have only validated it as the language of choice.</p></li>
+</ul>
+<p>We welcome you to develop application programming interfaces (APIs) for languages besides python.</p>
+</section>
+<section id="why-not-implement-dask-as-a-backend-to-pyusid">
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">Why not implement Dask as a backend to pyUSID?</a><a class="headerlink" href="#why-not-implement-dask-as-a-backend-to-pyusid" title="Link to this heading">¶</a></h3>
+<p>We have explored <code class="docutils literal notranslate"><span class="pre">Dask.distributed</span></code> and <code class="docutils literal notranslate"><span class="pre">Dask.arrays</span></code> as backends for how pyUSID handles data and (parallel) computing.
+We encountered the following challenges that are beyond the scope of this package:</p>
+<ul class="simple">
+<li><p><strong>Serialization</strong>: Our plan was to create <code class="docutils literal notranslate"><span class="pre">lazy</span></code> <code class="docutils literal notranslate"><span class="pre">Dask.Array</span></code> objects based on the HDF5 Datasets.
+However, Dask was unable to serialize and pickle <code class="docutils literal notranslate"><span class="pre">h5py.Dataset</span></code> objects.
+Though there are potential work-arounds, further incompatibility makes it challenging to
+reconcile for every child class built on <code class="docutils literal notranslate"><span class="pre">pyUSID.Process</span></code></p></li>
+<li><p><strong>Bookkeeping</strong>: A fundamental feature of <code class="docutils literal notranslate"><span class="pre">pyUSID.Process</span></code> is the ability to continue computation
+on a dataset after interruption. Using <code class="docutils literal notranslate"><span class="pre">Dask.distrbiuted</span></code> to scale the computation means giving up
+on clean and predicable checkpointing, which means being unable to continue an interrupted computation.</p></li>
+</ul>
+<p>Please see <a class="reference external" href="https://github.com/dask/distributed/issues/2787">this issue</a> on Dask’s repository for more information.</p>
+</section>
+<section id="why-not-just-use-the-base-hdf-libraries-or-h5py-instead">
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">Why not just use the base HDF libraries or h5py instead?</a><a class="headerlink" href="#why-not-just-use-the-base-hdf-libraries-or-h5py-instead" title="Link to this heading">¶</a></h3>
+<p>USID represents all data, regardless of dimensionality as a flattened 2D matrix.
+The base HDF libraries and h5py do not know anything about USID and do not support USID-specific operations via simple 1-line commands such as:</p>
+<ul class="simple">
+<li><p>writing a complex, N-dimensional data cube to disk,</p></li>
+<li><p>folding back the 2D USID data from HDF5 into its original N-dimensional shape (if and where available)</p></li>
+<li><p>slicing datasets by dimensions without reading the entire dataset into memory and reshaping it,</p></li>
+<li><p>reducing specified dimensions, etc.</p></li>
+<li><p>interactively visualizing N-dimensional datasets</p></li>
+</ul>
+<p>All of the above functionalities (and far more) are available in pyUSID.
+Moreover, pyUSID also provides numerous plotting utilities, that we ourselves have used for generating publication-quality figures.
+Finally, pyUSID also provides computational tools and a convenient framework for translating scientific problems into computational problems via the <code class="docutils literal notranslate"><span class="pre">pyUSID.Process</span></code> class.</p>
+</section>
+<section id="pyusid-is-written-in-python-so-it-is-going-to-be-slow-since-it-cannot-use-all-the-cores-on-my-cpu-right">
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">pyUSID is written in python, so it is going to be slow since it cannot use all the cores on my CPU, right?</a><a class="headerlink" href="#pyusid-is-written-in-python-so-it-is-going-to-be-slow-since-it-cannot-use-all-the-cores-on-my-cpu-right" title="Link to this heading">¶</a></h3>
+<p>Actually, all data processing / analysis algorithms we have written using <code class="docutils literal notranslate"><span class="pre">pyUSID.Process</span></code> so far can use every single core on your CPU. Given N CPU cores, you should notice a nearly N-fold speed up in your computation.
+Note that the goal of pyUSID was never to maximize performance but rather to simplify and lower the barrier for the average scientist who may not be an expert programmer.
+By default, we set aside 1-2 cores for the operating system and other user applications such as an internet browser, Microsoft Word, etc.</p>
+</section>
+</section>
+<section id="using-pyusid">
+<h2><a class="toc-backref" href="#id11" role="doc-backlink">Using pyUSID</a><a class="headerlink" href="#using-pyusid" title="Link to this heading">¶</a></h2>
+<section id="i-don-t-know-programming-does-this-preclude-me-from-using-pyusid">
+<h3><a class="toc-backref" href="#id12" role="doc-backlink">I don’t know programming. Does this preclude me from using pyUSID?</a><a class="headerlink" href="#i-don-t-know-programming-does-this-preclude-me-from-using-pyusid" title="Link to this heading">¶</a></h3>
+<p>Not at all. One of the tenets of pyUSID is lowering the barrier for scientists and researchers. To this end, we have put together a list of <a class="reference external" href="./external_guides.html">useful tutorials</a> and examples and <a class="reference external" href="./auto_examples/index.html">examples</a> to guide you. You should have no trouble getting started even if you do not know programming. That being said, you would be able to make the fullest use of pyUSID if you knew basic programming in python.</p>
+</section>
+<section id="what-sort-of-computer-do-i-need-to-run-pyusid">
+<h3><a class="toc-backref" href="#id13" role="doc-backlink">What sort of computer do I need to run pyUSID?</a><a class="headerlink" href="#what-sort-of-computer-do-i-need-to-run-pyusid" title="Link to this heading">¶</a></h3>
+<p>You can use practically any laptop / desktop / virtual machine running Windows / Mac OS / Linux. pyUSID is not tested on 32 bit operating systems (very rare).</p>
+</section>
+<section id="i-am-not-able-to-find-an-example-on-topic-x-i-find-tutorial-y-confusing-i-need-help">
+<h3><a class="toc-backref" href="#id14" role="doc-backlink">I am not able to find an example on topic X / I find tutorial Y confusing / I need help!</a><a class="headerlink" href="#i-am-not-able-to-find-an-example-on-topic-x-i-find-tutorial-y-confusing-i-need-help" title="Link to this heading">¶</a></h3>
+<p>We appreciate your feedback regarding the documentation. Please <a class="reference external" href="./contact.html">contact us</a> and we will add / improve our documentation.</p>
+</section>
+<section id="what-do-i-do-when-something-is-broken">
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">What do I do when something is broken?</a><a class="headerlink" href="#what-do-i-do-when-something-is-broken" title="Link to this heading">¶</a></h3>
+<p>Often, others may have encountered the same problem and may have brought up a similar issue. Try searching on google and trying out some suggested solutions. If this does not work, raise an <code class="docutils literal notranslate"><span class="pre">issue</span></code> <a class="reference external" href="https://github.com/pycroscopy/pyUSID/issues">here</a> and one of us will work with you to resolve the problem.</p>
+</section>
+<section id="how-can-i-reference-pyusid">
+<h3><a class="toc-backref" href="#id16" role="doc-backlink">How can I reference pyUSID?</a><a class="headerlink" href="#how-can-i-reference-pyusid" title="Link to this heading">¶</a></h3>
+<p>Please reference our <a class="reference external" href="https://arxiv.org/abs/1903.09515">Arxiv</a> paper for now.
+This manuscript was submitted to Advanced Structural and Chemical Imaging recently and is currently being peer-reviewed.</p>
+</section>
+</section>
+<section id="becoming-a-part-of-the-effort">
+<h2><a class="toc-backref" href="#id17" role="doc-backlink">Becoming a part of the effort</a><a class="headerlink" href="#becoming-a-part-of-the-effort" title="Link to this heading">¶</a></h2>
+<section id="i-don-t-know-python-i-don-t-think-i-write-great-python-code-does-this-preclude-me-from-contributing-to-pyusid">
+<h3><a class="toc-backref" href="#id18" role="doc-backlink">I don’t know python / I don’t think I write great python code. Does this preclude me from contributing to pyUSID?</a><a class="headerlink" href="#i-don-t-know-python-i-don-t-think-i-write-great-python-code-does-this-preclude-me-from-contributing-to-pyusid" title="Link to this heading">¶</a></h3>
+<p>Not really. Python is far easier to learn than many languages. If you know Matlab, Julia, C++, Fortran or any other programming language. You should not have a hard time reading our code or contributing to the codebase.</p>
+<p>You can still contribute your code.</p>
+</section>
+<section id="i-would-like-to-help-but-i-don-t-know-programming">
+<h3><a class="toc-backref" href="#id19" role="doc-backlink">I would like to help but I don’t know programming</a><a class="headerlink" href="#i-would-like-to-help-but-i-don-t-know-programming" title="Link to this heading">¶</a></h3>
+<p>Your contributions are very valuable to the imaging and scientific community at large. You can help even if you DON’T know how to program!</p>
+<ul class="simple">
+<li><p>You can spread the word - tell anyone who you think may benefit from using pyUSID.</p></li>
+<li><p>Tell us what you think of our documentation or share your own.</p></li>
+<li><p>Let us know what you would like to see in pyUSID.</p></li>
+<li><p>Put us in touch with others working on similar efforts so that we can join forces.</p></li>
+</ul>
+</section>
+<section id="i-would-like-to-help-and-i-am-ok-at-programming">
+<h3><a class="toc-backref" href="#id20" role="doc-backlink">I would like to help and I am OK at programming</a><a class="headerlink" href="#i-would-like-to-help-and-i-am-ok-at-programming" title="Link to this heading">¶</a></h3>
+<p>Chances are that you are far better at python than you might think! Interesting tidbit - The (first version of the) first module of pyUSID was written less than a week after we learnt how to write code in python. We weren’t great programmers when we began but we would like to think that we have gotten a lot better since then.</p>
+<p>There are <a class="reference external" href="https://github.com/pycroscopy/pyUSID/blob/master/ToDo.rst">several things</a> we want to improve or add. Please <a class="reference external" href="./contact.html">get in touch</a> to start a conversation.</p>
+</section>
+<section id="can-you-add-my-code-to-pyusid">
+<h3><a class="toc-backref" href="#id21" role="doc-backlink">Can you add my code to pyUSID?</a><a class="headerlink" href="#can-you-add-my-code-to-pyusid" title="Link to this heading">¶</a></h3>
+<p>Please see our <a class="reference external" href="./contribution_guidelines.html">guidelines for contributing code</a></p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="install.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="contact.html" class="btn btn-neutral float-right" title="Contact us" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2018, Suhas Somnath and Chris R. Smith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

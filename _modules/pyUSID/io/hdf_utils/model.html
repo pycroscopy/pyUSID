@@ -1,0 +1,1242 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyUSID.io.hdf_utils.model &mdash; pyUSID 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pyUSID
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pyUSID</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">pyUSID</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contact.html">Contact us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../scale_to_hpc.html">Scaling to Clusters</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../_autosummary/pyUSID.html">pyUSID</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks/user_guide/index.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pyUSID</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pyUSID.io.hdf_utils.model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pyUSID.io.hdf_utils.model</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Utilities for reading and writing USID datasets that are highly model-dependent (with or without N-dimensional form)</span>
+
+<span class="sd">Created on Tue Nov  3 21:14:25 2015</span>
+
+<span class="sd">@author: Suhas Somnath, Chris Smith</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">unicode_literals</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dask</span><span class="w"> </span><span class="kn">import</span> <span class="n">array</span> <span class="k">as</span> <span class="n">da</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sidpy.hdf.hdf_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_attr</span><span class="p">,</span> <span class="n">write_simple_attrs</span><span class="p">,</span> <span class="n">is_editable_h5</span><span class="p">,</span> \
+    <span class="n">copy_dataset</span><span class="p">,</span> <span class="n">lazy_load_array</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sidpy.base.num_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">contains_integers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sidpy.base.dict_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">flatten_dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sidpy.base.string_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_single_string_arg</span><span class="p">,</span> \
+    <span class="n">validate_list_of_strings</span><span class="p">,</span> <span class="n">validate_string_args</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sidpy.hdf.dtype_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_dtype</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sidpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">sid</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_book_keeping_attrs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.simple</span><span class="w"> </span><span class="kn">import</span> <span class="n">link_as_main</span><span class="p">,</span> <span class="n">check_if_main</span><span class="p">,</span> <span class="n">write_ind_val_dsets</span><span class="p">,</span> <span class="n">validate_dims_against_main</span><span class="p">,</span> <span class="n">validate_anc_h5_dsets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..dimension</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">validate_dimensions</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..anc_build_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">INDICES_DTYPE</span><span class="p">,</span> <span class="n">make_indices_matrix</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="n">unicode</span> <span class="o">=</span> <span class="nb">str</span>
+
+
+<div class="viewcode-block" id="reshape_to_n_dims">
+<a class="viewcode-back" href="../../../../_autosummary/pyUSID.io.hdf_utils.model.reshape_to_n_dims.html#pyUSID.io.hdf_utils.model.reshape_to_n_dims">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reshape_to_n_dims</span><span class="p">(</span><span class="n">h5_main</span><span class="p">,</span> <span class="n">h5_pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">h5_spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_labels</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sort_dims</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                      <span class="n">lazy</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reshape the input 2D matrix to be N-dimensions based on the</span>
+<span class="sd">    position and spectroscopic datasets.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    h5_main : HDF5 Dataset</span>
+<span class="sd">        2D data to be reshaped</span>
+<span class="sd">    h5_pos : HDF5 Dataset, optional</span>
+<span class="sd">        Position indices corresponding to rows in `h5_main`</span>
+<span class="sd">    h5_spec : HDF5 Dataset, optional</span>
+<span class="sd">        Spectroscopic indices corresponding to columns in `h5_main`</span>
+<span class="sd">    get_labels : bool, optional</span>
+<span class="sd">        Whether or not to return the dimension labels.  Default False</span>
+<span class="sd">    verbose : bool, optional</span>
+<span class="sd">        Whether or not to print debugging statements</span>
+<span class="sd">    sort_dims : bool</span>
+<span class="sd">        If True, the data is sorted so that the dimensions are in order from slowest to fastest</span>
+<span class="sd">        If False, the data is kept in the original order</span>
+<span class="sd">        If `get_labels` is also True, the labels are sorted as well.</span>
+<span class="sd">    lazy : bool, optional. Default = False</span>
+<span class="sd">        If False, ds_Nd will be a numpy.ndarray object - this is suitable if the HDF5 dataset fits into memory</span>
+<span class="sd">        If True, ds_Nd will be a dask.array object - This is suitable if the HDF5 dataset is too large to fit into</span>
+<span class="sd">        memory. Note that this will bea lazy computation meaning that the returned object just contains the instructions</span>
+<span class="sd">        . In order to get the actual value or content in numpy arrays, call ds_Nd.compute()</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ds_Nd : N-D numpy array or dask.array object</span>
+<span class="sd">        N dimensional array arranged as [positions slowest to fastest, spectroscopic slowest to fastest]</span>
+<span class="sd">    success : boolean or string</span>
+<span class="sd">        True if full reshape was successful</span>
+
+<span class="sd">        &quot;Positions&quot; if it was only possible to reshape by</span>
+<span class="sd">        the position dimensions</span>
+
+<span class="sd">        False if no reshape was possible</span>
+<span class="sd">    ds_labels : list of str</span>
+<span class="sd">        List of the labels of each dimension of `ds_Nd`</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    If either `h5_pos` or `h5_spec` are not provided, the function will first</span>
+<span class="sd">    attempt to find them as attributes of `h5_main`.  If that fails, it will</span>
+<span class="sd">    generate dummy values for them.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># TODO: automatically switch on lazy if the data is larger than memory</span>
+    <span class="c1"># TODO: sort_dims does not appear to do much. Functions as though it was always True</span>
+
+    <span class="k">if</span> <span class="n">h5_pos</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">h5_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">check_if_main</span><span class="p">(</span><span class="n">h5_main</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;if h5_main is a h5py.Dataset it should be a Main dataset&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_main</span><span class="p">,</span> <span class="p">(</span><span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Array</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;h5_main should either be a h5py.Dataset or numpy array&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">h5_pos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_pos</span><span class="p">,</span> <span class="p">(</span><span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Array</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;h5_pos should either be a h5py.Dataset or numpy array&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">h5_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The size of h5_pos: </span><span class="si">{}</span><span class="s1"> does not match with h5_main: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">h5_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                                                                             <span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">h5_spec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_spec</span><span class="p">,</span> <span class="p">(</span><span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Array</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;h5_spec should either be a h5py.Dataset or numpy array&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">h5_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The size of h5_spec: </span><span class="si">{}</span><span class="s1"> does not match with h5_main: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">h5_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                                                                              <span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+    <span class="n">pos_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;Positions&#39;</span><span class="p">])</span>
+    <span class="n">spec_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;Spectral_Step&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">h5_pos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the Position datasets from the references if possible</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_main</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">h5_pos</span> <span class="o">=</span> <span class="n">h5_main</span><span class="o">.</span><span class="n">file</span><span class="p">[</span><span class="n">h5_main</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;Position_Indices&#39;</span><span class="p">]]</span>
+                <span class="n">ds_pos</span> <span class="o">=</span> <span class="n">h5_pos</span><span class="p">[()]</span>
+                <span class="n">pos_labs</span> <span class="o">=</span> <span class="n">get_attr</span><span class="p">(</span><span class="n">h5_pos</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No position datasets found as attributes of </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">h5_main</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">ds_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">INDICES_DTYPE</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">pos_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;Position Dimension </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ipos</span><span class="p">)</span> <span class="k">for</span> <span class="n">ipos</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ds_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ds_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">INDICES_DTYPE</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ds_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">INDICES_DTYPE</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">pos_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;Position Dimension </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ipos</span><span class="p">)</span> <span class="k">for</span> <span class="n">ipos</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ds_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])])</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_pos</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Position Indices dataset was provided</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ds_pos</span> <span class="o">=</span> <span class="n">h5_pos</span><span class="p">[()]</span>
+        <span class="n">pos_labs</span> <span class="o">=</span> <span class="n">get_attr</span><span class="p">(</span><span class="n">h5_pos</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_pos</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Array</span><span class="p">)):</span>
+        <span class="n">ds_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">h5_pos</span><span class="p">)</span>
+        <span class="n">pos_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;Position Dimension </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ipos</span><span class="p">)</span> <span class="k">for</span> <span class="n">ipos</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ds_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Position Indices must be either h5py.Dataset or None&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">h5_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the Spectroscopic datasets from the references if possible</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_main</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">h5_spec</span> <span class="o">=</span> <span class="n">h5_main</span><span class="o">.</span><span class="n">file</span><span class="p">[</span><span class="n">h5_main</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;Spectroscopic_Indices&#39;</span><span class="p">]]</span>
+                <span class="n">ds_spec</span> <span class="o">=</span> <span class="n">h5_spec</span><span class="p">[()]</span>
+                <span class="n">spec_labs</span> <span class="o">=</span> <span class="n">get_attr</span><span class="p">(</span><span class="n">h5_spec</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No spectroscopic datasets found as attributes of </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">h5_main</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">ds_spec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">INDICES_DTYPE</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">spec_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;Spectral Dimension </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ispec</span><span class="p">)</span> <span class="k">for</span> <span class="n">ispec</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ds_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ds_spec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">INDICES_DTYPE</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ds_spec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">INDICES_DTYPE</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">spec_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;Spectral Dimension </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ispec</span><span class="p">)</span> <span class="k">for</span> <span class="n">ispec</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ds_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])])</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_spec</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Spectroscopic Indices dataset was provided</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ds_spec</span> <span class="o">=</span> <span class="n">h5_spec</span><span class="p">[()]</span>
+        <span class="n">spec_labs</span> <span class="o">=</span> <span class="n">get_attr</span><span class="p">(</span><span class="n">h5_spec</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_spec</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Array</span><span class="p">)):</span>
+        <span class="n">ds_spec</span> <span class="o">=</span> <span class="n">h5_spec</span>
+        <span class="n">spec_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;Spectral Dimension </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ispec</span><span class="p">)</span> <span class="k">for</span> <span class="n">ispec</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ds_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Spectroscopic Indices must be either h5py.Dataset or None&#39;</span><span class="p">)</span>
+
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Sort the indices from fastest to slowest</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">pos_sort</span> <span class="o">=</span> <span class="n">get_sort_order</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">ds_pos</span><span class="p">))</span>
+    <span class="n">spec_sort</span> <span class="o">=</span> <span class="n">get_sort_order</span><span class="p">(</span><span class="n">ds_spec</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Position dimensions:&#39;</span><span class="p">,</span> <span class="n">pos_labs</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Position sort order:&#39;</span><span class="p">,</span> <span class="n">pos_sort</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Spectroscopic Dimensions:&#39;</span><span class="p">,</span> <span class="n">spec_labs</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Spectroscopic sort order:&#39;</span><span class="p">,</span> <span class="n">spec_sort</span><span class="p">)</span>
+
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Get the size of each dimension in the sorted order</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">pos_dims</span> <span class="o">=</span> <span class="n">get_dimensionality</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">ds_pos</span><span class="p">),</span> <span class="n">pos_sort</span><span class="p">)</span>
+    <span class="n">spec_dims</span> <span class="o">=</span> <span class="n">get_dimensionality</span><span class="p">(</span><span class="n">ds_spec</span><span class="p">,</span> <span class="n">spec_sort</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">pos_dims</span><span class="p">)</span> <span class="o">!=</span> <span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="n">mesg</span> <span class="o">=</span> <span class="s1">&#39;Product of position dimension sizes: </span><span class="si">{}</span><span class="s1"> = </span><span class="si">{}</span><span class="s1"> not matching &#39;</span> \
+               <span class="s1">&#39;with size of first axis of main dataset: </span><span class="si">{}</span><span class="s1">. One or more &#39;</span> \
+               <span class="s1">&#39;dimensions are dependent dimensions and not marked as such&#39;</span> \
+               <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pos_dims</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">pos_dims</span><span class="p">),</span> <span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">mesg</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">spec_dims</span><span class="p">)</span> <span class="o">!=</span> <span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">mesg</span> <span class="o">=</span> <span class="s1">&#39;Product of spectroscopic dimension sizes: </span><span class="si">{}</span><span class="s1"> = </span><span class="si">{}</span><span class="s1"> not matching &#39;</span> \
+               <span class="s1">&#39;with size of second axis of main dataset: </span><span class="si">{}</span><span class="s1">. One or more &#39;</span> \
+               <span class="s1">&#39;dimensions are dependent dimensions and not marked as such&#39;</span> \
+               <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">spec_dims</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">spec_dims</span><span class="p">),</span> <span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">mesg</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Position dimensions (sort applied):&#39;</span><span class="p">,</span> <span class="n">pos_labs</span><span class="p">[</span><span class="n">pos_sort</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Position dimensionality (sort applied):&#39;</span><span class="p">,</span> <span class="n">pos_dims</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Spectroscopic dimensions (sort applied):&#39;</span><span class="p">,</span> <span class="n">spec_labs</span><span class="p">[</span><span class="n">spec_sort</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Spectroscopic dimensionality (sort applied):&#39;</span><span class="p">,</span> <span class="n">spec_dims</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">lazy</span><span class="p">:</span>
+        <span class="n">ds_main</span> <span class="o">=</span> <span class="n">lazy_load_array</span><span class="p">(</span><span class="n">h5_main</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ds_main</span> <span class="o">=</span> <span class="n">h5_main</span><span class="p">[()]</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Now we reshape the dataset based on those dimensions</span>
+<span class="sd">    numpy reshapes correctly when the dimensions are arranged from slowest to fastest.</span>
+<span class="sd">    Since the sort orders we have are from fastest to slowest, we need to reverse the orders</span>
+<span class="sd">    for both the position and spectroscopic dimensions</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Will attempt to reshape main dataset from:</span><span class="se">\n</span><span class="si">{}</span><span class="s1"> to </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds_main</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">pos_dims</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">spec_dims</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ds_Nd</span> <span class="o">=</span> <span class="n">ds_main</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">pos_dims</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">spec_dims</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Could not reshape dataset to full N-dimensional form.  Attempting reshape based on position only.&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ds_Nd</span> <span class="o">=</span> <span class="n">ds_main</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">pos_dims</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Reshape by position only also failed.  Will keep dataset in 2d form.&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">get_labels</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ds_main</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;Position&#39;</span><span class="p">,</span> <span class="s1">&#39;Spectral Step&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ds_main</span><span class="p">,</span> <span class="kc">False</span>
+
+        <span class="c1"># No exception</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">get_labels</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ds_Nd</span><span class="p">,</span> <span class="s1">&#39;Positions&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;Position&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">spec_labs</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ds_Nd</span><span class="p">,</span> <span class="s1">&#39;Positions&#39;</span>
+
+    <span class="n">all_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">pos_labs</span><span class="p">[</span><span class="n">pos_sort</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                            <span class="n">spec_labs</span><span class="p">[</span><span class="n">spec_sort</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">After reshaping, labels are&#39;</span><span class="p">,</span> <span class="n">all_labels</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Data shape is&#39;</span><span class="p">,</span> <span class="n">ds_Nd</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    At this point, the data is arranged from slowest to fastest dimension in both pos and spec</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">sort_dims</span><span class="p">:</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds_Nd</span><span class="p">,</span> <span class="kc">True</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">get_labels</span><span class="p">:</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">all_labels</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">results</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Going to put dimensions back in the same order as in the file:&#39;</span><span class="p">)</span>
+
+    <span class="n">swap_axes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="c1"># Compare the original order of the pos / spec labels with where these dimensions occur in the sorted labels</span>
+    <span class="k">for</span> <span class="n">lab</span> <span class="ow">in</span> <span class="n">pos_labs</span><span class="p">:</span>
+        <span class="n">swap_axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">all_labels</span> <span class="o">==</span> <span class="n">lab</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">lab</span> <span class="ow">in</span> <span class="n">spec_labs</span><span class="p">:</span>
+        <span class="n">swap_axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">all_labels</span> <span class="o">==</span> <span class="n">lab</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+
+    <span class="n">swap_axes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">swap_axes</span><span class="p">)</span>
+
+    <span class="c1">#If there are empty arrays, remove them. </span>
+    <span class="n">swap_axes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ax</span> <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">swap_axes</span> <span class="k">if</span> <span class="n">ax</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Axes will permuted in this order:&#39;</span><span class="p">,</span> <span class="n">swap_axes</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;New labels ordering:&#39;</span><span class="p">,</span> <span class="n">all_labels</span><span class="p">[</span><span class="n">swap_axes</span><span class="p">])</span>
+
+    <span class="n">ds_Nd</span> <span class="o">=</span> <span class="n">ds_Nd</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">swap_axes</span><span class="p">))</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds_Nd</span><span class="p">,</span> <span class="kc">True</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Dataset now of shape:&#39;</span><span class="p">,</span> <span class="n">ds_Nd</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">get_labels</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get the labels in the proper order</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">all_labels</span><span class="p">[</span><span class="n">swap_axes</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+
+<div class="viewcode-block" id="reshape_from_n_dims">
+<a class="viewcode-back" href="../../../../_autosummary/pyUSID.io.hdf_utils.model.reshape_from_n_dims.html#pyUSID.io.hdf_utils.model.reshape_from_n_dims">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reshape_from_n_dims</span><span class="p">(</span><span class="n">data_n_dim</span><span class="p">,</span> <span class="n">h5_pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">h5_spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reshape the input 2D matrix to be N-dimensions based on the</span>
+<span class="sd">    position and spectroscopic datasets.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data_n_dim : numpy.array or dask.array.core.Array</span>
+<span class="sd">        N dimensional array arranged as [positions dimensions..., spectroscopic dimensions]</span>
+<span class="sd">        If h5_pos and h5_spec are not provided, this function will have to assume that the dimensions</span>
+<span class="sd">        are arranged as [positions slowest to fastest, spectroscopic slowest to fastest].</span>
+<span class="sd">        This restriction is removed if h5_pos and h5_spec are provided</span>
+<span class="sd">    h5_pos : HDF5 Dataset, numpy.array or dask.array.core.Array</span>
+<span class="sd">        Position indices corresponding to rows in the final 2d array</span>
+<span class="sd">        The dimensions should be arranged in terms of rate of change corresponding to data_n_dim.</span>
+<span class="sd">        In other words if data_n_dim had two position dimensions arranged as [pos_fast, pos_slow, spec_dim_1....],</span>
+<span class="sd">        h5_pos should be arranged as [pos_fast, pos_slow]</span>
+<span class="sd">    h5_spec : HDF5 Dataset, numpy. array or dask.array.core.Array</span>
+<span class="sd">        Spectroscopic indices corresponding to columns in the final 2d array</span>
+<span class="sd">        The dimensions should be arranged in terms of rate of change corresponding to data_n_dim.</span>
+<span class="sd">        In other words if data_n_dim had two spectral dimensions arranged as [pos_dim_1,..., spec_fast, spec_slow],</span>
+<span class="sd">        h5_spec should be arranged as [pos_slow, pos_fast]</span>
+<span class="sd">    verbose : bool, optional. Default = False</span>
+<span class="sd">        Whether or not to print log statements</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ds_2d : numpy.array</span>
+<span class="sd">        2 dimensional numpy array arranged as [positions, spectroscopic]</span>
+<span class="sd">    success : boolean or string</span>
+<span class="sd">        True if full reshape was successful</span>
+
+<span class="sd">        &quot;Positions&quot; if it was only possible to reshape by</span>
+<span class="sd">        the position dimensions</span>
+
+<span class="sd">        False if no reshape was possible</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    If either `h5_pos` or `h5_spec` are not provided, the function will</span>
+<span class="sd">    assume the first dimension is position and the remaining are spectroscopic already</span>
+<span class="sd">    in order from fastest to slowest.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_n_dim</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Array</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;data_n_dim is not a numpy or dask array&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">h5_spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">h5_pos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;at least one of h5_pos or h5_spec must be specified for an attempt to reshape to 2D&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">data_n_dim</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">data_n_dim</span><span class="p">,</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="n">h5_pos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_pos</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Position Indices dataset was provided</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">ds_pos</span> <span class="o">=</span> <span class="n">h5_pos</span><span class="p">[()]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_pos</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+        <span class="n">ds_pos</span> <span class="o">=</span> <span class="n">h5_pos</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_pos</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">ds_pos</span> <span class="o">=</span> <span class="n">h5_pos</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Position Indices must be either h5py.Dataset or None&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">h5_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_spec</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Spectroscopic Indices dataset was provided</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">ds_spec</span> <span class="o">=</span> <span class="n">h5_spec</span><span class="p">[()]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_spec</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+        <span class="n">ds_spec</span> <span class="o">=</span> <span class="n">h5_spec</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_spec</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">ds_spec</span> <span class="o">=</span> <span class="n">h5_spec</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Spectroscopic Indices must be either h5py.Dataset or None&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">h5_spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">h5_pos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Spectral indices not provided but position indices provided.</span><span class="se">\n</span><span class="s1">&#39;</span>
+                  <span class="s1">&#39;Building spectral indices assuming that dimensions are arranged as slow -&gt; fast&#39;</span><span class="p">)</span>
+        <span class="n">pos_dims</span> <span class="o">=</span> <span class="n">get_dimensionality</span><span class="p">(</span><span class="n">ds_pos</span><span class="p">,</span> <span class="n">index_sort</span><span class="o">=</span><span class="n">get_sort_order</span><span class="p">(</span><span class="n">ds_pos</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">([</span><span class="n">x</span> <span class="ow">in</span> <span class="n">data_n_dim</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pos_dims</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Dimension sizes in pos_dims: </span><span class="si">{}</span><span class="s1"> do not exist in data_n_dim shape: &#39;</span>
+                             <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pos_dims</span><span class="p">,</span> <span class="n">data_n_dim</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+        <span class="n">spec_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">data_n_dim</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">pos_dims</span><span class="p">):])]</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;data has dimensions: </span><span class="si">{}</span><span class="s1">. Provided position indices had dimensions of size: </span><span class="si">{}</span><span class="s1">. Spectral dimensions &#39;</span>
+                  <span class="s1">&#39;will built with dimensions: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data_n_dim</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">pos_dims</span><span class="p">,</span> <span class="n">spec_dims</span><span class="p">))</span>
+        <span class="n">ds_spec</span> <span class="o">=</span> <span class="n">make_indices_matrix</span><span class="p">(</span><span class="n">spec_dims</span><span class="p">,</span> <span class="n">is_position</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">h5_pos</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">h5_spec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Position indices not provided but spectral indices provided.</span><span class="se">\n</span><span class="s1">&#39;</span>
+                  <span class="s1">&#39;Building position indices assuming that dimensions are arranged as slow -&gt; fast&#39;</span><span class="p">)</span>
+        <span class="n">spec_dims</span> <span class="o">=</span> <span class="n">get_dimensionality</span><span class="p">(</span><span class="n">ds_spec</span><span class="p">,</span> <span class="n">index_sort</span><span class="o">=</span><span class="n">get_sort_order</span><span class="p">(</span><span class="n">ds_spec</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">([</span><span class="n">x</span> <span class="ow">in</span> <span class="n">data_n_dim</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">spec_dims</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Dimension sizes in spec_dims: </span><span class="si">{}</span><span class="s1"> do not exist in data_n_dim shape: &#39;</span>
+                             <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">spec_dims</span><span class="p">,</span> <span class="n">data_n_dim</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+        <span class="n">pos_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">data_n_dim</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="n">data_n_dim</span><span class="o">.</span><span class="n">ndim</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">spec_dims</span><span class="p">)])]</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;data has dimensions: </span><span class="si">{}</span><span class="s1">. Spectroscopic position indices had dimensions of size: </span><span class="si">{}</span><span class="s1">. Position &#39;</span>
+                  <span class="s1">&#39;dimensions will built with dimensions: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data_n_dim</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">spec_dims</span><span class="p">,</span> <span class="n">pos_dims</span><span class="p">))</span>
+        <span class="n">ds_pos</span> <span class="o">=</span> <span class="n">make_indices_matrix</span><span class="p">(</span><span class="n">pos_dims</span><span class="p">,</span> <span class="n">is_position</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">h5_spec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">h5_pos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ds_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">ds_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">data_n_dim</span><span class="o">.</span><span class="n">shape</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The product (</span><span class="si">{}</span><span class="s1">) of the number of positions (</span><span class="si">{}</span><span class="s1">) and spectroscopic (</span><span class="si">{}</span><span class="s1">) observations is &#39;</span>
+                             <span class="s1">&#39;not equal to the product (</span><span class="si">{}</span><span class="s1">) of the data shape (</span><span class="si">{}</span><span class="s1">)&#39;</span>
+                             <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">ds_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ds_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ds_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                        <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">data_n_dim</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">data_n_dim</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">ds_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">ds_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">data_n_dim</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
+            <span class="c1"># This may mean that the dummy position or spectroscopic axes has been squeezed out!</span>
+            <span class="c1"># Dask does NOT allow singular dimensions apparently. So cannot do expand_dims. Handle later</span>
+
+            <span class="k">if</span> <span class="n">ds_pos</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">ds_spec</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ALL Position dimensions squeezed: </span><span class="si">{}</span><span class="s1">. ALL Spectroscopic dimensions squeezed: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                          <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds_pos</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ds_spec</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The number of position (</span><span class="si">{}</span><span class="s1">) and spectroscopic (</span><span class="si">{}</span><span class="s1">) dimensions do not match with the &#39;</span>
+                                 <span class="s1">&#39;dimensionality of the N-dimensional dataset: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                                 <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ds_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data_n_dim</span><span class="o">.</span><span class="n">ndim</span><span class="p">))</span>
+
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Sort the indices from fastest to slowest</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">ds_pos</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># Position dimension squeezed out:</span>
+        <span class="n">pos_sort</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pos_sort</span> <span class="o">=</span> <span class="n">get_sort_order</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">ds_pos</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">ds_spec</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># Spectroscopic axis squeezed out:</span>
+        <span class="n">spec_sort</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">spec_sort</span> <span class="o">=</span> <span class="n">get_sort_order</span><span class="p">(</span><span class="n">ds_spec</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">h5_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">spec_sort</span> <span class="o">=</span> <span class="n">spec_sort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">h5_pos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pos_sort</span> <span class="o">=</span> <span class="n">pos_sort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Position sort order: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pos_sort</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Spectroscopic sort order: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">spec_sort</span><span class="p">))</span>
+
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Now we transpose the axes associated with the spectroscopic dimensions</span>
+<span class="sd">    so that they are in the same order as in the index array</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">swap_axes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pos_sort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">spec_sort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos_sort</span><span class="p">)))</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;swap axes: </span><span class="si">{}</span><span class="s1"> to be applied to N dimensional data of shape </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">swap_axes</span><span class="p">,</span> <span class="n">data_n_dim</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+    <span class="n">data_n_dim_2</span> <span class="o">=</span> <span class="n">data_n_dim</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">swap_axes</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;N dimensional data shape after axes swap: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data_n_dim_2</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Now we reshape the dataset based on those dimensions</span>
+<span class="sd">    We must use the spectroscopic dimensions in reverse order</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ds_2d</span> <span class="o">=</span> <span class="n">data_n_dim_2</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="n">ds_pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ds_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Could not reshape dataset to full N-dimensional form&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ds_2d</span><span class="p">,</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="get_dimensionality">
+<a class="viewcode-back" href="../../../../_autosummary/pyUSID.io.hdf_utils.model.get_dimensionality.html#pyUSID.io.hdf_utils.model.get_dimensionality">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_dimensionality</span><span class="p">(</span><span class="n">ds_index</span><span class="p">,</span> <span class="n">index_sort</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the size of each index dimension in a specified sort order</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ds_index : 2D HDF5 Dataset or numpy array</span>
+<span class="sd">        Row matrix of indices</span>
+<span class="sd">    index_sort : Iterable of unsigned integers (Optional)</span>
+<span class="sd">        Sort that can be applied to dimensionality.</span>
+<span class="sd">        For example - Order of rows sorted from fastest to slowest</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sorted_dims : list of unsigned integers</span>
+<span class="sd">        Dimensionality of each row in ds_index.  If index_sort is supplied, it will be in the sorted order</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds_index</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+        <span class="n">ds_index</span> <span class="o">=</span> <span class="n">ds_index</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds_index</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;ds_index should either be a numpy array or h5py.Dataset&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ds_index</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">ds_index</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="c1"># must be spectroscopic like in shape (few rows, more cols)</span>
+        <span class="n">ds_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">ds_index</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">index_sort</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">index_sort</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ds_index</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">contains_integers</span><span class="p">(</span><span class="n">index_sort</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;index_sort should contain integers &gt; 0&#39;</span><span class="p">)</span>
+        <span class="n">index_sort</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">index_sort</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">index_sort</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;index_sort should be a 1D array&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">index_sort</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">ds_index</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;length of index_sort (</span><span class="si">{}</span><span class="s1">) should be smaller than number of dimensions in provided dataset&#39;</span>
+                             <span class="s1">&#39; (</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">index_sort</span><span class="p">)),</span> <span class="n">ds_index</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ds_index</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">!=</span>  <span class="nb">set</span><span class="p">(</span><span class="n">index_sort</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Sort order of dimensions (</span><span class="si">{}</span><span class="s1">) not  matching  with number of dimensions (</span><span class="si">{}</span><span class="s1">)&#39;</span>
+                             <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_sort</span><span class="p">,</span> <span class="n">ds_index</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+    <span class="n">sorted_dims</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">row</span><span class="p">))</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ds_index</span><span class="p">,</span> <span class="n">ndmin</span><span class="o">=</span><span class="mi">2</span><span class="p">)[</span><span class="n">index_sort</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">sorted_dims</span></div>
+
+
+
+<div class="viewcode-block" id="get_sort_order">
+<a class="viewcode-back" href="../../../../_autosummary/pyUSID.io.hdf_utils.model.get_sort_order.html#pyUSID.io.hdf_utils.model.get_sort_order">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_sort_order</span><span class="p">(</span><span class="n">ds_spec</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find how quickly the spectroscopic values are changing in each row</span>
+<span class="sd">    and the order of rows from fastest changing to slowest.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ds_spec : 2D HDF5 dataset or numpy array</span>
+<span class="sd">        Rows of indices to be sorted from fastest changing to slowest</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    change_sort : List of unsigned integers</span>
+<span class="sd">        Order of rows sorted from fastest changing to slowest</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds_spec</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+        <span class="n">ds_spec</span> <span class="o">=</span> <span class="n">ds_spec</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds_spec</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;ds_spec should either be a numpy array or h5py.Dataset&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ds_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">ds_spec</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="c1"># must be spectroscopic like in shape (few rows, more cols)</span>
+        <span class="n">ds_spec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">ds_spec</span><span class="p">)</span>
+
+    <span class="n">change_count</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">([</span><span class="n">row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">row</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">))])[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">ds_spec</span><span class="p">]</span>
+    <span class="n">change_sort</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">change_count</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">change_sort</span></div>
+
+
+
+<div class="viewcode-block" id="get_unit_values">
+<a class="viewcode-back" href="../../../../_autosummary/pyUSID.io.hdf_utils.model.get_unit_values.html#pyUSID.io.hdf_utils.model.get_unit_values">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_unit_values</span><span class="p">(</span><span class="n">ds_inds</span><span class="p">,</span> <span class="n">ds_vals</span><span class="p">,</span> <span class="n">dim_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">all_dim_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets the unit arrays of values that describe the spectroscopic dimensions</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ds_inds : h5py.Dataset or numpy.ndarray</span>
+<span class="sd">        Spectroscopic or Position Indices dataset</span>
+<span class="sd">    ds_vals : h5py.Dataset or numpy.ndarray</span>
+<span class="sd">        Spectroscopic or Position Values dataset</span>
+<span class="sd">    dim_names : str, or list of str, Optional</span>
+<span class="sd">        Names of the dimensions of interest. Default = all</span>
+<span class="sd">    all_dim_names : list of str, Optional</span>
+<span class="sd">        Names of all the dimensions in these datasets. Use this if supplying numpy arrays instead of h5py.Dataset</span>
+<span class="sd">        objects for h5_inds, h5_vals since there is no other way of getting the dimension names.</span>
+<span class="sd">    is_spec : bool, optional</span>
+<span class="sd">        Whether or not the provided ancillary datasets are position or spectroscopic</span>
+<span class="sd">        The user is recommended to supply this parameter whenever it is known</span>
+<span class="sd">        By default, this function will attempt to recognize the answer based on the shape of the datasets.</span>
+<span class="sd">    verbose : bool, optional</span>
+<span class="sd">        Whether or not to print debugging statements. Default - off</span>
+
+<span class="sd">    Note - this function can be extended / modified for ancillary position dimensions as well</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    unit_values : dict</span>
+<span class="sd">        Dictionary containing the unit array for each dimension. The name of the dimensions are the keys.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">all_dim_names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">allowed_types</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">all_dim_names</span> <span class="o">=</span> <span class="n">validate_list_of_strings</span><span class="p">(</span><span class="n">all_dim_names</span><span class="p">,</span> <span class="s1">&#39;all_dim_names&#39;</span><span class="p">)</span>
+        <span class="n">all_dim_names</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">all_dim_names</span><span class="p">)</span>
+        <span class="n">allowed_types</span> <span class="o">=</span> <span class="p">(</span><span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">dset</span><span class="p">,</span> <span class="n">dset_name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="n">ds_inds</span><span class="p">,</span> <span class="n">ds_vals</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;ds_inds&#39;</span><span class="p">,</span> <span class="s1">&#39;ds_vals&#39;</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dset</span><span class="p">,</span> <span class="n">allowed_types</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">dset_name</span> <span class="o">+</span> <span class="s1">&#39; should be of type: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">allowed_types</span><span class="p">))</span>
+
+    <span class="c1"># For now, we will throw an error if even a single dimension is listed as an incomplete dimension:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds_inds</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="s1">&#39;incomplete_dimensions&#39;</span> <span class="ow">in</span> <span class="n">dset</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">for</span> <span class="n">dset</span> <span class="ow">in</span> <span class="p">[</span><span class="n">ds_inds</span><span class="p">,</span> <span class="n">ds_vals</span><span class="p">]]):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">incomp_dims_inds</span> <span class="o">=</span> <span class="n">get_attr</span><span class="p">(</span><span class="n">ds_inds</span><span class="p">,</span> <span class="s1">&#39;incomplete_dimensions&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">incomp_dims_inds</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">incomp_dims_vals</span> <span class="o">=</span> <span class="n">get_attr</span><span class="p">(</span><span class="n">ds_vals</span><span class="p">,</span> <span class="s1">&#39;incomplete_dimensions&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">incomp_dims_vals</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">incomp_dims_inds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">incomp_dims_vals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">incomp_dims</span> <span class="o">=</span> <span class="n">incomp_dims_vals</span>
+            <span class="k">elif</span> <span class="n">incomp_dims_inds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">incomp_dims_vals</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">incomp_dims</span> <span class="o">=</span> <span class="n">incomp_dims_inds</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># ensure that both attributes are the same</span>
+                <span class="k">if</span> <span class="n">incomp_dims_vals</span> <span class="o">!=</span> <span class="n">incomp_dims_inds</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Provided indices (</span><span class="si">{}</span><span class="s1">) and values (</span><span class="si">{}</span><span class="s1">) datasets were marked with different values &#39;</span>
+                                     <span class="s1">&#39;for incomplete_datasets.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">incomp_dims_inds</span><span class="p">,</span> <span class="n">incomp_dims_vals</span><span class="p">))</span>
+                <span class="n">incomp_dims</span> <span class="o">=</span> <span class="n">incomp_dims_vals</span>
+
+            <span class="n">all_dim_names</span> <span class="o">=</span> <span class="n">get_attr</span><span class="p">(</span><span class="n">ds_inds</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Among all dimensions: </span><span class="si">{}</span><span class="s1">, These dimensions were marked as incomplete dimensions: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                             <span class="s1">&#39;. You are recommended to find unit values manually&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">all_dim_names</span><span class="p">,</span> <span class="n">incomp_dims</span><span class="p">))</span>
+
+    <span class="c1"># Do we need to check that the provided inds and vals correspond to the same main dataset?</span>
+    <span class="k">if</span> <span class="n">ds_inds</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">ds_vals</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;h5_inds: </span><span class="si">{}</span><span class="s1"> and h5_vals: </span><span class="si">{}</span><span class="s1"> should have the same shapes&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds_inds</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">ds_vals</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">all_dim_names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">all_dim_names</span> <span class="o">=</span> <span class="n">get_attr</span><span class="p">(</span><span class="n">ds_inds</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;All dimensions: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">all_dim_names</span><span class="p">))</span>
+
+    <span class="c1"># First load to memory</span>
+    <span class="n">inds_mat</span> <span class="o">=</span> <span class="n">ds_inds</span><span class="p">[()]</span>
+    <span class="n">vals_mat</span> <span class="o">=</span> <span class="n">ds_vals</span><span class="p">[()]</span>
+
+    <span class="k">if</span> <span class="n">is_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Attempt to recognize the type automatically</span>
+        <span class="n">is_spec</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">inds_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">inds_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">is_spec</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">is_spec</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;is_spec should be a boolean. Provided object is of type: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">is_spec</span><span class="p">)))</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s1">&#39;Ancillary matrices of shape: </span><span class="si">{}</span><span class="s1">, hence determined to be Spectroscopic:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">inds_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">is_spec</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_spec</span><span class="p">:</span>
+        <span class="c1"># Convert to spectral shape</span>
+        <span class="n">inds_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">inds_mat</span><span class="p">)</span>
+        <span class="n">vals_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">vals_mat</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_dim_names</span><span class="p">)</span> <span class="o">!=</span> <span class="n">inds_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Length of dimension names list: </span><span class="si">{}</span><span class="s1"> not matching with shape of dataset: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                         <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_dim_names</span><span class="p">),</span> <span class="n">inds_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">dim_names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dim_names</span> <span class="o">=</span> <span class="n">all_dim_names</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Going to return unit values for all dimensions: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">all_dim_names</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dim_names</span> <span class="o">=</span> <span class="n">validate_list_of_strings</span><span class="p">(</span><span class="n">dim_names</span><span class="p">,</span> <span class="s1">&#39;dim_names&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Checking to make sure that the target dimension names: </span><span class="si">{}</span><span class="s1"> exist in the datasets attributes: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                  <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dim_names</span><span class="p">,</span> <span class="n">all_dim_names</span><span class="p">))</span>
+
+        <span class="c1"># check to make sure that the dimension names exist in the datasets:</span>
+        <span class="k">for</span> <span class="n">dim_name</span> <span class="ow">in</span> <span class="n">dim_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dim_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_dim_names</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Dimension </span><span class="si">{}</span><span class="s1"> does not exist in the provided ancillary datasets&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dim_name</span><span class="p">))</span>
+
+    <span class="n">unit_values</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">dim_name</span> <span class="ow">in</span> <span class="n">all_dim_names</span><span class="p">:</span>
+        <span class="c1"># Find the row in the spectroscopic indices that corresponds to the dimensions we want to slice:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Looking for dimension: </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dim_name</span><span class="p">,</span> <span class="n">dim_names</span><span class="p">))</span>
+        <span class="n">desired_row_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">all_dim_names</span> <span class="o">==</span> <span class="n">dim_name</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">inds_for_dim</span> <span class="o">=</span> <span class="n">inds_mat</span><span class="p">[</span><span class="n">desired_row_ind</span><span class="p">]</span>
+        <span class="c1"># Wherever this dimension goes to 0 - start of a new tile</span>
+        <span class="n">starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">inds_for_dim</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">inds_for_dim</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">starts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Spectroscopic Indices for dimension: &quot;</span><span class="si">{}</span><span class="s1">&quot; not &#39;</span>
+                             <span class="s1">&#39;starting with 0. Please fix this and try again&#39;</span>
+                             <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dim_name</span><span class="p">))</span>
+
+        <span class="c1"># There may be repetitions in addition to tiling. Find how the the positions increase.</span>
+        <span class="c1"># 1 = repetition, &gt; 1 = new tile</span>
+        <span class="n">step_sizes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(([</span><span class="mi">1</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">starts</span><span class="p">)))</span>
+        <span class="c1"># This array is of the same length as the full indices array</span>
+
+        <span class="c1"># We should expect only two values of step sizes for a regular dimension (tiles of the same size):</span>
+        <span class="c1"># 1 for same value repeating and a big jump in indices when the next tile starts</span>
+        <span class="c1"># If the repeats / tiles are of different lengths, then this is not a regular dimension.</span>
+        <span class="c1"># What does a Unit Values vector even mean in this case? Just raise an error for now</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">step_sizes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Non constant step sizes&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Finding Start of a new tile</span>
+        <span class="n">tile_starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">step_sizes</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># converting these indices to correct indices that can be mapped straight to</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tile_starts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Dimension(s) with no tiling at all</span>
+            <span class="c1"># Make it look as though the next tile starts at the end of the whole indices vector</span>
+            <span class="n">tile_starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">inds_for_dim</span><span class="p">)])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Dimension with some form of repetition</span>
+            <span class="n">tile_starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(([</span><span class="mi">0</span><span class="p">],</span> <span class="n">starts</span><span class="p">[</span><span class="n">tile_starts</span><span class="p">]))</span>
+
+            <span class="c1"># Verify that each tile is identical here</span>
+            <span class="c1"># Last tile will not be checked unless we add the length of the indices vector as the start of next tile</span>
+            <span class="n">tile_starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">tile_starts</span><span class="p">,</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">inds_for_dim</span><span class="p">)]))</span>
+            <span class="n">subsections</span> <span class="o">=</span> <span class="p">[</span><span class="n">inds_for_dim</span><span class="p">[</span><span class="n">tile_starts</span><span class="p">[</span><span class="n">ind</span><span class="p">]:</span> <span class="n">tile_starts</span><span class="p">[</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]</span> <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tile_starts</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">subsections</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Should get unit values for ALL dimensions regardless of expectations to catch such scenarios.</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Values in each tile of dimension: </span><span class="si">{}</span><span class="s1"> are different&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dim_name</span><span class="p">))</span>
+
+        <span class="c1"># Now looking within the first tile:</span>
+        <span class="n">subsection</span> <span class="o">=</span> <span class="n">inds_for_dim</span><span class="p">[</span><span class="n">tile_starts</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">tile_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="c1"># remove all repetitions. ie - take indices only where jump == 1</span>
+        <span class="n">step_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(([</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(([</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">subsection</span><span class="p">))))[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="c1"># Finally, use these indices to get the values</span>
+        <span class="k">if</span> <span class="n">dim_name</span> <span class="ow">in</span> <span class="n">dim_names</span><span class="p">:</span>
+            <span class="c1"># Only add this dimension to dictionary if requwested.</span>
+            <span class="n">unit_values</span><span class="p">[</span><span class="n">dim_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">vals_mat</span><span class="p">[</span><span class="n">desired_row_ind</span><span class="p">,</span> <span class="n">step_inds</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">unit_values</span></div>
+
+
+
+<div class="viewcode-block" id="write_main_dataset">
+<a class="viewcode-back" href="../../../../_autosummary/pyUSID.io.hdf_utils.model.write_main_dataset.html#pyUSID.io.hdf_utils.model.write_main_dataset">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_main_dataset</span><span class="p">(</span><span class="n">h5_parent_group</span><span class="p">,</span> <span class="n">main_data</span><span class="p">,</span> <span class="n">main_data_name</span><span class="p">,</span> <span class="n">quantity</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span> <span class="n">pos_dims</span><span class="p">,</span> <span class="n">spec_dims</span><span class="p">,</span>
+                       <span class="n">main_dset_attrs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">h5_pos_inds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">h5_pos_vals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">h5_spec_inds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">h5_spec_vals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="n">aux_spec_prefix</span><span class="o">=</span><span class="s1">&#39;Spectroscopic_&#39;</span><span class="p">,</span> <span class="n">aux_pos_prefix</span><span class="o">=</span><span class="s1">&#39;Position_&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">slow_to_fast</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Writes the provided data as a &#39;Main&#39; dataset with all appropriate linking.</span>
+<span class="sd">    By default, the instructions for generating the ancillary datasets should be specified using the pos_dims and</span>
+<span class="sd">    spec_dims arguments as dictionary objects. Alternatively, if both the indices and values datasets are already</span>
+<span class="sd">    available for either/or the positions / spectroscopic, they can be specified using the keyword arguments. In this</span>
+<span class="sd">    case, fresh datasets will not be generated.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    h5_parent_group : :class:`h5py.Group`</span>
+<span class="sd">        Parent group under which the datasets will be created</span>
+<span class="sd">    main_data : numpy.ndarray, dask.array.core.Array, list or tuple</span>
+<span class="sd">        2D matrix formatted as [position, spectral] or a list / tuple with the shape for an empty dataset.</span>
+<span class="sd">        If creating an empty dataset - the dtype must be specified via a kwarg.</span>
+<span class="sd">    main_data_name : String / Unicode</span>
+<span class="sd">        Name to give to the main dataset. This cannot contain the &#39;-&#39; character.</span>
+<span class="sd">    quantity : String / Unicode</span>
+<span class="sd">        Name of the physical quantity stored in the dataset. Example - &#39;Current&#39;</span>
+<span class="sd">    units : String / Unicode</span>
+<span class="sd">        Name of units for the quantity stored in the dataset. Example - &#39;A&#39; for amperes</span>
+<span class="sd">    pos_dims : Dimension or array-like of Dimension objects</span>
+<span class="sd">        Sequence of Dimension objects that provides all necessary instructions for constructing the indices and values</span>
+<span class="sd">        datasets</span>
+<span class="sd">        Object specifying the instructions necessary for building the Position indices and values datasets</span>
+<span class="sd">    spec_dims : Dimension or array-like of Dimension objects</span>
+<span class="sd">        Sequence of Dimension objects that provides all necessary instructions for constructing the indices and values</span>
+<span class="sd">        datasets</span>
+<span class="sd">        Object specifying the instructions necessary for building the Spectroscopic indices and values datasets</span>
+<span class="sd">    main_dset_attrs : dictionary, Optional</span>
+<span class="sd">        Dictionary of parameters that will be written to the main dataset. Do NOT include region references here.</span>
+<span class="sd">    h5_pos_inds : h5py.Dataset, Optional</span>
+<span class="sd">        Dataset that will be linked with the name &quot;Position_Indices&quot;</span>
+<span class="sd">    h5_pos_vals : h5py.Dataset, Optional</span>
+<span class="sd">        Dataset that will be linked with the name &quot;Position_Values&quot;</span>
+<span class="sd">    h5_spec_inds : h5py.Dataset, Optional</span>
+<span class="sd">        Dataset that will be linked with the name &quot;Spectroscopic_Indices&quot;</span>
+<span class="sd">    h5_spec_vals : h5py.Dataset, Optional</span>
+<span class="sd">        Dataset that will be linked with the name &quot;Spectroscopic_Values&quot;</span>
+<span class="sd">    aux_spec_prefix : str or unicode, Optional</span>
+<span class="sd">        Default prefix for Spectroscopic datasets. Default = &quot;Spectroscopic&quot;</span>
+<span class="sd">    aux_pos_prefix : str or unicode, Optional</span>
+<span class="sd">        Default prefix for Position datasets. Default = &quot;Position&quot;</span>
+<span class="sd">    verbose : bool, Optional, default=False</span>
+<span class="sd">        If set to true - prints debugging logs</span>
+<span class="sd">    slow_to_fast : bool, Optional. Default=False</span>
+<span class="sd">        Set to True if the dimensions are arranged from slowest varying to fastest varying.</span>
+<span class="sd">        Set to False otherwise.</span>
+<span class="sd">    kwargs will be passed onto the creation of the dataset. Please pass chunking, compression, dtype, and other</span>
+<span class="sd">        arguments this way</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    h5_main : USIDataset</span>
+<span class="sd">        Reference to the main dataset</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__check_anc_before_creation</span><span class="p">(</span><span class="n">aux_prefix</span><span class="p">,</span> <span class="n">dim_type</span><span class="o">=</span><span class="s1">&#39;pos&#39;</span><span class="p">):</span>
+        <span class="n">aux_prefix</span> <span class="o">=</span> <span class="n">validate_single_string_arg</span><span class="p">(</span><span class="n">aux_prefix</span><span class="p">,</span> <span class="s1">&#39;aux_&#39;</span> <span class="o">+</span> <span class="n">dim_type</span> <span class="o">+</span> <span class="s1">&#39;_prefix&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">aux_prefix</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">):</span>
+            <span class="n">aux_prefix</span> <span class="o">+=</span> <span class="s1">&#39;_&#39;</span>
+        <span class="k">if</span> <span class="s1">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">aux_prefix</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;aux_&#39;</span> <span class="o">+</span> <span class="n">dim_type</span> <span class="o">+</span> <span class="s1">&#39; should not contain the &quot;-&quot; character. Reformatted name from:</span><span class="si">{}</span><span class="s1"> to &#39;</span>
+                                     <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">aux_prefix</span><span class="p">,</span> <span class="n">aux_prefix</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)))</span>
+        <span class="n">aux_prefix</span> <span class="o">=</span> <span class="n">aux_prefix</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">dset_name</span> <span class="ow">in</span> <span class="p">[</span><span class="n">aux_prefix</span> <span class="o">+</span> <span class="s1">&#39;Indices&#39;</span><span class="p">,</span> <span class="n">aux_prefix</span> <span class="o">+</span> <span class="s1">&#39;Values&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">dset_name</span> <span class="ow">in</span> <span class="n">h5_parent_group</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="c1"># TODO: What if the contained data was correct?</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Dataset named: &#39;</span> <span class="o">+</span> <span class="n">dset_name</span> <span class="o">+</span> <span class="s1">&#39; already exists in group: &#39;</span>
+                                                               <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">. Consider passing these datasets using kwargs (if they are correct) instead of providing the pos_dims and spec_dims arguments&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">h5_parent_group</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">aux_prefix</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__ensure_anc_in_correct_file</span><span class="p">(</span><span class="n">h5_inds</span><span class="p">,</span> <span class="n">h5_vals</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">h5_inds</span><span class="o">.</span><span class="n">file</span> <span class="o">!=</span> <span class="n">h5_vals</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Provided &#39;</span> <span class="o">+</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s1">&#39; datasets are present in different HDF5 files!&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">h5_inds</span><span class="o">.</span><span class="n">file</span> <span class="o">!=</span> <span class="n">h5_parent_group</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
+            <span class="c1"># Need to copy over the anc datasets to the new group</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Need to copy over ancillary datasets: </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1"> to &#39;</span>
+                      <span class="s1">&#39;destination group: </span><span class="si">{}</span><span class="s1"> which is in a different HDF5 &#39;</span>
+                      <span class="s1">&#39;file&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">h5_inds</span><span class="p">,</span> <span class="n">h5_vals</span><span class="p">,</span> <span class="n">h5_parent_group</span><span class="p">))</span>
+            <span class="n">ret_vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">copy_dataset</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h5_parent_group</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="n">h5_inds</span><span class="p">,</span> <span class="n">h5_vals</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ret_vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">h5_inds</span><span class="p">,</span> <span class="n">h5_vals</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">ret_vals</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_parent_group</span><span class="p">,</span> <span class="p">(</span><span class="n">h5py</span><span class="o">.</span><span class="n">Group</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;h5_parent_group should be a h5py.File or h5py.Group object&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_editable_h5</span><span class="p">(</span><span class="n">h5_parent_group</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The provided file is not editable&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;h5 group and file OK&#39;</span><span class="p">)</span>
+
+    <span class="n">quantity</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span> <span class="n">main_data_name</span> <span class="o">=</span> <span class="n">validate_string_args</span><span class="p">([</span><span class="n">quantity</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span> <span class="n">main_data_name</span><span class="p">],</span>
+                                                           <span class="p">[</span><span class="s1">&#39;quantity&#39;</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">,</span> <span class="s1">&#39;main_data_name&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;quantity, units, main_data_name all OK&#39;</span><span class="p">)</span>
+
+    <span class="n">quantity</span> <span class="o">=</span> <span class="n">quantity</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">units</span> <span class="o">=</span> <span class="n">units</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">main_data_name</span> <span class="o">=</span> <span class="n">main_data_name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s1">&#39;-&#39;</span> <span class="ow">in</span> <span class="n">main_data_name</span><span class="p">:</span>
+        <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;main_data_name should not contain the &quot;-&quot; character. Reformatted name from:</span><span class="si">{}</span><span class="s1"> to &#39;</span>
+             <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">main_data_name</span><span class="p">,</span> <span class="n">main_data_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)))</span>
+    <span class="n">main_data_name</span> <span class="o">=</span> <span class="n">main_data_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main_data</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">contains_integers</span><span class="p">(</span><span class="n">main_data</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;main_data if specified as a shape should be a list / tuple of integers &gt;= 1&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">main_data</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;main_data if specified as a shape should contain 2 numbers&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;dtype&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;dtype must be included as a kwarg when creating an empty dataset&#39;</span><span class="p">)</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">validate_dtype</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;dtype&#39;</span><span class="p">))</span>
+        <span class="n">main_shape</span> <span class="o">=</span> <span class="n">main_data</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Selected empty dataset creation. OK so far&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main_data</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Array</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">main_data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;main_data should be a 2D array&#39;</span><span class="p">)</span>
+        <span class="n">main_shape</span> <span class="o">=</span> <span class="n">main_data</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Provided numpy or Dask array for main_data OK so far&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;main_data should either be a numpy array or a tuple / list with the shape of the data&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">h5_pos_inds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">h5_pos_vals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># The provided datasets override fresh building instructions.</span>
+        <span class="n">validate_anc_h5_dsets</span><span class="p">(</span><span class="n">h5_pos_inds</span><span class="p">,</span> <span class="n">h5_pos_vals</span><span class="p">,</span> <span class="n">main_shape</span><span class="p">,</span> <span class="n">is_spectroscopic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The shapes of the provided h5 position indices and values are OK&#39;</span><span class="p">)</span>
+        <span class="n">h5_pos_inds</span><span class="p">,</span> <span class="n">h5_pos_vals</span> <span class="o">=</span> <span class="n">__ensure_anc_in_correct_file</span><span class="p">(</span><span class="n">h5_pos_inds</span><span class="p">,</span> <span class="n">h5_pos_vals</span><span class="p">,</span> <span class="s1">&#39;Position&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">aux_pos_prefix</span> <span class="o">=</span> <span class="n">__check_anc_before_creation</span><span class="p">(</span><span class="n">aux_pos_prefix</span><span class="p">,</span> <span class="n">dim_type</span><span class="o">=</span><span class="s1">&#39;pos&#39;</span><span class="p">)</span>
+        <span class="n">pos_dims</span> <span class="o">=</span> <span class="n">validate_dimensions</span><span class="p">(</span><span class="n">pos_dims</span><span class="p">,</span> <span class="n">dim_type</span><span class="o">=</span><span class="s1">&#39;Position&#39;</span><span class="p">)</span>
+        <span class="n">validate_dims_against_main</span><span class="p">(</span><span class="n">main_shape</span><span class="p">,</span> <span class="n">pos_dims</span><span class="p">,</span> <span class="n">is_spectroscopic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Passed all pre-tests for creating position datasets&#39;</span><span class="p">)</span>
+        <span class="n">h5_pos_inds</span><span class="p">,</span> <span class="n">h5_pos_vals</span> <span class="o">=</span> <span class="n">write_ind_val_dsets</span><span class="p">(</span><span class="n">h5_parent_group</span><span class="p">,</span> <span class="n">pos_dims</span><span class="p">,</span> <span class="n">is_spectral</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+                                                       <span class="n">slow_to_fast</span><span class="o">=</span><span class="n">slow_to_fast</span><span class="p">,</span> <span class="n">base_name</span><span class="o">=</span><span class="n">aux_pos_prefix</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Created position datasets!&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">h5_spec_inds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">h5_spec_vals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># The provided datasets override fresh building instructions.</span>
+        <span class="n">validate_anc_h5_dsets</span><span class="p">(</span><span class="n">h5_spec_inds</span><span class="p">,</span> <span class="n">h5_spec_vals</span><span class="p">,</span> <span class="n">main_shape</span><span class="p">,</span> <span class="n">is_spectroscopic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The shapes of the provided h5 position indices and values &#39;</span>
+                  <span class="s1">&#39;are OK&#39;</span><span class="p">)</span>
+        <span class="n">h5_spec_inds</span><span class="p">,</span> <span class="n">h5_spec_vals</span> <span class="o">=</span> <span class="n">__ensure_anc_in_correct_file</span><span class="p">(</span><span class="n">h5_spec_inds</span><span class="p">,</span> <span class="n">h5_spec_vals</span><span class="p">,</span>
+                                         <span class="s1">&#39;Spectroscopic&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">aux_spec_prefix</span> <span class="o">=</span> <span class="n">__check_anc_before_creation</span><span class="p">(</span><span class="n">aux_spec_prefix</span><span class="p">,</span> <span class="n">dim_type</span><span class="o">=</span><span class="s1">&#39;spec&#39;</span><span class="p">)</span>
+        <span class="n">spec_dims</span> <span class="o">=</span> <span class="n">validate_dimensions</span><span class="p">(</span><span class="n">spec_dims</span><span class="p">,</span> <span class="n">dim_type</span><span class="o">=</span><span class="s1">&#39;Spectroscopic&#39;</span><span class="p">)</span>
+        <span class="n">validate_dims_against_main</span><span class="p">(</span><span class="n">main_shape</span><span class="p">,</span> <span class="n">spec_dims</span><span class="p">,</span> <span class="n">is_spectroscopic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Passed all pre-tests for creating spectroscopic datasets&#39;</span><span class="p">)</span>
+        <span class="n">h5_spec_inds</span><span class="p">,</span> <span class="n">h5_spec_vals</span> <span class="o">=</span> <span class="n">write_ind_val_dsets</span><span class="p">(</span><span class="n">h5_parent_group</span><span class="p">,</span> <span class="n">spec_dims</span><span class="p">,</span> <span class="n">is_spectral</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+                                                         <span class="n">slow_to_fast</span><span class="o">=</span><span class="n">slow_to_fast</span><span class="p">,</span> <span class="n">base_name</span><span class="o">=</span><span class="n">aux_spec_prefix</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Created Spectroscopic datasets&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">h5_parent_group</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">driver</span> <span class="o">==</span> <span class="s1">&#39;mpio&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;compression&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;This HDF5 file has been opened wth the &quot;mpio&quot; communicator. &#39;</span>
+                 <span class="s1">&#39;mpi4py does not allow creation of compressed datasets. Compression kwarg has been removed&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main_data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="c1"># Case 1 - simple small dataset</span>
+        <span class="n">h5_main</span> <span class="o">=</span> <span class="n">h5_parent_group</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">main_data_name</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">main_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Created main dataset with provided data&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main_data</span><span class="p">,</span> <span class="n">da</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+        <span class="c1"># Case 2 - Dask dataset</span>
+        <span class="c1"># step 0 - get rid of any automated dtype specification:</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;dtype&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># step 1 - create the empty dataset:</span>
+        <span class="n">h5_main</span> <span class="o">=</span> <span class="n">h5_parent_group</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">main_data_name</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">main_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">main_data</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                                                 <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Created empty dataset: </span><span class="si">{}</span><span class="s1"> for writing Dask dataset: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">h5_main</span><span class="p">,</span> <span class="n">main_data</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Dask array will be written to HDF5 dataset: &quot;</span><span class="si">{}</span><span class="s1">&quot; in file: &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">h5_main</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                                                                          <span class="n">h5_main</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">filename</span><span class="p">))</span>
+        <span class="c1"># Step 2 - now ask Dask to dump data to disk</span>
+        <span class="n">da</span><span class="o">.</span><span class="n">to_hdf5</span><span class="p">(</span><span class="n">h5_main</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="p">{</span><span class="n">h5_main</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">main_data</span><span class="p">})</span>
+        <span class="c1"># main_data.to_hdf5(h5_main.file.filename, h5_main.name)  # Does not work with python 2 for some reason</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Case 3 - large empty dataset</span>
+        <span class="n">h5_main</span> <span class="o">=</span> <span class="n">h5_parent_group</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">main_data_name</span><span class="p">,</span> <span class="n">main_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Created empty dataset for Main&#39;</span><span class="p">)</span>
+
+    <span class="n">write_simple_attrs</span><span class="p">(</span><span class="n">h5_main</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;quantity&#39;</span><span class="p">:</span> <span class="n">quantity</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="n">units</span><span class="p">})</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Wrote quantity and units attributes to main dataset&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main_dset_attrs</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">write_simple_attrs</span><span class="p">(</span><span class="n">h5_main</span><span class="p">,</span> <span class="n">main_dset_attrs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Wrote provided attributes to main dataset&#39;</span><span class="p">)</span>
+
+    <span class="n">write_book_keeping_attrs</span><span class="p">(</span><span class="n">h5_main</span><span class="p">)</span>
+
+    <span class="c1"># make it main</span>
+    <span class="n">link_as_main</span><span class="p">(</span><span class="n">h5_main</span><span class="p">,</span> <span class="n">h5_pos_inds</span><span class="p">,</span> <span class="n">h5_pos_vals</span><span class="p">,</span> <span class="n">h5_spec_inds</span><span class="p">,</span> <span class="n">h5_spec_vals</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Successfully linked datasets - dataset should be main now&#39;</span><span class="p">)</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..usi_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">USIDataset</span>
+    <span class="k">return</span> <span class="n">USIDataset</span><span class="p">(</span><span class="n">h5_main</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="map_grid_to_cartesian">
+<a class="viewcode-back" href="../../../../_autosummary/pyUSID.io.hdf_utils.model.map_grid_to_cartesian.html#pyUSID.io.hdf_utils.model.map_grid_to_cartesian">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">map_grid_to_cartesian</span><span class="p">(</span><span class="n">h5_main</span><span class="p">,</span> <span class="n">grid_shape</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;histogram&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map an incomplete measurement, such as a spiral scan, to a cartesian grid.</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    h5_main : :class:`pyUSID.USIDataset`</span>
+<span class="sd">        Dataset containing the sparse measurement</span>
+<span class="sd">    grid_shape : int or [int, int]</span>
+<span class="sd">        Shape of the output :class:`numpy.ndarray`.</span>
+<span class="sd">    mode : str, optional. Default = &#39;histogram&#39;</span>
+<span class="sd">        Method used for building a cartesian grid.</span>
+<span class="sd">        Available methods = &#39;histogram&#39;, &#39;linear&#39;, &#39;nearest&#39;, &#39;cubic&#39;</span>
+<span class="sd">        Use kwargs to pass onto each of the techniques</span>
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    UNDER DEVELOPMENT!</span>
+<span class="sd">    Currently only valid for 2 position dimensions</span>
+
+<span class="sd">    @author: Patrik Marschalik</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :class:`numpy.ndarray` but could be a h5py.Dataset or dask.array.core.Array object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">griddata</span>
+    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">expn</span><span class="p">:</span>
+        <span class="n">griddata</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;map_grid_to_cartesian() requires scipy&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">expn</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">..usi_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">USIDataset</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_main</span><span class="p">,</span> <span class="n">USIDataset</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Provided object is not a pyUSID.USIDataset object&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;histogram&#39;</span><span class="p">,</span> <span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="s1">&#39;cubic&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;mode must be a string among[&quot;histogram&quot;, &quot;cubic&quot;]&#39;</span><span class="p">)</span>
+
+    <span class="n">ds_main</span> <span class="o">=</span> <span class="n">h5_main</span><span class="p">[()]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+    <span class="n">ds_pos_vals</span> <span class="o">=</span> <span class="n">h5_main</span><span class="o">.</span><span class="n">h5_pos_vals</span><span class="p">[()]</span>
+
+    <span class="k">if</span> <span class="n">ds_pos_vals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Only working for 2 position dimensions.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Transform to row, col image format</span>
+    <span class="n">rotation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+    <span class="n">ds_pos_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">ds_pos_vals</span><span class="p">,</span> <span class="n">rotation</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">grid_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">grid_shape</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="n">grid_n</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">grid_n</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">grid_n</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;grid_shape must be of type int or [int, int].&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">grid_n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">grid_shape</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">[</span><span class="n">grid_shape</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">interpolate</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">grid_shape</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+        <span class="n">grid_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">((</span><span class="mi">1</span><span class="n">j</span><span class="p">)</span><span class="o">.</span><span class="fm">__mul__</span><span class="p">,</span> <span class="n">grid_shape</span><span class="p">))</span>
+        <span class="n">grid_x</span><span class="p">,</span> <span class="n">grid_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]):</span><span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]):</span><span class="n">grid_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">amin</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]):</span><span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]):</span><span class="n">grid_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">ndim_data</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="p">(</span><span class="n">grid_x</span><span class="p">,</span> <span class="n">grid_y</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ndim_data</span>
+
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;histogram&quot;</span><span class="p">:</span>
+        <span class="n">histogram_weighted</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram2d</span><span class="p">(</span><span class="o">*</span><span class="n">ds_pos_vals</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">grid_shape</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">ds_main</span><span class="p">)</span>
+        <span class="n">histogram</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram2d</span><span class="p">(</span><span class="o">*</span><span class="n">ds_pos_vals</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">grid_shape</span><span class="p">)</span>
+        <span class="n">cart_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">histogram_weighted</span><span class="p">,</span> <span class="n">histogram</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cart_data</span> <span class="o">=</span> <span class="n">interpolate</span><span class="p">(</span><span class="n">ds_pos_vals</span><span class="p">,</span> <span class="n">ds_main</span><span class="p">,</span> <span class="n">grid_shape</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cart_data</span></div>
+
+
+
+<div class="viewcode-block" id="write_sidpy_dataset">
+<a class="viewcode-back" href="../../../../_autosummary/pyUSID.io.hdf_utils.model.write_sidpy_dataset.html#pyUSID.io.hdf_utils.model.write_sidpy_dataset">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_sidpy_dataset</span><span class="p">(</span><span class="n">si_dset</span><span class="p">,</span> <span class="n">h5_parent_group</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Writes a sidpy.Dataset as a USID dataset in the provided HDF5 Group.</span>
+<span class="sd">    Please see notes about dimension types</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    si_dset: sidpy.Dataset</span>
+<span class="sd">        Dataset to be written to HDF5 in NSID format</span>
+<span class="sd">    h5_parent_group : class:`h5py.Group`</span>
+<span class="sd">        Parent group under which the datasets will be created</span>
+<span class="sd">    verbose : bool, Optional. Default = False</span>
+<span class="sd">        Whether or not to write logs to standard out</span>
+<span class="sd">    kwargs: dict</span>
+<span class="sd">        additional keyword arguments passed on to h5py when writing data</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    ------</span>
+<span class="sd">    h5_main : USIDataset</span>
+<span class="sd">        Reference to the main dataset</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    USID only has two dimension types - Position and Spectroscopic.</span>
+<span class="sd">    Consider changing the types of dimensions of all other dimensions to either</span>
+<span class="sd">    &quot;SPATIAL&quot; or &quot;SPECTRAL&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">si_dset</span><span class="p">,</span> <span class="n">sid</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Data to write is not a sidpy dataset&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h5_parent_group</span><span class="p">,</span> <span class="p">(</span><span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">Group</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;h5_parent_group is not a h5py.File or &#39;</span>
+                        <span class="s1">&#39;h5py.Group object&#39;</span><span class="p">)</span>
+
+    <span class="n">spatial_dims</span><span class="p">,</span> <span class="n">spectral_dims</span><span class="p">,</span>  <span class="n">spatial_size</span><span class="p">,</span> <span class="n">spectral_size</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">dim_ind</span><span class="p">,</span> <span class="n">dime</span> <span class="ow">in</span> <span class="n">si_dset</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">dime</span><span class="o">.</span><span class="n">_dimension_type</span> <span class="o">==</span> <span class="n">sid</span><span class="o">.</span><span class="n">DimensionType</span><span class="o">.</span><span class="n">SPATIAL</span><span class="p">:</span>
+            <span class="n">spatial_dims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Dimension</span><span class="p">(</span><span class="n">dime</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span>
+                                          <span class="n">dime</span><span class="o">.</span><span class="n">_units</span><span class="p">,</span>
+                                          <span class="n">dime</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                                          <span class="n">dime</span><span class="o">.</span><span class="n">_quantity</span><span class="p">,</span>
+                                          <span class="n">dime</span><span class="o">.</span><span class="n">_dimension_type</span><span class="p">))</span>
+
+            <span class="n">spatial_size</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">dime</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dime</span><span class="o">.</span><span class="n">_dimension_type</span> <span class="o">==</span> <span class="n">sid</span><span class="o">.</span><span class="n">DimensionType</span><span class="o">.</span><span class="n">SPECTRAL</span><span class="p">:</span>
+                <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Will consider dimension: </span><span class="si">{}</span><span class="s1"> of type: </span><span class="si">{}</span><span class="s1"> as a &#39;</span>
+                     <span class="s1">&#39;spectroscopic dimension&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dime</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span>
+                                                      <span class="n">dime</span><span class="o">.</span><span class="n">_dimension_type</span><span class="p">))</span>
+            <span class="n">spectral_dims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Dimension</span><span class="p">(</span><span class="n">dime</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span>
+                                           <span class="n">dime</span><span class="o">.</span><span class="n">_units</span><span class="p">,</span>
+                                           <span class="n">dime</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                                           <span class="n">dime</span><span class="o">.</span><span class="n">_quantity</span><span class="p">,</span>
+                                           <span class="n">dime</span><span class="o">.</span><span class="n">_dimension_type</span><span class="p">))</span>
+
+            <span class="n">spectral_size</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">dime</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+    <span class="n">main_dataset</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">si_dset</span><span class="p">,</span> <span class="p">[</span><span class="n">spatial_size</span><span class="p">,</span> <span class="n">spectral_size</span><span class="p">])</span>
+
+    <span class="c1"># TODO : Consider writing this out as a separate group</span>
+    <span class="n">main_dset_attr</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">attr_name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">si_dset</span><span class="p">):</span>
+        <span class="n">attr_val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">si_dset</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attr_val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">main_dset_attr</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">attr_val</span><span class="p">)</span>
+
+    <span class="n">h5_main</span> <span class="o">=</span> <span class="n">write_main_dataset</span><span class="p">(</span><span class="n">h5_parent_group</span><span class="o">=</span><span class="n">h5_parent_group</span><span class="p">,</span>
+                                 <span class="n">main_data</span><span class="o">=</span><span class="n">main_dataset</span><span class="p">,</span>
+                                 <span class="n">main_data_name</span><span class="o">=</span><span class="n">si_dset</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                 <span class="n">quantity</span><span class="o">=</span><span class="n">si_dset</span><span class="o">.</span><span class="n">quantity</span><span class="p">,</span>
+                                 <span class="n">units</span><span class="o">=</span><span class="n">si_dset</span><span class="o">.</span><span class="n">units</span><span class="p">,</span>
+                                 <span class="n">pos_dims</span><span class="o">=</span><span class="n">spatial_dims</span><span class="p">,</span>
+                                 <span class="n">spec_dims</span><span class="o">=</span><span class="n">spectral_dims</span><span class="p">,</span>
+                                 <span class="n">main_dset_attrs</span><span class="o">=</span><span class="n">flatten_dict</span><span class="p">(</span><span class="n">main_dset_attr</span><span class="p">),</span>
+                                 <span class="n">slow_to_fast</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                 <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+                                 <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">h5_main</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2018, Suhas Somnath and Chris R. Smith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

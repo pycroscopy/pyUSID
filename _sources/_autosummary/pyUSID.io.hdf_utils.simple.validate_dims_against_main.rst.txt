@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.validate\_dims\_against\_main
+=========================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: validate_dims_against_main

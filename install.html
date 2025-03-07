@@ -1,0 +1,283 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; pyUSID 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Frequently asked questions" href="faq.html" />
+    <link rel="prev" title="pyUSID" href="about.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pyUSID
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pyUSID</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="about.html">pyUSID</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#preparing-for-pyusid">Preparing for pyUSID</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#compatibility">Compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#terminal">Terminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-pyusid">Installing pyUSID</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#offline-installation">Offline installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installing-from-a-specific-branch-advanced-users-only">Installing from a specific branch (advanced users <strong>ONLY</strong>)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#updating-pyusid">Updating pyUSID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#other-software">Other software</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scale_to_hpc.html">Scaling to Clusters</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="_autosummary/pyUSID.html">pyUSID</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/user_guide/index.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pyUSID</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/install.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
+<section id="preparing-for-pyusid">
+<h2>Preparing for pyUSID<a class="headerlink" href="#preparing-for-pyusid" title="Link to this heading">¶</a></h2>
+<p><a class="reference external" href="https://github.com/pycroscopy/pyUSID">PyUSID</a> requires many commonly used scientific and numeric python packages such as numpy, h5py etc.
+To simplify the installation process, we recommend the installation of
+<a class="reference external" href="https://www.anaconda.com/distribution/">Anaconda</a> which contains most of the prerequisite packages,
+<a class="reference external" href="https://conda.io/docs/">conda</a> - a package / environment manager,
+as well as an <a class="reference external" href="https://en.wikipedia.org/wiki/Integrated_development_environment">interactive development environment</a> - <a class="reference external" href="https://www.coursera.org/learn/python-programming-introduction/lecture/ywcuv/introduction-to-the-spyder-ide">Spyder</a>.</p>
+<p>Do you already have Anaconda installed?</p>
+<ul class="simple">
+<li><p>No? <a class="reference external" href="https://www.anaconda.com/download/">Download and install Anaconda</a> for Python 3.6</p></li>
+<li><p>Yes?</p>
+<ul>
+<li><p>Is your Anaconda based on python 2.7, 3.4+?</p>
+<ul>
+<li><p>No?</p>
+<ul>
+<li><p>Uninstall existing Python / Anaconda distribution(s).</p></li>
+<li><p>Restart computer</p></li>
+</ul>
+</li>
+<li><p>Yes?</p>
+<ul>
+<li><p>Proceed to install pyUSID</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<section id="compatibility">
+<h3>Compatibility<a class="headerlink" href="#compatibility" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>pyUSID is compatible with python 2.7, and 3.4 onwards. Please raise an issue if you find a bug.</p></li>
+<li><p>We do not support 32 bit architectures</p></li>
+<li><p>We only support text that is UTF-8 compliant due to restrictions posed by HDF5</p></li>
+</ul>
+</section>
+</section>
+<section id="terminal">
+<h2>Terminal<a class="headerlink" href="#terminal" title="Link to this heading">¶</a></h2>
+<p>Installing, uninstalling, or updating pyUSID (or any other python package for that matter) can be performed using the <code class="docutils literal notranslate"><span class="pre">Terminal</span></code> application.
+You will need to open the Terminal to type any command shown on this page.
+Here is how you can access the Terminal on your computer:</p>
+<ul class="simple">
+<li><p>Windows - Open <code class="docutils literal notranslate"><span class="pre">Command</span> <span class="pre">Prompt</span></code> by clicking on the Start button on the bottom left and typing <code class="docutils literal notranslate"><span class="pre">cmd</span></code> in the search box.
+You can either click on the <code class="docutils literal notranslate"><span class="pre">Command</span> <span class="pre">Prompt</span></code> that appears in the search result or just hit the Enter button on your keyboard.</p>
+<ul>
+<li><p>Note - be sure to install in a location where you have write access.  Do not install as administrator unless you are required to do so.</p></li>
+</ul>
+</li>
+<li><p>MacOS - Click on the <code class="docutils literal notranslate"><span class="pre">Launchpad</span></code>. You will be presented a screen with a list of all your applications with a search box at the top.
+Alternatively, simultaneously hold down the <code class="docutils literal notranslate"><span class="pre">Command</span></code> and <code class="docutils literal notranslate"><span class="pre">Space</span></code> keys on the keyboard to launch the <code class="docutils literal notranslate"><span class="pre">Spotlight</span> <span class="pre">search</span></code>.
+Type <code class="docutils literal notranslate"><span class="pre">terminal</span></code> in the search box and click on the <code class="docutils literal notranslate"><span class="pre">Terminal</span></code> application.</p></li>
+<li><p>Linux (e.g - Ubuntu) - Open the Dash by clicking the Ubuntu (or equivalent) icon in the upper-left, type “terminal”.
+Select the Terminal application from the results that appear.</p></li>
+</ul>
+</section>
+<section id="installing-pyusid">
+<h2>Installing pyUSID<a class="headerlink" href="#installing-pyusid" title="Link to this heading">¶</a></h2>
+<ol class="arabic">
+<li><p>Ensure that a compatible Anaconda distribution has been successfully installed</p></li>
+<li><p>Open a <a class="reference internal" href="#terminal"><span class="std std-ref">terminal</span></a> window.</p></li>
+<li><p>You can now install pyUSID via <strong>either</strong> the <code class="docutils literal notranslate"><span class="pre">pip</span></code> or <code class="docutils literal notranslate"><span class="pre">conda</span></code> methods shown below.
+Type the following commands into the terminal / command prompt and hit the Return / Enter key:</p>
+<ul>
+<li><p>pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pyUSID
+</pre></div>
+</div>
+</li>
+<li><p>conda:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span>conda-forge
+conda<span class="w"> </span>install<span class="w"> </span>pyusid
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+</ol>
+<section id="offline-installation">
+<h3>Offline installation<a class="headerlink" href="#offline-installation" title="Link to this heading">¶</a></h3>
+<p>In certain cases, you may need your python packages to work on a computer
+(typically the computer that controls a scientific instrument) that is not connected to the internet.
+In such cases, the aforementioned routes will not work. Please follow these instructions instead:</p>
+<ol class="arabic">
+<li><p>Recall that pyUSID requires python and several other packages. Therefore, you will need to:</p>
+<ol class="arabic simple">
+<li><p>Download the <a class="reference external" href="https://www.anaconda.com/download/">Anaconda installer</a> from a computer is online</p></li>
+<li><p>Copy the installer onto the target computer via a USB pen drive</p></li>
+<li><p>Install Anaconda</p></li>
+</ol>
+</li>
+<li><p>Download the pyUSID repository from GitHub via <a class="reference external" href="https://github.com/pycroscopy/pyUSID/archive/master.zip">this link</a></p></li>
+<li><p>Copy the resultant zip file to the offline computer via a portable storage device like a USB pen drive</p></li>
+<li><p>Unzip the zip file in the offline computer.</p></li>
+<li><p>Open a <a class="reference internal" href="#terminal"><span class="std std-ref">terminal</span></a> window</p></li>
+<li><p>Navigate to the folder where you unzipped the contents of the zip file via <code class="docutils literal notranslate"><span class="pre">cd</span></code> commands</p></li>
+<li><p>Type the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>setup.py<span class="w"> </span>install
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="installing-from-a-specific-branch-advanced-users-only">
+<h3>Installing from a specific branch (advanced users <strong>ONLY</strong>)<a class="headerlink" href="#installing-from-a-specific-branch-advanced-users-only" title="Link to this heading">¶</a></h3>
+<p>Note that we do not recommend installing pyUSID this way since branches other than the master branch may contain bugs.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Windows users will need to install <code class="docutils literal notranslate"><span class="pre">git</span></code> before proceeding. Please type the following command in the Command Prompt:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>git
+</pre></div>
+</div>
+</div>
+<p>Install a specific branch of pyUSID (<code class="docutils literal notranslate"><span class="pre">usi_dev</span></code> in this case):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>git+https://github.com/pycroscopy/pyUSID@usi_dev
+</pre></div>
+</div>
+</section>
+</section>
+<section id="updating-pyusid">
+<h2>Updating pyUSID<a class="headerlink" href="#updating-pyusid" title="Link to this heading">¶</a></h2>
+<p>We recommend periodically updating your conda / anaconda distribution. Please see <a class="reference external" href="./external_guides.html#Updating-packages">these instructions to update anaconda</a>.</p>
+<p>If you already have pyUSID installed and want to update to the latest version, use the following command in a terminal window:</p>
+<ul>
+<li><p>If you originally installed pyUSID via <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>--no-deps<span class="w"> </span>pyUSID
+</pre></div>
+</div>
+<p>If it does not work try reinstalling the package:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>uninstall<span class="w"> </span>pyUSID
+pip<span class="w"> </span>install<span class="w"> </span>pyUSID
+</pre></div>
+</div>
+</li>
+<li><p>If you originally installed pyUSID via <code class="docutils literal notranslate"><span class="pre">conda</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>update<span class="w"> </span>pyUSID
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="other-software">
+<h2>Other software<a class="headerlink" href="#other-software" title="Link to this heading">¶</a></h2>
+<p>We recommend <a class="reference external" href="https://support.hdfgroup.org/products/java/hdfview/">HDF View</a> for exploring HDF5 files generated by and used in pyUSID.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="about.html" class="btn btn-neutral float-left" title="pyUSID" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="faq.html" class="btn btn-neutral float-right" title="Frequently asked questions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2018, Suhas Somnath and Chris R. Smith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

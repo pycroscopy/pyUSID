@@ -1,0 +1,32 @@
+pyUSID.io.hdf\_utils
+====================
+
+.. automodule:: pyUSID.io.hdf_utils
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+      :template: custom-module-template.rst
+   :recursive:
+
+   base
+   model
+   simple
+

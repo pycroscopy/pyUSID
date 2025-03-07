@@ -1,0 +1,26 @@
+pyUSID.io.dimension.DimType
+===========================
+
+.. currentmodule:: pyUSID.io.dimension
+
+.. autoclass:: DimType
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DimType.DEFAULT
+      ~DimType.INCOMPLETE
+      ~DimType.DEPENDENT
+   
+   

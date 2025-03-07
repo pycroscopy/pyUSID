@@ -1,0 +1,36 @@
+pyUSID.io
+=========
+
+.. automodule:: pyUSID.io
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+      :template: custom-module-template.rst
+   :recursive:
+
+   anc_build_utils
+   array_translator
+   dimension
+   hdf_utils
+   image
+   reg_ref
+   usi_data
+

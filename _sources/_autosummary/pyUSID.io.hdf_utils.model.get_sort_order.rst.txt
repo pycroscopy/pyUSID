@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.model.get\_sort\_order
+===========================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.model
+
+.. autofunction:: get_sort_order

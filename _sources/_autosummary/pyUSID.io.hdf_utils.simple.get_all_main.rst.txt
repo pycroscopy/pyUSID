@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.get\_all\_main
+==========================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: get_all_main

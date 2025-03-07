@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.get\_source\_dataset
+================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: get_source_dataset

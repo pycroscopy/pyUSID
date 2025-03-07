@@ -1,0 +1,75 @@
+pyUSID.io.usi\_data.USIDataset
+==============================
+
+.. currentmodule:: pyUSID.io.usi_data
+
+.. autoclass:: USIDataset
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~USIDataset.asstr
+      ~USIDataset.astype
+      ~USIDataset.fields
+      ~USIDataset.flush
+      ~USIDataset.get_current_sorting
+      ~USIDataset.get_n_dim_form
+      ~USIDataset.get_pos_values
+      ~USIDataset.get_spec_values
+      ~USIDataset.iter_chunks
+      ~USIDataset.len
+      ~USIDataset.make_scale
+      ~USIDataset.read_direct
+      ~USIDataset.reduce
+      ~USIDataset.refresh
+      ~USIDataset.resize
+      ~USIDataset.slice
+      ~USIDataset.slice_to_dataset
+      ~USIDataset.to_csv
+      ~USIDataset.toggle_sorting
+      ~USIDataset.virtual_sources
+      ~USIDataset.visualize
+      ~USIDataset.write_direct
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~USIDataset.attrs
+      ~USIDataset.chunks
+      ~USIDataset.compression
+      ~USIDataset.compression_opts
+      ~USIDataset.dims
+      ~USIDataset.dtype
+      ~USIDataset.external
+      ~USIDataset.file
+      ~USIDataset.fillvalue
+      ~USIDataset.fletcher32
+      ~USIDataset.id
+      ~USIDataset.is_scale
+      ~USIDataset.is_virtual
+      ~USIDataset.maxshape
+      ~USIDataset.name
+      ~USIDataset.nbytes
+      ~USIDataset.ndim
+      ~USIDataset.parent
+      ~USIDataset.ref
+      ~USIDataset.regionref
+      ~USIDataset.scaleoffset
+      ~USIDataset.shape
+      ~USIDataset.shuffle
+      ~USIDataset.size
+   
+   

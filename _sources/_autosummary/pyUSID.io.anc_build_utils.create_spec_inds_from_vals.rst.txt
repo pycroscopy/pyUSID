@@ -1,0 +1,6 @@
+pyUSID.io.anc\_build\_utils.create\_spec\_inds\_from\_vals
+==========================================================
+
+.. currentmodule:: pyUSID.io.anc_build_utils
+
+.. autofunction:: create_spec_inds_from_vals

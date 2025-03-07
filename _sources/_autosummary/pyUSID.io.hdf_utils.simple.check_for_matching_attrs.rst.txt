@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.check\_for\_matching\_attrs
+=======================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: check_for_matching_attrs

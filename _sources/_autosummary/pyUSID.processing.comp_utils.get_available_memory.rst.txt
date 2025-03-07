@@ -1,0 +1,6 @@
+pyUSID.processing.comp\_utils.get\_available\_memory
+====================================================
+
+.. currentmodule:: pyUSID.processing.comp_utils
+
+.. autofunction:: get_available_memory

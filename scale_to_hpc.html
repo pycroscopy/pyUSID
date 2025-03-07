@@ -1,0 +1,478 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scaling to Clusters &mdash; pyUSID 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="pyUSID" href="_autosummary/pyUSID.html" />
+    <link rel="prev" title="Credits" href="credits.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pyUSID
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pyUSID</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="about.html">pyUSID</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credits.html">Credits</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Scaling to Clusters</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#computing-on-a-personal-computer">Computing on a Personal Computer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#computing-on-an-hpc">Computing on an HPC</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#changing-the-hdf5-file-access-mode">1. Changing the HDF5 file access mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#job-script">2. Job script</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#wall-time">Wall time</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#queues-and-organizations">Queues and organizations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#modules">Modules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hpc-file-systems">HPC File systems</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#running-the-script">Running the script</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#submitting-the-job">3. Submitting the job</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#faqs">FAQs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#why-mpiexec-instead-of-mpirun">Why mpiexec instead of mpirun?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#why-is-mpi-used-in-both-the-python-and-pbs-script">Why is MPI used in both the Python and PBS script?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="_autosummary/pyUSID.html">pyUSID</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/user_guide/index.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pyUSID</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Scaling to Clusters</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/scale_to_hpc.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="scaling-to-clusters">
+<h1>Scaling to Clusters<a class="headerlink" href="#scaling-to-clusters" title="Link to this heading">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Author<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Emily Costa and Suhas Somnath</p>
+</dd>
+<dt class="field-even">Created on<span class="colon">:</span></dt>
+<dd class="field-even"><p>08/20/2019</p>
+</dd>
+</dl>
+<p><strong>Here we provide instructions and advice on scaling computations based on pyUSID.Process
+to multiple computers in a high-performance-computing (HPC) cluster</strong></p>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h2>
+<p>Certain data processing routines are very time consuming because of the sheer size of the data and/or
+the computational complexity of the data processing routine.
+Often, such computations are <code class="docutils literal notranslate"><span class="pre">embarrasingly</span> <span class="pre">parallel</span></code> meaning that the processing of one portion (e.g. pixel)
+of data is independent from  the processing of all other portions of data.</p>
+<p>The <a class="reference external" href="./_autosummary/pyUSID.processing.html#pyUSID.processing.parallel_compute">pyUSID.parallel_compute()</a>
+function can effectively distribute the computation over all available cores in a CPU and reduce the computational time.
+However, <code class="docutils literal notranslate"><span class="pre">pyUSID.parallel_compute()</span></code> only distribute computations within a single CPU in a single personal computer.
+As a consequence, it may not be feasible to run large / lengthy computations on personal computers.
+In such cases and when available, it is recommended that such computations be run on a university / national lab
+compute cluster for timely processing of the data.</p>
+<p>The <a class="reference external" href="./user_guide/process.html">pyUSID.Process</a>
+class facilitates the formalization of data processing that needs
+to be performed routinely or by  multiple researchers in a repeatable and systematic manner.
+<code class="docutils literal notranslate"><span class="pre">pyUSID.Process</span></code> has built-in mechanisms to automatically detect when it is
+being called within an HPC context (as opposed to within a personal computer) and use all available
+compute nodes (individual computers within a cluster) to distribute and accelerate the computation.
+The user does <strong>not</strong> need to write any new code or restructure existing code in classes
+that extend <code class="docutils literal notranslate"><span class="pre">pyUSID.Process</span></code> to take advantage of such capabilities.
+Two examples of such classes are the
+<a class="reference external" href="https://pycroscopy.github.io/pycroscopy/_autosummary/_autosummary/pycroscopy.processing.signal_filter.html#pycroscopy.processing.signal_filter.SignalFilter">pycroscopy.processing.SignalFilter</a>
+and <a class="reference external" href="https://pycroscopy.github.io/BGlib/_autosummary/_autosummary/_autosummary/BGlib.gmode.analysis.GIVBayesian.html#BGlib.gmode.analysis.GIVBayesian">BGlib.gmode.analysis.GIVBayesian</a>.</p>
+<p>HPCs are structured and operate in a manner that is different from a personal computer.
+As a consequence, running the computations on a (child of) <code class="docutils literal notranslate"><span class="pre">pyUSID.Process</span></code> on an HPC necessitate a few small scripts.
+Please read <a class="reference external" href="https://github.com/pycroscopy/scalable_analytics/blob/master/shpc_condo_tutorial.md">this document</a> to learn how to submit computational <code class="docutils literal notranslate"><span class="pre">jobs</span></code> in HPCs.</p>
+<p>This tutorial uses the <a class="reference external" href="https://cades.ornl.gov/service-suite/scalable-hpc/">CADES SHPC Condo</a>
+at Oak Ridge National Laboratory. However, most of the instructions and guidance in this document
+can be applied to other HPC systems to submit and deploy computational jobs.</p>
+<p>This example will demonstrate how to perform signal filtering using the
+<a class="reference external" href="https://pycroscopy.github.io/pycroscopy/_autosummary/_autosummary/pycroscopy.processing.signal_filter.html#pycroscopy.processing.signal_filter.SignalFilter">pycroscopy.processing.SignalFilter</a>
+class, on a h5USID dataset on an HPC.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The changes necessary to run on a HPC machine are far less intimidating than they appear!</p>
+</div>
+</section>
+<section id="computing-on-a-personal-computer">
+<h2>Computing on a Personal Computer<a class="headerlink" href="#computing-on-a-personal-computer" title="Link to this heading">¶</a></h2>
+<p>In order to perform certain data processing on a personal computer, one needs a
+python script that opens the file with the data, assigns appropriate parameters,
+and instructs the <code class="docutils literal notranslate"><span class="pre">pycroscopy.processing.SignalFilter</span></code> class to perform the filtering:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Import appropriate packages:</span>
+<span class="c1"># To read (and write) to the data file:</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="c1"># To specify the parameters for filtering:</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pycroscopy.processing.fft</span><span class="w"> </span><span class="kn">import</span> <span class="n">LowPassFilter</span>
+<span class="c1"># The class that will apply the filter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pycroscopy.processing.signal_filter</span><span class="w"> </span><span class="kn">import</span> <span class="n">SignalFilter</span>
+
+<span class="c1"># Specify the path to the data file:</span>
+<span class="n">h5_path</span> <span class="o">=</span> <span class="s1">&#39;giv_raw.h5&#39;</span>
+
+<span class="c1"># Open the data file:</span>
+<span class="c1"># --------------------------------------------------------------</span>
+<span class="c1"># this line will need to be changed for use on HPC:</span>
+<span class="n">h5_f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">h5_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r+&#39;</span><span class="p">)</span>
+<span class="c1"># --------------------------------------------------------------</span>
+
+<span class="c1"># find the dataset of the interest within  the data file:</span>
+<span class="n">h5_grp</span> <span class="o">=</span> <span class="n">h5_f</span><span class="p">[</span><span class="s1">&#39;Measurement_000/Channel_000&#39;</span><span class="p">]</span>
+<span class="n">h5_main</span> <span class="o">=</span> <span class="n">h5_grp</span><span class="p">[</span><span class="s1">&#39;Raw_Data&#39;</span><span class="p">]</span>
+
+<span class="c1"># find parameters necessary for setting up the filters:</span>
+<span class="n">samp_rate</span> <span class="o">=</span> <span class="n">h5_grp</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;IO_samp_rate_[Hz]&#39;</span><span class="p">]</span>
+<span class="n">num_spectral_pts</span> <span class="o">=</span> <span class="n">h5_main</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="c1"># Set up the desired filter parameters:</span>
+<span class="n">frequency_filters</span> <span class="o">=</span> <span class="p">[</span><span class="n">LowPassFilter</span><span class="p">(</span><span class="n">num_spectral_pts</span><span class="p">,</span> <span class="n">samp_rate</span><span class="p">,</span> <span class="mf">10E+3</span><span class="p">)]</span>
+<span class="n">noise_tol</span> <span class="o">=</span> <span class="mf">1E-6</span>
+
+<span class="c1"># Instantiate and set up the class that will perform the filtering</span>
+<span class="n">sig_filt</span> <span class="o">=</span> <span class="n">SignalFilter</span><span class="p">(</span><span class="n">h5_main</span><span class="p">,</span> <span class="n">frequency_filters</span><span class="o">=</span><span class="n">frequency_filters</span><span class="p">,</span>
+                        <span class="n">noise_threshold</span><span class="o">=</span><span class="n">noise_tol</span><span class="p">,</span> <span class="n">write_filtered</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">write_condensed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">num_pix</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Perform the filtering:</span>
+<span class="n">h5_filt_grp</span> <span class="o">=</span> <span class="n">sig_filt</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+
+<span class="c1"># Don&#39;t forget to close the file</span>
+<span class="n">h5_f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Running the python script as is on an HPC without submitting a computational <code class="docutils literal notranslate"><span class="pre">job</span></code>
+would cause the job to run on the <code class="docutils literal notranslate"><span class="pre">login</span> <span class="pre">node</span></code> rather than on the <code class="docutils literal notranslate"><span class="pre">compute</span> <span class="pre">node</span></code>.
+Users are highly discouraged from running computationally intensive tasks (especially
+the computational task of interest) on the <code class="docutils literal notranslate"><span class="pre">login</span> <span class="pre">node</span></code>. Users are required to
+submit <code class="docutils literal notranslate"><span class="pre">jobs</span></code> instead.</p>
+<p>Even if a job is submitted based on the above script, the computation would only
+run on a <strong>single</strong> (node) computer within the HPC cluster.</p>
+</div>
+</section>
+<section id="computing-on-an-hpc">
+<h2>Computing on an HPC<a class="headerlink" href="#computing-on-an-hpc" title="Link to this heading">¶</a></h2>
+<p>The fundamental change in scaling from a personal computer to an HPC is the communication
+of instructions and data between the multiple computers within an HPC so that the
+multiple python processes spawned on the individual computers on an HPC can work
+together to reduce the computational time. Most HPC code uses an inter-node
+communication paradigm called the <code class="docutils literal notranslate"><span class="pre">message</span> <span class="pre">passing</span> <span class="pre">interface</span> <span class="pre">(MPI)</span></code>. <code class="docutils literal notranslate"><span class="pre">mpi4py</span></code>
+is the python API for interacting with the MPI on the HPC. Note that in-depth
+knowledge of MPI or mpi4py is unnecessary for understanding this tutorial since
+<code class="docutils literal notranslate"><span class="pre">pyUSID.Process</span></code> handles most of the heavy lifting behind the scenes.</p>
+<p>Below are the changes necessary to scale from a personal computer to an HPC:</p>
+<section id="changing-the-hdf5-file-access-mode">
+<h3>1. Changing the HDF5 file access mode<a class="headerlink" href="#changing-the-hdf5-file-access-mode" title="Link to this heading">¶</a></h3>
+<p>We need to tell <code class="docutils literal notranslate"><span class="pre">h5py</span></code> to open the data  file in such a manner that
+multiple python processes running on multiple compute <code class="docutils literal notranslate"><span class="pre">nodes</span></code> (individual computers within the HPC)
+can read and write to the data file in parallel and independently:</p>
+<p>from:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">h5_f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">h5_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r+&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>to:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mpi4py</span><span class="w"> </span><span class="kn">import</span> <span class="n">MPI</span>
+<span class="n">h5_f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">h5_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r+&#39;</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="s1">&#39;mpio&#39;</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here:</p>
+<ol class="arabic simple">
+<li><p><strong>driver:</strong> will map the logical HDF5 address space to a storage mechanism and
+we need to specify the ‘<cite>mpio’</cite> file driver. This will allow mpi4py to delegate
+memory allocation for the HDF5 file.</p></li>
+<li><p><strong>comm:</strong> class for communication of generic Python objects</p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is best to have a single version of a script that works on both laptops and
+HPC clusters. The following modification would allow the script to adapt either to
+a personal computer or a HPC environment:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This handy function in pyUSID.comp_utils returns the MPI object if both mpi4py was</span>
+<span class="sd">available and if the script was called via mpirun or mpiexec. If either</span>
+<span class="sd">conditions fail, it returns None (e.g. - personal computer)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">MPI</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">comp_utils</span><span class="o">.</span><span class="n">get_MPI</span><span class="p">()</span>
+
+<span class="c1"># At a minimum, we want to read the file in an editable manner</span>
+<span class="n">h5_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;r+&#39;</span><span class="p">}</span>
+
+<span class="c1"># If the script is being called in the mpirun or mpiexec context:</span>
+<span class="k">if</span> <span class="n">MPI</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># Then, add the driver and communication configurations to the keyword arguments</span>
+    <span class="n">h5_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;driver&#39;</span><span class="p">:</span> <span class="s1">&#39;mpio&#39;</span><span class="p">,</span> <span class="s1">&#39;comm&#39;</span><span class="p">:</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">})</span>
+
+<span class="c1"># Now, the file can be opened with the appropriate keyword arguments preconfigured</span>
+<span class="n">h5_f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">input_data_path</span><span class="p">,</span> <span class="o">**</span><span class="n">h5_kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We are still not yet ready to actually run the script even though it is ready.
+See the next step.</p>
+</div>
+</section>
+<section id="job-script">
+<h3>2. Job script<a class="headerlink" href="#job-script" title="Link to this heading">¶</a></h3>
+<p>The above modification to the main python script is in theory sufficient to run on
+multiple computers in a cluster. However, most HPC clusters are not operated by a single user
+and are in fact shared by multiple users unlike a personal computer.
+On an HPC, the computational jobs from multiple users are handled by a <code class="docutils literal notranslate"><span class="pre">scheduler</span></code>
+that maintains queue(s) where users can request the scheduler to run their job.
+Users need to request the scheduler to run their computational task by submitting a
+<code class="docutils literal notranslate"><span class="pre">job</span> <span class="pre">script</span></code> with appropriate information. This is the second and final part of the puzzle
+when it comes to running computations on a HPC cluster.</p>
+<p>Different HPC systems have different schedulers which expect the job script to be configured
+in a specific manner. However, the basic components remain the same:</p>
+<ol class="arabic simple">
+<li><p>Details regarding the job - number of nodes, CPU processors / GPUs within each node,
+name of the user requesting the job, how long the nodes need to be reserved for the computation, etc.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Modules</span></code> - Modules can be thought of as drivers and software libraries.</p></li>
+<li><p>Setting up the script and necessary data files</p></li>
+<li><p>Running the script</p></li>
+</ol>
+<p>The following is an example PBS script, configured for the ORNL CADES SHPC Condo, along with helpful comments:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+
+<span class="c1">### 1. Job description</span>
+
+<span class="c1">### Comments in this section need to be preceded by three hash symbols</span>
+<span class="c1">### The scheduler reads text following a single hash symbol</span>
+<span class="c1">### Set the job name. Your output files will share this name.</span>
+<span class="c1">#PBS -N mpiSignalFilter</span>
+<span class="c1">### Enter your email address. Errors will be emailed to this address.</span>
+<span class="c1">#PBS -M your_email@institution.gov</span>
+<span class="c1">### Number of nodes and processors per node that you desire.</span>
+<span class="c1">### Two nodes each with 36 cores per node in this case.</span>
+<span class="c1">#PBS -l nodes=2:ppn=36</span>
+<span class="c1">### Anticipated runtime for your job specified as HH:MM:S.</span>
+<span class="c1">### See notes below on setting an appropriate wall-time</span>
+<span class="c1">#PBS -l walltime=0:00:30:0</span>
+<span class="c1">### The organization / group that you belong to</span>
+<span class="c1">#PBS -W group_list=cades-birthright</span>
+<span class="c1">### Your account type</span>
+<span class="c1">#PBS -A birthright</span>
+<span class="c1">### Quality of service - leave this as is</span>
+<span class="c1">#PBS -l qos=std</span>
+
+
+<span class="c1">###  2. Set up modules ##</span>
+
+<span class="c1">### Remove old modules to ensure a clean state.</span>
+module<span class="w"> </span>purge
+<span class="c1">### Load the programming environment</span>
+module<span class="w"> </span>load<span class="w"> </span>PE-intel
+<span class="c1">### Load the python module with the appropriate packages</span>
+module<span class="w"> </span>load<span class="w"> </span>python/3.6.3
+<span class="c1">### Check loaded modules</span>
+module<span class="w"> </span>list
+
+<span class="c1">### 2.5 Set any environment variables here:</span>
+<span class="c1">### Here we are using an Intel programming environment, so:</span>
+<span class="c1">### Forcing MKL to use 1 thread only:</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MKL_NUM_THREADS</span><span class="o">=</span><span class="m">1</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OPENBLAS_NUM_THREADS</span><span class="o">=</span><span class="m">1</span>
+
+<span class="c1">### 3. Set up script and data</span>
+
+<span class="c1"># Here, we assume that the code and the data are on a fast scratch file system</span>
+<span class="c1"># Lustre in this case:</span>
+<span class="nb">cd</span><span class="w"> </span>/lustre/or-hydra/cades-ccsd/syz/signal_filter
+<span class="c1"># Sanity check - make sure all the necessary files are in the working folder:</span>
+ls<span class="w"> </span>-ahl
+
+<span class="c1">### 4. Run the script</span>
+
+<span class="c1"># More details on the flags below</span>
+mpiexec<span class="w"> </span>-use-hwthread-cpus<span class="w"> </span>python<span class="w"> </span>filter_script.py
+</pre></div>
+</div>
+<section id="wall-time">
+<h4>Wall time<a class="headerlink" href="#wall-time" title="Link to this heading">¶</a></h4>
+<p>The scheduler will kill the computational job once the elapsed time is greater than
+the wall time requested in the job script. Besides the incompleteness of the desired
+computation, this can also result in the corruption of output files if the job was killed
+while some files were being modified.</p>
+<p>It is recommended that the <code class="docutils literal notranslate"><span class="pre">wall</span> <span class="pre">time</span></code> be comfortably larger than the expected
+computational time. Often, one may not know how long the computation takes and this can be
+a challenge. Users are recommended to <code class="docutils literal notranslate"><span class="pre">checkpoint</span></code> (save intermediate or partial results)
+regularly so that only a portion of the computation is lost.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">pyUSID.Process</span></code> has built-in mechanisms to <code class="docutils literal notranslate"><span class="pre">checkpoint</span></code> regularly and even
+restart from partially completed computations (either on laptops or on HPC clusters).
+Besides loading the parameters and providing handles to the necessary HD5 datasets,
+the user need not do anything additional to enable checkpointing in their <code class="docutils literal notranslate"><span class="pre">Process</span></code> class.</p>
+</div>
+</section>
+<section id="queues-and-organizations">
+<h4>Queues and organizations<a class="headerlink" href="#queues-and-organizations" title="Link to this heading">¶</a></h4>
+<p>The nodes in most HPC clusters are not homogeneous meaning that certain nodes may
+have GPUs, more memory, more CPU cores, etc. while others may not. Often, this is
+a result of upgrades / additions every few months or years with slightly different hardware
+compared to the original set of nodes. Typically, the scheduler has separate queues
+for each kind of nodes. One can specify which kinds of nodes to use using <code class="docutils literal notranslate"><span class="pre">directives</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is mostly relevant only to ORNL CADES SHPC users - all ORNL users with UCAMS / XCAMS
+accounts have access to the <code class="docutils literal notranslate"><span class="pre">CADES</span> <span class="pre">Birthright</span></code> allocation. Certain divisions / groups such as
+CCSD, BSD, CNMS have their own compute hardware and queues. If you belong to any divisions
+listed <a class="reference external" href="https://support.cades.ornl.gov/user-documentation/_book/condos/how-to-use/resource-queues.html">here</a>,
+you are recommended to change the <code class="docutils literal notranslate"><span class="pre">PBS</span> <span class="pre">-W</span> <span class="pre">group_list</span></code> and <code class="docutils literal notranslate"><span class="pre">PBS</span> <span class="pre">-A</span></code> flags.</p>
+</div>
+</section>
+<section id="modules">
+<h4>Modules<a class="headerlink" href="#modules" title="Link to this heading">¶</a></h4>
+<p>One is recommended to clear the modules before loading them since we do not always know what modules
+were already loaded. Modules are not always interchangeable. For example, the python module above
+may not work (at all or as well) with another programming environment. In the above example,
+all the necessary software was already available within the two modules.</p>
+</section>
+<section id="hpc-file-systems">
+<h4>HPC File systems<a class="headerlink" href="#hpc-file-systems" title="Link to this heading">¶</a></h4>
+<p>Most HPC systems are connected to a slower file system (typically a network file system (NFS))
+with the user’s home directory and a much faster file system (typically something like <code class="docutils literal notranslate"><span class="pre">GPFS</span></code>
+or <code class="docutils literal notranslate"><span class="pre">Lustre</span></code>) for scratch space where the raw and intermediate data directly interacting with
+the compute nodes reside. It is <strong>highly</strong> recommended that the scripts, and data reside in the
+scratch space file system to take advantage of the speed.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In most HPC systems, the file systems are <code class="docutils literal notranslate"><span class="pre">purged</span></code> every few weeks or months.
+In other words, files that have not been used in the last few weeks or months will
+be permanently deleted. Check with specific documentation.</p>
+</div>
+</section>
+<section id="running-the-script">
+<h4>Running the script<a class="headerlink" href="#running-the-script" title="Link to this heading">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">mpiexec</span></code> was used to initialize a parallel job from within the scheduler batch.
+<code class="docutils literal notranslate"><span class="pre">mpiexec</span></code> uses the task manager library of PBS to spawn copies of the executable
+on the nodes in a PBS allocation.</p>
+</section>
+</section>
+<section id="submitting-the-job">
+<h3>3. Submitting the job<a class="headerlink" href="#submitting-the-job" title="Link to this heading">¶</a></h3>
+<p>Once the python script and the job script are prepared, the job can be submitted to the
+scheduler via:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>qsub<span class="w"> </span>my_pbs_script.pbs
+</pre></div>
+</div>
+</section>
+</section>
+<section id="faqs">
+<h2>FAQs<a class="headerlink" href="#faqs" title="Link to this heading">¶</a></h2>
+<section id="why-mpiexec-instead-of-mpirun">
+<h3>Why mpiexec instead of mpirun?<a class="headerlink" href="#why-mpiexec-instead-of-mpirun" title="Link to this heading">¶</a></h3>
+<p><a class="reference external" href="https://www.osc.edu/~djohnson/mpiexec/">Reasons to use</a> <code class="docutils literal notranslate"><span class="pre">mpiexec</span></code> rather than a <code class="docutils literal notranslate"><span class="pre">mpirun</span></code> or an external daemon (<code class="docutils literal notranslate"><span class="pre">mpd</span></code>):</p>
+<ol class="arabic simple">
+<li><p>Starting tasks with the TM interface is much faster than invoking a separate rsh or ssh once for each process.</p></li>
+<li><p>Resources used by the spawned processes are accounted correctly with mpiexec, and reported in the PBS logs, because all the processes of a parallel job remain under the control of PBS, unlike when using startup scripts such as mpirun.</p></li>
+<li><p>Tasks that exceed their assigned limits of CPU time, wallclock time, memory usage, or disk space are killed cleanly by PBS. It is quite hard for processes to escape control of the resource manager when using mpiexec.</p></li>
+<li><p>You can use mpiexec to enforce a security policy. If all jobs are required to startup using mpiexec and the PBS execution environment, it is not necessary to enable rsh or ssh access to the compute nodes in the cluster.</p></li>
+</ol>
+<p>Reference:</p>
+</section>
+<section id="why-is-mpi-used-in-both-the-python-and-pbs-script">
+<h3>Why is MPI used in both the Python and PBS script?<a class="headerlink" href="#why-is-mpi-used-in-both-the-python-and-pbs-script" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Python script</strong>: <code class="docutils literal notranslate"><span class="pre">MPI</span></code> is used for point-to-point (<code class="docutils literal notranslate"><span class="pre">send</span></code>, <code class="docutils literal notranslate"><span class="pre">receive</span></code>), and collective (<code class="docutils literal notranslate"><span class="pre">broadcast</span></code>, <code class="docutils literal notranslate"><span class="pre">scatter</span></code>, <code class="docutils literal notranslate"><span class="pre">gather</span></code>) communications of any <code class="docutils literal notranslate"><span class="pre">pickle</span></code>-able Python object.</p></li>
+<li><p><strong>Job script</strong>: <code class="docutils literal notranslate"><span class="pre">mpiexec</span></code> starts the parallel job - starts the program a specified number of times in parallel, forming a parallel job.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="credits.html" class="btn btn-neutral float-left" title="Credits" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="_autosummary/pyUSID.html" class="btn btn-neutral float-right" title="pyUSID" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2018, Suhas Somnath and Chris R. Smith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

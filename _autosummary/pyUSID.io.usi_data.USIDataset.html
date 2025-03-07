@@ -1,0 +1,950 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyUSID.io.usi_data.USIDataset &mdash; pyUSID 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pyUSID
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pyUSID</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">pyUSID</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contact.html">Contact us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scale_to_hpc.html">Scaling to Clusters</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pyUSID.html">pyUSID</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks/user_guide/index.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pyUSID</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">pyUSID.io.usi_data.USIDataset</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/_autosummary/pyUSID.io.usi_data.USIDataset.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pyusid-io-usi-data-usidataset">
+<h1>pyUSID.io.usi_data.USIDataset<a class="headerlink" href="#pyusid-io-usi-data-usidataset" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyUSID.io.usi_data.</span></span><span class="sig-name descname"><span class="pre">USIDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">h5_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyUSID/io/usi_data.html#USIDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+<blockquote>
+<div><p>A class that simplifies slicing, visualization, reshaping, reduction etc. of USID datasets in HDF5 files.</p>
+</div></blockquote>
+<p>This class extends the <a class="reference external" href="https://docs.h5py.org/en/latest/high/dataset.html#h5py.Dataset" title="(in h5py v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">h5py.Dataset</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>h5_ref</strong> (<a class="reference external" href="https://docs.h5py.org/en/latest/high/dataset.html#h5py.Dataset" title="(in h5py v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">h5py.Dataset</span></code></a>) – The dataset which is actually a USID Main dataset</p></li>
+<li><p><strong>sort_dims</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>Optional. Default=False</em>) – If set to True - Dimensions will be sorted from slowest to fastest
+Else - Dimensions will be arranged as they appear in ancillary datasets</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.get_current_sorting">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">get_current_sorting</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.get_current_sorting" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.toggle_sorting">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">toggle_sorting</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.toggle_sorting" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.get_pos_values">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">get_pos_values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.get_pos_values" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.get_spec_values">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">get_spec_values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.get_spec_values" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.get_n_dim_form">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">get_n_dim_form</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.get_n_dim_form" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.slice">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">slice</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.slice" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.h5_spec_vals">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">h5_spec_vals</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.h5_spec_vals" title="Link to this definition">¶</a></dt>
+<dd><p>Associated Spectroscopic Values dataset</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.h5py.org/en/latest/high/dataset.html#h5py.Dataset" title="(in h5py v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">h5py.Dataset</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.h5_spec_inds">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">h5_spec_inds</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.h5_spec_inds" title="Link to this definition">¶</a></dt>
+<dd><p>Associated Spectroscopic Indices dataset</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.h5py.org/en/latest/high/dataset.html#h5py.Dataset" title="(in h5py v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">h5py.Dataset</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.h5_pos_vals">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">h5_pos_vals</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.h5_pos_vals" title="Link to this definition">¶</a></dt>
+<dd><p>Associated Position Values dataset</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.h5py.org/en/latest/high/dataset.html#h5py.Dataset" title="(in h5py v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">h5py.Dataset</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.h5_pos_inds">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">h5_pos_inds</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.h5_pos_inds" title="Link to this definition">¶</a></dt>
+<dd><p>Associated Position Indices dataset</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.h5py.org/en/latest/high/dataset.html#h5py.Dataset" title="(in h5py v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">h5py.Dataset</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.pos_dim_labels">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">pos_dim_labels</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.pos_dim_labels" title="Link to this definition">¶</a></dt>
+<dd><p>The labels for the position dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.spec_dim_labels">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">spec_dim_labels</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.spec_dim_labels" title="Link to this definition">¶</a></dt>
+<dd><p>The labels for the spectroscopic dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.n_dim_labels">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">n_dim_labels</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.n_dim_labels" title="Link to this definition">¶</a></dt>
+<dd><p>The labels for the n-dimensional dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.pos_dim_sizes">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">pos_dim_sizes</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.pos_dim_sizes" title="Link to this definition">¶</a></dt>
+<dd><p>A list of the sizes of each position dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a> of <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.spec_dim_sizes">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">spec_dim_sizes</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.spec_dim_sizes" title="Link to this definition">¶</a></dt>
+<dd><p>A list of the sizes of each spectroscopic dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a> of <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.self.n_dim_sizes">
+<span class="sig-prename descclassname"><span class="pre">self.</span></span><span class="sig-name descname"><span class="pre">n_dim_sizes</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.self.n_dim_sizes" title="Link to this definition">¶</a></dt>
+<dd><p>A list of the sizes of each dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a> of <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<p>The order of all labels and sizes attributes is determined by the current value of <cite>sort_dims</cite>.</p>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.asstr" title="pyUSID.io.usi_data.USIDataset.asstr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asstr</span></code></a></p></td>
+<td><p>Get a wrapper to read string data as Python strings:</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.astype" title="pyUSID.io.usi_data.USIDataset.astype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">astype</span></code></a></p></td>
+<td><p>Get a wrapper allowing you to perform reads to a different destination type, e.g.:</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.fields" title="pyUSID.io.usi_data.USIDataset.fields"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fields</span></code></a></p></td>
+<td><p>Get a wrapper to read a subset of fields from a compound data type:</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.flush" title="pyUSID.io.usi_data.USIDataset.flush"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flush</span></code></a></p></td>
+<td><p>Flush the dataset data and metadata to the file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.get_current_sorting" title="pyUSID.io.usi_data.USIDataset.get_current_sorting"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_current_sorting</span></code></a></p></td>
+<td><p>Prints the current sorting method.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.get_n_dim_form" title="pyUSID.io.usi_data.USIDataset.get_n_dim_form"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_n_dim_form</span></code></a></p></td>
+<td><p>Reshapes the dataset to an N-dimensional array</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.get_pos_values" title="pyUSID.io.usi_data.USIDataset.get_pos_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_pos_values</span></code></a></p></td>
+<td><p>Extract the reference values for the specified position dimension</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.get_spec_values" title="pyUSID.io.usi_data.USIDataset.get_spec_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_spec_values</span></code></a></p></td>
+<td><p>Extract the values for the specified spectroscopic dimension</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.iter_chunks" title="pyUSID.io.usi_data.USIDataset.iter_chunks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iter_chunks</span></code></a></p></td>
+<td><p>Return chunk iterator.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.len" title="pyUSID.io.usi_data.USIDataset.len"><code class="xref py py-obj docutils literal notranslate"><span class="pre">len</span></code></a></p></td>
+<td><p>The size of the first axis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.make_scale" title="pyUSID.io.usi_data.USIDataset.make_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_scale</span></code></a></p></td>
+<td><p>Make this dataset an HDF5 dimension scale.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.read_direct" title="pyUSID.io.usi_data.USIDataset.read_direct"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_direct</span></code></a></p></td>
+<td><p>Read data directly from HDF5 into an existing NumPy array.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.reduce" title="pyUSID.io.usi_data.USIDataset.reduce"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reduce</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.refresh" title="pyUSID.io.usi_data.USIDataset.refresh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refresh</span></code></a></p></td>
+<td><p>Refresh the dataset metadata by reloading from the file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.resize" title="pyUSID.io.usi_data.USIDataset.resize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resize</span></code></a></p></td>
+<td><p>Resize the dataset, or the specified axis.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.slice" title="pyUSID.io.usi_data.USIDataset.slice"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slice</span></code></a></p></td>
+<td><p>Slice the dataset based on an input dictionary of 'str': slice pairs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.slice_to_dataset" title="pyUSID.io.usi_data.USIDataset.slice_to_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slice_to_dataset</span></code></a></p></td>
+<td><p>Slices the dataset, writes its output to back to the HDF5 file, and returns a USIDataset object</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.to_csv" title="pyUSID.io.usi_data.USIDataset.to_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_csv</span></code></a></p></td>
+<td><p>Output this USIDataset and position + spectroscopic values to a csv file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.toggle_sorting" title="pyUSID.io.usi_data.USIDataset.toggle_sorting"><code class="xref py py-obj docutils literal notranslate"><span class="pre">toggle_sorting</span></code></a></p></td>
+<td><p>Toggles between sorting from the fastest changing dimension to the slowest and sorting based on the order of the labels</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.virtual_sources" title="pyUSID.io.usi_data.USIDataset.virtual_sources"><code class="xref py py-obj docutils literal notranslate"><span class="pre">virtual_sources</span></code></a></p></td>
+<td><p>Get a list of the data mappings for a virtual dataset</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.visualize" title="pyUSID.io.usi_data.USIDataset.visualize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">visualize</span></code></a></p></td>
+<td><p>Interactive visualization of this dataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.write_direct" title="pyUSID.io.usi_data.USIDataset.write_direct"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_direct</span></code></a></p></td>
+<td><p>Write data directly to HDF5 from a NumPy array.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.attrs" title="pyUSID.io.usi_data.USIDataset.attrs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">attrs</span></code></a></p></td>
+<td><p>Attributes attached to this object</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.chunks" title="pyUSID.io.usi_data.USIDataset.chunks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">chunks</span></code></a></p></td>
+<td><p>Dataset chunks (or None)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.compression" title="pyUSID.io.usi_data.USIDataset.compression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compression</span></code></a></p></td>
+<td><p>Compression strategy (or None)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.compression_opts" title="pyUSID.io.usi_data.USIDataset.compression_opts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compression_opts</span></code></a></p></td>
+<td><p>Compression setting.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.dims" title="pyUSID.io.usi_data.USIDataset.dims"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dims</span></code></a></p></td>
+<td><p>Access dimension scales attached to this dataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.dtype" title="pyUSID.io.usi_data.USIDataset.dtype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dtype</span></code></a></p></td>
+<td><p>Numpy dtype representing the datatype</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.external" title="pyUSID.io.usi_data.USIDataset.external"><code class="xref py py-obj docutils literal notranslate"><span class="pre">external</span></code></a></p></td>
+<td><p>External file settings.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.file" title="pyUSID.io.usi_data.USIDataset.file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">file</span></code></a></p></td>
+<td><p>Return a File instance associated with this object</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.fillvalue" title="pyUSID.io.usi_data.USIDataset.fillvalue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fillvalue</span></code></a></p></td>
+<td><p>Fill value for this dataset (0 by default)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.fletcher32" title="pyUSID.io.usi_data.USIDataset.fletcher32"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fletcher32</span></code></a></p></td>
+<td><p>Fletcher32 filter is present (T/F)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.id" title="pyUSID.io.usi_data.USIDataset.id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">id</span></code></a></p></td>
+<td><p>Low-level identifier appropriate for this object</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.is_scale" title="pyUSID.io.usi_data.USIDataset.is_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_scale</span></code></a></p></td>
+<td><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if this dataset is also a dimension scale.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.is_virtual" title="pyUSID.io.usi_data.USIDataset.is_virtual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_virtual</span></code></a></p></td>
+<td><p>Check if this is a virtual dataset</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.maxshape" title="pyUSID.io.usi_data.USIDataset.maxshape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">maxshape</span></code></a></p></td>
+<td><p>Shape up to which this dataset can be resized.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.name" title="pyUSID.io.usi_data.USIDataset.name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></a></p></td>
+<td><p>Return the full name of this object.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.nbytes" title="pyUSID.io.usi_data.USIDataset.nbytes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nbytes</span></code></a></p></td>
+<td><p>Numpy-style attribute giving the raw dataset size as the number of bytes</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.ndim" title="pyUSID.io.usi_data.USIDataset.ndim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ndim</span></code></a></p></td>
+<td><p>Numpy-style attribute giving the number of dimensions</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.parent" title="pyUSID.io.usi_data.USIDataset.parent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parent</span></code></a></p></td>
+<td><p>Return the parent group of this object.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.ref" title="pyUSID.io.usi_data.USIDataset.ref"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ref</span></code></a></p></td>
+<td><p>An (opaque) HDF5 reference to this object</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.regionref" title="pyUSID.io.usi_data.USIDataset.regionref"><code class="xref py py-obj docutils literal notranslate"><span class="pre">regionref</span></code></a></p></td>
+<td><p>Create a region reference (Datasets only).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.scaleoffset" title="pyUSID.io.usi_data.USIDataset.scaleoffset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scaleoffset</span></code></a></p></td>
+<td><p>Scale/offset filter settings.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.shape" title="pyUSID.io.usi_data.USIDataset.shape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">shape</span></code></a></p></td>
+<td><p>Numpy-style shape tuple giving dataset dimensions</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.shuffle" title="pyUSID.io.usi_data.USIDataset.shuffle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">shuffle</span></code></a></p></td>
+<td><p>Shuffle filter present (T/F)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset.size" title="pyUSID.io.usi_data.USIDataset.size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">size</span></code></a></p></td>
+<td><p>Numpy-style attribute giving the total dataset size</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.__array__">
+<span class="sig-name descname"><span class="pre">__array__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.__array__" title="Link to this definition">¶</a></dt>
+<dd><p>Create a Numpy array containing the whole dataset.  DON’T THINK
+THIS MEANS DATASETS ARE INTERCHANGEABLE WITH ARRAYS.  For one thing,
+you have to read the whole dataset every time this method is called.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.__getitem__" title="Link to this definition">¶</a></dt>
+<dd><p>Read a slice from the HDF5 dataset.</p>
+<p>Takes slices and recarray-style field names (more than one is
+allowed!) in any order.  Obeys basic NumPy rules, including
+broadcasting.</p>
+<p>Also supports:</p>
+<ul class="simple">
+<li><p>Boolean “mask” array indexing</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.__getnewargs__">
+<span class="sig-name descname"><span class="pre">__getnewargs__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.__getnewargs__" title="Link to this definition">¶</a></dt>
+<dd><p>Disable pickle.</p>
+<p>Handles for HDF5 objects can’t be reliably deserialised, because the
+recipient may not have access to the same files. So we do this to
+fail early.</p>
+<p>If you really want to pickle h5py objects and can live with some
+limitations, look at the h5pickle project on PyPI.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.__iter__">
+<span class="sig-name descname"><span class="pre">__iter__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.__iter__" title="Link to this definition">¶</a></dt>
+<dd><p>Iterate over the first axis.  TypeError if scalar.</p>
+<p>BEWARE: Modifications to the yielded data are <em>NOT</em> written to file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.__len__">
+<span class="sig-name descname"><span class="pre">__len__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.__len__" title="Link to this definition">¶</a></dt>
+<dd><p>The size of the first axis.  TypeError if scalar.</p>
+<p>Limited to 2**32 on 32-bit systems; Dataset.len() is preferred.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.__setitem__">
+<span class="sig-name descname"><span class="pre">__setitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.__setitem__" title="Link to this definition">¶</a></dt>
+<dd><p>Write to the HDF5 dataset from a Numpy array.</p>
+<p>NumPy’s broadcasting rules are honored, for “simple” indexing
+(slices and integers).  For advanced indexing, the shapes must
+match.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.asstr">
+<span class="sig-name descname"><span class="pre">asstr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'strict'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.asstr" title="Link to this definition">¶</a></dt>
+<dd><p>Get a wrapper to read string data as Python strings:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">str_array</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">asstr</span><span class="p">()[:]</span>
+</pre></div>
+</div>
+<p>The parameters have the same meaning as in <code class="docutils literal notranslate"><span class="pre">bytes.decode()</span></code>.
+If <code class="docutils literal notranslate"><span class="pre">encoding</span></code> is unspecified, it will use the encoding in the HDF5
+datatype (either ascii or utf-8).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.astype">
+<span class="sig-name descname"><span class="pre">astype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.astype" title="Link to this definition">¶</a></dt>
+<dd><p>Get a wrapper allowing you to perform reads to a
+different destination type, e.g.:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">double_precision</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;f8&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="mi">100</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.attrs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">attrs</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.attrs" title="Link to this definition">¶</a></dt>
+<dd><p>Attributes attached to this object</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.chunks">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">chunks</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.chunks" title="Link to this definition">¶</a></dt>
+<dd><p>Dataset chunks (or None)</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.compression">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compression</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.compression" title="Link to this definition">¶</a></dt>
+<dd><p>Compression strategy (or None)</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.compression_opts">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compression_opts</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.compression_opts" title="Link to this definition">¶</a></dt>
+<dd><p>Compression setting.  Int(0-9) for gzip, 2-tuple for szip.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.dims">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dims</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.dims" title="Link to this definition">¶</a></dt>
+<dd><p>Access dimension scales attached to this dataset.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.dtype">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.dtype" title="Link to this definition">¶</a></dt>
+<dd><p>Numpy dtype representing the datatype</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.external">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">external</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.external" title="Link to this definition">¶</a></dt>
+<dd><p>External file settings. Returns a list of tuples of
+(name, offset, size) for each external file entry, or returns None
+if no external files are used.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_prior_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.fields" title="Link to this definition">¶</a></dt>
+<dd><p>Get a wrapper to read a subset of fields from a compound data type:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="mi">2</span><span class="n">d_coords</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">fields</span><span class="p">([</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">])[:]</span>
+</pre></div>
+</div>
+<p>If names is a string, a single field is extracted, and the resulting
+arrays will have that dtype. Otherwise, it should be an iterable,
+and the read data will have a compound dtype.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.file">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">file</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.file" title="Link to this definition">¶</a></dt>
+<dd><p>Return a File instance associated with this object</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.fillvalue">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fillvalue</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.fillvalue" title="Link to this definition">¶</a></dt>
+<dd><p>Fill value for this dataset (0 by default)</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.fletcher32">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fletcher32</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.fletcher32" title="Link to this definition">¶</a></dt>
+<dd><p>Fletcher32 filter is present (T/F)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.flush">
+<span class="sig-name descname"><span class="pre">flush</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.flush" title="Link to this definition">¶</a></dt>
+<dd><p>Flush the dataset data and metadata to the file.
+If the dataset is chunked, raw data chunks are written to the file.</p>
+<p>This is part of the SWMR features and only exist when the HDF5
+library version &gt;=1.9.178</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.get_current_sorting">
+<span class="sig-name descname"><span class="pre">get_current_sorting</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyUSID/io/usi_data.html#USIDataset.get_current_sorting"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.get_current_sorting" title="Link to this definition">¶</a></dt>
+<dd><p>Prints the current sorting method.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.get_n_dim_form">
+<span class="sig-name descname"><span class="pre">get_n_dim_form</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">as_scalar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lazy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyUSID/io/usi_data.html#USIDataset.get_n_dim_form"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.get_n_dim_form" title="Link to this definition">¶</a></dt>
+<dd><p>Reshapes the dataset to an N-dimensional array</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>as_scalar</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional. Default = False</em>) – If False, the data is returned in its original (complex, compound) dtype
+Else, the data is flattened to a real-valued dataset</p></li>
+<li><p><strong>lazy</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional. Default = False</em>) – If set to false, n_dim_data will be a <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>
+Else returned object is <a class="reference external" href="https://docs.dask.org/en/latest/generated/dask.array.Array.html#dask.array.Array" title="(in Dask)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dask.array.core.Array</span></code></a></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>n_dim_data</strong> – N-dimensional form of the dataset</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a> or <code class="xref py py-class docutils literal notranslate"><span class="pre">dask.core.Array</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.get_pos_values">
+<span class="sig-name descname"><span class="pre">get_pos_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyUSID/io/usi_data.html#USIDataset.get_pos_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.get_pos_values" title="Link to this definition">¶</a></dt>
+<dd><p>Extract the reference values for the specified position dimension</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dim_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Name of one of the dimensions in <cite>self.pos_dim_labels</cite></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>dim_values</strong> – Array containing the unit values of the dimension <cite>dim_name</cite></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.get_spec_values">
+<span class="sig-name descname"><span class="pre">get_spec_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyUSID/io/usi_data.html#USIDataset.get_spec_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.get_spec_values" title="Link to this definition">¶</a></dt>
+<dd><p>Extract the values for the specified spectroscopic dimension</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dim_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Name of one of the dimensions in <cite>self.spec_dim_labels</cite></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>dim_values</strong> – Array containing the unit values of the dimension <cite>dim_name</cite></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.id">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.id" title="Link to this definition">¶</a></dt>
+<dd><p>Low-level identifier appropriate for this object</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.is_scale">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_scale</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.is_scale" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if this dataset is also a dimension scale.</p>
+<p>Return <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.is_virtual">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_virtual</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.is_virtual" title="Link to this definition">¶</a></dt>
+<dd><p>Check if this is a virtual dataset</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.iter_chunks">
+<span class="sig-name descname"><span class="pre">iter_chunks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.iter_chunks" title="Link to this definition">¶</a></dt>
+<dd><p>Return chunk iterator.  If set, the sel argument is a slice or
+tuple of slices that defines the region to be used. If not set, the
+entire dataspace will be used for the iterator.</p>
+<p>For each chunk within the given region, the iterator yields a tuple of
+slices that gives the intersection of the given chunk with the
+selection area.</p>
+<p>A TypeError will be raised if the dataset is not chunked.</p>
+<p>A ValueError will be raised if the selection region is invalid.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.len">
+<span class="sig-name descname"><span class="pre">len</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.len" title="Link to this definition">¶</a></dt>
+<dd><p>The size of the first axis.  TypeError if scalar.</p>
+<p>Use of this method is preferred to len(dset), as Python’s built-in
+len() cannot handle values greater then 2**32 on 32-bit systems.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.make_scale">
+<span class="sig-name descname"><span class="pre">make_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.make_scale" title="Link to this definition">¶</a></dt>
+<dd><p>Make this dataset an HDF5 dimension scale.</p>
+<p>You can then attach it to dimensions of other datasets like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">other_ds</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">attach_scale</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can optionally pass a name to associate with this scale.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.maxshape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">maxshape</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.maxshape" title="Link to this definition">¶</a></dt>
+<dd><p>Shape up to which this dataset can be resized.  Axes with value
+None have no resize limit.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.name" title="Link to this definition">¶</a></dt>
+<dd><p>Return the full name of this object.  None if anonymous.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.nbytes">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nbytes</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.nbytes" title="Link to this definition">¶</a></dt>
+<dd><p>Numpy-style attribute giving the raw dataset size as the number of bytes</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.ndim">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ndim</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.ndim" title="Link to this definition">¶</a></dt>
+<dd><p>Numpy-style attribute giving the number of dimensions</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.parent">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parent</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.parent" title="Link to this definition">¶</a></dt>
+<dd><p>Return the parent group of this object.</p>
+<p>This is always equivalent to obj.file[posixpath.dirname(obj.name)].
+ValueError if this object is anonymous.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.read_direct">
+<span class="sig-name descname"><span class="pre">read_direct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_sel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_sel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.read_direct" title="Link to this definition">¶</a></dt>
+<dd><p>Read data directly from HDF5 into an existing NumPy array.</p>
+<p>The destination array must be C-contiguous and writable.
+Selections must be the output of numpy.s_[&lt;args&gt;].</p>
+<p>Broadcasting is supported for simple indexing.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.reduce">
+<span class="sig-name descname"><span class="pre">reduce</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ufunc=&lt;function</span> <span class="pre">mean&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_hdf5=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dset_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyUSID/io/usi_data.html#USIDataset.reduce"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.reduce" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dims</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Names of the position and/or spectroscopic dimensions that need to be reduced</p></li>
+<li><p><strong>ufunc</strong> (<em>callable</em><em>, </em><em>optional. Default = dask.array.mean</em>) – Reduction function such as dask.array.mean available in dask.array</p></li>
+<li><p><strong>to_hdf5</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional. Default = False</em>) – Whether or not to write the reduced data back to a new dataset</p></li>
+<li><p><strong>dset_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> (</em><em>optional</em><em>)</em>) – Name of the new USID Main datset in the HDF5 file that will contain the sliced data.
+Default - the sliced dataset takes the same name as this source dataset</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional. Default = False</em>) – Whether or not to print any debugging statements to stdout</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>reduced_nd</strong> (<em>dask.array object</em>) – Dask array object containing the reduced data.
+Call compute() on this object to get the equivalent numpy array</p></li>
+<li><p><strong>h5_main_red</strong> (<em>USIDataset</em>) – USIDataset reference if to_hdf5 was set to True. Otherwise - None.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.ref">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ref</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.ref" title="Link to this definition">¶</a></dt>
+<dd><p>An (opaque) HDF5 reference to this object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.refresh">
+<span class="sig-name descname"><span class="pre">refresh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.refresh" title="Link to this definition">¶</a></dt>
+<dd><p>Refresh the dataset metadata by reloading from the file.</p>
+<p>This is part of the SWMR features and only exist when the HDF5
+library version &gt;=1.9.178</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.regionref">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">regionref</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.regionref" title="Link to this definition">¶</a></dt>
+<dd><p>Create a region reference (Datasets only).</p>
+<p>The syntax is regionref[&lt;slices&gt;]. For example, dset.regionref[…]
+creates a region reference in which the whole dataset is selected.</p>
+<p>Can also be used to determine the shape of the referenced dataset
+(via .shape property), or the shape of the selection (via the
+.selection property).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.resize">
+<span class="sig-name descname"><span class="pre">resize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.resize" title="Link to this definition">¶</a></dt>
+<dd><p>Resize the dataset, or the specified axis.</p>
+<p>The dataset must be stored in chunked format; it can be resized up to
+the “maximum shape” (keyword maxshape) specified at creation time.
+The rank of the dataset cannot be changed.</p>
+<p>“Size” should be a shape tuple, or if an axis is specified, an integer.</p>
+<p>BEWARE: This functions differently than the NumPy resize() method!
+The data is not “reshuffled” to fit in the new shape; each axis is
+grown or shrunk independently.  The coordinates of existing data are
+fixed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.scaleoffset">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">scaleoffset</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.scaleoffset" title="Link to this definition">¶</a></dt>
+<dd><p>Scale/offset filter settings. For integer data types, this is
+the number of bits stored, or 0 for auto-detected. For floating
+point data types, this is the number of decimal places retained.
+If the scale/offset filter is not in use, this is None.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.shape" title="Link to this definition">¶</a></dt>
+<dd><p>Numpy-style shape tuple giving dataset dimensions</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.shuffle">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shuffle</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.shuffle" title="Link to this definition">¶</a></dt>
+<dd><p>Shuffle filter present (T/F)</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">size</span></span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.size" title="Link to this definition">¶</a></dt>
+<dd><p>Numpy-style attribute giving the total dataset size</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.slice">
+<span class="sig-name descname"><span class="pre">slice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slice_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndim_form</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">as_scalar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lazy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyUSID/io/usi_data.html#USIDataset.slice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.slice" title="Link to this definition">¶</a></dt>
+<dd><p>Slice the dataset based on an input dictionary of ‘str’: slice pairs.
+Each string should correspond to a dimension label.  The slices can be
+array-likes or slice objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>slice_dict</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a>) – Dictionary of array-likes. for any dimension one needs to slice</p></li>
+<li><p><strong>ndim_form</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether or not to return the slice in it’s N-dimensional form. Default = True</p></li>
+<li><p><strong>as_scalar</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Should the data be returned as scalar values only.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether or not to print debugging statements</p></li>
+<li><p><strong>lazy</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional. Default = False</em>) – If set to false, data_slice will be a <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>
+Else returned object is <a class="reference external" href="https://docs.dask.org/en/latest/generated/dask.array.Array.html#dask.array.Array" title="(in Dask)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dask.array.core.Array</span></code></a></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>data_slice</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></a>, or <a class="reference external" href="https://docs.dask.org/en/latest/generated/dask.array.Array.html#dask.array.Array" title="(in Dask)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dask.array.core.Array</span></code></a>) – Slice of the dataset.  Dataset has been reshaped to N-dimensions if <cite>success</cite> is True, only
+by Position dimensions if <cite>success</cite> is ‘Positions’, or not reshape at all if <cite>success</cite>
+is False.</p></li>
+<li><p><strong>success</strong> (<em>str or bool</em>) – Informs the user as to how the data_slice has been shaped.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.slice_to_dataset">
+<span class="sig-name descname"><span class="pre">slice_to_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slice_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dset_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyUSID/io/usi_data.html#USIDataset.slice_to_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.slice_to_dataset" title="Link to this definition">¶</a></dt>
+<dd><p>Slices the dataset, writes its output to back to the HDF5 file, and returns a USIDataset object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>slice_dict</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a>) – Dictionary to slice one or more dimensions of the dataset by indices</p></li>
+<li><p><strong>dset_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> (</em><em>optional</em><em>)</em>) – Name of the new USID Main datset in the HDF5 file that will contain the sliced data.
+Default - the sliced dataset takes the same name as this source dataset</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em> (</em><em>optional</em><em>)</em>) – Whether or not to print debugging statements to stdout. Default = False</p></li>
+<li><p><strong>kwargs</strong> (<em>keyword arguments</em>) – keyword arguments that will be passed on to write_main_data()</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>h5_trunc</strong> – USIDataset containing the sliced data</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pyUSID.io.usi_data.USIDataset" title="pyUSID.io.usi_data.USIDataset">USIDataset</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.to_csv">
+<span class="sig-name descname"><span class="pre">to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyUSID/io/usi_data.html#USIDataset.to_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.to_csv" title="Link to this definition">¶</a></dt>
+<dd><p>Output this USIDataset and position + spectroscopic values to a csv file.
+This should ideally be limited to small datasets only</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><em>optional</em>) – path that the output file should be written to.
+By default, the file will be written to the same directory as the HDF5 file</p></li>
+<li><p><strong>force</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether or not to force large dataset to be written to CSV. Default = False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>output_file</strong> (<em>str</em>)</p></li>
+<li><p><em>Author - Daniel Streater, Suhas Somnath</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.toggle_sorting">
+<span class="sig-name descname"><span class="pre">toggle_sorting</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyUSID/io/usi_data.html#USIDataset.toggle_sorting"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.toggle_sorting" title="Link to this definition">¶</a></dt>
+<dd><p>Toggles between sorting from the fastest changing dimension to the slowest and sorting based on the
+order of the labels</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.virtual_sources">
+<span class="sig-name descname"><span class="pre">virtual_sources</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.virtual_sources" title="Link to this definition">¶</a></dt>
+<dd><p>Get a list of the data mappings for a virtual dataset</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.visualize">
+<span class="sig-name descname"><span class="pre">visualize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slice_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pyUSID/io/usi_data.html#USIDataset.visualize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.visualize" title="Link to this definition">¶</a></dt>
+<dd><p>Interactive visualization of this dataset. <strong>Only available on jupyter notebooks</strong></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>slice_dict</strong> (<em>dictionary</em><em>, </em><em>optional</em>) – Slicing instructions</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether or not to print debugging statements. Default = Off</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>fig</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.figure</span></code> handle) – Handle for the figure object</p></li>
+<li><p><strong>axis</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.Axes.axis</span></code> object) – Axis within which the data was plotted. Note - the interactive visualizer does not return this object</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyUSID.io.usi_data.USIDataset.write_direct">
+<span class="sig-name descname"><span class="pre">write_direct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_sel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_sel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pyUSID.io.usi_data.USIDataset.write_direct" title="Link to this definition">¶</a></dt>
+<dd><p>Write data directly to HDF5 from a NumPy array.</p>
+<p>The source array must be C-contiguous.  Selections must be
+the output of numpy.s_[&lt;args&gt;].</p>
+<p>Broadcasting is supported for simple indexing.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2018, Suhas Somnath and Chris R. Smith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,6 @@
+pyUSID.processing.comp\_utils.parallel\_compute
+===============================================
+
+.. currentmodule:: pyUSID.processing.comp_utils
+
+.. autofunction:: parallel_compute

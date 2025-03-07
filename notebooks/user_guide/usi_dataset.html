@@ -1,0 +1,616 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The USIDataset &mdash; pyUSID 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ArrayTranslator for translating from proprietary file formats" href="array_translator.html" />
+    <link rel="prev" title="User Guide" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            pyUSID
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pyUSID</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../about.html">pyUSID</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contact.html">Contact us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scale_to_hpc.html">Scaling to Clusters</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../_autosummary/pyUSID.html">pyUSID</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User Guide</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">The USIDataset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#USID-Main-Datasets">USID Main Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#USIDatasets-=-USID-Main-Datasets">USIDatasets = USID Main Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Recommended-pre-requisite-reading">Recommended pre-requisite reading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Example-scientific-dataset">Example scientific dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Load-all-necessary-packages">Load all necessary packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Load-the-dataset">Load the dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Creating-a-USIDataset">Creating a USIDataset</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#USIDataset-=-Supercharged(h5py.Dataset)">USIDataset = Supercharged(h5py.Dataset)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Easier-access-to-information">Easier access to information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Values-for-each-Dimension">Values for each Dimension</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Reshaping-to-N-dimensions">Reshaping to N dimensions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Slicing">Slicing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Interactive-Visualization">Interactive Visualization</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="array_translator.html">ArrayTranslator for translating from proprietary file formats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="anc_build_utils.html">Utilities that assist in building USID Ancillary datasets manually</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hdf_utils_write.html">Utilities for writing h5USID files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="process.html">Formalizing Data Processing using the Process Class</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">pyUSID</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">User Guide</a></li>
+      <li class="breadcrumb-item active">The USIDataset</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/user_guide/usi_dataset.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+</pre></div>
+</div>
+</div>
+<section id="The-USIDataset">
+<h1>The USIDataset<a class="headerlink" href="#The-USIDataset" title="Link to this heading">¶</a></h1>
+<p><strong>Suhas Somnath</strong></p>
+<p>11/11/2017</p>
+<p><strong>This document illustrates how the pyUSID.USIDataset class substantially simplifies accessing information about, slicing, and visualizing N-dimensional Universal Spectroscopy and Imaging Data (USID) Main datasets</strong></p>
+<section id="USID-Main-Datasets">
+<h2>USID Main Datasets<a class="headerlink" href="#USID-Main-Datasets" title="Link to this heading">¶</a></h2>
+<p>According to the <strong>Universal Spectroscopy and Imaging Data (USID)</strong> model, all spatial dimensions are collapsed to a single dimension and, similarly, all spectroscopic dimensions are also collapsed to a single dimension. Thus, the data is stored as a two-dimensional (N x P) matrix with N spatial locations each with P spectroscopic data points.</p>
+<p>This general and intuitive format allows imaging data from any instrument, measurement scheme, size, or dimensionality to be represented in the same way. Such an instrument independent data format enables a single set of analysis and processing functions to be reused for multiple image formats or modalities.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Main</span> <span class="pre">datasets</span></code> are greater than the sum of their parts. They are more capable and information-packed than conventional datasets since they have (or are linked to) all the necessary information to describe a measured dataset. The additional information contained / linked by <code class="docutils literal notranslate"><span class="pre">Main</span> <span class="pre">datasets</span></code> includes:</p>
+<ul class="simple">
+<li><p>the recorded physical quantity</p></li>
+<li><p>units of the data</p></li>
+<li><p>names of the position and spectroscopic dimensions</p></li>
+<li><p>dimensionality of the data in its original N dimensional form etc.</p></li>
+</ul>
+</section>
+<section id="USIDatasets-=-USID-Main-Datasets">
+<h2>USIDatasets = USID Main Datasets<a class="headerlink" href="#USIDatasets-=-USID-Main-Datasets" title="Link to this heading">¶</a></h2>
+<p>Regardless, <code class="docutils literal notranslate"><span class="pre">Main</span> <span class="pre">datasets</span></code> are just concepts or blueprints and not concrete digital objects in a programming language or a file. <code class="docutils literal notranslate"><span class="pre">USIDatasets</span></code> are <strong>tangible representations of Main datasets</strong>. From an implementation perspective, the USIDataset class extends the <code class="docutils literal notranslate"><span class="pre">h5py.Dataset</span> <span class="pre">object</span></code>. In other words, USIDatasets have all the capabilities of standard HDF5 / h5py Dataset objects but are supercharged from a scientific perspective since they:</p>
+<ul class="simple">
+<li><p>are self-describing</p></li>
+<li><p>allow quick interactive visualization in Jupyter notebooks</p></li>
+<li><p>allow intuitive slicing of the N dimensional dataset</p></li>
+<li><p>and much much more.</p></li>
+</ul>
+<p>While it is most certainly possible to access this information and enable these functionalities via the native <code class="docutils literal notranslate"><span class="pre">h5py</span></code> functionality, it can become tedious very quickly. In fact, a lot of the functionality of USIDataset comes from orchestration of multiple functions in <code class="docutils literal notranslate"><span class="pre">pyUSID.hdf_utils</span></code> outlined in other documents. The USIDataset class makes such necessary information and functionality easily accessible.</p>
+<p>Since Main datasets are the hubs of information in a USID HDF5 file (<strong>h5USID</strong>), we expect that the majority of the data interrogation will happen via USIDatasets</p>
+</section>
+<section id="Recommended-pre-requisite-reading">
+<h2>Recommended pre-requisite reading<a class="headerlink" href="#Recommended-pre-requisite-reading" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pycroscopy.github.io/USID/usid_model.html">Universal Spectroscopic and Imaging Data (USID) model</a></p></li>
+<li><p><a class="reference external" href="./h5py_primer.html">Crash course on HDF5 and h5py</a></p></li>
+<li><p>Utilities for <a class="reference external" href="./hdf_utils_read.html">reading</a> h5USID files using pyUSID</p></li>
+</ul>
+</section>
+<section id="Example-scientific-dataset">
+<h2>Example scientific dataset<a class="headerlink" href="#Example-scientific-dataset" title="Link to this heading">¶</a></h2>
+<p>Before, we dive into the functionalities of USIDatasets we need to understand the dataset that will be used in this example. For this example, we will be working with a Band Excitation Polarization Switching (BEPS) dataset acquired from advanced atomic force microscopes. In the much simpler Band Excitation (BE) imaging datasets, a single spectra is acquired at each location in a two dimensional grid of spatial locations. Thus, BE imaging datasets have two position dimensions (X, Y) and one
+spectroscopic dimension (frequency - against which the spectra is recorded). The BEPS dataset used in this example has a spectra for each combination of three other parameters (DC offset, Field, and Cycle). Thus, this dataset has three new spectral dimensions in addition to the spectra itself. Hence, this dataset becomes a 2+4 = 6 dimensional dataset</p>
+</section>
+<section id="Load-all-necessary-packages">
+<h2>Load all necessary packages<a class="headerlink" href="#Load-all-necessary-packages" title="Link to this heading">¶</a></h2>
+<p>First, we need to load the necessary packages. Here are a list of packages, besides pyUSID, that will be used in this example:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">h5py</span></code> - to open and close the file</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">wget</span></code> - to download the example data file</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">numpy</span></code> - for numerical operations on arrays in memory</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> - basic visualization of data</p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="c1"># Warning package in case something goes wrong</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">install</span><span class="p">(</span><span class="n">package</span><span class="p">):</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="n">package</span><span class="p">])</span>
+<span class="c1"># Package for downloading online files:</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># This package is not part of anaconda and may need to be installed.</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">wget</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;wget not found.  Will install with pip.&#39;</span><span class="p">)</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pip</span>
+    <span class="n">install</span><span class="p">(</span><span class="s1">&#39;wget&#39;</span><span class="p">)</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">wget</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">sidpy</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;sidpy not found.  Will install with pip.&#39;</span><span class="p">)</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pip</span>
+    <span class="n">install</span><span class="p">(</span><span class="s1">&#39;sidpy&#39;</span><span class="p">)</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">sidpy</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pyUSID</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">usid</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;pyUSID not found.  Will install with pip.&#39;</span><span class="p">)</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pip</span>
+    <span class="n">install</span><span class="p">(</span><span class="s1">&#39;pyUSID&#39;</span><span class="p">)</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pyUSID</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">usid</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Load-the-dataset">
+<h2>Load the dataset<a class="headerlink" href="#Load-the-dataset" title="Link to this heading">¶</a></h2>
+<p>First, lets download example h5USID file from the pyUSID Github project:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;https://raw.githubusercontent.com/pycroscopy/pyUSID/master/data/BEPS_small.h5&#39;</span>
+<span class="n">h5_path</span> <span class="o">=</span> <span class="s1">&#39;temp.h5&#39;</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">wget</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">h5_path</span><span class="p">,</span> <span class="n">bar</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Working on:</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">h5_path</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Working on:
+temp.h5
+</pre></div></div>
+</div>
+<p>Next, lets open this HDF5 file in read-only mode. Note that opening the file does not cause the contents to be automatically loaded to memory. Instead, we are presented with objects that refer to specific HDF5 datasets, attributes or groups in the file</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">h5_path</span> <span class="o">=</span> <span class="s1">&#39;temp.h5&#39;</span>
+<span class="n">h5_f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">h5_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">h5_f</span></code> is an active handle to the open file. Lets quickly look at the contents of this HDF5 file using a handy function in <code class="docutils literal notranslate"><span class="pre">pyUSID.hdf_utils</span></code> - <code class="docutils literal notranslate"><span class="pre">print_tree()</span></code></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Contents of the H5 file:&#39;</span><span class="p">)</span>
+<span class="n">sidpy</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">print_tree</span><span class="p">(</span><span class="n">h5_f</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Contents of the H5 file:
+/
+├ Measurement_000
+  ---------------
+  ├ Channel_000
+    -----------
+    ├ Bin_FFT
+    ├ Bin_Frequencies
+    ├ Bin_Indices
+    ├ Bin_Step
+    ├ Bin_Wfm_Type
+    ├ Excitation_Waveform
+    ├ Noise_Floor
+    ├ Position_Indices
+    ├ Position_Values
+    ├ Raw_Data
+    ├ Raw_Data-SHO_Fit_000
+      --------------------
+      ├ Fit
+      ├ Guess
+      ├ Spectroscopic_Indices
+      ├ Spectroscopic_Values
+    ├ Spatially_Averaged_Plot_Group_000
+      ---------------------------------
+      ├ Bin_Frequencies
+      ├ Mean_Spectrogram
+      ├ Spectroscopic_Parameter
+      ├ Step_Averaged_Response
+    ├ Spatially_Averaged_Plot_Group_001
+      ---------------------------------
+      ├ Bin_Frequencies
+      ├ Mean_Spectrogram
+      ├ Spectroscopic_Parameter
+      ├ Step_Averaged_Response
+    ├ Spectroscopic_Indices
+    ├ Spectroscopic_Values
+    ├ UDVS
+    ├ UDVS_Indices
+</pre></div></div>
+</div>
+<p>For this example, we will only focus on the <code class="docutils literal notranslate"><span class="pre">Raw_Data</span></code> dataset which contains the 6D raw measurement data. First lets access the HDF5 dataset and check if it is a <code class="docutils literal notranslate"><span class="pre">Main</span></code> dataset in the first place:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">h5_raw</span> <span class="o">=</span> <span class="n">h5_f</span><span class="p">[</span><span class="s1">&#39;/Measurement_000/Channel_000/Raw_Data&#39;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">h5_raw</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;h5_raw is a main dataset? </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">usid</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">check_if_main</span><span class="p">(</span><span class="n">h5_raw</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;HDF5 dataset &#34;Raw_Data&#34;: shape (25, 22272), type &#34;&lt;c8&#34;&gt;
+h5_raw is a main dataset? True
+</pre></div></div>
+</div>
+<p>It turns out that this is indeed a Main dataset. Therefore, we can turn this in to a USIDataset without any problems.</p>
+</section>
+<section id="Creating-a-USIDataset">
+<h2>Creating a USIDataset<a class="headerlink" href="#Creating-a-USIDataset" title="Link to this heading">¶</a></h2>
+<p>All one needs for creating a USIDataset object is a Main dataset. Here is how we can supercharge h5_raw:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pd_raw</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">USIDataset</span><span class="p">(</span><span class="n">h5_raw</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pd_raw</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;HDF5 dataset &#34;Raw_Data&#34;: shape (25, 22272), type &#34;&lt;c8&#34;&gt;
+located at:
+        /Measurement_000/Channel_000/Raw_Data
+Data contains:
+        Cantilever Vertical Deflection (V)
+Data dimensions and original shape:
+Position Dimensions:
+        X - size: 5
+        Y - size: 5
+Spectroscopic Dimensions:
+        Frequency - size: 87
+        DC_Offset - size: 64
+        Field - size: 2
+        Cycle - size: 2
+Data Type:
+        complex64
+</pre></div></div>
+</div>
+<p>Notice how easy it was to create a USIDataset object. Also, note how the USIDataset is much more informative in comparison with the conventional h5py.Dataset object.</p>
+<section id="USIDataset-=-Supercharged(h5py.Dataset)">
+<h3>USIDataset = Supercharged(h5py.Dataset)<a class="headerlink" href="#USIDataset-=-Supercharged(h5py.Dataset)" title="Link to this heading">¶</a></h3>
+<p>Remember that USIDataset is just an extension of the h5py.Dataset object class. Therefore, both the <code class="docutils literal notranslate"><span class="pre">h5_raw</span></code> and <code class="docutils literal notranslate"><span class="pre">pd_raw</span></code> refer to the same object as the following equality test demonstrates. Except <code class="docutils literal notranslate"><span class="pre">pd_raw</span></code> knows about the <code class="docutils literal notranslate"><span class="pre">ancillary</span> <span class="pre">datasets</span></code> and other information which makes it a far more powerful object for you.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">pd_raw</span> <span class="o">==</span> <span class="n">h5_raw</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+True
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="Easier-access-to-information">
+<h2>Easier access to information<a class="headerlink" href="#Easier-access-to-information" title="Link to this heading">¶</a></h2>
+<p>Since the USIDataset is aware and has handles to the supporting ancillary datasets, they can be accessed as properties of the object unlike HDF5 datasets. Note that these ancillary datasets can be accessed using functionality in pyUSID.hdf_utils as well. However, the USIDataset option is far easier.</p>
+<p>Let us compare accessing the Spectroscopic Indices via the USIDataset and hdf_utils functionality:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">h5_spec_inds_1</span> <span class="o">=</span> <span class="n">pd_raw</span><span class="o">.</span><span class="n">h5_spec_inds</span>
+<span class="n">h5_spec_inds_2</span> <span class="o">=</span> <span class="n">sidpy</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">get_auxiliary_datasets</span><span class="p">(</span><span class="n">h5_raw</span><span class="p">,</span> <span class="s1">&#39;Spectroscopic_Indices&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">h5_spec_inds_1</span> <span class="o">==</span> <span class="n">h5_spec_inds_2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+True
+</pre></div></div>
+</div>
+<p>In the same vein, it is also easy to access <strong>string descriptors</strong> of the ancillary datasets and the Main dataset. The <code class="docutils literal notranslate"><span class="pre">hdf_utils</span></code> alternatives to these operations / properties also exist and are discussed in an alternate document, but will not be discussed here for brevity.:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Desctiption of physical quantity in the Main dataset:&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pd_raw</span><span class="o">.</span><span class="n">data_descriptor</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Position Dimension names and sizes:&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">pd_raw</span><span class="o">.</span><span class="n">pos_dim_labels</span><span class="p">,</span> <span class="n">pd_raw</span><span class="o">.</span><span class="n">pos_dim_sizes</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">length</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Spectroscopic Dimension names and sizes:&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">pd_raw</span><span class="o">.</span><span class="n">spec_dim_labels</span><span class="p">,</span> <span class="n">pd_raw</span><span class="o">.</span><span class="n">spec_dim_sizes</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">length</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Position Dimensions:&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pd_raw</span><span class="o">.</span><span class="n">pos_dim_descriptors</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Spectroscopic Dimensions:&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pd_raw</span><span class="o">.</span><span class="n">spec_dim_descriptors</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Desctiption of physical quantity in the Main dataset:
+Cantilever Vertical Deflection (V)
+Position Dimension names and sizes:
+X : 5
+Y : 5
+Spectroscopic Dimension names and sizes:
+Frequency : 87
+DC_Offset : 64
+Field : 2
+Cycle : 2
+Position Dimensions:
+[&#39;X (m)&#39;, &#39;Y (m)&#39;]
+Spectroscopic Dimensions:
+[&#39;Frequency (Hz)&#39;, &#39;DC_Offset (V)&#39;, &#39;Field ()&#39;, &#39;Cycle ()&#39;]
+</pre></div></div>
+</div>
+</section>
+<section id="Values-for-each-Dimension">
+<h2>Values for each Dimension<a class="headerlink" href="#Values-for-each-Dimension" title="Link to this heading">¶</a></h2>
+<p>When visualizing the data it is essential to plot the data against appropriate values on the X, Y, Z axes. The USIDataset object makes it very easy to access the values over which a dimension was varied using the <code class="docutils literal notranslate"><span class="pre">get_pos_values()</span></code> and <code class="docutils literal notranslate"><span class="pre">get_spec_values()</span></code> functions. This functionality is enabled by the <code class="docutils literal notranslate"><span class="pre">get_unit_values()</span></code> function in <code class="docutils literal notranslate"><span class="pre">pyUSID.hdf_utils</span></code>.</p>
+<p>For example, let us say we wanted to see how the <code class="docutils literal notranslate"><span class="pre">DC_Offset</span></code> dimension was varied, we could:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dim_name</span> <span class="o">=</span> <span class="s1">&#39;DC_Offset&#39;</span>
+<span class="n">dc_vec</span> <span class="o">=</span> <span class="n">pd_raw</span><span class="o">.</span><span class="n">get_spec_values</span><span class="p">(</span><span class="n">dim_name</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">3.5</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">))</span>
+<span class="n">axis</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dc_vec</span><span class="p">)</span>
+<span class="n">axis</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Points in dimension&#39;</span><span class="p">)</span>
+<span class="n">axis</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">dim_name</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_user_guide_usi_dataset_21_0.png" src="../../_images/notebooks_user_guide_usi_dataset_21_0.png" />
+</div>
+</div>
+</section>
+<section id="Reshaping-to-N-dimensions">
+<h2>Reshaping to N dimensions<a class="headerlink" href="#Reshaping-to-N-dimensions" title="Link to this heading">¶</a></h2>
+<p>The USID model stores N dimensional datasets in a flattened 2D form of position x spectral values. It can become challenging to retrieve the data in its original N-dimensional form, especially for multidimensional datasets such as the one we are working on. Fortunately, all the information regarding the dimensionality of the dataset are contained in the spectral and position ancillary datasets. PycoDataset makes it remarkably easy to obtain the N dimensional form of a dataset:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ndim_form</span> <span class="o">=</span> <span class="n">pd_raw</span><span class="o">.</span><span class="n">get_n_dim_form</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Shape of the N dimensional form of the dataset:&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ndim_form</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;And these are the dimensions&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pd_raw</span><span class="o">.</span><span class="n">n_dim_labels</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Shape of the N dimensional form of the dataset:
+(5, 5, 87, 64, 2, 2)
+And these are the dimensions
+[&#39;X&#39;, &#39;Y&#39;, &#39;Frequency&#39;, &#39;DC_Offset&#39;, &#39;Field&#39;, &#39;Cycle&#39;]
+</pre></div></div>
+</div>
+</section>
+<section id="Slicing">
+<h2>Slicing<a class="headerlink" href="#Slicing" title="Link to this heading">¶</a></h2>
+<p>It is often very challenging to grapple with multidimensional datasets such as the one in this example. It may not even be possible to load the entire dataset in its 2D or N dimensional form to memory if the dataset is several (or several hundred) gigabytes large. Slicing the 2D Main dataset can easily become confusing and frustrating. To solve this problem, USIDataset has a <code class="docutils literal notranslate"><span class="pre">slice()</span></code> function that efficiently loads the only the sliced data into memory and reshapes the data to an N dimensional
+form. Best of all, the slicing arguments can be provided in the actual N dimensional form!</p>
+<p>For example, imagine that we cannot load the entire example dataset in its N dimensional form and then slice it. Lets try to get the spatial map for the following conditions without loading the entire dataset in its N dimensional form and then slicing it :</p>
+<ul class="simple">
+<li><p>14th index of DC Offset</p></li>
+<li><p>1st index of cycle</p></li>
+<li><p>0th index of Field (remember Python is 0 based)</p></li>
+<li><p>43rd index of Frequency</p></li>
+</ul>
+<p>To get this, we would slice as:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">spat_map_1</span><span class="p">,</span> <span class="n">success</span> <span class="o">=</span> <span class="n">pd_raw</span><span class="o">.</span><span class="n">slice</span><span class="p">({</span><span class="s1">&#39;Frequency&#39;</span><span class="p">:</span> <span class="mi">43</span><span class="p">,</span> <span class="s1">&#39;DC_Offset&#39;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span> <span class="s1">&#39;Field&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Cycle&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<p>As a verification, lets try to plot the same spatial map by slicing the N dimensional form we got earlier and compare it with what we got above:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">spat_map_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">ndim_form</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">43</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;2D slicing == ND slicing: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">spat_map_1</span><span class="p">,</span> <span class="n">spat_map_2</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+2D slicing == ND slicing: True
+</pre></div></div>
+</div>
+</section>
+<section id="Interactive-Visualization">
+<h2>Interactive Visualization<a class="headerlink" href="#Interactive-Visualization" title="Link to this heading">¶</a></h2>
+<p>USIDatasets also enable quick, interactive, and easy visualization of data up to 2 position and 2 spectroscopic dimensions (4D datasets). Since this particular example has 6 dimensions, we would need to slice two dimensions in order to visualize the remaining 4 dimensions. Note that this interactive visualization <strong>only</strong> works on Jupyter Notebooks. This html file generated by a python script does not allow for interactive visualization and you may only see a set of static plots.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pd_raw</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="n">slice_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Field&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Cycle&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">});</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_user_guide_usi_dataset_29_0.png" src="../../_images/notebooks_user_guide_usi_dataset_29_0.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "cef4b1d636ee4aa39f29e343b57f9de5"}</script></div>
+</div>
+<p>Close and delete the h5_file</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">h5_f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">h5_path</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<script type="application/vnd.jupyter.widget-state+json">
+{"state": {"1595f8d4065240e78a5abbdc35fb5d97": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "cef4b1d636ee4aa39f29e343b57f9de5": {"model_name": "VBoxModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": ["widget-interact"], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "VBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "VBoxView", "box_style": "", "children": ["IPY_MODEL_af1db0827ac14eaaab41b96728dd33a8", "IPY_MODEL_d940fb65393a43489b4070c1540d677d", "IPY_MODEL_4b416872aa424abc991a95823e074a9e", "IPY_MODEL_68fc8816af934e5699512617a1ab0ee9", "IPY_MODEL_306b6f832efc439e81085617022092bf", "IPY_MODEL_ba137601461341f8aab35fc612fcc36b"], "layout": "IPY_MODEL_1595f8d4065240e78a5abbdc35fb5d97", "tabbable": null, "tooltip": null}}, "ee15856fe5444b78a913a467f3658f03": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "2dbdad5b018f4c34975d0bfe4649118d": {"model_name": "SliderStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "SliderStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "description_width": "", "handle_color": null}}, "af1db0827ac14eaaab41b96728dd33a8": {"model_name": "IntSliderModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "IntSliderModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "IntSliderView", "behavior": "drag-tap", "continuous_update": true, "description": "X", "description_allow_html": false, "disabled": false, "layout": "IPY_MODEL_ee15856fe5444b78a913a467f3658f03", "max": 4, "min": 0, "orientation": "horizontal", "readout": true, "readout_format": "d", "step": 1, "style": "IPY_MODEL_2dbdad5b018f4c34975d0bfe4649118d", "tabbable": null, "tooltip": null, "value": 2}}, "31b211ec83804a67b615252777b237ce": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "c1cd87e97aa54bb2a935746ab4ceefbb": {"model_name": "SliderStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "SliderStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "description_width": "", "handle_color": null}}, "d940fb65393a43489b4070c1540d677d": {"model_name": "IntSliderModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "IntSliderModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "IntSliderView", "behavior": "drag-tap", "continuous_update": true, "description": "Y", "description_allow_html": false, "disabled": false, "layout": "IPY_MODEL_31b211ec83804a67b615252777b237ce", "max": 4, "min": 0, "orientation": "horizontal", "readout": true, "readout_format": "d", "step": 1, "style": "IPY_MODEL_c1cd87e97aa54bb2a935746ab4ceefbb", "tabbable": null, "tooltip": null, "value": 2}}, "8ba9d7e530e044f8bdc898d576f7f8cb": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "cd935e020baf4c43810fdd5a5b6d7ae0": {"model_name": "SliderStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "SliderStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "description_width": "", "handle_color": null}}, "4b416872aa424abc991a95823e074a9e": {"model_name": "IntSliderModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "IntSliderModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "IntSliderView", "behavior": "drag-tap", "continuous_update": true, "description": "Frequency", "description_allow_html": false, "disabled": false, "layout": "IPY_MODEL_8ba9d7e530e044f8bdc898d576f7f8cb", "max": 86, "min": 0, "orientation": "horizontal", "readout": true, "readout_format": "d", "step": 1, "style": "IPY_MODEL_cd935e020baf4c43810fdd5a5b6d7ae0", "tabbable": null, "tooltip": null, "value": 43}}, "039d9fc4799a4ef9bad66be31fafc0be": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "cffa96326baf4c95a00b5dabaa1d481c": {"model_name": "SliderStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "SliderStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "description_width": "", "handle_color": null}}, "68fc8816af934e5699512617a1ab0ee9": {"model_name": "IntSliderModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "IntSliderModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "IntSliderView", "behavior": "drag-tap", "continuous_update": true, "description": "DC_Offset", "description_allow_html": false, "disabled": false, "layout": "IPY_MODEL_039d9fc4799a4ef9bad66be31fafc0be", "max": 63, "min": 0, "orientation": "horizontal", "readout": true, "readout_format": "d", "step": 1, "style": "IPY_MODEL_cffa96326baf4c95a00b5dabaa1d481c", "tabbable": null, "tooltip": null, "value": 31}}, "3ba76e0cfc29479bbb4a12873c248709": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "3287e16bb56d46398777d578bfee1151": {"model_name": "DescriptionStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "description_width": ""}}, "306b6f832efc439e81085617022092bf": {"model_name": "DropdownModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "DropdownModel", "_options_labels": ["Real", "Imaginary", "Amplitude", "Phase"], "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "DropdownView", "description": "component", "description_allow_html": false, "disabled": false, "index": 0, "layout": "IPY_MODEL_3ba76e0cfc29479bbb4a12873c248709", "style": "IPY_MODEL_3287e16bb56d46398777d578bfee1151", "tabbable": null, "tooltip": null}}, "0a0c405d956749299b73962184ddc8a9": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "ba137601461341f8aab35fc612fcc36b": {"model_name": "OutputModel", "model_module": "@jupyter-widgets/output", "model_module_version": "1.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/output", "_model_module_version": "1.0.0", "_model_name": "OutputModel", "_view_count": null, "_view_module": "@jupyter-widgets/output", "_view_module_version": "1.0.0", "_view_name": "OutputView", "layout": "IPY_MODEL_0a0c405d956749299b73962184ddc8a9", "msg_id": "", "outputs": [{"output_type": "error", "ename": "RuntimeError", "evalue": "x must be a sequence", "traceback": ["\u001b[0;31m---------------------------------------------------------------------------\u001b[0m", "\u001b[0;31mRuntimeError\u001b[0m                              Traceback (most recent call last)", "File \u001b[0;32m/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/ipywidgets/widgets/interaction.py:243\u001b[0m, in \u001b[0;36minteractive.update\u001b[0;34m(self, *args)\u001b[0m\n\u001b[1;32m    241\u001b[0m     value \u001b[38;5;241m=\u001b[39m widget\u001b[38;5;241m.\u001b[39mget_interact_value()\n\u001b[1;32m    242\u001b[0m     \u001b[38;5;28mself\u001b[39m\u001b[38;5;241m.\u001b[39mkwargs[widget\u001b[38;5;241m.\u001b[39m_kwarg] \u001b[38;5;241m=\u001b[39m value\n\u001b[0;32m--> 243\u001b[0m \u001b[38;5;28mself\u001b[39m\u001b[38;5;241m.\u001b[39mresult \u001b[38;5;241m=\u001b[39m \u001b[38;5;28;43mself\u001b[39;49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43mf\u001b[49m\u001b[43m(\u001b[49m\u001b[38;5;241;43m*\u001b[39;49m\u001b[38;5;241;43m*\u001b[39;49m\u001b[38;5;28;43mself\u001b[39;49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43mkwargs\u001b[49m\u001b[43m)\u001b[49m\n\u001b[1;32m    244\u001b[0m show_inline_matplotlib_plots()\n\u001b[1;32m    245\u001b[0m \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;28mself\u001b[39m\u001b[38;5;241m.\u001b[39mauto_display \u001b[38;5;129;01mand\u001b[39;00m \u001b[38;5;28mself\u001b[39m\u001b[38;5;241m.\u001b[39mresult \u001b[38;5;129;01mis\u001b[39;00m \u001b[38;5;129;01mnot\u001b[39;00m \u001b[38;5;28;01mNone\u001b[39;00m:\n", "File \u001b[0;32m/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/sidpy/viz/jupyter_utils.py:341\u001b[0m, in \u001b[0;36msimple_ndim_visualizer.<locals>.update_plots\u001b[0;34m(**kwargs)\u001b[0m\n\u001b[1;32m    338\u001b[0m     axes[\u001b[38;5;241m1\u001b[39m]\u001b[38;5;241m.\u001b[39mset_title(\u001b[38;5;124m'\u001b[39m\u001b[38;5;124mSpectrogram for\u001b[39m\u001b[38;5;130;01m\\n\u001b[39;00m\u001b[38;5;124m'\u001b[39m \u001b[38;5;241m+\u001b[39m global_vars[\u001b[38;5;124m'\u001b[39m\u001b[38;5;124mcomponent_title\u001b[39m\u001b[38;5;124m'\u001b[39m] \u001b[38;5;241m+\u001b[39m \u001b[38;5;124m'\u001b[39m\u001b[38;5;130;01m\\n\u001b[39;00m\u001b[38;5;124m'\u001b[39m \u001b[38;5;241m+\u001b[39m pos_titles,\n\u001b[1;32m    339\u001b[0m                       fontsize\u001b[38;5;241m=\u001b[39msubtitle_fontsize)\n\u001b[1;32m    340\u001b[0m     \u001b[38;5;28;01mif\u001b[39;00m pos_plot_2d:\n\u001b[0;32m--> 341\u001b[0m         \u001b[43mmain_vert_line\u001b[49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43mset_xdata\u001b[49m\u001b[43m(\u001b[49m\u001b[43mspgram_slicing\u001b[49m\u001b[43m[\u001b[49m\u001b[43mpos_dims\u001b[49m\u001b[43m[\u001b[49m\u001b[38;5;241;43m1\u001b[39;49m\u001b[43m]\u001b[49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43mname\u001b[49m\u001b[43m]\u001b[49m\u001b[43m)\u001b[49m\n\u001b[1;32m    342\u001b[0m         main_hor_line\u001b[38;5;241m.\u001b[39mset_ydata(spgram_slicing[pos_dims[\u001b[38;5;241m0\u001b[39m]\u001b[38;5;241m.\u001b[39mname])\n\u001b[1;32m    344\u001b[0m update_spatmap \u001b[38;5;241m=\u001b[39m \u001b[38;5;28;01mFalse\u001b[39;00m\n", "File \u001b[0;32m/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/matplotlib/lines.py:1289\u001b[0m, in \u001b[0;36mLine2D.set_xdata\u001b[0;34m(self, x)\u001b[0m\n\u001b[1;32m   1276\u001b[0m \u001b[38;5;250m\u001b[39m\u001b[38;5;124;03m\"\"\"\u001b[39;00m\n\u001b[1;32m   1277\u001b[0m \u001b[38;5;124;03mSet the data array for x.\u001b[39;00m\n\u001b[1;32m   1278\u001b[0m \n\u001b[0;32m   (...)\u001b[0m\n\u001b[1;32m   1286\u001b[0m \u001b[38;5;124;03mset_ydata\u001b[39;00m\n\u001b[1;32m   1287\u001b[0m \u001b[38;5;124;03m\"\"\"\u001b[39;00m\n\u001b[1;32m   1288\u001b[0m \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;129;01mnot\u001b[39;00m np\u001b[38;5;241m.\u001b[39miterable(x):\n\u001b[0;32m-> 1289\u001b[0m     \u001b[38;5;28;01mraise\u001b[39;00m \u001b[38;5;167;01mRuntimeError\u001b[39;00m(\u001b[38;5;124m'\u001b[39m\u001b[38;5;124mx must be a sequence\u001b[39m\u001b[38;5;124m'\u001b[39m)\n\u001b[1;32m   1290\u001b[0m \u001b[38;5;28mself\u001b[39m\u001b[38;5;241m.\u001b[39m_xorig \u001b[38;5;241m=\u001b[39m copy\u001b[38;5;241m.\u001b[39mcopy(x)\n\u001b[1;32m   1291\u001b[0m \u001b[38;5;28mself\u001b[39m\u001b[38;5;241m.\u001b[39m_invalidx \u001b[38;5;241m=\u001b[39m \u001b[38;5;28;01mTrue\u001b[39;00m\n", "\u001b[0;31mRuntimeError\u001b[0m: x must be a sequence"]}], "tabbable": null, "tooltip": null}}}, "version_major": 2, "version_minor": 0}
+</script></section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="User Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="array_translator.html" class="btn btn-neutral float-right" title="ArrayTranslator for translating from proprietary file formats" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2018, Suhas Somnath and Chris R. Smith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

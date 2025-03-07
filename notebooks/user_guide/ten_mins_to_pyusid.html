@@ -1,0 +1,764 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyUSID in 10 minutes &mdash; pyUSID 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            pyUSID
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pyUSID</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../about.html">pyUSID</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contact.html">Contact us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scale_to_hpc.html">Scaling to Clusters</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../_autosummary/pyUSID.html">pyUSID</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">User Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">pyUSID</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">pyUSID in 10 minutes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/user_guide/ten_mins_to_pyusid.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+</pre></div>
+</div>
+</div>
+<section id="pyUSID-in-10-minutes">
+<h1>pyUSID in 10 minutes<a class="headerlink" href="#pyUSID-in-10-minutes" title="Link to this heading">¶</a></h1>
+<p><strong>Rajiv Giridharagopal (University of Washington)</strong></p>
+<p>4/24/2020</p>
+<p><strong>This document serves as a quick primer to the essential components of pyUSID</strong></p>
+<section id="Recommended-pre-requisite-reading">
+<h2>Recommended pre-requisite reading<a class="headerlink" href="#Recommended-pre-requisite-reading" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pycroscopy.github.io/USID/usid_model.html">Universal Spectroscopic and Imaging Data (USID) model</a></p></li>
+<li><p><a class="reference external" href="./h5py_primer.html">Crash course on HDF5 and h5py</a></p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sidpy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyUSID</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">usid</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+</pre></div>
+</div>
+</div>
+<section id="Converting-a-3D-Matrix-to-USID">
+<h3>Converting a 3D Matrix to USID<a class="headerlink" href="#Converting-a-3D-Matrix-to-USID" title="Link to this heading">¶</a></h3>
+<p>As an example of how to use pyUSID to reformat data for analysis, let’s take an image with some time-series at each pixel Let’s imagine we have a 10 x 10 array that measures the height. But we’re applying a voltage to oscillate the height at 2 Hz for 1 second, with 10 Hz sampling and a slight phase shift and amplitude shift at each pixel.</p>
+<p>In other words, a 10 x 10 x 100 array</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create some data</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">100</span><span class="p">))</span>
+<span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">])</span>
+<span class="n">amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">r</span><span class="p">,</span><span class="n">c</span><span class="p">,</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">amp</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">/</span><span class="mi">100</span> <span class="o">+</span> <span class="n">phase</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">c</span><span class="p">])</span>
+
+<span class="c1"># To visualize a 3D stack, there&#39;s a handy function in sidpy</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">sidpy</span><span class="o">.</span><span class="n">plot_utils</span><span class="o">.</span><span class="n">plot_map_stack</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">num_comps</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fig_mult</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">pad_mult</span><span class="o">=</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span><span class="mf">.4</span><span class="p">));</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_user_guide_ten_mins_to_pyusid_4_0.png" src="../../_images/notebooks_user_guide_ten_mins_to_pyusid_4_0.png" />
+</div>
+</div>
+<p>Instead of being 3D, we need it to be (10x10, 100) in 2D for USID. First, let’s define the position dimensions, which are 10 x 10 nm</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pos</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">build_ind_val_matrices</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">10e-9</span><span class="p">,</span> <span class="mf">1e-9</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">10e-9</span><span class="p">,</span> <span class="mf">1e-9</span><span class="p">)],</span>
+                                             <span class="n">is_spectral</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># pos[0] are the indices (0,1,2...), pos[1] are the values (0,1e-9, 2e-9...)</span>
+<span class="c1"># Second, let&#39;s define he spectral dimensions, which is our 1 s long waveform</span>
+<span class="n">spec</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">build_ind_val_matrices</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mf">0.01</span><span class="p">)],</span> <span class="n">is_spectral</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Finally, we make our USID-compatible dataset, which is now (100, 100)</span>
+<span class="n">data_reshape</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">reshape_from_n_dims</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">spec</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Creating-a-USID-Dataset">
+<h3>Creating a USID Dataset<a class="headerlink" href="#Creating-a-USID-Dataset" title="Link to this heading">¶</a></h3>
+<p>Now that we have a USID-compatible dataset, we’re almost there Let’s actually create the USID dataset</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use the USID Dimension to define the dimensions directly, including the units</span>
+<span class="n">pos_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">usid</span><span class="o">.</span><span class="n">Dimension</span><span class="p">(</span><span class="s1">&#39;Rows&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">10e-9</span><span class="p">,</span> <span class="mf">1e-9</span><span class="p">)),</span>
+            <span class="n">usid</span><span class="o">.</span><span class="n">Dimension</span><span class="p">(</span><span class="s1">&#39;Cols&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">10e-9</span><span class="p">,</span> <span class="mf">1e-9</span><span class="p">))]</span>
+
+<span class="n">spec_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">usid</span><span class="o">.</span><span class="n">Dimension</span><span class="p">(</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mf">0.01</span><span class="p">))]</span>
+
+<span class="c1"># Use the ArrayTranslator to create our file</span>
+<span class="c1"># Let&#39;s define our HDF55 file. This is the name of a file we&#39;ll write into</span>
+<span class="n">h5_path</span> <span class="o">=</span> <span class="s1">&#39;cookbook_data.h5&#39;</span>
+
+<span class="c1"># Now let&#39;s use the ArrayTranslator to write our data to an HDF5 file</span>
+<span class="n">tran</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">numpy_translator</span><span class="o">.</span><span class="n">ArrayTranslator</span><span class="p">()</span>
+<span class="n">tran</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">h5_path</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="n">data_reshape</span><span class="p">,</span> <span class="s1">&#39;Height&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span>
+               <span class="n">pos_dims</span><span class="p">,</span> <span class="n">spec_dims</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/sidpy/sid/translator.py:42: FutureWarning: Consider using sidpy.Reader instead of sidpy.Translator if possible and contribute your reader to ScopeReaders
+  warn(&#39;Consider using sidpy.Reader instead of sidpy.Translator if &#39;
+/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/pyUSID/io/hdf_utils/simple.py:1072: UserWarning: In the future write_ind_val_dsets will default to requiring dimensions to be arranged from slowest to fastest varying
+  warn(&#39;In the future write_ind_val_dsets will default to requiring dimensions to be arranged from slowest to fastest varying&#39;)
+/opt/hostedtoolcache/Python/3.9.21/x64/lib/python3.9/site-packages/pyUSID/io/hdf_utils/simple.py:1129: UserWarning: pyUSID.io.hdf_utils.simple.write_ind_val_dsets no longer createsregion references for each dimension. Please use pyUSID.io.reg_ref.write_region_references to manually create region references
+  warn(&#39;pyUSID.io.hdf_utils.simple.write_ind_val_dsets no longer creates&#39;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&#39;cookbook_data.h5&#39;
+</pre></div></div>
+</div>
+<p>That’s it! We’re done. It’s just a few lines of code to convert a random matrix of data into a USID format. We just need to know a little about our data. Now that our cookbook_data is full of delicious data, let’s crack it open.</p>
+<p>We can open the file by using the h5py command</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">h5_file</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">h5_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r+&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">print_tree</span></code> shows all the contents in this HDF5 file</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sidpy</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">print_tree</span><span class="p">(</span><span class="n">h5_file</span><span class="p">,</span> <span class="n">rel_paths</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+/
+Measurement_000
+Measurement_000/Channel_000
+Measurement_000/Channel_000/Position_Indices
+Measurement_000/Channel_000/Position_Values
+Measurement_000/Channel_000/Raw_Data
+Measurement_000/Channel_000/Spectroscopic_Indices
+Measurement_000/Channel_000/Spectroscopic_Values
+</pre></div></div>
+</div>
+<p>Our data are in the <code class="docutils literal notranslate"><span class="pre">Raw_Data</span></code> dataset. How do we extract our data? First let’s print all the Main datasets</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">usid</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">get_all_main</span><span class="p">(</span><span class="n">h5_file</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&lt;HDF5 dataset &#34;Raw_Data&#34;: shape (100, 100), type &#34;&lt;f8&#34;&gt;
+located at:
+        /Measurement_000/Channel_000/Raw_Data
+Data contains:
+        Height (m)
+Data dimensions and original shape:
+Position Dimensions:
+        Cols - size: 10
+        Rows - size: 10
+Spectroscopic Dimensions:
+        Time - size: 100
+Data Type:
+        float64]
+</pre></div></div>
+</div>
+<p>This is a list of all the Main datasets. In this case there’s only a single one. So we can access our data in two ways:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Option 1:</span>
+<span class="c1"># Access a specific dataset in the list of Main datasets</span>
+<span class="n">data_usid</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">get_all_main</span><span class="p">(</span><span class="n">h5_file</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="c1"># Option 2:</span>
+<span class="c1"># We could highlight the path in the tree and access it directly</span>
+<span class="n">data_usid</span> <span class="o">=</span> <span class="n">h5_file</span><span class="p">[</span><span class="s1">&#39;Measurement_000/Channel_000/Raw_Data&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p>Note that reading the dataset in this manual manner only gives us the standard <code class="docutils literal notranslate"><span class="pre">h5py.Dataset</span></code>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">data_usid</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;HDF5 dataset &#34;Raw_Data&#34;: shape (100, 100), type &#34;&lt;f8&#34;&gt;
+</pre></div></div>
+</div>
+<p>Lastly, let’s upgrade from <code class="docutils literal notranslate"><span class="pre">h5py.Dataset</span></code> to a <code class="docutils literal notranslate"><span class="pre">USIDataset</span></code></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data_usid</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">USIDataset</span><span class="p">(</span><span class="n">data_usid</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">data_usid</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;HDF5 dataset &#34;Raw_Data&#34;: shape (100, 100), type &#34;&lt;f8&#34;&gt;
+located at:
+        /Measurement_000/Channel_000/Raw_Data
+Data contains:
+        Height (m)
+Data dimensions and original shape:
+Position Dimensions:
+        Cols - size: 10
+        Rows - size: 10
+Spectroscopic Dimensions:
+        Time - size: 100
+Data Type:
+        float64
+</pre></div></div>
+</div>
+</section>
+<section id="Exploring-a-USID-Dataset">
+<h3>Exploring a USID Dataset<a class="headerlink" href="#Exploring-a-USID-Dataset" title="Link to this heading">¶</a></h3>
+<p>There are lots of advantages to this kind of dataset</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Let&#39;s take a look via the handy visualize option</span>
+<span class="c1"># What is the signal vs time at pixel (5,3)</span>
+<span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">data_usid</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span><span class="n">slice_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Rows&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;Cols&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_user_guide_ten_mins_to_pyusid_22_0.png" src="../../_images/notebooks_user_guide_ten_mins_to_pyusid_22_0.png" />
+</div>
+</div>
+<p>To access our data in the HDF5 dataset directly, we can use the <code class="docutils literal notranslate"><span class="pre">[()]</span></code> shortcut</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">two_dim_form</span> <span class="o">=</span> <span class="n">data_usid</span><span class="p">[()]</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">two_dim_form</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">two_dim_form</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;class &#39;numpy.ndarray&#39;&gt;
+(100, 100)
+</pre></div></div>
+</div>
+<p>Given that we are working on 3D dataset, we want reshape the flattened data present in the HDF5 dataset back to the original form of (10,10,100)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n_dim_form</span> <span class="o">=</span> <span class="n">data_usid</span><span class="o">.</span><span class="n">get_n_dim_form</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">n_dim_form</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">n_dim_form</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;class &#39;numpy.ndarray&#39;&gt;
+(10, 10, 100)
+</pre></div></div>
+</div>
+<p>What are the properties of our data?</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Rows = </span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data_usid</span><span class="o">.</span><span class="n">get_pos_values</span><span class="p">(</span><span class="s1">&#39;Rows&#39;</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Cols = </span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data_usid</span><span class="o">.</span><span class="n">get_pos_values</span><span class="p">(</span><span class="s1">&#39;Cols&#39;</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time = </span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data_usid</span><span class="o">.</span><span class="n">get_spec_values</span><span class="p">(</span><span class="s1">&#39;Time&#39;</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Rows =
+[0.e+00 1.e-09 2.e-09 3.e-09 4.e-09 5.e-09 6.e-09 7.e-09 8.e-09 9.e-09]
+Cols =
+[0.e+00 1.e-09 2.e-09 3.e-09 4.e-09 5.e-09 6.e-09 7.e-09 8.e-09 9.e-09]
+Time =
+[0.   0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.1  0.11 0.12 0.13
+ 0.14 0.15 0.16 0.17 0.18 0.19 0.2  0.21 0.22 0.23 0.24 0.25 0.26 0.27
+ 0.28 0.29 0.3  0.31 0.32 0.33 0.34 0.35 0.36 0.37 0.38 0.39 0.4  0.41
+ 0.42 0.43 0.44 0.45 0.46 0.47 0.48 0.49 0.5  0.51 0.52 0.53 0.54 0.55
+ 0.56 0.57 0.58 0.59 0.6  0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68 0.69
+ 0.7  0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79 0.8  0.81 0.82 0.83
+ 0.84 0.85 0.86 0.87 0.88 0.89 0.9  0.91 0.92 0.93 0.94 0.95 0.96 0.97
+ 0.98 0.99]
+</pre></div></div>
+</div>
+<p>Attributes of the data when it was written</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sidpy</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">get_attributes</span><span class="p">(</span><span class="n">data_usid</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;Position_Indices&#39;: &lt;HDF5 object reference&gt;,
+ &#39;Position_Values&#39;: &lt;HDF5 object reference&gt;,
+ &#39;Spectroscopic_Indices&#39;: &lt;HDF5 object reference&gt;,
+ &#39;Spectroscopic_Values&#39;: &lt;HDF5 object reference&gt;,
+ &#39;machine_id&#39;: &#39;fv-az1691-747&#39;,
+ &#39;platform&#39;: &#39;Linux-6.8.0-1021-azure-x86_64-with-glibc2.39&#39;,
+ &#39;pyUSID_version&#39;: &#39;0.0.12&#39;,
+ &#39;quantity&#39;: &#39;Height&#39;,
+ &#39;sidpy_version&#39;: &#39;0.12.6&#39;,
+ &#39;timestamp&#39;: &#39;2025_03_07-22_01_46&#39;,
+ &#39;units&#39;: &#39;m&#39;}
+</pre></div></div>
+</div>
+<p>To get the path of the Main dataset within the HDF5 file</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">data_usid</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+/Measurement_000/Channel_000/Raw_Data
+</pre></div></div>
+</div>
+<p>And to get the parent folder of this Dataset, you use</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">data_usid</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+/Measurement_000/Channel_000
+</pre></div></div>
+</div>
+</section>
+<section id="Adding-some-new-data">
+<h3>Adding some new data<a class="headerlink" href="#Adding-some-new-data" title="Link to this heading">¶</a></h3>
+<p>Let’s say we process our data using some method and want to save that process. For the sake of argument, we’ll just make a matrix that’s the magnitude^2</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data_proc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data_usid</span><span class="p">[()]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Let’s create a new group within this file to store our results</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">result_group</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">create_indexed_group</span><span class="p">(</span><span class="n">h5_file</span><span class="p">[</span><span class="n">data_usid</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">name</span><span class="p">],</span> <span class="s1">&#39;Magnitude&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result_group</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;HDF5 group &#34;/Measurement_000/Channel_000/Magnitude_000&#34; (0 members)&gt;
+</pre></div></div>
+</div>
+<p>The “indexed” part means it appends 000, 001, etc if we do this many times Many built-in pyUSID and pycroscopy command do this so we don’t overwrite old results. Because of the power of HDF5 we can go back to old processing and see!</p>
+<p>There’s an analogous command create_results_group if you’d like</p>
+<p>Anyway let’s print our tree out for good measure</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sidpy</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">print_tree</span><span class="p">(</span><span class="n">h5_file</span><span class="p">,</span> <span class="n">rel_paths</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+/
+Measurement_000
+Measurement_000/Channel_000
+Measurement_000/Channel_000/Magnitude_000
+Measurement_000/Channel_000/Position_Indices
+Measurement_000/Channel_000/Position_Values
+Measurement_000/Channel_000/Raw_Data
+Measurement_000/Channel_000/Spectroscopic_Indices
+Measurement_000/Channel_000/Spectroscopic_Values
+</pre></div></div>
+</div>
+<p>Now we want to add our data. But we want to add some attributes as well to describe what we’ve done to our data. Attributes are a dictionary, so let’s create one.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Method&#39;</span><span class="p">:</span> <span class="s1">&#39;Magnitude_Squared&#39;</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;m^2&#39;</span><span class="p">}</span>
+<span class="n">sidpy</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">write_simple_attrs</span><span class="p">(</span><span class="n">result_group</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now, let’s write a new main dataset</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data_result</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">write_main_dataset</span><span class="p">(</span><span class="n">result_group</span><span class="p">,</span>
+                                                <span class="n">data_proc</span><span class="p">,</span>
+                                                <span class="s1">&#39;Data Squared&#39;</span><span class="p">,</span>
+                                                <span class="s1">&#39;Height Squared&#39;</span><span class="p">,</span> <span class="s1">&#39;m^2&#39;</span><span class="p">,</span>
+                                                <span class="n">pos_dims</span><span class="p">,</span>
+                                                <span class="n">spec_dims</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>This populates our new folder with the new data! Let’s look for the Magnitude folder in our tree:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sidpy</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">print_tree</span><span class="p">(</span><span class="n">h5_file</span><span class="p">,</span> <span class="n">rel_paths</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+/
+Measurement_000
+Measurement_000/Channel_000
+Measurement_000/Channel_000/Magnitude_000
+Measurement_000/Channel_000/Magnitude_000/Data Squared
+Measurement_000/Channel_000/Magnitude_000/Position_Indices
+Measurement_000/Channel_000/Magnitude_000/Position_Values
+Measurement_000/Channel_000/Magnitude_000/Spectroscopic_Indices
+Measurement_000/Channel_000/Magnitude_000/Spectroscopic_Values
+Measurement_000/Channel_000/Position_Indices
+Measurement_000/Channel_000/Position_Values
+Measurement_000/Channel_000/Raw_Data
+Measurement_000/Channel_000/Spectroscopic_Indices
+Measurement_000/Channel_000/Spectroscopic_Values
+</pre></div></div>
+</div>
+<p>If we get all the Main datasets, we see a new dataset pop up in our list.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">usid</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">get_all_main</span><span class="p">(</span><span class="n">h5_file</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&lt;HDF5 dataset &#34;Data Squared&#34;: shape (100, 100), type &#34;&lt;f8&#34;&gt;
+ located at:
+        /Measurement_000/Channel_000/Magnitude_000/Data Squared
+ Data contains:
+        Height Squared (m^2)
+ Data dimensions and original shape:
+ Position Dimensions:
+        Cols - size: 10
+        Rows - size: 10
+ Spectroscopic Dimensions:
+        Time - size: 100
+ Data Type:
+        float64,
+ &lt;HDF5 dataset &#34;Raw_Data&#34;: shape (100, 100), type &#34;&lt;f8&#34;&gt;
+ located at:
+        /Measurement_000/Channel_000/Raw_Data
+ Data contains:
+        Height (m)
+ Data dimensions and original shape:
+ Position Dimensions:
+        Cols - size: 10
+        Rows - size: 10
+ Spectroscopic Dimensions:
+        Time - size: 100
+ Data Type:
+        float64]
+</pre></div></div>
+</div>
+<p>And to verify the attributes for the data:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sidpy</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">get_attributes</span><span class="p">(</span><span class="n">data_result</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;Position_Indices&#39;: &lt;HDF5 object reference&gt;,
+ &#39;Position_Values&#39;: &lt;HDF5 object reference&gt;,
+ &#39;Spectroscopic_Indices&#39;: &lt;HDF5 object reference&gt;,
+ &#39;Spectroscopic_Values&#39;: &lt;HDF5 object reference&gt;,
+ &#39;machine_id&#39;: &#39;fv-az1691-747&#39;,
+ &#39;platform&#39;: &#39;Linux-6.8.0-1021-azure-x86_64-with-glibc2.39&#39;,
+ &#39;pyUSID_version&#39;: &#39;0.0.12&#39;,
+ &#39;quantity&#39;: &#39;Height Squared&#39;,
+ &#39;sidpy_version&#39;: &#39;0.12.6&#39;,
+ &#39;timestamp&#39;: &#39;2025_03_07-22_01_46&#39;,
+ &#39;units&#39;: &#39;m^2&#39;}
+</pre></div></div>
+</div>
+<p>… and the data_group:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sidpy</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">get_attributes</span><span class="p">(</span><span class="n">data_result</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;Method&#39;: &#39;Magnitude_Squared&#39;,
+ &#39;machine_id&#39;: &#39;fv-az1691-747&#39;,
+ &#39;platform&#39;: &#39;Linux-6.8.0-1021-azure-x86_64-with-glibc2.39&#39;,
+ &#39;pyUSID_version&#39;: &#39;0.0.12&#39;,
+ &#39;sidpy_version&#39;: &#39;0.12.6&#39;,
+ &#39;timestamp&#39;: &#39;2025_03_07-22_01_46&#39;,
+ &#39;units&#39;: &#39;m^2&#39;}
+</pre></div></div>
+</div>
+<p>Lastly, to verify this dataset is a Main dataset (with position and spectral dimensions)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sidpy</span><span class="o">.</span><span class="n">hdf_utils</span><span class="o">.</span><span class="n">get_attributes</span><span class="p">(</span><span class="n">data_result</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;Position_Indices&#39;: &lt;HDF5 object reference&gt;,
+ &#39;Position_Values&#39;: &lt;HDF5 object reference&gt;,
+ &#39;Spectroscopic_Indices&#39;: &lt;HDF5 object reference&gt;,
+ &#39;Spectroscopic_Values&#39;: &lt;HDF5 object reference&gt;,
+ &#39;machine_id&#39;: &#39;fv-az1691-747&#39;,
+ &#39;platform&#39;: &#39;Linux-6.8.0-1021-azure-x86_64-with-glibc2.39&#39;,
+ &#39;pyUSID_version&#39;: &#39;0.0.12&#39;,
+ &#39;quantity&#39;: &#39;Height Squared&#39;,
+ &#39;sidpy_version&#39;: &#39;0.12.6&#39;,
+ &#39;timestamp&#39;: &#39;2025_03_07-22_01_46&#39;,
+ &#39;units&#39;: &#39;m^2&#39;}
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2018, Suhas Somnath and Chris R. Smith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

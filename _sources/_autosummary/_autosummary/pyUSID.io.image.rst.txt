@@ -1,0 +1,18 @@
+pyUSID.io.image
+===============
+
+.. automodule:: pyUSID.io.image
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      read_image
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      ImageTranslator
+   

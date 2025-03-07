@@ -1,0 +1,489 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Utilities that assist in building USID Ancillary datasets manually &mdash; pyUSID 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Utilities for writing h5USID files" href="hdf_utils_write.html" />
+    <link rel="prev" title="ArrayTranslator for translating from proprietary file formats" href="array_translator.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            pyUSID
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pyUSID</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../about.html">pyUSID</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">Frequently asked questions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contact.html">Contact us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../credits.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scale_to_hpc.html">Scaling to Clusters</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../_autosummary/pyUSID.html">pyUSID</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="usi_dataset.html">The USIDataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="array_translator.html">ArrayTranslator for translating from proprietary file formats</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Utilities that assist in building USID Ancillary datasets manually</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Introduction">Introduction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Recommended-pre-requisite-reading">Recommended pre-requisite reading</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#What-to-read-after-this">What to read after this</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Import-necessary-packages">Import necessary packages</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Building-Ancillary-datasets">Building Ancillary datasets</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#make_indices_matrix()">make_indices_matrix()</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#build_ind_val_matrices()">build_ind_val_matrices()</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#create_spec_inds_from_vals()">create_spec_inds_from_vals()</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#get_aux_dset_slicing()">get_aux_dset_slicing()</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Dimension">Dimension</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Misc-writing-utilities">Misc writing utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#calc_chunks()">calc_chunks()</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="hdf_utils_write.html">Utilities for writing h5USID files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="process.html">Formalizing Data Processing using the Process Class</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">pyUSID</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">User Guide</a></li>
+      <li class="breadcrumb-item active">Utilities that assist in building USID Ancillary datasets manually</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/notebooks/user_guide/anc_build_utils.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+</pre></div>
+</div>
+</div>
+<section id="Utilities-that-assist-in-building-USID-Ancillary-datasets-manually">
+<h1>Utilities that assist in building USID Ancillary datasets manually<a class="headerlink" href="#Utilities-that-assist-in-building-USID-Ancillary-datasets-manually" title="Link to this heading">¶</a></h1>
+<p><strong>Suhas Somnath</strong></p>
+<p>4/18/2018</p>
+<p><strong>This document illustrates certain helper functions that simplify building ancillary Universal Spectroscopy and Imaging Data (USID) datasets manually</strong></p>
+<section id="Introduction">
+<h2>Introduction<a class="headerlink" href="#Introduction" title="Link to this heading">¶</a></h2>
+<p>The USID model takes a unique approach towards towards storing scientific observational data. Several helper functions are necessary to simplify the actual file writing process. In some circunstances, the data does not have an N-dimensonal form and we therefore cannot use the <code class="docutils literal notranslate"><span class="pre">pyUSID.Dimension</span></code> objects to define the ancillary Datasets. <code class="docutils literal notranslate"><span class="pre">pyUSID.anc_build_utils</span></code> is home for those utilities that assist in manually building ancillary USID datasets but do not directly interact with HDF5 files (as
+in <code class="docutils literal notranslate"><span class="pre">pyUSID.hdf_utils</span></code>).</p>
+<p><strong>Note that most of these are low-level functions that are used by popular high level functions in pyUSID.hdf_utils to simplify the writing of datasets.</strong></p>
+<section id="Recommended-pre-requisite-reading">
+<h3>Recommended pre-requisite reading<a class="headerlink" href="#Recommended-pre-requisite-reading" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pycroscopy.github.io/USID/usid_model.html">Universal Spectroscopic and Imaging Data (USID) model</a></p></li>
+</ul>
+</section>
+<section id="What-to-read-after-this">
+<h3>What to read after this<a class="headerlink" href="#What-to-read-after-this" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="./h5py_primer.html">Crash course on HDF5 and h5py</a></p></li>
+<li><p>Utilities for <a class="reference external" href="./hdf_utils_read.html">reading</a> and <a class="reference external" href="./hdf_utils_write.html">writing</a> h5USID files using pyUSID</p></li>
+</ul>
+</section>
+<section id="Import-necessary-packages">
+<h3>Import necessary packages<a class="headerlink" href="#Import-necessary-packages" title="Link to this heading">¶</a></h3>
+<p>We only need a handful of packages besides pyUSID to illustrate the functions in <code class="docutils literal notranslate"><span class="pre">pyUSID.anc_build_utils</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">numpy</span></code> - for numerical operations on arrays in memory</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> - basic visualization of data</p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">unicode_literals</span>
+<span class="c1"># Warning package in case something goes wrong</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">install</span><span class="p">(</span><span class="n">package</span><span class="p">):</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="n">package</span><span class="p">])</span>
+<span class="c1"># Package for downloading online files:</span>
+<span class="c1"># Finally import pyUSID.</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pyUSID</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">usid</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;pyUSID not found.  Will install with pip.&#39;</span><span class="p">)</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pip</span>
+    <span class="n">install</span><span class="p">(</span><span class="s1">&#39;pyUSID&#39;</span><span class="p">)</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pyUSID</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">usid</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="Building-Ancillary-datasets">
+<h2>Building Ancillary datasets<a class="headerlink" href="#Building-Ancillary-datasets" title="Link to this heading">¶</a></h2>
+<p>The USID model uses pairs of <code class="docutils literal notranslate"><span class="pre">ancillary</span> <span class="pre">matrices</span></code> to support the instrument-agnostic and compact representation of multidimensional datasets. While the creation of <code class="docutils literal notranslate"><span class="pre">ancillary</span> <span class="pre">datasets</span></code> is straightforward when the number of position and spectroscopic dimensions are relatively small (0-2), one needs to be careful when building these <code class="docutils literal notranslate"><span class="pre">ancillary</span> <span class="pre">datasets</span></code> for datasets with large number of position / spectroscopic dimensions (&gt; 2). The main challenge involves the careful tiling and repetition
+of unit vectors for each dimension with respect to the sizes of all other dimensions. Fortunately, <code class="docutils literal notranslate"><span class="pre">pyUSID.anc_build_utils</span></code> has many handy functions that solve this problem.</p>
+<p>In order to demonstrate the functions, lets say that we are working on an example <code class="docutils literal notranslate"><span class="pre">Main</span> <span class="pre">dataset</span></code> that has three spectroscopic dimensions (<code class="docutils literal notranslate"><span class="pre">Bias</span></code>, <code class="docutils literal notranslate"><span class="pre">Field</span></code>, <code class="docutils literal notranslate"><span class="pre">Cycle</span></code>). The Bias dimension varies as a bi-polar triangular waveform. This waveform is repeated for two Fields over 3 Cycles meaning that the <code class="docutils literal notranslate"><span class="pre">Field</span></code> and <code class="docutils literal notranslate"><span class="pre">Cycle</span></code> dimensions are far simpler than the <code class="docutils literal notranslate"><span class="pre">Bias</span></code> dimension in that they have linearly increasing / decreasing values.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">max_v</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">half_pts</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">bi_triang</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">max_v</span><span class="p">,</span> <span class="n">max_v</span><span class="p">,</span> <span class="n">half_pts</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                               <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">max_v</span><span class="p">,</span> <span class="o">-</span><span class="n">max_v</span><span class="p">,</span> <span class="n">half_pts</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">))),</span> <span class="o">-</span><span class="n">half_pts</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">cycles</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+<span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="n">dim_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Bias&#39;</span><span class="p">,</span> <span class="s1">&#39;Field&#39;</span><span class="p">,</span> <span class="s1">&#39;Cycles&#39;</span><span class="p">]</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">vec</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="o">.</span><span class="n">flat</span><span class="p">,</span> <span class="n">dim_names</span><span class="p">,</span> <span class="p">[</span><span class="n">bi_triang</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">cycles</span><span class="p">]):</span>
+    <span class="n">axis</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="s1">&#39;o-&#39;</span><span class="p">)</span>
+    <span class="n">axis</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Unit values for each dimension&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.05</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_user_guide_anc_build_utils_5_0.png" src="../../_images/notebooks_user_guide_anc_build_utils_5_0.png" />
+</div>
+</div>
+<section id="make_indices_matrix()">
+<h3>make_indices_matrix()<a class="headerlink" href="#make_indices_matrix()" title="Link to this heading">¶</a></h3>
+<p>One half of the work for generating the ancillary datasets is generating the <code class="docutils literal notranslate"><span class="pre">indices</span> <span class="pre">matrix</span></code>. The <code class="docutils literal notranslate"><span class="pre">make_indices_matrix()</span></code> function solves this problem. All one needs to do is supply a list with the lengths of each dimension. The result is a 2D matrix of shape: (3 dimensions, points in <code class="docutils literal notranslate"><span class="pre">Bias</span></code>[<code class="docutils literal notranslate"><span class="pre">16</span></code>] * points in <code class="docutils literal notranslate"><span class="pre">Field</span></code>[<code class="docutils literal notranslate"><span class="pre">2</span></code>] * points in <code class="docutils literal notranslate"><span class="pre">Cycle</span></code>[<code class="docutils literal notranslate"><span class="pre">3</span></code>]) = <code class="docutils literal notranslate"><span class="pre">(3,</span> <span class="pre">96)</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inds</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">anc_build_utils</span><span class="o">.</span><span class="n">make_indices_matrix</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">bi_triang</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">fields</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">cycles</span><span class="p">)],</span> <span class="n">is_position</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Generated indices of shape: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">inds</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+<span class="c1"># The plots below show a visual representation of the indices for each dimension:</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">vec</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="o">.</span><span class="n">flat</span><span class="p">,</span> <span class="n">dim_names</span><span class="p">,</span> <span class="n">inds</span><span class="p">):</span>
+    <span class="n">axis</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">vec</span><span class="p">)</span>
+    <span class="n">axis</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Indices for each dimension&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.05</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Generated indices of shape: (3, 96)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_user_guide_anc_build_utils_7_1.png" src="../../_images/notebooks_user_guide_anc_build_utils_7_1.png" />
+</div>
+</div>
+</section>
+<section id="build_ind_val_matrices()">
+<h3>build_ind_val_matrices()<a class="headerlink" href="#build_ind_val_matrices()" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">make_indices_matrix()</span></code> is a very handy function but it only solves one of the problems - the indices matrix. We also need the matrix with the values tiled and repeated in the same manner. Perhaps one of the most useful functions is <code class="docutils literal notranslate"><span class="pre">build_ind_val_matrices()</span></code> which uses just the values over which each dimension is varied to automatically generate the indices and values matrices that form the ancillary datasets.</p>
+<p>In order to generate the indices and values matrices, we would just need to provide the list of values over which these dimensions are varied to <code class="docutils literal notranslate"><span class="pre">build_ind_val_matrices()</span></code>. The results are two matrices - one for the indices and the other for the values, of the same shape <code class="docutils literal notranslate"><span class="pre">(3,</span> <span class="pre">96)</span></code>.</p>
+<p>As mentioned in our document about the <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">structuring</span> <span class="pre">&lt;../../data_format.html&gt;</span></code>_, the <code class="docutils literal notranslate"><span class="pre">Bias</span></code> would be in the first row, followed by <code class="docutils literal notranslate"><span class="pre">Field</span></code>, finally followed by <code class="docutils literal notranslate"><span class="pre">Cycle</span></code>. The plots below illustrate what the indices and values look like for each dimension. For example, notice how the bipolar triangular bias vector has been repeated 2 (<code class="docutils literal notranslate"><span class="pre">Field</span></code>) * 3 (<code class="docutils literal notranslate"><span class="pre">Cycle</span></code>) times. Also note how the indices vector is a saw-tooth waveform that also repeats in the same manner. The repeated + tiled
+indices and values vectors for <code class="docutils literal notranslate"><span class="pre">Cycle</span></code> and <code class="docutils literal notranslate"><span class="pre">Field</span></code> look the same / very similar since they were simple linearly increasing values to start with.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inds</span><span class="p">,</span> <span class="n">vals</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">anc_build_utils</span><span class="o">.</span><span class="n">build_ind_val_matrices</span><span class="p">([</span><span class="n">bi_triang</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">cycles</span><span class="p">],</span> <span class="n">is_spectral</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Indices and values of shape: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">inds</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">vec</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="o">.</span><span class="n">flat</span><span class="p">,</span> <span class="n">dim_names</span><span class="p">,</span> <span class="n">inds</span><span class="p">):</span>
+    <span class="n">axis</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">vec</span><span class="p">)</span>
+    <span class="n">axis</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Indices for each dimension&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.05</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">vec</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="o">.</span><span class="n">flat</span><span class="p">,</span> <span class="n">dim_names</span><span class="p">,</span> <span class="n">vals</span><span class="p">):</span>
+    <span class="n">axis</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">vec</span><span class="p">)</span>
+    <span class="n">axis</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Values for each dimension&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.05</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Indices and values of shape: (3, 96)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_user_guide_anc_build_utils_9_1.png" src="../../_images/notebooks_user_guide_anc_build_utils_9_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_user_guide_anc_build_utils_9_2.png" src="../../_images/notebooks_user_guide_anc_build_utils_9_2.png" />
+</div>
+</div>
+</section>
+<section id="create_spec_inds_from_vals()">
+<h3>create_spec_inds_from_vals()<a class="headerlink" href="#create_spec_inds_from_vals()" title="Link to this heading">¶</a></h3>
+<p>When writing analysis functions or classes wherein one or more (typically spectroscopic) dimensions are dropped as a consequence of dimensionality reduction, new ancillary spectroscopic datasets need to be generated when writing the reduced data back to the file. <code class="docutils literal notranslate"><span class="pre">create_spec_inds_from_vals()</span></code> is a handy function when we need to generate the indices matrix that corresponds to a values matrix. For this example, lets assume that we only have the values matrix but need to generate the indices
+matrix from this:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">inds</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">anc_build_utils</span><span class="o">.</span><span class="n">create_spec_inds_from_vals</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">axis</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">vec</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="o">.</span><span class="n">flat</span><span class="p">,</span> <span class="n">dim_names</span><span class="p">,</span> <span class="n">inds</span><span class="p">):</span>
+    <span class="n">axis</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">vec</span><span class="p">)</span>
+    <span class="n">axis</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Indices for each dimension&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.05</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/notebooks_user_guide_anc_build_utils_11_0.png" src="../../_images/notebooks_user_guide_anc_build_utils_11_0.png" />
+</div>
+</div>
+</section>
+<section id="get_aux_dset_slicing()">
+<h3>get_aux_dset_slicing()<a class="headerlink" href="#get_aux_dset_slicing()" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Region</span> <span class="pre">references</span></code> are a handy feature in HDF5 that allow users to refer to a certain section of data within a dataset by name rather than the indices that define the region of interest.</p>
+<p>In USID, we use region references to define the row or column in the <code class="docutils literal notranslate"><span class="pre">ancillary</span> <span class="pre">dataset</span></code> that corresponds to each dimension by its name. In other words, if we only wanted the <code class="docutils literal notranslate"><span class="pre">Field</span></code> dimension we could directly get the data corresponding to this dimension without having to remember or figure out the index in which this dimension exists.</p>
+<p>Let’s take the example of the Field dimension which occurs at index 1 in the <code class="docutils literal notranslate"><span class="pre">(3,</span> <span class="pre">96)</span></code> shaped spectroscopic index / values matrix. We could extract the <code class="docutils literal notranslate"><span class="pre">Field</span></code> dimension from the 2D matrix by slicing each dimension using slice objects . We need the second row so the first dimension would be sliced as <code class="docutils literal notranslate"><span class="pre">slice(start=1,</span> <span class="pre">stop=2)</span></code>. We need all the colummns in the second dimension so we would slice as <code class="docutils literal notranslate"><span class="pre">slice(start=None,</span> <span class="pre">stop=None)</span></code> meaning that we need all the columns. Doing this by hand for
+each dimension is clearly tedious.</p>
+<p><code class="docutils literal notranslate"><span class="pre">get_aux_dset_slicing()</span></code> helps generate the instructions for region references for each dimension in an ancillary dataset. The instructions for each region reference in <code class="docutils literal notranslate"><span class="pre">h5py</span></code> are defined by tuples of slice objects. Lets see the region-reference instructions that this function provides for our aforementioned example dataset with the three spectroscopic dimensions.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Region references slicing instructions for Spectroscopic dimensions:&#39;</span><span class="p">)</span>
+<span class="n">ret_val</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">anc_build_utils</span><span class="o">.</span><span class="n">get_aux_dset_slicing</span><span class="p">(</span><span class="n">dim_names</span><span class="p">,</span> <span class="n">is_spectroscopic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">ret_val</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Region references slicing instructions for Position dimensions:&#39;</span><span class="p">)</span>
+<span class="n">ret_val</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">anc_build_utils</span><span class="o">.</span><span class="n">get_aux_dset_slicing</span><span class="p">([</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">],</span> <span class="n">is_spectroscopic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">ret_val</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Region references slicing instructions for Spectroscopic dimensions:
+Bias : (slice(0, 1, None), slice(None, None, None))
+Field : (slice(1, 2, None), slice(None, None, None))
+Cycles : (slice(2, 3, None), slice(None, None, None))
+
+Region references slicing instructions for Position dimensions:
+X : (slice(None, None, None), slice(0, 1, None))
+Y : (slice(None, None, None), slice(1, 2, None))
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="Dimension">
+<h2>Dimension<a class="headerlink" href="#Dimension" title="Link to this heading">¶</a></h2>
+<p>In USID, <code class="docutils literal notranslate"><span class="pre">position</span></code> and <code class="docutils literal notranslate"><span class="pre">spectroscopic</span> <span class="pre">dimensions</span></code> are defined using some basic information that will be incorporated in <code class="docutils literal notranslate"><span class="pre">Dimension</span></code> objects that contain three vital pieces of information:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code> of the dimension</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">units</span></code> for the dimension</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">values</span></code>:</p>
+<ul>
+<li><p>These can be the actual values over which the dimension was varied</p></li>
+<li><p>or number of steps in case of linearly varying dimensions such as ‘Cycle’ below</p></li>
+</ul>
+</li>
+</ul>
+<p>These objects will be heavily used for creating <code class="docutils literal notranslate"><span class="pre">Main</span></code> or <code class="docutils literal notranslate"><span class="pre">ancillary</span> <span class="pre">datasets</span></code> in <code class="docutils literal notranslate"><span class="pre">pyUSID.hdf_utils</span></code> and even to set up interactive jupyter Visualizers in <code class="docutils literal notranslate"><span class="pre">pyUSID.USIDataset</span></code>.</p>
+<p>Note that the <code class="docutils literal notranslate"><span class="pre">Dimension</span></code> objects in the lists for <code class="docutils literal notranslate"><span class="pre">Position</span></code> and <code class="docutils literal notranslate"><span class="pre">Spectroscopic</span></code> must be arranged from fastest varying to slowest varying to mimic how the data is actually arranged. For example, in this example, there are multiple bias points per field and multiple fields per cycle. Thus, the bias changes faster than the field and the field changes faster than the cycle. Therefore, the <code class="docutils literal notranslate"><span class="pre">Bias</span></code> must precede <code class="docutils literal notranslate"><span class="pre">Field</span></code> which will precede <code class="docutils literal notranslate"><span class="pre">Cycle</span></code>. Let’s assume that we were describing the
+spectroscopic dimensions for this example dataset to some other pyUSID function , we would describe the spectroscopic dimensions as:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">spec_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">usid</span><span class="o">.</span><span class="n">Dimension</span><span class="p">(</span><span class="s1">&#39;Bias&#39;</span><span class="p">,</span> <span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="n">bi_triang</span><span class="p">),</span>
+             <span class="n">usid</span><span class="o">.</span><span class="n">Dimension</span><span class="p">(</span><span class="s1">&#39;Fields&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">fields</span><span class="p">),</span>
+             <span class="c1"># for the sake of example, since we know that cycles is linearly increasing from 0 with a step size of 1,</span>
+             <span class="c1"># we can specify such a simply dimension via just the length of that dimension:</span>
+             <span class="n">usid</span><span class="o">.</span><span class="n">dimension</span><span class="o">.</span><span class="n">Dimension</span><span class="p">(</span><span class="s1">&#39;Cycle&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cycles</span><span class="p">))]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">AttributeError</span>                            Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[8], line 5</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> spec_dims <span style="color: rgb(98,98,98)">=</span> [usid<span style="color: rgb(98,98,98)">.</span>Dimension(<span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">Bias</span><span style="color: rgb(175,0,0)">&#39;</span>, <span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">V</span><span style="color: rgb(175,0,0)">&#39;</span>, bi_triang),
+<span class="ansi-green-intense-fg ansi-bold">      2</span>              usid<span style="color: rgb(98,98,98)">.</span>Dimension(<span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">Fields</span><span style="color: rgb(175,0,0)">&#39;</span>, <span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">&#39;</span>, fields),
+<span class="ansi-green-intense-fg ansi-bold">      3</span>              <span style="color: rgb(95,135,135)"># for the sake of example, since we know that cycles is linearly increasing from 0 with a step size of 1,</span>
+<span class="ansi-green-intense-fg ansi-bold">      4</span>              <span style="color: rgb(95,135,135)"># we can specify such a simply dimension via just the length of that dimension:</span>
+<span class="ansi-green-fg">----&gt; 5</span>              <span class="ansi-yellow-bg">usid</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">dimension</span><span style="color: rgb(98,98,98)">.</span>Dimension(<span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">Cycle</span><span style="color: rgb(175,0,0)">&#39;</span>, <span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">&#39;</span>, <span style="color: rgb(0,135,0)">len</span>(cycles))]
+
+<span class="ansi-red-fg">AttributeError</span>: module &#39;pyUSID&#39; has no attribute &#39;dimension&#39;
+</pre></div></div>
+</div>
+<p>The application of the Dimension objects will be a lot more apparent in the document about the <a class="reference external" href="./hdf_utils_write.html">writing functions in pyUSID.hdf_utils</a>.</p>
+</section>
+<section id="Misc-writing-utilities">
+<h2>Misc writing utilities<a class="headerlink" href="#Misc-writing-utilities" title="Link to this heading">¶</a></h2>
+<section id="calc_chunks()">
+<h3>calc_chunks()<a class="headerlink" href="#calc_chunks()" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">h5py</span></code> package automatically (virtually) breaks up HDF5 datasets into contiguous <code class="docutils literal notranslate"><span class="pre">chunks</span></code> to speed up reading and writing of datasets. In certain situations the default mode of chunking may not result in the highest performance. In such cases, it helps in chunking the dataset manually. The <code class="docutils literal notranslate"><span class="pre">calc_chunks()</span></code> function helps in calculating appropriate chunk sizes for the dataset using some apriori knowledge about the way the data would be accessed, the size of each element in the dataset,
+maximum size for a single chunk, etc. The examples below illustrate a few ways on how to use this function:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">dimensions</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16384</span><span class="p">,</span> <span class="mi">16384</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">dtype_bytesize</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">ret_val</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">anc_build_utils</span><span class="o">.</span><span class="n">calc_chunks</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">dtype_bytesize</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ret_val</span><span class="p">)</span>
+
+<span class="n">dimensions</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16384</span><span class="p">,</span> <span class="mi">16384</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">dtype_bytesize</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">unit_chunks</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+<span class="n">max_mem</span> <span class="o">=</span> <span class="mi">50000</span>
+<span class="n">ret_val</span> <span class="o">=</span> <span class="n">usid</span><span class="o">.</span><span class="n">anc_build_utils</span><span class="o">.</span><span class="n">calc_chunks</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">dtype_bytesize</span><span class="p">,</span> <span class="n">unit_chunks</span><span class="o">=</span><span class="n">unit_chunks</span><span class="p">,</span> <span class="n">max_chunk_mem</span><span class="o">=</span><span class="n">max_mem</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ret_val</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(np.uint64(26), np.uint64(100))
+(np.uint64(57), np.uint64(224))
+</pre></div></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="array_translator.html" class="btn btn-neutral float-left" title="ArrayTranslator for translating from proprietary file formats" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="hdf_utils_write.html" class="btn btn-neutral float-right" title="Utilities for writing h5USID files" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2018, Suhas Somnath and Chris R. Smith.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

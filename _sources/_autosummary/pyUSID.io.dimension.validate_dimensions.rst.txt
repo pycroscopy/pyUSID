@@ -1,0 +1,6 @@
+pyUSID.io.dimension.validate\_dimensions
+========================================
+
+.. currentmodule:: pyUSID.io.dimension
+
+.. autofunction:: validate_dimensions

@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.assign\_group\_index
+================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: assign_group_index

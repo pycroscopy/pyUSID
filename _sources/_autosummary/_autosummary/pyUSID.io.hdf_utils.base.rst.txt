@@ -1,0 +1,14 @@
+pyUSID.io.hdf\_utils.base
+=========================
+
+.. automodule:: pyUSID.io.hdf_utils.base
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      get_h5_obj_refs
+      print_tree
+      write_book_keeping_attrs
+   

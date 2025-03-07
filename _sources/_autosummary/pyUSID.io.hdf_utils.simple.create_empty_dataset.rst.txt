@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.create\_empty\_dataset
+==================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: create_empty_dataset

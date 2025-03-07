@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.base.write\_book\_keeping\_attrs
+=====================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.base
+
+.. autofunction:: write_book_keeping_attrs

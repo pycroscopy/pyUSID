@@ -1,0 +1,26 @@
+pyUSID.io.array\_translator.ArrayTranslator
+===========================================
+
+.. currentmodule:: pyUSID.io.array_translator
+
+.. autoclass:: ArrayTranslator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~ArrayTranslator.is_valid_file
+      ~ArrayTranslator.translate
+   
+   
+
+   
+   
+   

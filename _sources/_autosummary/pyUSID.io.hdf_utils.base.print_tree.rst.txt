@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.base.print\_tree
+=====================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.base
+
+.. autofunction:: print_tree

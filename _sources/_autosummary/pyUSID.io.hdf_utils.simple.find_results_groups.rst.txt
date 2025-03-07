@@ -1,0 +1,6 @@
+pyUSID.io.hdf\_utils.simple.find\_results\_groups
+=================================================
+
+.. currentmodule:: pyUSID.io.hdf_utils.simple
+
+.. autofunction:: find_results_groups
