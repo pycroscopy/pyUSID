@@ -402,11 +402,11 @@ def reshape_from_n_dims(data_n_dim, h5_pos=None, h5_spec=None, verbose=False):
         ds_pos = make_indices_matrix(pos_dims, is_position=True)
 
     elif h5_spec is not None and h5_pos is not None:
-        if ds_pos.shape[0] * ds_spec.shape[1] != np.product(data_n_dim.shape):
+        if ds_pos.shape[0] * ds_spec.shape[1] != np.prod(data_n_dim.shape):
             raise ValueError('The product ({}) of the number of positions ({}) and spectroscopic ({}) observations is '
                              'not equal to the product ({}) of the data shape ({})'
                              '.'.format(ds_pos.shape[0] * ds_spec.shape[1], ds_pos.shape[0], ds_spec.shape[1],
-                                        np.product(data_n_dim.shape), data_n_dim.shape))
+                                        np.prod(data_n_dim.shape), data_n_dim.shape))
 
         if ds_pos.shape[1] + ds_spec.shape[0] != data_n_dim.ndim:
             # This may mean that the dummy position or spectroscopic axes has been squeezed out!
